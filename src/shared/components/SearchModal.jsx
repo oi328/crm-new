@@ -24,11 +24,15 @@ export default function SearchModal({ onClose, variant = 'modal' }) {
   if (variant === 'dropdown') {
     return (
       <div
-        className={`${isLight ? 'bg-white' : 'backdrop-blur-md bg-gray-900/95'} z-[110] 
-        fixed left-0 right-0 top-16 max-[320px]:top-14 w-screen md:w-auto md:fixed md:top-auto md:absolute md:top-12 
-        md:${isRTL ? 'left-0' : 'right-0'} md:w-80 
-        border-t md:border ${isLight ? 'border-gray-200' : 'border-gray-700'} 
+        className={`${isLight ? 'bg-white' : 'backdrop-blur-md bg-gray-900/95'} z-[110]
+        fixed top-16 max-[320px]:top-14
+        border-t md:border ${isLight ? 'border-gray-200' : 'border-gray-700'}
         rounded-none md:rounded-xl shadow-none md:shadow-2xl`}
+        style={{
+          left: isRTL ? 0 : 'var(--content-gutter)',
+          right: isRTL ? 'var(--content-gutter)' : 0,
+          width: 'auto'
+        }}
         role="dialog"
         aria-label={t('Search')}
       >

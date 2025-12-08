@@ -4,13 +4,14 @@ import NewTaskModal from '../components/NewTaskModal'
 import TaskDetailsModal from '../components/TaskDetailsModal'
 
 function Chip({ label, active, onClick, tone = 'default', count }) {
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   const base = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors';
   const tones = {
     default: 'bg-[var(--dropdown-bg)] text-[var(--content-text)] border-[var(--divider)] hover:bg-[var(--table-row-hover)]',
-    green: 'bg-emerald-900/20 text-emerald-300 border-emerald-600/40 hover:bg-emerald-900/30',
-    red: 'bg-red-900/20 text-red-300 border-red-600/40 hover:bg-red-900/30',
-    yellow: 'bg-yellow-900/20 text-yellow-300 border-yellow-600/40 hover:bg-yellow-900/30',
-    blue: 'bg-sky-900/20 text-sky-300 border-sky-600/40 hover:bg-sky-900/30'
+    green: `bg-emerald-900/20 ${isDark ? 'text-emerald-300' : 'text-black'} border-emerald-600/40 hover:bg-emerald-900/30`,
+    red: `bg-red-900/20 ${isDark ? 'text-red-300' : 'text-black'} border-red-600/40 hover:bg-red-900/30`,
+    yellow: `bg-yellow-900/20 ${isDark ? 'text-yellow-300' : 'text-black'} border-yellow-600/40 hover:bg-yellow-900/30`,
+    blue: `bg-sky-900/20 ${isDark ? 'text-sky-300' : 'text-black'} border-sky-600/40 hover:bg-sky-900/30`
   }
   const activeRing = active ? ' ring-2 ring-indigo-500/40' : ''
   return (
@@ -23,11 +24,12 @@ function Chip({ label, active, onClick, tone = 'default', count }) {
 }
 
 function Badge({ label, tone = 'yellow' }) {
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   const tones = {
-    yellow: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40',
-    blue: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
-    green: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
-    red: 'bg-red-500/20 text-red-300 border-red-500/40'
+    yellow: `bg-yellow-500/20 ${isDark ? 'text-yellow-300' : 'text-black'} border-yellow-500/40`,
+    blue: `bg-sky-500/20 ${isDark ? 'text-sky-300' : 'text-black'} border-sky-500/40`,
+    green: `bg-emerald-500/20 ${isDark ? 'text-emerald-300' : 'text-black'} border-emerald-500/40`,
+    red: `bg-red-500/20 ${isDark ? 'text-red-300' : 'text-black'} border-red-500/40`
   }
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${tones[tone]}`}>{label}</span>
@@ -533,42 +535,42 @@ export default function Tasks() {
          )}
        </div>
 
-       {/* Desktop table */}
-      <div className="mt-2 rounded-xl border hidden md:block">
-       <table className="w-full table-fixed text-sm">
+      {/* Desktop table (responsive with horizontal scroll) */}
+      <div className="mt-2 rounded-xl border hidden md:block overflow-x-auto">
+       <table className="w-full text-xs sm:text-sm min-w-[900px] lg:min-w-[1000px]">
           <thead className="bg-[var(--table-header-bg)]">
             <tr>
-              <th className="px-4 py-3 text-left">
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left">
                 <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAllVisible} />
               </th>
-              <th className="px-4 py-3 text-left">{isArabic ? 'المهمة' : 'Task'}</th>
-              <th className="px-4 py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'المسند' : 'Assigned'}</th>
-              <th className="px-4 py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'الحالة' : 'Status'}</th>
-              <th className="px-4 py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'تاريخ الاستحقاق' : 'Due'}</th>
-              <th className="px-4 py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'المندوب' : 'Salesman'}</th>
-              <th className="px-4 py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'الأولوية' : 'Priority'}</th>
-              <th className="px-4 py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'إجراءات' : 'Actions'}</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left">{isArabic ? 'المهمة' : 'Task'}</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'المسند' : 'Assigned'}</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'الحالة' : 'Status'}</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'تاريخ الاستحقاق' : 'Due'}</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'المندوب' : 'Salesman'}</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'الأولوية' : 'Priority'}</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'إجراءات' : 'Actions'}</th>
             </tr>
           </thead>
           <tbody className="bg-[var(--content-bg)]">
             {pagedRows.length === 0 ? (
               <tr>
-                <td colSpan="8" className="px-4 py-6 text-center text-sm opacity-70">
+                <td colSpan="8" className="px-2 sm:px-4 py-6 text-center opacity-70">
                   {isArabic ? 'لا توجد مهام الآن' : 'No tasks right now'}
                 </td>
               </tr>
             ) : (
               pagedRows.map((item) => (
                 <tr key={item.id} className="hover:bg-[var(--table-row-hover)] cursor-pointer" onClick={() => openTaskDetails(item)}>
-                  <td className="px-4 py-3">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3">
                     <input type="checkbox" checked={!!selectedIds[item.id]} onClick={(e) => e.stopPropagation()} onChange={(e) => { e.stopPropagation(); toggleSelect(item.id) }} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3">
                     <div className="font-medium">{item.name}</div>
                     {/* إخفاء الوصف في الجدول */}
                   </td>
-                  <td className="px-4 py-3 border-l border-[var(--divider)]">{item.assignee}</td>
-                  <td className="px-4 py-3 border-l border-[var(--divider)]">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">{item.assignee}</td>
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">
                   <div className="flex items-center gap-1">
                     {(() => {
                       const s = item.status;
@@ -580,12 +582,12 @@ export default function Tasks() {
                     })()}
                   </div>
                 </td>
-                  <td className="px-4 py-3 border-l border-[var(--divider)]">{item.due}</td>
-                  <td className="px-4 py-3 border-l border-[var(--divider)]">{item.salesman}</td>
-                  <td className="px-4 py-3 border-l border-[var(--divider)]">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">{item.due}</td>
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">{item.salesman}</td>
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">
                     {(() => { const tone = item.priority === 'high' ? 'red' : item.priority === 'medium' ? 'yellow' : 'green'; const label = item.priority === 'high' ? (isArabic ? 'عالية' : 'High') : item.priority === 'medium' ? (isArabic ? 'متوسطة' : 'Medium') : (isArabic ? 'منخفضة' : 'Low'); return <Badge label={label} tone={tone} />; })()}
                   </td>
-                  <td className="px-4 py-3 border-l border-[var(--divider)]">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">
                     <div className="flex items-center gap-2 flex-wrap">
                       <button type="button" onClick={(e) => { e.stopPropagation(); startTask(item.id) }} className="px-2 py-1 rounded-md border text-xs bg-[var(--dropdown-bg)]" title={isArabic ? 'بدء المهمة' : 'Start Task'}>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-4 h-4">
