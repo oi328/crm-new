@@ -1,0 +1,156 @@
+// Prisma schema reflecting Sales Workflow models and relations
+// Note: This is provided as a DB model spec; integration can be added later.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // or mysql/sqlite
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id         String   @id @default(uuid())
+  companyId  String
+  name       String
+  phone      String
+  email      String?
+  source     String
+  status     LeadStatus @default(New)
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime?
+  deletedAt  DateTime?
+
+  opportunities Opportunity[]
+}
+
+model Opportunity {
+  id                String   @id @default(uuid())
+  companyId         String
+  leadId            String?
+  customerId        String?
+  contact           String?
+  amount            Float?
+  expectedCloseDate DateTime?
+  status            OppStatus @default(New)
+  stage             OppStage  @default(Qualification)
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime?
+  deletedAt         DateTime?
+
+  lead       Lead?        @relation(fields: [leadId], references: [id])
+  customer   Customer?    @relation(fields: [customerId], references: [id])
+  quotations Quotation[]
+}
+
+model Quotation {
+  id            String   @id @default(uuid())
+  companyId     String
+  opportunityId String
+  status        QuoteStatus @default(Draft)
+  notes         String?
+  subtotal      Float
+  tax           Float
+  total         Float
+  attachment    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime?
+  deletedAt     DateTime?
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id])
+  items       QuotationItem[]
+  salesOrder  SalesOrder?
+}
+
+model QuotationItem {
+  id           String   @id @default(uuid())
+  quotationId  String
+  name         String
+  quantity     Int
+  unitPrice    Float
+  discount     Float?
+
+  quotation Quotation @relation(fields: [quotationId], references: [id])
+}
+
+model SalesOrder {
+  id           String   @id @default(uuid())
+  companyId    String
+  quotationId  String
+  customerId   String?
+  deliveryDate DateTime?
+  paymentTerms String?
+  status       OrderStatus @default(Pending)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime?
+  deletedAt    DateTime?
+
+  quotation Quotation @relation(fields: [quotationId], references: [id])
+  customer  Customer?  @relation(fields: [customerId], references: [id])
+  invoice   Invoice?
+}
+
+model Invoice {
+  id               String   @id @default(uuid())
+  companyId        String
+  salesOrderId     String
+  customerId       String?
+  subtotal         Float
+  tax              Float
+  total            Float
+  paymentStatus    PaymentStatus @default(Unpaid)
+  dueDate          DateTime?
+  receiptAttachment String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime?
+  deletedAt        DateTime?
+
+  salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id])
+  customer   Customer?  @relation(fields: [customerId], references: [id])
+}
+
+model Customer {
+  id         String   @id @default(uuid())
+  companyId  String
+  name       String
+  phone      String?
+  email      String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime?
+  deletedAt  DateTime?
+
+  opportunities Opportunity[]
+  orders       SalesOrder[]
+  invoices     Invoice[]
+  tickets      Ticket[]
+}
+
+model Ticket {
+  id            String   @id @default(uuid())
+  companyId     String
+  customerId    String
+  subject       String
+  description   String
+  priority      TicketPriority @default(Low)
+  status        TicketStatus   @default(Open)
+  assignedAgent String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime?
+  deletedAt     DateTime?
+
+  customer Customer @relation(fields: [customerId], references: [id])
+}
+
+enum LeadStatus { New Contacted Qualified Lost }
+enum OppStatus { New In_Progress Won Lost }
+enum OppStage { Qualification Proposal Negotiation Final }
+enum QuoteStatus { Draft Sent }
+enum OrderStatus { Pending Processing Delivered Completed }
+enum PaymentStatus { Paid Unpaid Partial }
+enum TicketPriority { Low Medium High }
+enum TicketStatus { Open In_Progress Resolved Closed }

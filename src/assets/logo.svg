@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Growify mark: blue rounded square with upward arrow and leaf -->
+  <rect x="6" y="6" width="52" height="52" rx="12" fill="#2B7BEF"/>
+
+  <!-- Upward arrow (trend) -->
+  <path d="M18 40 L30 28 L38 32" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38 32 L46 24" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M46 24 L46 19 L51 20 Z" fill="#FFFFFF"/>
+
+  <!-- Leaf symbol -->
+  <path d="M26 44 C28 40, 34 38, 38 40 C42 42, 40 48, 36 50 C32 52, 28 50, 26 46 Z" fill="#FFFFFF"/>
+  <path d="M30 44 C32 42, 36 42, 38 45" stroke="#E6F0FF" stroke-width="2" stroke-linecap="round"/>
+</svg>
