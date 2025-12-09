@@ -2,16 +2,18 @@ import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import NewTaskModal from '../components/NewTaskModal'
 import TaskDetailsModal from '../components/TaskDetailsModal'
+import { useTheme } from '@shared/context/ThemeProvider'
 
 function Chip({ label, active, onClick, tone = 'default', count }) {
-  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-  const base = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors';
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  const base = 'inline-flex items-center gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-medium border transition-colors';
   const tones = {
-    default: 'bg-[var(--dropdown-bg)] text-[var(--content-text)] border-[var(--divider)] hover:bg-[var(--table-row-hover)]',
-    green: `bg-emerald-900/20 ${isDark ? 'text-emerald-300' : 'text-black'} border-emerald-600/40 hover:bg-emerald-900/30`,
-    red: `bg-red-900/20 ${isDark ? 'text-red-300' : 'text-black'} border-red-600/40 hover:bg-red-900/30`,
-    yellow: `bg-yellow-900/20 ${isDark ? 'text-yellow-300' : 'text-black'} border-yellow-600/40 hover:bg-yellow-900/30`,
-    blue: `bg-sky-900/20 ${isDark ? 'text-sky-300' : 'text-black'} border-sky-600/40 hover:bg-sky-900/30`
+    default: `bg-[var(--dropdown-bg)] ${isDark ? 'text-white' : 'text-[var(--content-text)]'} border-[var(--divider)] hover:bg-[var(--table-row-hover)]`,
+    green: `bg-emerald-900/20 ${isDark ? 'text-white' : 'text-black'} border-emerald-600/40 hover:bg-emerald-900/30`,
+    red: `bg-red-900/20 ${isDark ? 'text-white' : 'text-black'} border-red-600/40 hover:bg-red-900/30`,
+    yellow: `bg-yellow-900/20 ${isDark ? 'text-white' : 'text-black'} border-yellow-600/40 hover:bg-yellow-900/30`,
+    blue: `bg-sky-900/20 ${isDark ? 'text-white' : 'text-black'} border-sky-600/40 hover:bg-sky-900/30`
   }
   const activeRing = active ? ' ring-2 ring-indigo-500/40' : ''
   return (
@@ -24,15 +26,16 @@ function Chip({ label, active, onClick, tone = 'default', count }) {
 }
 
 function Badge({ label, tone = 'yellow' }) {
-  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const tones = {
-    yellow: `bg-yellow-500/20 ${isDark ? 'text-yellow-300' : 'text-black'} border-yellow-500/40`,
-    blue: `bg-sky-500/20 ${isDark ? 'text-sky-300' : 'text-black'} border-sky-500/40`,
-    green: `bg-emerald-500/20 ${isDark ? 'text-emerald-300' : 'text-black'} border-emerald-500/40`,
-    red: `bg-red-500/20 ${isDark ? 'text-red-300' : 'text-black'} border-red-500/40`
+    yellow: `bg-yellow-500/20 ${isDark ? 'text-white' : 'text-black'} border-yellow-500/40`,
+    blue: `bg-sky-500/20 ${isDark ? 'text-white' : 'text-black'} border-sky-500/40`,
+    green: `bg-emerald-500/20 ${isDark ? 'text-white' : 'text-black'} border-emerald-500/40`,
+    red: `bg-red-500/20 ${isDark ? 'text-white' : 'text-black'} border-red-500/40`
   }
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${tones[tone]}`}>{label}</span>
+    <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[11px] sm:text-xs border ${tones[tone]}`}>{label}</span>
   )
 }
 
@@ -41,6 +44,9 @@ export default function Tasks() {
   const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar')
 
   const [query, setQuery] = useState('')
+  const [countryFlagEmoji, setCountryFlagEmoji] = useState('')
+  const flagsMapRef = React.useRef(null)
+  const flagsLoadingRef = React.useRef(false)
   const [filters, setFilters] = useState({
     status: { PENDING: true, ACCEPTING: true, FINISHED: true, CANCELLED: false },
   })
@@ -49,7 +55,6 @@ export default function Tasks() {
     search: '',
     createdAt: '',
     endDate: '',
-    salesman: '',
     assignedTo: '',
     relatedType: '',
     status: '',
@@ -61,8 +66,56 @@ export default function Tasks() {
   })
   const updateAdv = (key, val) => setAdvFilters(prev => ({ ...prev, [key]: val }))
   const toggleAdvEnable = (key) => setAdvFilters(prev => ({ ...prev, [key]: !prev[key] }))
-  const resetAdv = () => setAdvFilters({ search: '', createdAt: '', endDate: '', salesman: '', assignedTo: '', relatedType: '', status: '', priority: '', createdBy: '', useCreatedAt: false, useEndDate: false, overdueOnly: false })
+  const resetAdv = () => setAdvFilters({ search: '', createdAt: '', endDate: '', assignedTo: '', relatedType: '', status: '', priority: '', createdBy: '', useCreatedAt: false, useEndDate: false, overdueOnly: false })
   const toggleIn = (group, key) => setFilters(prev => ({ ...prev, [group]: { ...prev[group], [key]: !prev[group][key] } }))
+
+  const normalizeCode = (s) => {
+    const v = (s || '').trim().replace(/\s|-/g, '')
+    if (!v) return ''
+    if (v.startsWith('+')) return v
+    const m = v.match(/^0+(\d{1,4})/)
+    if (m) return `+${m[1]}`
+    const d = v.match(/^(\d{1,4})$/)
+    if (d) return `+${d[1]}`
+    return ''
+  }
+  React.useEffect(() => {
+    if (!flagsMapRef.current && !flagsLoadingRef.current) {
+      flagsLoadingRef.current = true
+      fetch('https://restcountries.com/v3.1/all?fields=idd,flag')
+        .then(r => r.json())
+        .then(arr => {
+          const map = new Map()
+          if (Array.isArray(arr)) {
+            arr.forEach(c => {
+              const root = (c?.idd?.root || '').trim()
+              const suffixes = Array.isArray(c?.idd?.suffixes) ? c.idd.suffixes : []
+              suffixes.forEach(s => {
+                const full = `${root}${s}`
+                if (full) map.set(full, c?.flag || '')
+              })
+            })
+          }
+          flagsMapRef.current = map
+          const code = normalizeCode(query)
+          if (code && map.has(code)) {
+            setCountryFlagEmoji(map.get(code) || '')
+          }
+        })
+        .catch(() => { flagsMapRef.current = new Map() })
+        .finally(() => { flagsLoadingRef.current = false })
+    }
+  }, [])
+  React.useEffect(() => {
+    const code = normalizeCode(query)
+    if (!code) { setCountryFlagEmoji(''); return }
+    const map = flagsMapRef.current
+    if (map && map.has(code)) {
+      setCountryFlagEmoji(map.get(code) || '')
+    } else {
+      setCountryFlagEmoji('')
+    }
+  }, [query])
 
   const data = useMemo(() => ([
     { id: 101, name: 'Initial Setup', sub: 'Project structure and configs', assignee: 'Ibrahim', state1: 'Phase 1', state2: 'Init', due: 'Today', salesman: 'Ibrahim', priority: 'high', status: 'PENDING' },
@@ -135,7 +188,6 @@ export default function Tasks() {
     const active = filters?.status || {}
     const advStatus = advFilters.status
     const advPriority = advFilters.priority
-    const advSalesman = advFilters.salesman
     const advAssigned = advFilters.assignedTo
     const advRelatedType = advFilters.relatedType
     const overdueOnly = advFilters.overdueOnly
@@ -144,7 +196,6 @@ export default function Tasks() {
       const okChip = active[item.status] ?? true
       const okAdvStatus = advStatus ? item.status === advStatus : true
       const okPriority = advPriority ? item.priority === advPriority : true
-      const okSalesman = advSalesman ? (item.salesman === advSalesman) : true
       const okAssigned = advAssigned ? (item.assignee === advAssigned) : true
       const okRelated = advRelatedType ? (item.relatedType === advRelatedType) : true
       let okOverdue = true
@@ -152,9 +203,9 @@ export default function Tasks() {
         // نعتبر المهمة متأخرة فقط إذا كان تاريخ الاستحقاق بصيغة YYYY-MM-DD وأقدم من اليوم
         okOverdue = typeof item.due === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item.due) && item.due < todayStr
       }
-      return okChip && okAdvStatus && okPriority && okSalesman && okAssigned && okRelated && okOverdue
+      return okChip && okAdvStatus && okPriority && okAssigned && okRelated && okOverdue
     })
-  }, [rows, filters, advFilters.status, advFilters.priority, advFilters.salesman, advFilters.assignedTo, advFilters.relatedType, advFilters.overdueOnly])
+  }, [rows, filters, advFilters.status, advFilters.priority, advFilters.assignedTo, advFilters.relatedType, advFilters.overdueOnly])
 
   // عدّادات الحالات لجميع المهام
   const countsByStatus = useMemo(() => {
@@ -220,7 +271,7 @@ export default function Tasks() {
     <div className="px-4 md:px-6 py-4">
         {/* Page header */}
          <div className="flex items-center justify-between">
-           <h1 className="text-lg font-semibold tracking-wide">ALL TASK</h1>
+          <h1 className="text-lg font-semibold tracking-wide">{isArabic ? 'المهمات' : 'ALL TASK'}</h1>
            <button
              type="button"
              onClick={closePage}
@@ -238,23 +289,24 @@ export default function Tasks() {
          <div className="h-6"></div>
  
          {/* Controls row: icons only */}
-         <div className="flex items-center justify-between">
-           <button
-             onClick={() => setShowAdvancedFilters(v => !v)}
-             className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-md bg-[var(--dropdown-bg)] text-[var(--content-text)]"
-             title={isArabic ? 'إظهار/إخفاء الفلاتر المتقدمة' : 'Toggle advanced filters'}
-             aria-label={isArabic ? 'فلتر' : 'Filter'}
-           >
-             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-                <path d="M3 6h18" />
-                <path d="M6 12h12" />
-                <path d="M10 18h4" />
-             </svg>
-           </button>
+         <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-between">
+          <button
+            onClick={() => setShowAdvancedFilters(v => !v)}
+           className="inline-flex items-center gap-2 px-2.5 py-1.5 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm rounded-md bg-[var(--dropdown-bg)] text-[var(--content-text)]"
+            title={isArabic ? 'إظهار/إخفاء الفلاتر المتقدمة' : 'Toggle advanced filters'}
+            aria-label={isArabic ? 'فلتر' : 'Filter'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+               <path d="M3 6h18" />
+               <path d="M6 12h12" />
+               <path d="M10 18h4" />
+            </svg>
+            <span className="text-sm font-medium">{isArabic ? 'خيارات الفلتر' : 'Filter options'}</span>
+          </button>
            <div className="flex items-center gap-2">
              <button
                onClick={() => setShowNewTaskModal(true)}
-               className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-md bg-[var(--dropdown-bg)] text-[var(--content-text)]"
+               className="inline-flex items-center gap-2 px-2.5 py-1.5 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm rounded-md bg-[var(--dropdown-bg)] text-[var(--content-text)]"
                title={isArabic ? 'مهمة جديدة' : 'New Task'}
              >
                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
@@ -262,7 +314,7 @@ export default function Tasks() {
                </svg>
                {isArabic ? 'جديد' : 'New'}
              </button>
-             <button onClick={exportTasks} className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-md bg-[var(--dropdown-bg)] text-[var(--content-text)]" title={isArabic ? 'تصدير' : 'Export'}>
+            <button onClick={exportTasks} className="inline-flex items-center gap-2 px-2.5 py-1.5 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm rounded-md bg-[var(--dropdown-bg)] text-[var(--content-text)]" title={isArabic ? 'تصدير' : 'Export'}>
                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
                  <path d="M12 5v8m0 0l-3-3m3 3l3-3" />
                  <path d="M5 19h14" />
@@ -287,13 +339,14 @@ export default function Tasks() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-           {/* Search */}
-           <div className="flex flex-col">
-             <label className="text-xs opacity-70 block mb-1">{isArabic ? 'بحث' : 'Search'}</label>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-[var(--dropdown-bg)] w-full">
+          {/* Search */}
+          <div className="flex flex-col">
+            <label className="text-xs opacity-70 block mb-1">{isArabic ? 'بحث' : 'Search'}</label>
+           <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-[var(--dropdown-bg)] w-full">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-4 h-4 opacity-70">
                 <circle cx="11" cy="11" r="6" /><path d="M21 21l-4.5-4.5" />
               </svg>
+              {countryFlagEmoji ? <span className="text-lg">{countryFlagEmoji}</span> : null}
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -325,20 +378,7 @@ export default function Tasks() {
             />
           </div>
 
-          {/* Salesman */}
-          <div className="flex flex-col">
-            <label className="text-xs opacity-70 mb-1">{isArabic ? 'المندوب' : 'Salesman'}</label>
-            <select
-              value={advFilters.salesman}
-              onChange={(e) => updateAdv('salesman', e.target.value)}
-              className="px-3 py-2 rounded-md border bg-[var(--dropdown-bg)] text-sm w-full"
-            >
-              <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
-              <option>Ibrahim</option>
-              <option>Admin</option>
-              <option>Ahmed</option>
-            </select>
-          </div>
+          
 
           {/* Assigned To */}
           <div className="flex flex-col">
@@ -439,7 +479,7 @@ export default function Tasks() {
           <Chip label={isArabic ? 'ملغاة' : 'CANCELLED'} tone="red" active={!!filters.status.CANCELLED} count={countsByStatus.CANCELLED} onClick={() => toggleIn('status','CANCELLED')} />
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={clearTasks} className="px-3 py-1.5 rounded-md border text-sm bg-[var(--dropdown-bg)]">{isArabic ? 'مسح البيانات' : 'Clear Data'}</button>
+          <button type="button" onClick={clearTasks} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md border text-xs sm:text-sm bg-[var(--dropdown-bg)]">{isArabic ? 'مسح البيانات' : 'Clear Data'}</button>
         </div>
       </div>
 
@@ -447,15 +487,15 @@ export default function Tasks() {
        <div className="mb-2 flex items-center justify-between">
          <div className="text-xs opacity-70">{isArabic ? `المحدّد: ${selectedCount}` : `Selected: ${selectedCount}`}</div>
          <div className="flex items-center gap-2">
-           <button type="button" onClick={deleteSelected} className="px-3 py-1.5 rounded-md border text-sm bg-[var(--dropdown-bg)]">{isArabic ? 'مسح المحدد' : 'Delete Selected'}</button>
+           <button type="button" onClick={deleteSelected} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md border text-xs sm:text-sm bg-[var(--dropdown-bg)]">{isArabic ? 'مسح المحدد' : 'Delete Selected'}</button>
            <label className="text-xs opacity-70">{isArabic ? 'إعادة تعيين إلى' : 'Reassign to'}</label>
-           <select value={reassignTo} onChange={(e) => setReassignTo(e.target.value)} className="px-2 py-1 rounded-md border bg-[var(--dropdown-bg)] text-sm">
+           <select value={reassignTo} onChange={(e) => setReassignTo(e.target.value)} className="px-2 py-1 rounded-md border bg-[var(--dropdown-bg)] text-xs sm:text-sm">
              <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
              <option>Ibrahim</option>
              <option>Admin</option>
              <option>Ahmed</option>
            </select>
-           <button type="button" onClick={reassignSelected} className="px-3 py-1.5 rounded-md border text-sm bg-[var(--dropdown-bg)]">{isArabic ? 'تنفيذ' : 'Apply'}</button>
+           <button type="button" onClick={reassignSelected} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md border text-xs sm:text-sm bg-[var(--dropdown-bg)]">{isArabic ? 'تنفيذ' : 'Apply'}</button>
          </div>
        </div>
 
@@ -493,16 +533,16 @@ export default function Tasks() {
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="min-w-0">
-                    <div className="opacity-70">{isArabic ? 'المسند' : 'Assigned'}</div>
-                    <div className="truncate">{item.assignee}</div>
+                    <div className="opacity-70">{isArabic ? 'أنشئت بواسطة' : 'Created By'}</div>
+                    <div className="truncate">{item.createdBy}</div>
                   </div>
                   <div className="min-w-0">
                     <div className="opacity-70">{isArabic ? 'تاريخ الاستحقاق' : 'Due'}</div>
                     <div className="truncate">{item.due}</div>
                   </div>
                   <div className="min-w-0">
-                    <div className="opacity-70">{isArabic ? 'المندوب' : 'Salesman'}</div>
-                    <div className="truncate">{item.salesman}</div>
+                    <div className="opacity-70">{isArabic ? 'مسند إلى' : 'Assigned To'}</div>
+                    <div className="truncate">{item.assignee}</div>
                   </div>
                   <div className="min-w-0">
                     <div className="opacity-70">{isArabic ? 'الأولوية' : 'Priority'}</div>
@@ -544,10 +584,10 @@ export default function Tasks() {
                 <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAllVisible} />
               </th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left">{isArabic ? 'المهمة' : 'Task'}</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'المسند' : 'Assigned'}</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'أنشئت بواسطة' : 'Created By'}</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'الحالة' : 'Status'}</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'تاريخ الاستحقاق' : 'Due'}</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'المندوب' : 'Salesman'}</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'مسند إلى' : 'Assigned To'}</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'الأولوية' : 'Priority'}</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left border-l border-[var(--divider)]">{isArabic ? 'إجراءات' : 'Actions'}</th>
             </tr>
@@ -569,7 +609,7 @@ export default function Tasks() {
                     <div className="font-medium">{item.name}</div>
                     {/* إخفاء الوصف في الجدول */}
                   </td>
-                  <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">{item.assignee}</td>
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">{item.createdBy}</td>
                   <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">
                   <div className="flex items-center gap-1">
                     {(() => {
@@ -583,7 +623,7 @@ export default function Tasks() {
                   </div>
                 </td>
                   <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">{item.due}</td>
-                  <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">{item.salesman}</td>
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">{item.assignee}</td>
                   <td className="px-2 sm:px-4 py-2 sm:py-3 border-l border-[var(--divider)]">
                     {(() => { const tone = item.priority === 'high' ? 'red' : item.priority === 'medium' ? 'yellow' : 'green'; const label = item.priority === 'high' ? (isArabic ? 'عالية' : 'High') : item.priority === 'medium' ? (isArabic ? 'متوسطة' : 'Medium') : (isArabic ? 'منخفضة' : 'Low'); return <Badge label={label} tone={tone} />; })()}
                   </td>

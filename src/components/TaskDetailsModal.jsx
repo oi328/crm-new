@@ -30,12 +30,12 @@ export default function TaskDetailsModal({ isOpen, onClose, task }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-stretch sm:items-center justify-center">
+    <div className="fixed inset-x-0 top-24 bottom-0 z-[100] flex items-stretch sm:items-center justify-center">
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal Container */}
-      <div className="relative w-full h-screen sm:w-[90%] sm:max-w-2xl sm:max-h-[90vh] sm:h-auto bg-[var(--content-bg)] text-[var(--content-text)] border shadow-xl rounded-none sm:rounded-2xl flex flex-col">
+      <div className="relative w-full h-full sm:w-[90%] sm:max-w-2xl sm:max-h-[90vh] sm:h-auto bg-[var(--content-bg)] text-[var(--content-text)] border shadow-xl rounded-none sm:rounded-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b sticky top-0 bg-[var(--content-bg)] z-10">
           <h2 className="text-xl font-semibold">{labels.details}</h2>

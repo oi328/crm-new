@@ -109,6 +109,69 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
   const [showLeadDetails, setShowLeadDetails] = useState(false)
   const [selectedLead, setSelectedLead] = useState(null)
   
+  // Searchable select UI for filters
+  const SearchableSelect = ({ value, onChange, options = [], isLight }) => {
+    const [open, setOpen] = useState(false)
+    const [search, setSearch] = useState('')
+    const ref = React.useRef(null)
+    useEffect(() => {
+      const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+      document.addEventListener('mousedown', handler)
+      return () => document.removeEventListener('mousedown', handler)
+    }, [])
+    const filtered = useMemo(() => {
+      const q = String(search).toLowerCase()
+      return options.filter(opt => String(opt).toLowerCase().includes(q))
+    }, [options, search])
+    return (
+      <div ref={ref} className="relative inline-flex items-center">
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          className={`px-3 py-1 text-sm rounded-md border flex items-center gap-2 ${isLight ? 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100' : 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600'}`}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+        >
+          <span className="truncate max-w-[140px]">
+            {value || t('Select')}
+          </span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 opacity-70">
+            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.25 8.27a.75.75 0 01-.02-1.06z" clipRule="evenodd" />
+          </svg>
+        </button>
+        {open && (
+          <div className={`absolute z-20 top-full left-0 mt-1 w-56 rounded-md border shadow-lg ${isLight ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700'}`}>
+            <div className="p-2">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('Search...')}
+                className={`w-full px-2 py-1 text-sm rounded-md border ${isLight ? 'bg-white border-gray-300 text-gray-700 placeholder-gray-400' : 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400'}`}
+              />
+            </div>
+            <ul role="listbox" className="max-h-48 overflow-y-auto py-1">
+              {filtered.map((opt) => (
+                <li key={opt}>
+                  <button
+                    type="button"
+                    className={`w-full text-left px-3 py-1 text-sm ${isLight ? 'hover:bg-gray-100' : 'hover:bg-gray-700'}`}
+                    onClick={() => { onChange(opt); setOpen(false) }}
+                  >
+                    {opt}
+                  </button>
+                </li>
+              ))}
+              {filtered.length === 0 && (
+                <li className="px-3 py-2 text-xs opacity-70">No results</li>
+              )}
+            </ul>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // Mock data for dropdowns - these should be fetched from API in real implementation
   const managers = [t('All Managers'), 'Manager 1', 'Manager 2', 'Manager 3']
   const employees = [t('All Employees'), 'Employee 1', 'Employee 2', 'Employee 3']
@@ -252,6 +315,11 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
   const year = cursor.getFullYear()
   const month = cursor.getMonth()
   const grid = useMemo(() => getMonthGrid(year, month), [year, month])
+  const weekdayNames = useMemo(() => {
+    const fmt = new Intl.DateTimeFormat(i18n.language, { weekday: 'short' })
+    const base = new Date(2021, 7, 1)
+    return Array.from({ length: 7 }).map((_, i) => fmt.format(new Date(base.getFullYear(), base.getMonth(), base.getDate() + i)))
+  }, [i18n.language])
 
   const fmt = (d) => {
     const y = d.getFullYear()
@@ -403,7 +471,7 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-10">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 sm:pt-28">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
@@ -419,7 +487,7 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
       >
         {/* زر الإغلاق في أعلى يمين النافذة */}
         <button
-          className={`absolute top-4 right-4 z-10 p-2 rounded-md transition-colors ${
+          className={`absolute top-4 ${i18n.language === 'ar' ? 'left-4' : 'right-4'} z-10 p-2 rounded-md transition-colors ${
             isLight ? 'hover:bg-gray-100 text-gray-500 hover:text-gray-700' : 'hover:bg-gray-800 text-gray-400 hover:text-gray-200'
           }`}
           onClick={onClose}
@@ -430,12 +498,12 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
           </svg>
         </button>
 
-        <div className="p-4 pt-8">
+        <div className="p-4 pt-8 pb-20">
             <div className="flex items-center gap-3 mb-3">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>
               <div>
-                <h2 className={`text-base font-semibold ${isLight ? 'text-gray-900' : 'text-white'}`}>Calender</h2>
-                <p className={`text-sm ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>Select which columns you need to see lead table</p>
+                <h2 className={`text/base font-semibold ${isLight ? 'text-gray-900' : 'text-white'}`}>{t('Calendar')}</h2>
+                <p className={`text-sm ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>{t('Calendar Subtitle')}</p>
               </div>
             </div>
         {/* Header */}
@@ -443,8 +511,8 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
           isLight ? 'bg-gray-50 border-gray-200' : 'bg-gray-800 border-gray-700'
         }`}>
           <div className="flex items-center gap-4">
-            <span className={`font-bold text-base ${isLight ? 'text-gray-800' : 'text-white'}`}>
-              {cursor.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
+          <span className={`font-bold text-base ${isLight ? 'text-gray-800' : 'text-white'}`}>
+              {cursor.toLocaleString(i18n.language, { month: 'long', year: 'numeric' })}
             </span>
             <div className="flex items-center gap-2">
               <select
@@ -458,7 +526,7 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
               >
                 {Array.from({ length: 12 }).map((_, i) => (
                   <option key={i} value={i}>
-                    {new Date(2000, i, 1).toLocaleString(undefined, { month: 'long' })}
+                    {new Date(2000, i, 1).toLocaleString(i18n.language, { month: 'long' })}
                   </option>
                 ))}
               </select>
@@ -499,9 +567,9 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
           <div className="flex items-center gap-2">
             <button
               className={`px-3 py-1 text-sm font-semibold rounded-md ${isLight ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-700 hover:bg-gray-600'}`}
-              onClick={() => setCursor(new Date())}
+              onClick={() => { const now = new Date(); setCursor(now); setSelectedDate(now); setActionsView('selected') }}
             >
-              Today
+              {t('Today')}
             </button>
           </div>
         </div>
@@ -512,70 +580,58 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               {/* Stage Dropdown */}
-              <select 
-                value={selectedStage} 
-                onChange={(e) => setSelectedStage(e.target.value)}
-                className={`px-3 py-1 text-sm rounded-md border ${isLight ? 'bg-white border-gray-300 text-gray-700' : 'bg-gray-700 border-gray-600 text-gray-200'}`}
-              >
-                {stages.map(stage => (
-                  <option key={stage} value={stage}>{stage}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                value={selectedStage}
+                onChange={(val) => setSelectedStage(val)}
+                options={stages}
+                isLight={isLight}
+              />
               
               {/* Manager Dropdown */}
-              <select 
-                value={selectedManager} 
-                onChange={(e) => setSelectedManager(e.target.value)}
-                className={`px-3 py-1 text-sm rounded-md border ${isLight ? 'bg-white border-gray-300 text-gray-700' : 'bg-gray-700 border-gray-600 text-gray-200'}`}
-              >
-                {managers.map(manager => (
-                  <option key={manager} value={manager}>{manager}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                value={selectedManager}
+                onChange={(val) => setSelectedManager(val)}
+                options={managers}
+                isLight={isLight}
+              />
               
               {/* Employee Dropdown */}
-              <select 
-                value={selectedEmployee} 
-                onChange={(e) => setSelectedEmployee(e.target.value)}
-                className={`px-3 py-1 text-sm rounded-md border ${isLight ? 'bg-white border-gray-300 text-gray-700' : 'bg-gray-700 border-gray-600 text-gray-200'}`}
-              >
-                {employees.map(employee => (
-                  <option key={employee} value={employee}>{employee}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                value={selectedEmployee}
+                onChange={(val) => setSelectedEmployee(val)}
+                options={employees}
+                isLight={isLight}
+              />
 
               {/* Leads Dropdown */}
-              <select 
+              <SearchableSelect
                 value={selectedLeadFilter}
-                onChange={(e) => setSelectedLeadFilter(e.target.value)}
-                className={`px-3 py-1 text-sm rounded-md border ${isLight ? 'bg-white border-gray-300 text-gray-700' : 'bg-gray-700 border-gray-600 text-gray-200'}`}
-              >
-                {leadOptions.map(name => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedLeadFilter(val)}
+                options={leadOptions}
+                isLight={isLight}
+              />
             </div>
             <div className="flex-1 md:flex-none">
               <input
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={isLight ? 'Search...' : 'Search...'}
+                placeholder={t('Search...')}
                 className={`w-full md:w-64 px-3 py-1 text-sm rounded-md border ${isLight ? 'bg-white border-gray-300 text-gray-700 placeholder-gray-400' : 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400'}`}
               />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
             {/* Calendar Column */}
-            <div className="min-h-[360px] flex flex-col" style={{ height: columnHeight }}>
+            <div className="min-h-[360px] flex flex-col" style={{ minHeight: columnHeight }}>
               {/* Month Header */}
-              <div className="grid grid-cols-7 text-xs opacity-70 mb-2">
-                {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((w) => (
+              <div className={`grid grid-cols-7 text-xs mb-2 ${isLight ? 'text-gray-600 opacity-70' : 'text-gray-300 opacity-80'}`}>
+                {weekdayNames.map((w) => (
                   <div key={w} className="text-center py-1">{w}</div>
                 ))}
               </div>
               {/* Month Grid */}
-              <div className="grid grid-cols-7 gap-1 flex-1 overflow-y-auto">
+              <div className="grid grid-cols-7 gap-1 flex-1">
                 {grid.map(({ date, inMonth }, idx) => {
                   const isToday = date.toDateString() === today.toDateString()
                   const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString()
@@ -621,15 +677,15 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
             </div>
 
             {/* Right Column: Actions + Notifications stacked */}
-            <div className="min-h-[360px] flex flex-col" style={{ height: columnHeight }}>
+            <div className="min-h-[360px] flex flex-col" style={{ minHeight: columnHeight }}>
               {/* Actions List */}
               <div className={`rounded-xl border ${isLight ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700'} shadow-sm flex-1 flex flex-col overflow-hidden`}>
-                <div className={`px-4 py-2 border-b flex items-center justify-between ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>
+                <div className={`px-4 py-2 border-b flex items-center justify-between ${isLight ? 'border-gray-200' : 'border-gray-700 bg-gray-800'}`}>
                   <span className="font-semibold text-sm">{t('Actions')}</span>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
-                      {[
-                        { key: 'selected', label: (selectedDate && selectedDate.toDateString() === today.toDateString()) ? t('Today') : t('Selected', 'Selected') },
+                        {[
+                        { key: 'selected', label: (selectedDate && selectedDate.toDateString() === today.toDateString()) ? t('Today') : t('Selected') },
                         { key: 'week', label: t('Week') },
                         { key: 'month', label: t('Month') },
                         { key: 'upcoming', label: t('Upcoming') }
@@ -643,30 +699,15 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
                         </button>
                       ))}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        title={t('Decrease height')}
-                        className={`px-2 py-1 text-xs rounded-md border ${isLight ? 'border-gray-300 hover:bg-gray-100' : 'border-gray-600 hover:bg-gray-700'}`}
-                        onClick={() => adjustColumnHeight(-40)}
-                      >
-                        −
-                      </button>
-                      <button
-                        title={t('Increase height')}
-                        className={`px-2 py-1 text-xs rounded-md border ${isLight ? 'border-gray-300 hover:bg-gray-100' : 'border-gray-600 hover:bg-gray-700'}`}
-                        onClick={() => adjustColumnHeight(40)}
-                      >
-                        +
-                      </button>
-                    </div>
+                    
                   </div>
                 </div>
-                <div className="p-3 space-y-2 overflow-y-auto flex-1">
+                <div className="p-3 space-y-2 flex-1 pb-4">
                   {getActionsByTimeframe(actionsView).map((a, i) => {
                     const title = typeof a === 'string' ? a : (a.title || 'Action')
                     const pr = typeof a === 'string' ? 'medium' : (a.priority || 'medium')
-                    const bg = pr === 'high' ? (isLight ? 'bg-red-100' : 'bg-red-900/30') : pr === 'medium' ? (isLight ? 'bg-yellow-100' : 'bg-yellow-900/30') : (isLight ? 'bg-emerald-100' : 'bg-emerald-900/30')
-                    const text = pr === 'high' ? (isLight ? 'text-red-800' : 'text-red-300') : pr === 'medium' ? (isLight ? 'text-yellow-800' : 'text-yellow-300') : (isLight ? 'text-emerald-800' : 'text-emerald-300')
+                    const bg = pr === 'high' ? (isLight ? 'bg-red-100' : 'bg-red-900/40') : pr === 'medium' ? (isLight ? 'bg-yellow-100' : 'bg-yellow-900/40') : (isLight ? 'bg-emerald-100' : 'bg-emerald-900/40')
+                    const text = pr === 'high' ? (isLight ? 'text-red-800' : 'text-red-200') : pr === 'medium' ? (isLight ? 'text-yellow-800' : 'text-yellow-200') : (isLight ? 'text-emerald-800' : 'text-emerald-200')
                     const sub = typeof a === 'string' ? '' : (a.leadName ? a.leadName : '')
                     return (
                       <button
@@ -692,14 +733,14 @@ export default function CalendarModal({ open, onClose, tone = 'light' }) {
                     )
                   })}
                   {getActionsByTimeframe(actionsView).length === 0 && (
-                    <div className={`text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'} opacity-70`}>{t('No actions for selected range.')}</div>
+                    <div className={`text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'} opacity-80`}>{t('No actions for selected range.')}</div>
                   )}
                 </div>
               </div>
 
               {/* Notifications */}
               <div className={`mt-3 rounded-xl border ${isLight ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700'} shadow-sm`}>
-                <div className={`px-4 py-2 border-b font-semibold text-sm ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Notifications')}</div>
+                <div className={`px-4 py-2 border-b font-semibold text-sm ${isLight ? 'border-gray-200' : 'border-gray-700 text-gray-100'}`}>{t('Notifications')}</div>
                 <div className="p-3 space-y-2 text-sm">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500"></span>

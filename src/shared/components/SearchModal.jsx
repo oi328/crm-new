@@ -9,8 +9,55 @@ export default function SearchModal({ onClose, variant = 'modal' }) {
   const { theme } = useTheme()
   const isLight = theme === 'light'
 
-  const [filterField, setFilterField] = useState('all'); // 'all' | 'lead' | 'mobile' | 'comment' | 'country'
+  const [filterField, setFilterField] = useState('all');
   const [query, setQuery] = useState('');
+  const [flagEmoji, setFlagEmoji] = useState('')
+  const flagsMapRef = React.useRef(null)
+  const flagsLoadingRef = React.useRef(false)
+
+  const normalizeCode = (s) => {
+    const v = (s || '').trim().replace(/\s|-/g, '')
+    if (!v) return ''
+    if (v.startsWith('+')) return v
+    const m = v.match(/^0+(\d{1,4})/)
+    if (m) return `+${m[1]}`
+    const d = v.match(/^(\d{1,4})$/)
+    if (d) return `+${d[1]}`
+    return ''
+  }
+  React.useEffect(() => {
+    if (!flagsMapRef.current && !flagsLoadingRef.current) {
+      flagsLoadingRef.current = true
+      fetch('https://restcountries.com/v3.1/all?fields=idd,flag')
+        .then(r => r.json())
+        .then(arr => {
+          const map = new Map()
+          if (Array.isArray(arr)) {
+            arr.forEach(c => {
+              const root = (c?.idd?.root || '').trim()
+              const suffixes = Array.isArray(c?.idd?.suffixes) ? c.idd.suffixes : []
+              suffixes.forEach(s => {
+                const full = `${root}${s}`
+                if (full) map.set(full, c?.flag || '')
+              })
+            })
+          }
+          flagsMapRef.current = map
+        })
+        .catch(() => { flagsMapRef.current = new Map() })
+        .finally(() => { flagsLoadingRef.current = false })
+    }
+  }, [])
+  React.useEffect(() => {
+    const code = normalizeCode(query)
+    if (!code) { setFlagEmoji(''); return }
+    const map = flagsMapRef.current
+    if (map && map.has(code)) {
+      setFlagEmoji(map.get(code) || '')
+    } else {
+      setFlagEmoji('')
+    }
+  }, [query])
 
   const applySearch = () => {
     try {
@@ -26,20 +73,17 @@ export default function SearchModal({ onClose, variant = 'modal' }) {
       <div
         className={`${isLight ? 'bg-white' : 'backdrop-blur-md bg-gray-900/95'} z-[110]
         fixed top-16 max-[320px]:top-14
+        left-1/2 -translate-x-1/2 w-[85vw] sm:w-[80vw] max-w-[28rem]
+        md:translate-x-0 ${isRTL ? 'md:left-0 md:right-auto' : 'md:right-0 md:left-auto'} md:w-[28rem]
         border-t md:border ${isLight ? 'border-gray-200' : 'border-gray-700'}
-        rounded-none md:rounded-xl shadow-none md:shadow-2xl`}
-        style={{
-          left: isRTL ? 0 : 'var(--content-gutter)',
-          right: isRTL ? 'var(--content-gutter)' : 0,
-          width: 'auto'
-        }}
+        rounded-xl shadow-2xl`}
         role="dialog"
         aria-label={t('Search')}
       >
         <div className="px-3 py-2 md:px-4 md:py-3 space-y-2 md:space-y-3 max-h-[60vh] overflow-auto">
           <div className="flex items-center gap-2">
             <label className={`text-xs md:text-sm max-[480px]:hidden ${isLight ? 'text-gray-800' : 'text-gray-300'}`}>{isRTL ? 'الفلتر' : 'Filter'}</label>
-            <div className="relative w-40 max-[480px]:w-32 md:w-48">
+            <div className="relative w-64 max-[480px]:w-52 sm:w-72 md:w-80">
               <SearchableSelect
                 value={filterField}
                 onChange={(v) => setFilterField(v)}
@@ -55,6 +99,7 @@ export default function SearchModal({ onClose, variant = 'modal' }) {
             </div>
 
             <label className={`text-xs md:text-sm max-[480px]:hidden ${isLight ? 'text-gray-800' : 'text-gray-300'}`}>{t('Search')}</label>
+            {flagEmoji ? <span className={`text-lg ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>{flagEmoji}</span> : null}
             <input
               type="text"
               value={query}
@@ -137,6 +182,7 @@ export default function SearchModal({ onClose, variant = 'modal' }) {
             <label className={`text-sm min-w-[70px] ${isLight ? 'text-gray-800' : 'text-gray-300'}`}>
               {t('Search')}
             </label>
+            {flagEmoji ? <span className={`text-lg ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>{flagEmoji}</span> : null}
             <input
               type="text"
               value={query}

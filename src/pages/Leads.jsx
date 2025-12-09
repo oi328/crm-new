@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@shared/context/ThemeProvider'
-import { FaPlus, FaSearch, FaFilter, FaDownload, FaEye, FaEdit, FaTrash, FaPhone, FaEnvelope, FaWhatsapp, FaVideo, FaUserPlus } from 'react-icons/fa'
+import { FaPlus, FaSearch, FaFilter, FaDownload, FaEye, FaEdit, FaTrash, FaPhone, FaEnvelope, FaWhatsapp, FaVideo } from 'react-icons/fa'
+import { SiGooglemeet } from 'react-icons/si'
 import { api } from '../utils/api'
 import LeadModal from '../components/LeadModal'
+import AddActionModal from '../components/AddActionModal'
 import EnhancedLeadDetailsModal from '@shared/components/EnhancedLeadDetailsModal'
 import ImportLeadsModal from '../components/ImportLeadsModal'
 import ColumnToggle from '../components/ColumnToggle'
@@ -55,6 +57,7 @@ export const Leads = () => {
   const [exportTo, setExportTo] = useState(1)
   const [showLeadModal, setShowLeadModal] = useState(false)
   const [selectedLead, setSelectedLead] = useState(null)
+  const [showAddActionModal, setShowAddActionModal] = useState(false)
   const [excelFile, setExcelFile] = useState(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState('')
@@ -80,6 +83,13 @@ export const Leads = () => {
   // Filter visibility state
   const [showAllFilters, setShowAllFilters] = useState(false)
   const activeRowRef = useRef(null)
+
+  const [isActionsSticky, setIsActionsSticky] = useState(false)
+  const scrollXRef = useRef(null)
+  useEffect(() => {
+    const el = scrollXRef.current
+    if (el) setIsActionsSticky(el.scrollLeft > 0)
+  }, [])
 
 
   // Generate and add temporary leads for demonstration
@@ -566,10 +576,10 @@ export const Leads = () => {
   }
 
   const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+    switch (String(priority).toLowerCase()) {
+      case 'high': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
       case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      case 'low': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
     }
   }
@@ -849,60 +859,60 @@ export const Leads = () => {
   
 
   return (
-    <div className={`p-6 bg-[var(--content-bg)] text-[var(--content-text)] space-y-8 md:space-y-10 lg:space-y-12`}>
+    <div className={`p-6 bg-[var(--content-bg)] text-[var(--content-text)] text-xs md:text-sm space-y-8 md:space-y-10 lg:space-y-12`}>
           {/* Page Title and Add Button */}
           <div className="flex w-full items-center justify-between gap-6 mb-4 lg:gap-0">
             <div className="flex items-center gap-3 flex-1">
               <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">{t('Lead Management')}</h1>
+              <h1 className="text-3xl font-bold dark:text-white">{t('Lead Management')}</h1>
             </div>
             
             {/* Toolbar: Add + Import */}
             <div className="flex-shrink-0">
-              <div className="flex items-center gap-2 flex-nowrap justify-end">
-                <button
-                  onClick={() => navigate('/leads/new')}
-                  className="group relative inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold bg-gradient-to-br from-green-500 via-emerald-500 to-teal-600 hover:from-emerald-400 hover:via-green-500 hover:to-emerald-700 text-white border-2 border-emerald-300/30 shadow-[0_8px_30px_rgb(34,197,94,0.3)] hover:shadow-[0_20px_40px_rgb(34,197,94,0.6)] transition-all duration-300 ease-out hover:brightness-125 hover:scale-110 hover:-translate-y-1 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/50 hover:ring-4 hover:ring-emerald-300/70 active:scale-95 active:translate-y-0 overflow-hidden"
-                >
-                  <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 bg-[linear-gradient(45deg,transparent_30%,rgba(255,255,255,0.5)_50%,transparent_70%)] animate-pulse"></span>
-                  <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-30 pointer-events-none transition-opacity duration-300 bg-gradient-to-r from-transparent via-white to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full group-hover:duration-700"></span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12M6 12h12" />
-                  </svg>
-                  <span>{t('Add New Lead')}</span>
-                </button>
+            <div className="flex items-center gap-2 flex-nowrap justify-end">
+              <button
+                onClick={() => navigate('/leads/new')}
+                className="group relative inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-gradient-to-br from-green-500 via-emerald-500 to-teal-600 text-white border border-emerald-300/30 shadow-sm transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/50 overflow-hidden"
+              >
+                <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 bg-[linear-gradient(45deg,transparent_30%,rgba(255,255,255,0.5)_50%,transparent_70%)] animate-pulse"></span>
+                <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-30 pointer-events-none transition-opacity duration-300 bg-gradient-to-r from-transparent via-white to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full group-hover:duration-700"></span>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12M6 12h12" />
+                </svg>
+                <span>{t('Add New Lead')}</span>
+              </button>
 
-                <button
-                  onClick={() => setShowImportModal(true)}
-                  className="group relative inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 hover:from-indigo-400 hover:via-blue-500 hover:to-indigo-700 text-white border-2 border-blue-300/30 shadow-[0_8px_30px_rgb(59,130,246,0.3)] hover:shadow-[0_20px_40px_rgb(59,130,246,0.6)] transition-all duration-300 ease-out hover:brightness-125 hover:scale-110 hover:-translate-y-1 focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300/50 hover:ring-4 hover:ring-blue-300/70 active:scale-95 active:translate-y-0 overflow-hidden"
-                >
-                  <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 bg-[linear-gradient(45deg,transparent_30%,rgba(255,255,255,0.5)_50%,transparent_70%)] animate-pulse"></span>
-                  <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-30 pointer-events-none transition-opacity duration-300 bg-gradient-to-r from-transparent via-white to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full group-hover:duration-700"></span>
-                  <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 3v12" />
-                    <path d="M8 11l4 4 4-4" />
-                    <path d="M4 20h16" />
-                  </svg>
-                  <span>{t('Import Leads')}</span>
-                </button>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="group relative inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white border border-blue-300/30 shadow-sm transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300/50 overflow-hidden"
+              >
+                <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 bg-[linear-gradient(45deg,transparent_30%,rgba(255,255,255,0.5)_50%,transparent_70%)] animate-pulse"></span>
+                <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-30 pointer-events-none transition-opacity duration-300 bg-gradient-to-r from-transparent via-white to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full group-hover:duration-700"></span>
+                <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 3v12" />
+                  <path d="M8 11l4 4 4-4" />
+                  <path d="M4 20h16" />
+                </svg>
+                <span>{t('Import Leads')}</span>
+              </button>
 
-                <button
-                  onClick={() => handleAddTemporaryLeads(15)}
-                  className="group relative inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-600 hover:from-amber-400 hover:via-orange-500 hover:to-amber-700 text-white border-2 border-orange-300/30 shadow-[0_8px_30px_rgb(245,158,11,0.3)] hover:shadow-[0_20px_40px_rgb(245,158,11,0.6)] transition-all duration-300 ease-out hover:brightness-125 hover:scale-110 hover:-translate-y-1 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/50 hover:ring-4 hover:ring-orange-300/70 active:scale-95 active:translate-y-0 overflow-hidden"
-                >
-                  <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 bg-[linear-gradient(45deg,transparent_30%,rgba(255,255,255,0.5)_50%,transparent_70%)] animate-pulse"></span>
-                  <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-30 pointer-events-none transition-opacity duration-300 bg-gradient-to-r from-transparent via-white to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full group-hover:duration-700"></span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span>{t('Add Demo Leads')}</span>
-                </button>
+              <button
+                onClick={() => handleAddTemporaryLeads(15)}
+                className="group relative inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-600 text-white border border-orange-300/30 shadow-sm transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/50 overflow-hidden"
+              >
+                <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 bg-[linear-gradient(45deg,transparent_30%,rgba(255,255,255,0.5)_50%,transparent_70%)] animate-pulse"></span>
+                <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-30 pointer-events-none transition-opacity duration-300 bg-gradient-to-r from-transparent via-white to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full group-hover:duration-700"></span>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>{t('Add Demo Leads')}</span>
+              </button>
               </div>
             </div>
           </div>
           
           {/* Filter Section - Same style as Dashboard */}
-          <section className="p-4 rounded-xl shadow-lg glass-panel w-full mb-8">
+          <section className="p-4 rounded-xl shadow-lg glass-panel w-full mb-2">
             {/* Filter Header */}
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-600">
               <div className="flex items-center gap-3">
@@ -916,40 +926,40 @@ export const Leads = () => {
                 </h3>
               </div>
               {/* Buttons Container */}
-              <div className="flex items-center gap-3">
-                {/* Show More/Less Button */}
-                <button
-                  onClick={() => setShowAllFilters(!showAllFilters)}
-                  className="btn btn-primary"
+            <div className="flex items-center gap-3">
+              {/* Show More/Less Button */}
+              <button
+                onClick={() => setShowAllFilters(!showAllFilters)}
+                className="btn btn-primary btn-xs px-1 py-0.5 text-[10px] gap-1"
+              >
+                <svg 
+                  className={`w-3 h-3 transition-transform duration-200 ${showAllFilters ? 'rotate-180' : ''}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
                 >
-                  <svg 
-                    className={`w-4 h-4 transition-transform duration-200 ${showAllFilters ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                  {showAllFilters ? t('Show Less') : t('Show More')}
-                </button>
-                {/* Reset Button */}
-                <button className="btn btn-ghost">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  {t('Reset')}
-                </button>
-              </div>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                {showAllFilters ? t('Show Less') : t('Show More')}
+              </button>
+              {/* Reset Button */}
+              <button className="btn btn-ghost btn-xs px-1 py-0.5 text-[10px] gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {t('Reset')}
+              </button>
+            </div>
             </div>
 
             {/* Filter Controls */}
             <div className="space-y-4">
               {/* First Row - Always Visible (Search + 3 filters) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
               {/* Search */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   {t('Search')}
@@ -959,14 +969,14 @@ export const Leads = () => {
                   placeholder={t('Search leads...')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-2 py-1 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium placeholder:text-xs placeholder:text-gray-400 dark:placeholder-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 />
               </div>
 
               {/* Status Filter */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {t('Status')}
@@ -974,7 +984,7 @@ export const Leads = () => {
                 <select 
                   value={statusFilter} 
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-2 py-1 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Status')}</option>
                   {statuses.map((status) => (
@@ -986,9 +996,9 @@ export const Leads = () => {
               </div>
 
               {/* Source Filter */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                   {t('Source')}
@@ -996,7 +1006,7 @@ export const Leads = () => {
                 <select 
                   value={sourceFilter} 
                   onChange={(e) => setSourceFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-2 py-1 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Sources')}</option>
                   <option value="website">{t('Website')}</option>
@@ -1008,9 +1018,9 @@ export const Leads = () => {
               </div>
 
               {/* Priority Filter */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {t('Priority')}
@@ -1018,7 +1028,7 @@ export const Leads = () => {
                 <select 
                   value={priorityFilter} 
                   onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-2 py-1 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Priority')}</option>
                   <option value="high">{t('High')}</option>
@@ -1038,7 +1048,7 @@ export const Leads = () => {
 
               {/* Project Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
                   <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
@@ -1047,7 +1057,7 @@ export const Leads = () => {
                 <select 
                   value={projectFilter} 
                   onChange={(e) => setProjectFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Projects')}</option>
                   <option value="project-a">{t('Project A')}</option>
@@ -1058,8 +1068,8 @@ export const Leads = () => {
 
               {/* Stage Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                   {t('Stage')}
@@ -1067,7 +1077,7 @@ export const Leads = () => {
                 <select 
                   value={stageFilter} 
                   onChange={(e) => setStageFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Stages')}</option>
                   {stages.map((stage) => (
@@ -1080,8 +1090,8 @@ export const Leads = () => {
 
               {/* Manager Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   {t('Manager')}
@@ -1089,7 +1099,7 @@ export const Leads = () => {
                 <select 
                   value={managerFilter} 
                   onChange={(e) => setManagerFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Managers')}</option>
                   <option value="ibrahim">{t('Ibrahim Ahmed')}</option>
@@ -1100,8 +1110,8 @@ export const Leads = () => {
 
               {/* Sales Person Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                   {t('Sales Person')}
@@ -1109,7 +1119,7 @@ export const Leads = () => {
                 <select 
                   value={salesPersonFilter} 
                   onChange={(e) => setSalesPersonFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Sales People')}</option>
                   <option value="إبراهيم أحمد">{t('Ibrahim Ahmed')}</option>
@@ -1120,8 +1130,8 @@ export const Leads = () => {
 
               {/* Created By Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                   </svg>
                   {t('Created By')}
@@ -1129,7 +1139,7 @@ export const Leads = () => {
                 <select 
                   value={createdByFilter} 
                   onChange={(e) => setCreatedByFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Creators')}</option>
                   <option value="system">{t('System')}</option>
@@ -1140,8 +1150,8 @@ export const Leads = () => {
 
               {/* Assign Date Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   {t('Assign Date')}
@@ -1150,14 +1160,14 @@ export const Leads = () => {
                   type="date"
                   value={assignDateFilter}
                   onChange={(e) => setAssignDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 />
               </div>
 
               {/* Action Date Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {i18n.language === 'ar' ? 'تاريخ الإجراء' : t('Action Date')}
@@ -1166,14 +1176,14 @@ export const Leads = () => {
                   type="date"
                   value={actionDateFilter}
                   onChange={(e) => setActionDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 />
               </div>
 
               {/* Creation Date Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   {t('Creation Date')}
@@ -1182,14 +1192,14 @@ export const Leads = () => {
                   type="date"
                   value={creationDateFilter}
                   onChange={(e) => setCreationDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 />
               </div>
 
               {/* Old Stage Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {t('Old Stage')}
@@ -1197,7 +1207,7 @@ export const Leads = () => {
                 <select 
                   value={oldStageFilter} 
                   onChange={(e) => setOldStageFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Old Stages')}</option>
                   {stages.map((stage) => (
@@ -1210,8 +1220,8 @@ export const Leads = () => {
 
               {/* Closed Date Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   {t('Closed Date')}
@@ -1220,14 +1230,14 @@ export const Leads = () => {
                   type="date"
                   value={closedDateFilter}
                   onChange={(e) => setClosedDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 />
               </div>
 
               {/* Campaign Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                   </svg>
                   {t('Campaign')}
@@ -1235,7 +1245,7 @@ export const Leads = () => {
                 <select 
                   value={campaignFilter} 
                   onChange={(e) => setCampaignFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Campaigns')}</option>
                   <option value="summer-2024">{t('Summer 2024')}</option>
@@ -1246,8 +1256,8 @@ export const Leads = () => {
 
               {/* Country Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {t('Country')}
@@ -1255,7 +1265,7 @@ export const Leads = () => {
                 <select 
                   value={countryFilter} 
                   onChange={(e) => setCountryFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Countries')}</option>
                   <option value="saudi-arabia">{t('Saudi Arabia')}</option>
@@ -1267,8 +1277,8 @@ export const Leads = () => {
 
               {/* Expected Revenue Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                   </svg>
                   {t('Expected Revenue')}
@@ -1278,14 +1288,14 @@ export const Leads = () => {
                   placeholder={t('Min amount...')}
                   value={expectedRevenueFilter}
                   onChange={(e) => setExpectedRevenueFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium placeholder:text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 />
               </div>
 
               {/* Email Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   {t('Email')}
@@ -1295,14 +1305,14 @@ export const Leads = () => {
                   placeholder={t('Search by email...')}
                   value={emailFilter}
                   onChange={(e) => setEmailFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium placeholder:text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 />
               </div>
 
               {/* WhatsApp Intents Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                   {t('WhatsApp Intents')}
@@ -1310,7 +1320,7 @@ export const Leads = () => {
                 <select 
                   value={whatsappIntentsFilter} 
                   onChange={(e) => setWhatsappIntentsFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Intents')}</option>
                   <option value="inquiry">{t('Inquiry')}</option>
@@ -1321,8 +1331,8 @@ export const Leads = () => {
 
               {/* Call Type Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
                   {t('Call Type')}
@@ -1330,7 +1340,7 @@ export const Leads = () => {
                 <select 
                   value={callTypeFilter} 
                   onChange={(e) => setCallTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Call Types')}</option>
                   <option value="inbound">{t('Inbound')}</option>
@@ -1341,8 +1351,8 @@ export const Leads = () => {
 
               {/* Duplicate Status Filter */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="flex items-center gap-2 text-xs font-medium dark:text-white">
+                <svg className="w-4 h-4 text-blue-500 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                   {t('Duplicate Status')}
@@ -1350,7 +1360,7 @@ export const Leads = () => {
                 <select 
                   value={duplicateStatusFilter} 
                   onChange={(e) => setDuplicateStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400"
                 >
                   <option value="all">{t('All Status')}</option>
                   <option value="unique">{t('Unique')}</option>
@@ -1363,7 +1373,7 @@ export const Leads = () => {
             </div>
           </section>
 
-          <div className="h-10 md:h-12 lg:h-14" aria-hidden="true" />
+          <div className="h-3" aria-hidden="true" />
 
           {/* Bulk Actions */}
           {selectedLeads.length > 0 && (
@@ -1412,7 +1422,7 @@ export const Leads = () => {
 
                 {/* Assign Owner */}
                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <label htmlFor="bulk-assign" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('Assign Owner')}</label>
+                  <label htmlFor="bulk-assign" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('Assign to')}</label>
                   <div className="flex items-center gap-3">
                     <select
                       id="bulk-assign"
@@ -1420,7 +1430,7 @@ export const Leads = () => {
                       onChange={(e) => setBulkAssignTo(e.target.value)}
                       className="flex-grow bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm p-2.5"
                     >
-                      <option value="">{t('Select Owner')}</option>
+                      <option value="">{t('Select employee')}</option>
                       {Array.from(new Set(leads.map(l => l.assignedTo).filter(Boolean))).map(owner => (
                         <option key={owner} value={owner}>{owner}</option>
                       ))}
@@ -1461,64 +1471,106 @@ export const Leads = () => {
 
           
 
-          {/* Display Options Toggle - under Lead Statistics and above Leads Table */}
-          <div className="flex justify-end mt-6 mb-4">
-            <ColumnToggle 
-              columns={allColumns}
-              visibleColumns={visibleColumns}
-              onColumnToggle={handleColumnToggle}
-              onResetColumns={resetVisibleColumns}
-            />
-          </div>
+          {/* Display Options moved into table header */}
 
-          {/* Stages Bar */}
-          <div className="glass-panel rounded-xl shadow-lg p-4 mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
-                <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a 2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                {t('Lead Stages')}
-              </h3>
-              <button
-                onClick={() => setStageFilter('all')}
-                className={`btn ${stageFilter === 'all' ? 'btn-primary' : ''}`}
-              >
-                {t('All Stages')}
-              </button>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              {stages.map((stage) => (
-                <button
-                  key={stage.name}
-                  onClick={() => setStageFilter(stage.name)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 transform hover:scale-105 ${
-                    stageFilter === stage.name
-                      ? 'text-white shadow-lg scale-105'
-                      : 'bg-[var(--panel-bg)] text-[var(--app-text)] border border-[var(--panel-border)] hover:border-[var(--panel-border)] shadow-sm hover:shadow-md'
-                  }`}
-                  style={stageFilter === stage.name ? { backgroundColor: stage.color || '#3B82F6' } : {}}
-                >
-                  <span className="text-lg">{stage.icon}</span>
-                  <span>{i18n.language === 'ar' ? (stage.nameAr || stage.name) : stage.name}</span>
-                  <span className={`ml-1 px-2 py-0.5 text-xs rounded-full ${
-                    stageFilter === stage.name
-                      ? 'bg-white/20 text-white'
-                      : 'bg-[var(--panel-bg)] text-[var(--muted-text)] border border-[var(--panel-border)]'
-                  }`}>
-                    {filteredLeads.filter(lead => lead.stage === stage.name).length}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+          
 
           {/* Leads Table - Modern Design */}
           <div className="glass-panel rounded-2xl shadow-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <div
+              className="overflow-x-auto"
+              ref={scrollXRef}
+              onScroll={(e) => setIsActionsSticky(e.currentTarget.scrollLeft > 0)}
+              onWheel={(e) => {
+                const el = scrollXRef.current
+                if (!el) return
+                const dy = e.deltaY
+                const dx = e.deltaX
+                if (Math.abs(dy) >= Math.abs(dx)) {
+                  el.scrollLeft += dy
+                  e.preventDefault()
+                }
+              }}
+            >
+              <table className="w-full text-[11px] text-left dark:!text-white">
+                <thead className="text-[11px]  dark:text-white dark:!text-white uppercase bg-transparent dark:bg-transparent">
+                  <tr>
+                    <th colSpan={1 + Object.values(visibleColumns).filter(Boolean).length} className="px-6 py-3">
+                      <div className={`flex items-center justify-between ${i18n.language === 'ar' ? 'flex-row-reverse' : ''}`}>
+                        <div className="flex items-center gap-2  dark:text-white">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a 2 2 0 002-2m0 0V5a 2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                          <span className="text-[12px] font-semibold">{t('leads pipline')}</span>
+                        </div>
+                        <div className={`flex items-center gap-2 sticky ${i18n.language === 'ar' ? 'left-0 -ml-2' : 'right-0 -mr-2'}`}>
+                          <ColumnToggle 
+                            compact
+                            align={i18n.language === 'ar' ? 'left' : 'right'}
+                            columns={allColumns}
+                            visibleColumns={visibleColumns}
+                            onColumnToggle={handleColumnToggle}
+                            onResetColumns={resetVisibleColumns}
+                          />
+                         
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2 dark:!text-white">
+                        <button
+                          onClick={() => setStageFilter('all')}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] transition-all ${
+                            stageFilter === 'all'
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : ' dark:text-white border border-white/20 dark:border-white/30 hover:bg-black/10 dark:hover:bg-white/10'
+                          }`}
+                        >
+                          <span className="text-[13px]">📊</span>
+                          <span>{t('Total Leads')}</span>
+                          <span className={`ml-1 px-2 py-0.5 text-[10px] rounded-full ${
+                            stageFilter === 'all'
+                              ? 'bg-white/20 text-white'
+                              : 'border border-white/20 dark:border-white/30  dark:text-white'
+                          }`}>
+                            {filteredLeads.length}
+                          </span>
+                        </button>
+                        {[
+                          { key: 'new lead', icon: '🆕' },
+                          { key: 'duplicate', icon: '🔄' },
+                          { key: 'pending', icon: '⏳' },
+                          { key: 'cold calls', icon: '📞' },
+                          { key: 'follow up', icon: '🔁' },
+                        ].map((s) => (
+                          <button
+                            key={s.key}
+                            onClick={() => {
+                              try {
+                                const params = new URLSearchParams(location.search || '')
+                                params.set('stage', s.key)
+                                navigate({ pathname: location.pathname, search: `?${params.toString()}` })
+                              } catch (e) {}
+                              setStageFilter(s.key)
+                            }}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] transition-all ${
+                              stageFilter === s.key
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : ' dark:text-white border border-white/20 dark:border-white/30 hover:bg-black/10 dark:hover:bg-white/10'
+                            }`}
+                          >
+                            <span className="text-[13px]">{s.icon}</span>
+                            <span>{t(s.key)}</span>
+                            <span className={`ml-1 px-2 py-0.5 text-[10px] rounded-full ${
+                              stageFilter === s.key
+                                ? 'bg-white/20 text-white'
+                                : 'border border-white/20 dark:border-white/30  dark:text-white'
+                            }`}>
+                              {filteredLeads.filter(lead => String(lead.stage) === s.key).length}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </th>
+                  </tr>
                   <tr>
                     <th scope="col" className="p-4">
                       <div className="flex items-center">
@@ -1532,8 +1584,9 @@ export const Leads = () => {
                         <label htmlFor="checkbox-all-search" className="sr-only">checkbox</label>
                       </div>
                     </th>
-                    {visibleColumns.lead && <th scope="col" className="px-6 py-3">{t('Lead')}</th>}
-                    {visibleColumns.contact && <th scope="col" className="px-6 py-3">{t('Contact')}</th>}
+                    {visibleColumns.lead && <th scope="col" className="px-6 py-3  dark:text-white dark:!text-white">{t('Lead')}</th>}
+                    {visibleColumns.contact && <th scope="col" className="px-6 py-3  dark:text-white dark:!text-white">{t('Contact')}</th>}
+                    {visibleColumns.actions && <th scope="col" className="px-6 py-3  dark:text-white dark:!text-white">{t('Actions')}</th>}
                     {visibleColumns.source && <th scope="col" className="px-6 py-3">{t('Source')}</th>}
                     {visibleColumns.project && <th scope="col" className="px-6 py-3">{t('Project')}</th>}
                     {visibleColumns.sales && <th scope="col" className="px-6 py-3">{t('Sales')}</th>}
@@ -1542,16 +1595,16 @@ export const Leads = () => {
                     {visibleColumns.expectedRevenue && <th scope="col" className="px-6 py-3">{t('Expected Revenue')}</th>}
                     {visibleColumns.priority && <th scope="col" className="px-6 py-3">{t('Priority')}</th>}
                     {visibleColumns.status && <th scope="col" className="px-6 py-3">{t('Status')}</th>}
-                    {visibleColumns.actions && <th scope="col" className="px-6 py-3">{t('Actions')}</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedLeads.map((lead) => (
-                    <tr 
-                      key={lead.id} 
-                      className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer"
-                      onClick={(e) => handleRowClick(lead, e)}
-                    >
+                  <tr 
+                    key={lead.id} 
+                    className="bg-transparent border-b border-white/10 dark:border-white/10 hover:bg-white/10 dark:hover:bg-gray-700/20"
+                    onMouseEnter={() => setHoveredLead(lead)}
+                    onMouseLeave={() => setHoveredLead(null)}
+                  >
                       <td className="w-4 p-4">
                         <div className="flex items-center">
                           <input 
@@ -1565,123 +1618,108 @@ export const Leads = () => {
                         </div>
                       </td>
                       {visibleColumns.lead && (
-                        <th scope="row" className="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
+                        <th scope="row" className="flex items-center px-6 py-4  dark:text-white text-[11px] whitespace-nowrap">
                           <div className="pl-3">
-                            <div className="text-base font-semibold">{lead.name}</div>
+                            <div className="text-[11px] font-medium">{lead.name}</div>
                           </div>
                         </th>
                       )}
                       {visibleColumns.contact && (
-                        <td className="px-6 py-4">
-                          <div className="font-normal text-gray-500">{lead.email}</div>
-                          <div className="font-normal text-gray-500">{lead.phone}</div>
+                        <td className="px-6 py-4 dark:text-white">
+                          <div className="font-normal  dark:text-white">{lead.email}</div>
+                          <div className="font-normal  dark:text-white">{lead.phone}</div>
+                        </td>
+                      )}
+                      {visibleColumns.actions && (
+                        <td className={`px-6 py-4 ${hoveredLead?.id === lead.id ? 'sticky left-0 z-20' : ''} ${hoveredLead?.id === lead.id && isActionsSticky ? 'bg-[var(--table-header-bg)]' : 'bg-transparent'}`}>
+                          <div className="flex items-center gap-3 flex-nowrap">
+                            <button
+                              title={t('Preview')}
+                              onClick={() => { setSelectedLead(lead); setShowLeadModal(true); }}
+                              className="inline-flex items-center justify-center h-7 w-7 text-[#9EA8FF] hover:opacity-90"
+                            >
+                              <FaEye size={18} />
+                            </button>
+                            <button
+                              title={t('Add Action')}
+                              onClick={() => { setSelectedLead(lead); setShowAddActionModal(true) }}
+                              className="inline-flex items-center justify-center h-7 w-7 text-[#4ADE80] hover:opacity-90"
+                            >
+                              <FaPlus size={18} />
+                            </button>
+                            <button
+                              title={t('Call')}
+                              onClick={() => { const raw = lead.phone || lead.mobile || ''; const digits = String(raw).replace(/[^0-9]/g, ''); if (digits) window.open(`tel:${digits}`); }}
+                              className="inline-flex items-center justify-center h-7 w-7 text-[#3B82F6] hover:opacity-90"
+                            >
+                              <FaPhone size={18} />
+                            </button>
+                            <button
+                              title="WhatsApp"
+                              onClick={() => { const raw = lead.phone || lead.mobile || ''; const digits = String(raw).replace(/[^0-9]/g, ''); if (digits) window.open(`https://wa.me/${digits}`); }}
+                              className={`inline-flex items-center justify-center h-7 w-7 text-green-600 dark:text-green-400 hover:text-green-500`}
+                            >
+                              <FaWhatsapp size={18} className="icon-whatsapp" />
+                            </button>
+                            <button
+                              title={t('Email')}
+                              onClick={(e) => { e.stopPropagation(); if (lead.email) window.open(`mailto:${lead.email}`); }}
+                              className="inline-flex items-center justify-center text-[#F59E0B] hover:opacity-90"
+                            >
+                              <FaEnvelope size={16} className="icon-email" />
+                            </button>
+                            <button
+                              title="Google Meet"
+                              onClick={() => { window.open('https://meet.google.com/', '_blank'); }}
+                              className="inline-flex items-center justify-center h-7 w-7 text-[#10B981] hover:opacity-90"
+                            >
+                              <SiGooglemeet size={18} />
+                            </button>
+                          </div>
                         </td>
                       )}
                       {visibleColumns.source && (
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4  dark:text-white">
                           <div className="flex items-center gap-2">
                             <span>{getSourceIcon(lead.source)}</span>
-                            <span className="text-sm">{t(lead.source)}</span>
+                            <span className="text-[11px]">{t(lead.source)}</span>
                           </div>
                         </td>
                       )}
                       {visibleColumns.project && (
-                        <td className="px-6 py-4">{lead.company}</td>
+                        <td className="px-6 py-4  dark:text-white">{lead.company}</td>
                       )}
                       {visibleColumns.sales && (
-                        <td className="px-6 py-4">{lead.assignedTo}</td>
+                        <td className="px-6 py-4  dark:text-white">{lead.assignedTo}</td>
                       )}
                       {visibleColumns.lastComment && (
-                        <td className="px-6 py-4">{lead.notes}</td>
+                        <td className="px-6 py-4  dark:text-white">{lead.notes}</td>
                       )}
                       {visibleColumns.stage && (
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4  dark:text-white">
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(lead.stage)}`}>
                             {t(lead.stage)}
                           </span>
                         </td>
                       )}
                       {visibleColumns.expectedRevenue && (
-                        <td className="px-6 py-4">${lead.estimatedValue.toLocaleString()}</td>
+                        <td className="px-6 py-4  dark:text-white">${lead.estimatedValue.toLocaleString()}</td>
                       )}
                       {visibleColumns.priority && (
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4  dark:text-white">
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${getPriorityColor(lead.priority)}`}>
                             {t(lead.priority)}
                           </span>
                         </td>
                       )}
                       {visibleColumns.status && (
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4  dark:text-white">
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(lead.status)}`}>
                             {t(lead.status)}
                           </span>
                         </td>
                       )}
-                      {visibleColumns.actions && (
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            {/* Seen */}
-                            <button
-                              onClick={() => { setSelectedLead(lead); setShowLeadModal(true); }}
-                              className="text-blue-600 hover:text-blue-900 p-1"
-                              title={t('preview')}
-                            >
-                              <FaEye size={16} />
-                            </button>
-                            {/* Call */}
-                            <button
-                              onClick={() => console.log('Call lead:', lead?.phone)}
-                              className="text-purple-600 hover:text-purple-900 p-1"
-                              title="Call"
-                            >
-                              <FaPhone size={16} />
-                            </button>
-                            {/* WhatsApp */}
-                            <button
-                              onClick={() => console.log('WhatsApp lead:', lead?.phone)}
-                              className="text-green-600 hover:text-green-900 p-1"
-                              title="WhatsApp"
-                            >
-                              <FaWhatsapp size={16} />
-                            </button>
-                            {/* Email */}
-                            <button
-                              onClick={() => console.log('Email lead:', lead?.email)}
-                              className="text-gray-600 hover:text-gray-900 p-1"
-                              title="Email"
-                            >
-                              <FaEnvelope size={16} />
-                            </button>
-                          {/* Google Meet */}
-                          <button
-                            onClick={() => console.log('Google Meet lead:', lead?.email)}
-                            className="text-red-600 hover:text-red-900 p-1"
-                            title="Google Meet"
-                          >
-                            <FaVideo size={16} />
-                          </button>
-                          {/* Convert to Customer */}
-                          <button
-                            onClick={() => handleConvertCustomer(lead)}
-                            className="text-teal-600 hover:text-teal-900 p-1"
-                            title={t('Convert Customer')}
-                          >
-                            <FaUserPlus size={16} />
-                          </button>
-                          {/* Delete (show only if selected) */}
-                          {selectedLeads.includes(lead.id) && (
-                            <button
-                              onClick={() => handleDeleteLead(lead.id)}
-                              className="text-red-600 hover:text-red-900 p-1"
-                              title={t('Delete')}
-                            >
-                              <FaTrash size={16} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    )}
+                      
                     </tr>
                   ))}
                 </tbody>
@@ -1822,6 +1860,15 @@ export const Leads = () => {
           lead={selectedLead}
           isArabic={i18n.language === 'ar'}
           theme={theme}
+        />
+      )}
+
+      {showAddActionModal && (
+        <AddActionModal
+          isOpen={true}
+          onClose={() => setShowAddActionModal(false)}
+          onSave={() => setShowAddActionModal(false)}
+          lead={selectedLead}
         />
       )}
 

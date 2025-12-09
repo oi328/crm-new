@@ -8,14 +8,13 @@ export default function NewTaskModal({ isOpen, onClose, onSave }) {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [salesman, setSalesman] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
   const [endDate, setEndDate] = useState('');
   const [startDate, setStartDate] = useState('');
   const [priority, setPriority] = useState('medium');
   const [error, setError] = useState('');
   const [attachment, setAttachment] = useState(null);
-  const [taskType, setTaskType] = useState('Follow-up');
+  const [taskType, setTaskType] = useState('visit');
   const [createdBy, setCreatedBy] = useState('Admin');
   const [relatedType, setRelatedType] = useState('');
   const [relatedRef, setRelatedRef] = useState('');
@@ -24,9 +23,6 @@ export default function NewTaskModal({ isOpen, onClose, onSave }) {
   const [reminderBefore, setReminderBefore] = useState('');
   const [recurring, setRecurring] = useState('none');
 
-  const salesmen = useMemo(() => [
-    'Ibrahim', 'Ahmed M', 'Semik L', 'Casad', 'Admin'
-  ], []);
   const assignees = useMemo(() => [
     'Team A', 'Team B', 'Support', 'Sales', 'Admin', 'Ibrahim', 'Ahmed'
   ], []);
@@ -34,13 +30,14 @@ export default function NewTaskModal({ isOpen, onClose, onSave }) {
     'Lead', 'Deal', 'Contact', 'Opportunity', 'Ticket', 'Project'
   ], []);
   const taskTypes = useMemo(() => [
-    'Call', 'Meeting', 'Email', 'Follow-up', 'Internal', 'Delivery', 'Support'
+    'visit', 'mission', 'delivery', 'email', 'meeting', 'call'
   ], []);
   const reminderOptions = useMemo(() => [
-    { value: '', label: isArabic ? 'بدون' : 'None' },
     { value: '5m', label: isArabic ? 'قبل 5 دقائق' : '5 minutes before' },
     { value: '15m', label: isArabic ? 'قبل 15 دقيقة' : '15 minutes before' },
+    { value: '30m', label: isArabic ? 'قبل 30 دقيقة' : '30 minutes before' },
     { value: '1h', label: isArabic ? 'قبل ساعة' : '1 hour before' },
+    { value: '2h', label: isArabic ? 'قبل ساعتين' : '2 hours before' },
     { value: '1d', label: isArabic ? 'قبل يوم' : '1 day before' }
   ], [isArabic]);
   const recurringOptions = useMemo(() => [
@@ -61,7 +58,6 @@ export default function NewTaskModal({ isOpen, onClose, onSave }) {
     const payload = {
       title: title.trim(),
       description: description.trim(),
-      salesman,
       assignedTo,
       due: endDate,
       endDate,
@@ -82,7 +78,7 @@ export default function NewTaskModal({ isOpen, onClose, onSave }) {
     };
     onSave?.(payload);
     // إعادة تعيين الحقول بعد الحفظ
-    setTitle(''); setDescription(''); setSalesman(''); setAssignedTo(''); setEndDate(''); setStartDate(''); setPriority('medium'); setAttachment(null); setTaskType('Follow-up'); setCreatedBy('Admin'); setRelatedType(''); setRelatedRef(''); setTagsInput(''); setProgress(0); setReminderBefore(''); setRecurring('none'); setError('');
+    setTitle(''); setDescription(''); setAssignedTo(''); setEndDate(''); setStartDate(''); setPriority('medium'); setAttachment(null); setTaskType('visit'); setCreatedBy('Admin'); setRelatedType(''); setRelatedRef(''); setTagsInput(''); setProgress(0); setReminderBefore(''); setRecurring('none'); setError('');
   };
 
   const onFileChange = (e) => {
@@ -93,7 +89,7 @@ export default function NewTaskModal({ isOpen, onClose, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    <div className="fixed inset-0 z-[130] flex items-start justify-center pt-20">
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
@@ -133,25 +129,7 @@ export default function NewTaskModal({ isOpen, onClose, onSave }) {
             />
           </div>
 
-        {/* Salesman */}
-        <div className="space-y-1">
-          <label className="text-sm opacity-80">{isArabic ? 'اختر المندوب' : 'Select sales'}</label>
-          <div className="relative">
-            <select
-              value={salesman}
-              onChange={(e) => setSalesman(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border bg-[var(--dropdown-bg)] appearance-none pr-8"
-            >
-              <option value="">{isArabic ? 'اختر مندوباً' : 'Select a salesman'}</option>
-              {salesmen.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 opacity-70 pointer-events-none">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </div>
-        </div>
+        
 
         {/* Assigned To */}
         <div className="space-y-1">

@@ -754,7 +754,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
         {!isSectionViewOpen && !isMarketingActive && !isCoreReportsActive && (
           <NavLink
             to="/dashboard"
-            className={({ isActive }) => `${baseLink} !py-3 ${isActive ? activeLink : ''}`}
+            className={({ isActive }) => `${baseLink} !py-4 ${isActive ? activeLink : ''}`}
           >
             <span className="nova-icon-label">
               <span className={`${iconContainer} ${iconTone}`}>

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaColumns, FaUndoAlt } from 'react-icons/fa';
 
-const ColumnToggle = ({ columns, visibleColumns, onColumnToggle, onResetColumns }) => {
+const ColumnToggle = ({ columns, visibleColumns, onColumnToggle, onResetColumns, align = 'right', compact = false }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,17 +25,17 @@ const ColumnToggle = ({ columns, visibleColumns, onColumnToggle, onResetColumns 
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-2'} rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500`}
         aria-expanded={isOpen}
         aria-label={t('Display Options')}
         title={t('Display Options')}
       >
-        <FaColumns className="h-5 w-5" />
-        <span className="text-sm font-medium">{t('Display Options')}</span>
+        <FaColumns className={`${compact ? 'h-4 w-4' : 'h-5 w-5'}`} />
+        <span className={`${compact ? 'text-xs' : 'text-sm'} font-medium`}>{t('Display Options')}</span>
       </button>
 
       {isOpen && (
-        <div className="origin-top-right absolute right-0 mt-2 w-72 rounded-lg shadow-xl bg-[var(--panel-bg)] text-[var(--content-text)] ring-1 ring-[var(--panel-border)] z-50">
+        <div className={`origin-top-right absolute ${align === 'right' ? 'right-0' : 'left-0'} mt-2 w-72 rounded-lg shadow-xl bg-[var(--panel-bg)] text-[var(--content-text)] ring-1 ring-[var(--panel-border)] z-[10000] pointer-events-auto`}>
           <div className="p-3 space-y-3" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold">

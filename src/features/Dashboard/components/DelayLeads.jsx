@@ -262,7 +262,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
     return init;
   }, [delayLeads, dateFrom, dateTo, stageNames]);
 
-  // Filter leads based on selected stage and date range
+  // Filter leads based on selected stage and date range, with fallback data when empty
   const filteredLeads = useMemo(() => {
     const ranged = delayLeads.filter((lead) => inDateRange(lead.actionDate));
     const matchesStage = (lead) => {
@@ -278,7 +278,28 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
       if (s === 'duplicate') return String(lead?.duplicateStatus || lead?.isDuplicate || '').toLowerCase() === 'duplicate' || lead?.isDuplicate === true;
       return true;
     };
-    return ranged.filter(matchesStage);
+    const primary = ranged.filter(matchesStage);
+    if (primary.length > 0) return primary;
+    const fallbackDelayLeads = MOCK_LEADS.map((l) => ({
+      id: l.id,
+      name: l.name,
+      email: l.email,
+      phone: l.phone,
+      company: l.company,
+      status: l.status,
+      priority: l.priority,
+      source: l.source,
+      createdAt: l.createdAt,
+      lastContact: l.lastContact,
+      notes: l.notes,
+      leadName: l.name,
+      mobile: l.phone ? `(${String(l.phone).slice(0, 3)}*****)` : '',
+      actionDate: l.lastContact || l.createdAt,
+      lastComment: l.notes || '',
+      category: deriveDelayCategory(l),
+    }));
+    const rangedFallback = fallbackDelayLeads.filter((lead) => inDateRange(lead.actionDate));
+    return rangedFallback.filter(matchesStage);
   }, [delayLeads, selectedFilter, dateFrom, dateTo]);
   
   // Determine if we need to show scrollbar (when leads > 5)

@@ -13,11 +13,13 @@ export default defineConfig({
     headers: {
       'Content-Security-Policy': [
         "default-src 'self';",
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval';",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:;",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
         "font-src 'self' https://fonts.gstatic.com;",
         "img-src 'self' data: blob: https://i.pravatar.cc https://img.icons8.com;",
-        "connect-src 'self';",
+        "connect-src 'self' ws: wss: https://restcountries.com;",
+        "worker-src 'self' blob:;",
+        "child-src 'self' blob:;",
         "frame-ancestors 'self';",
         "base-uri 'self';",
         "form-action 'self';"
