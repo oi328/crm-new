@@ -66,8 +66,8 @@
   --lm-icon-muted: #94a3b8;
 
   /* حقول وتواريخ */
-  --lm-input-bg: #ffffff;
-  --lm-input-text: #0f1724;
+  /* --lm-input-bg: #ffffff; */
+  /* --lm-input-text: #0f1724; */
   --lm-input-placeholder: #9aa4b2;
   --lm-input-focus-border: rgba(37,99,235,0.25);
 
@@ -161,8 +161,6 @@ body, .content-container {
 /* 3) Inputs & Selects */
 .lm-input,
 .lm-select {
-  background: var(--lm-input-bg) !important;
-  color: var(--lm-input-text) !important;
   border: 1px solid var(--lm-border) !important;
   border-radius: 10px !important;
   padding: 14px 16px !important;
@@ -191,14 +189,14 @@ body, .content-container {
 
 /* 5) Reset button */
 .btn-reset {
-  background: var(--lm-reset-bg);
-  color: var(--lm-reset-text);
-  border: 1px solid var(--lm-reset-border);
+  /* background: var(--lm-reset-bg); */
+  /* color: var(--lm-reset-text); */
+  /* border: 1px solid var(--lm-reset-border); */
   padding: 12px 18px;
   border-radius: 10px;
   font-weight: 600;
 }
-.btn-reset:hover { background: #e9eef4; }
+/* .btn-reset:hover { background: #e9eef4; } */
 
 /* 6) CTA */
 .btn-primary { background: var(--lm-primary); color: var(--lm-primary-contrast); border-radius: 8px; padding: 12px 20px; box-shadow: 0 6px 16px rgba(37,99,235,0.18); }

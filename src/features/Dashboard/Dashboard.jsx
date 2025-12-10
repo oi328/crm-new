@@ -237,6 +237,9 @@ export const Dashboard = () => {
       iconBg: 'bg-blue-600 dark:bg-blue-500',
       iconBgLight: 'bg-blue-600/80',
       iconBgDark: 'bg-blue-500',
+      badgeLightBg: 'bg-blue-100/60',
+      badgeLightText: 'text-blue-700',
+      badgeLightBorder: 'border-blue-300',
     },
     green: {
       container: 'border-green-400 dark:border-green-500 bg-gradient-to-br from-green-100 via-green-200 to-green-300 dark:from-green-800 dark:via-green-700 dark:to-green-600 shadow-green-300/50 dark:shadow-green-500/25',
@@ -297,6 +300,21 @@ export const Dashboard = () => {
       badgeLightBg: 'bg-purple-100/60',
       badgeLightText: 'text-purple-700',
       badgeLightBorder: 'border-purple-300',
+    },
+    orange: {
+      container: 'border-orange-400 dark:border-orange-500 bg-gradient-to-br from-orange-100 via-orange-200 to-orange-300 dark:from-orange-800 dark:via-orange-700 dark:to-orange-600 shadow-orange-300/50 dark:shadow-orange-500/25',
+      containerLight: 'border-orange-400 bg-gradient-to-br from-orange-100/75 via-orange-100/65 to-orange-100/55 backdrop-blur-sm shadow-orange-300/30',
+      containerDark: 'border-orange-500 bg-transparent shadow-orange-500/25',
+      patternFrom: 'from-orange-200',
+      patternTo: 'to-orange-300',
+      patternFromLight: 'from-orange-200/40',
+      patternToLight: 'to-orange-300/30',
+      iconBg: 'bg-orange-600 dark:bg-orange-500',
+      iconBgLight: 'bg-orange-600/80',
+      iconBgDark: 'bg-orange-500',
+      badgeLightBg: 'bg-orange-100/60',
+      badgeLightText: 'text-orange-700',
+      badgeLightBorder: 'border-orange-300',
     },
   };
 
@@ -417,7 +435,7 @@ export const Dashboard = () => {
     {
       title: 'Cold Calls',
       value: leadsStats.coldCall.toLocaleString(),
-      icon: '📞',
+      icon: '📱',
       color: 'text-orange-800',
       bgColor: 'bg-gradient-to-br from-orange-100 via-orange-200 to-orange-300 dark:from-orange-800 dark:via-orange-700 dark:to-orange-600',
       borderColor: 'border-orange-400 dark:border-orange-500',
@@ -479,7 +497,7 @@ export const Dashboard = () => {
                   </svg>
                   </div>
                   <h3 className={`text-[12px] font-bold ${isLight ? 'text-black' : 'text-white'}`}>
-                   {t('Filter Options')}
+                   {t('Filters')}
                    </h3>
                 </div>
                 <div className="flex items-center gap-2">
@@ -681,9 +699,32 @@ export const Dashboard = () => {
                     setShowAllQuick(v => !v);
                   }
                 }}
-                className="btn btn-primary text-xs px-2 py-0.5 rounded-md"
+                className="inline-flex items-center justify-center text-xs px-2 py-0.5 rounded-md bg-transparent border-none shadow-none hover:bg-transparent"
               >
-                {(isMobileQuick ? showAllQuick : (isDesktopQuick ? showAllDesktopQuick : showAllQuick)) ? t('Show Less') : t('Show More')}
+                {(() => {
+                  const expanded = (isMobileQuick ? showAllQuick : (isDesktopQuick ? showAllDesktopQuick : showAllQuick));
+                  const ChevronDown = (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  );
+                  const ChevronUp = (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
+                      <path d="M18 15l-6-6-6 6" />
+                    </svg>
+                  );
+                  return expanded ? (
+                    <span className="inline-flex items-center gap-1 text-blue-600">
+                      {t('Show Less')}
+                      {ChevronUp}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-blue-600">
+                      {t('Show More')}
+                      {ChevronDown}
+                    </span>
+                  );
+                })()}
               </button>
               <button onClick={() => setQuickOpenMobile(v=>!v)} className="md:hidden flex items-center justify-center w-6 h-6 rounded-full border border-gray-300 dark:border-gray-600">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
@@ -703,24 +744,20 @@ export const Dashboard = () => {
               const totalCard = (
                 <div
                   key={'__fixed_total__'}
-                  className={`relative overflow-hidden rounded-2xl p-1 group ${
-                    isLight
-                      ? 'border-2 border-blue-400 bg-gradient-to-br from-blue-100/75 via-blue-100/65 to-blue-100/55 backdrop-blur-sm shadow-blue-300/30'
-                      : 'border-2 border-blue-500 dark:bg-none dark:bg-transparent shadow-blue-500/25'
-                  } shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-500`}
+                  className={`relative overflow-hidden rounded-2xl p-1 group border-2 border-blue-400 bg-gradient-to-br from-blue-100/75 via-blue-100/65 to-blue-100/55 backdrop-blur-sm shadow-blue-300/30 shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-500`}
                   onClick={() => setSelectedStageFilter('')}
                   role="button"
                   tabIndex={0}
                 >
                   <div className="absolute inset-0 opacity-15 dark:hidden">
-                    <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${isLight ? 'from-blue-200/30 to-blue-300/25' : 'from-blue-200 to-blue-300'} rounded-full transform translate-x-12 -translate-y-12 group-hover:scale-110 transition-transform duration-700`}></div>
-                    <div className={`absolute bottom-0 left-0 w-12 h-12 bg-gradient-to-tr ${isLight ? 'from-blue-200/30 to-blue-300/25' : 'from-blue-200 to-blue-300'} rounded-full transform -translate-x-10 translate-y-10 group-hover:scale-105 transition-transform duration-500`}></div>
+                    <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-200/30 to-blue-300/25 rounded-full transform translate-x-12 -translate-y-12 group-hover:scale-110 transition-transform duration-700`}></div>
+                    <div className={`absolute bottom-0 left-0 w-12 h-12 bg-gradient-to-tr from-blue-200/30 to-blue-300/25 rounded-full transform -translate-x-10 translate-y-10 group-hover:scale-105 transition-transform duration-500`}></div>
                   </div>
                   <div className="relative z-20">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1 pr-2">
-                        <span className={`text-[11px] font-semibold uppercase tracking-wider mb-0.5 block ${isLight ? 'text-gray-900' : 'text-gray-300'}`}>{t('Total Leads')}</span>
-                        <div className={`text-xl font-black mb-0 tracking-tight ${isLight ? 'text-black' : 'text-white'}`}>{allLeads.length}</div>
+                        <span className={`text-[11px] font-semibold uppercase tracking-wider mb-0.5 block text-black`}>{t('Total Leads')}</span>
+                        <div className={`text-xl font-black mb-0 tracking-tight text-black`}>{allLeads.length}</div>
                       </div>
                       <div className={`flex items-center justify-center w-6 h-6 ${isLight ? 'bg-blue-600/80' : 'bg-blue-500'} rounded-md shadow-xl group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 border-2 border-white/30`}>
                         <span className="text-lg text-white">👥</span>
@@ -764,9 +801,9 @@ export const Dashboard = () => {
                   title: t('Cold Calls'),
                   count: coldCallCount,
                   percent: allLeads.length > 0 ? Math.round((coldCallCount / allLeads.length) * 100) : 0,
-                  icon: '📞',
-                  color: 'blue',
-                  borderClass: 'border-blue-400 dark:border-blue-500',
+                  icon: '📱',
+                  color: 'orange',
+                  borderClass: 'border-orange-400 dark:border-orange-500',
                 },
                 {
                   key: '__fixed_followup__',
@@ -788,30 +825,26 @@ export const Dashboard = () => {
                 return (
                   <div
                     key={key}
-                    className={`relative overflow-hidden rounded-2xl p-1 group ${isLight ? style.containerLight : style.containerDark} dark:bg-none dark:bg-transparent border-2 shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-500 ${selectedStageFilter === stageKey ? 'ring-2 ring-blue-500' : ''}`}
+                    className={`relative overflow-hidden rounded-2xl p-1 group ${style.containerLight} border-2 shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-500 ${selectedStageFilter === stageKey ? 'ring-2 ring-blue-500' : ''}`}
                     onClick={() => setSelectedStageFilter(stageKey)}
                     role="button"
                     tabIndex={0}
                   >
                     <div className="absolute inset-0 opacity-15 dark:hidden">
-                      <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${isLight ? style.patternFromLight : style.patternFrom} ${isLight ? style.patternToLight : style.patternTo} rounded-full transform translate-x-12 -translate-y-12 group-hover:scale-110 transition-transform duration-700`}></div>
-                      <div className={`absolute bottom-0 left-0 w-12 h-12 bg-gradient-to-tr ${isLight ? style.patternFromLight : style.patternFrom} ${isLight ? style.patternToLight : style.patternTo} rounded-full transform -translate-x-10 translate-y-10 group-hover:scale-105 transition-transform duration-500`}></div>
+                      <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${style.patternFromLight} ${style.patternToLight} rounded-full transform translate-x-12 -translate-y-12 group-hover:scale-110 transition-transform duration-700`}></div>
+                      <div className={`absolute bottom-0 left-0 w-12 h-12 bg-gradient-to-tr ${style.patternFromLight} ${style.patternToLight} rounded-full transform -translate-x-10 translate-y-10 group-hover:scale-105 transition-transform duration-500`}></div>
                     </div>
                     <div className="relative z-20">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 pr-2">
-                          <span className={`text-[11px] font-semibold uppercase tracking-wider mb-0.5 block ${isLight ? 'text-gray-900' : 'text-gray-300'}`}>{title}</span>
-                          <div className={`text-xl font-black mb-0 tracking-tight ${isLight ? 'text-black' : 'text-white'}`}>{count}</div>
+                        <span className={`text-[11px] font-semibold uppercase tracking-wider mb-0.5 block text-black`}>{title}</span>
+                        <div className={`text-xl font-black mb-0 tracking-tight text-black`}>{count}</div>
                         </div>
-                        <div className={`flex items-center justify-center w-6 h-6 rounded-md shadow-xl group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 border-2 border-white/30 ${isLight ? style.iconBgLight : style.iconBgDark}`}>
+                        <div className={`flex items-center justify-center w-6 h-6 rounded-md shadow-xl group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 border-2 border-white/30 ${style.iconBgLight}`}>
                           <span className="text-lg text-white">{icon}</span>
                         </div>
                       </div>
-                      <div className={`${
-                        isLight
-                      ? `inline-flex items-center text-[11px] font-semibold px-1.5 py-[2px] rounded-md border ${style.badgeLightBg} ${style.badgeLightText} ${style.badgeLightBorder}`
-                          : 'inline-flex items-center text-[11px] text-gray-900 dark:text-gray-100 font-semibold bg-gray-100/80 dark:bg-gray-700/80 px-1.5 py-[2px] rounded-md backdrop-blur-sm border border-gray-200 dark:border-gray-600'
-                      }`}>
+                      <div className={`inline-flex items-center text-[11px] font-semibold px-1.5 py-[2px] rounded-md border ${style.badgeLightBg} ${style.badgeLightText} ${style.badgeLightBorder}`}>
                         {t('Stage share of total')}: {percent}%
                       </div>
                     </div>
@@ -980,7 +1013,7 @@ export const Dashboard = () => {
               </div>
 
               {/* Enhanced Leads Statistics */}
-              <div className="flex-1 min-h-0 grid grid-rows-4 gap-2">
+              <div className="flex-1 text-white min-h-0 grid grid-rows-4 gap-2">
                 <LeadsStatsCard
                   title={t('Total Leads')}
                   value="16,766"

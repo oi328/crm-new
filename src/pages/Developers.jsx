@@ -46,7 +46,7 @@ export default function Developers() {
 
   return (
     <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">{labels.title}</h1>
+        <h1 className="page-title text-2xl font-semibold">{labels.title}</h1>
         <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
           <h2 className="text-xl font-medium mb-4">{labels.formTitle}</h2>
           <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">

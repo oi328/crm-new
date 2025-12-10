@@ -327,7 +327,19 @@ export const AddNewLead = () => {
 
   return (
     <div className={`p-6 pb-24 bg-[var(--content-bg)] text-[var(--content-text)]`}>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('Add New Lead')}</h1>
+      <div className={`relative inline-flex items-center ${i18n.language === 'ar' ? 'flex-row-reverse' : ''} gap-2 mb-2`}>
+        <h1 className="page-title text-2xl font-bold text-white">{t('Add New Lead')}</h1>
+        <span
+          aria-hidden
+          className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent"
+          style={{
+            width: 'calc(100% + 8px)',
+            left: i18n.language === 'ar' ? 'auto' : '-4px',
+            right: i18n.language === 'ar' ? '-4px' : 'auto',
+            bottom: '-4px'
+          }}
+        ></span>
+      </div>
 
       <div className={`p-4 md:p-6 rounded-lg border ${formTone}`}>
               {/* Two-column layout */}

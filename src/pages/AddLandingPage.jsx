@@ -49,7 +49,7 @@ export default function AddLandingPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">{t('Add Landing Page')}</h1>
+        <h1 className="page-title text-2xl font-semibold">{t('Add Landing Page')}</h1>
 
         {status && (
           <div className={`card glass-card p-3 text-sm ${isRTL ? 'text-right' : 'text-left'}`}>{status}</div>

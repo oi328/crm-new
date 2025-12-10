@@ -1130,12 +1130,12 @@ body {
     border: 1px solid #d1d5db;
     border-radius: 0.375rem;
     box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
-    background-color: #ffffff;
+    background-color: transparent;
     color: #374151;
   }
   .input::placeholder { color: #9ca3af; }
   .input:focus { outline: none; box-shadow: 0 0 0 2px #3b82f6; border-color: #3b82f6; }
-  .dark .input { background-color: #374151; border-color: #4b5563; color: #ffffff; }
+  .dark .input { background-color: transparent; border-color: #4b5563; color: #ffffff; }
   .dark .input::placeholder { color: #9ca3af; }
   
   .label {
@@ -1472,8 +1472,38 @@ body {
 .content-container table {
   border-collapse: collapse;
   border-spacing: 0;
-  width: 100% !important;
-  table-layout: fixed;
+}
+
+/* Reduce table font size across the app */
+.content-container table th,
+.content-container table td {
+  font-size: 0.75rem !important;
+}
+
+.filters-compact,
+.filters-compact * {
+  font-size: 0.75rem;
+}
+
+.filters-compact input,
+.filters-compact select,
+.filters-compact button {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Ultra-compact buttons for header actions */
+.btn-compact {
+  font-size: 0.625rem !important;
+  line-height: 1 !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.375rem !important;
+}
+.btn-compact svg,
+.btn-compact .w-4,
+.btn-compact .h-4 {
+  width: 0.75rem !important;
+  height: 0.75rem !important;
 }
 
 .content-container table th,
@@ -1866,13 +1896,13 @@ body {
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
-  border: 1px solid #d1d5db;
-  background-color: #ffffff;
+  /* border: 1px solid #d1d5db;
+  background-color: #ffffff; */
   color: #374151;
   transition: background-color 0.2s ease;
 }
-.btn:hover { background-color: #f3f4f6; }
-.dark .btn { border-color: #1e40af; background-color: #1e3a8a; color: #e5e7eb; }
+/* .btn:hover { background-color: #f3f4f6; } */
+.dark .btn {  color: #e5e7eb; }
 .dark .btn:hover { background-color: #1e40af; }
 
 .btn-outline {
@@ -1908,12 +1938,12 @@ body {
   padding: 0.5rem 0.75rem;
   border-radius: 0.375rem;
   border: 1px solid #d1d5db;
-  background-color: #ffffff;
+  background-color: transparent;
   color: #374151;
 }
 .input::placeholder { color: #9ca3af; }
 .input:focus { outline: none; box-shadow: 0 0 0 2px #3b82f6; }
-.dark .input { background-color: #1e3a8a; border-color: #1d4ed8; color: #e5e7eb; }
+.dark .input { background-color: transparent; border-color: #1d4ed8; color: #e5e7eb; }
 
 /* Mobile date input optimization */
 @media (max-width: 640px) {
@@ -2363,3 +2393,18 @@ body {
 .section-header { display: flex; align-items: center; justify-content: space-between; }
 html[dir="rtl"] .section-header { flex-direction: row; }
 html[dir="ltr"] .section-header { flex-direction: row; }
+.page-title {
+  display: flex;
+  align-items: center;
+}
+[dir='rtl'] .page-title {
+  text-align: right;
+  justify-content: flex-end;
+  flex-direction: row-reverse;
+  margin-left: auto;
+}
+[dir='ltr'] .page-title {
+  text-align: left;
+  justify-content: flex-start;
+  margin-right: auto;
+}

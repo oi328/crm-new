@@ -65,6 +65,7 @@ export const Leads = () => {
   const [importSummary, setImportSummary] = useState(null)
   const [showImportModal, setShowImportModal] = useState(false)
   const [stageDefs, setStageDefs] = useState([])
+  const [isMobile, setIsMobile] = useState(false)
   
   const textColor = 'text-gray-900 dark:text-white'
   const bgColor = 'bg-white dark:bg-gray-900'
@@ -170,30 +171,7 @@ export const Leads = () => {
   const [showAllFilters, setShowAllFilters] = useState(false)
   const activeRowRef = useRef(null)
 
-  const [isActionsSticky, setIsActionsSticky] = useState(false)
   const scrollXRef = useRef(null)
-  
-  // FIX 3: Added scroll event listener and cleanup function
-  useEffect(() => {
-    const el = scrollXRef.current
-    
-    // Handler function to update state on scroll
-    const handleScroll = () => {
-      if (el) setIsActionsSticky(el.scrollLeft > 0)
-    }
-
-    if (el) {
-      // Initial check
-      handleScroll()
-      // Attach listener
-      el.addEventListener('scroll', handleScroll)
-    }
-
-    // Cleanup function: remove the event listener on unmount
-    return () => {
-      if (el) el.removeEventListener('scroll', handleScroll)
-    }
-  }, [])
 
 
   
@@ -417,6 +395,28 @@ export const Leads = () => {
     const all = Object.keys(allColumns).reduce((acc, k) => { acc[k] = true; return acc }, {})
     setVisibleColumns(all)
   }
+
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth < 640)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  useEffect(() => {
+    if (!isMobile) return
+    setVisibleColumns(prev => ({
+      ...prev,
+      source: false,
+      project: false,
+      sales: false,
+      lastComment: false,
+      stage: false,
+      expectedRevenue: false,
+      priority: false,
+      status: false,
+    }))
+  }, [isMobile])
 
   // Sample leads data
   const sampleLeads = Array.from({ length: 30 }, (_, idx) => {
@@ -892,26 +892,35 @@ export const Leads = () => {
     XLSX.writeFile(workbook, `Leads_Page_${from}_to_${to}.xlsx`)
   }
 
+  const columnMinWidths = {
+    source: 140,
+    project: 140,
+    sales: 140,
+    lastComment: 220,
+    stage: 140,
+    expectedRevenue: 160,
+    priority: 140,
+    status: 140,
+  };
+
   return (
-    <div className={`p-4 md:p-6 min-h-screen  ${textColor}` } dir={isRtl ? 'rtl' : 'ltr'}>
-      <div className={`glass-panel p-4 flex  ${isRtl ? 'md:flex-row-reverse' : 'md:flex-row'} justify-between items-start md:items-center gap-4 mb-6`}>
-        <h1 className="text-2xl md:text-3xl font-bold  dark:text-white flex items-center gap-2">
-          <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM12 9a3 3 0 10-2.82 4H5.06l-.42 2.37a1 1 0 00.99 1.13h10.74a1 1 0 00.99-1.13L15.94 13h-4.12A3 3 0 0012 9z" />
-          </svg>
-          {t('Leads Management')}
+    <div className={`px-2 max-[480px]:px-1 py-4 md:px-6 md:py-6 min-h-screen  ${textColor}` } dir={isRtl ? 'rtl' : 'ltr'}>
+      <div className={`glass-panel p-4 flex  justify-between items-center gap-4 mb-6`} dir={isRtl ? 'rtl' : 'ltr'}>
+        <h1 className={`page-title text-2xl md:text-3xl font-bold dark:text-white flex items-center gap-2 ${isRtl ? 'flex-row-reverse text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left' }}>
+         
+          {t('Leads')}
         </h1>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className={`flex items-center gap-2 flex-nowrap ${isRtl ? 'mr-auto' : 'ml-auto'}`}>
           <button
             onClick={() => navigate('/leads/new')}
-            className={primaryButton}
+            className={`${primaryButton} btn-compact`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12M6 12h12" />
             </svg>
             <span>{t('Add New Lead')}</span>
           </button>
-          <button onClick={() => setShowImportModal(true)} className="group relative inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-semibold bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white border border-blue-300/30 shadow-sm transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300/50 overflow-hidden" >
+          <button onClick={() => setShowImportModal(true)} className="group relative inline-flex items-center gap-1 rounded-md bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white border border-blue-300/30 shadow-sm transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300/50 overflow-hidden btn-compact" >
             <span className="sr-only">decor</span>
             <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 3v12" />
@@ -924,21 +933,57 @@ export const Leads = () => {
       </div>
 
       {/* Leads Table Filters & Controls */}
-      <div className={`glass-panel rounded-2xl p-4 mb-6`}>
-        <div className="flex justify-between items-center mb-4">
+      <div className={`glass-panel rounded-2xl p-3 mb-6 filters-compact`}>
+        <div className="flex justify-between items-center mb-3">
           <h2 className="text-lg font-semibold  dark:text-white flex items-center gap-2">
             <FaFilter size={16} className="text-blue-500 dark:text-blue-400" /> {t('Filters')}
           </h2>
-          <button onClick={() => setShowAllFilters(prev => !prev)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition-colors">
-            {showAllFilters ? t('Hide Advanced Filters') : t('Show All Filters')}
-            <FaChevronDown size={10} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowAllFilters(prev => !prev)} className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition-colors btn-compact">
+              {showAllFilters ? t('Hide ') : t('Show ')}
+              <FaChevronDown size={10} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
+            </button>
+            <button
+              onClick={() => {
+                setSearchTerm('')
+                setStatusFilter('all')
+                setSourceFilter('all')
+                setPriorityFilter('all')
+                setProjectFilter('all')
+                setStageFilter('all')
+                setManagerFilter('all')
+                setSalesPersonFilter('all')
+                setCreatedByFilter('all')
+                setAssignDateFilter('')
+                setActionDateFilter('')
+                setCreationDateFilter('')
+                setOldStageFilter('all')
+                setClosedDateFilter('')
+                setCampaignFilter('all')
+                setCountryFilter('all')
+                setExpectedRevenueFilter('')
+                setEmailFilter('')
+                setWhatsappIntentsFilter('all')
+                setCallTypeFilter('all')
+                setDuplicateStatusFilter('all')
+                setSortBy('createdAt')
+                setSortOrder('desc')
+                setCurrentPage(1)
+              }}
+              className="inline-flex items-center gap-1 font-semibold  dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors btn-compact"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {t('Reset')}
+            </button>
+          </div>
         </div>
 
         {/* Filter Controls */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* First Row - Always Visible (Search + 3 filters) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2">
             {/* Search */}
             <div className="space-y-1">
               <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
@@ -995,7 +1040,7 @@ export const Leads = () => {
                 >
                   <option value="all">{t('All Sources')}</option>
                   {Array.from(new Set(leads.map(l => l.source).filter(Boolean))).map(source => (
-                    <option key={source} value={source}>{source}</option>
+                    <option key={source} value={source}>{t(source)}</option>
                   ))}
                 </select>
                 <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
@@ -1031,8 +1076,8 @@ export const Leads = () => {
           </div>
 
           {/* Additional Filters (Show/Hide) */}
-          <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showAllFilters ? 'max-h-[800px] opacity-100 pt-4' : 'max-h-0 opacity-0'}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showAllFilters ? 'max-h-[800px] opacity-100 pt-3' : 'max-h-0 opacity-0'}`}>
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2">
               {/* Project Filter */}
               <div className="space-y-1">
                 <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
@@ -1050,7 +1095,7 @@ export const Leads = () => {
                     <option value="all">{t('All Projects')}</option>
                     {/* Assuming projects list exists in leads data or separate state */}
                     {Array.from(new Set(leads.map(l => l.project).filter(Boolean))).map(project => (
-                      <option key={project} value={project}>{project}</option>
+                      <option key={project} value={project}>{t(project)}</option>
                     ))}
                   </select>
                   <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
@@ -1074,12 +1119,13 @@ export const Leads = () => {
                     className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
                   >
                     <option value="all">{t('All Stages')}</option>
-                    {stageDefs.map((s) => (
-                      <option key={s.name} value={s.name}>
-                        {s.icon} {t(s.name)}
-                      </option>
-                    ))}
-                  </select>
+                    <option value="new">🆕 {t('New Lead')}</option>
+                    <option value="duplicate">🔄 {t('Duplicate')}</option>
+                    <option value="pending">⏳ {t('Pending')}</option>
+                    <option value="cold-call">📞 {t('Cold Calls')}</option>
+                    <option value="follow-up">🔁 {t('follow up')}</option>
+                  </select
+                  >
                   <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
                     <FaChevronDown size={12} />
                   </button>
@@ -1102,7 +1148,7 @@ export const Leads = () => {
                   >
                     <option value="all">{t('All Managers')}</option>
                     {Array.from(new Set(leads.map(l => l.manager).filter(Boolean))).map(manager => (
-                      <option key={manager} value={manager}>{manager}</option>
+                      <option key={manager} value={manager}>{t(manager)}</option>
                     ))}
                   </select>
                   <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
@@ -1127,7 +1173,7 @@ export const Leads = () => {
                   >
                     <option value="all">{t('All Sales Persons')}</option>
                     {Array.from(new Set(leads.map(l => l.assignedTo).filter(Boolean))).map(salesPerson => (
-                      <option key={salesPerson} value={salesPerson}>{salesPerson}</option>
+                      <option key={salesPerson} value={salesPerson}>{t(salesPerson)}</option>
                     ))}
                   </select>
                   <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
@@ -1152,7 +1198,7 @@ export const Leads = () => {
                   >
                     <option value="all">{t('All Creators')}</option>
                     {Array.from(new Set(leads.map(l => l.createdBy).filter(Boolean))).map(creator => (
-                      <option key={creator} value={creator}>{creator}</option>
+                      <option key={creator} value={creator}>{t(creator)}</option>
                     ))}
                   </select>
                   <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
@@ -1178,7 +1224,7 @@ export const Leads = () => {
                     <option value="all">{t('All Old Stages')}</option>
                     {/* Assuming oldStage list exists in leads data or separate state */}
                     {Array.from(new Set(leads.map(l => l.oldStage).filter(Boolean))).map(oldStage => (
-                      <option key={oldStage} value={oldStage}>{oldStage}</option>
+                      <option key={oldStage} value={oldStage}>{t(oldStage)}</option>
                     ))}
                   </select>
                   <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2  dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
@@ -1204,7 +1250,7 @@ export const Leads = () => {
                     <option value="all">{t('All Campaigns')}</option>
                     {/* Assuming campaign list exists in leads data or separate state */}
                     {Array.from(new Set(leads.map(l => l.campaign).filter(Boolean))).map(campaign => (
-                      <option key={campaign} value={campaign}>{campaign}</option>
+                      <option key={campaign} value={campaign}>{t(campaign)}</option>
                     ))}
                   </select>
                   <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
@@ -1230,7 +1276,7 @@ export const Leads = () => {
                     <option value="all">{t('All Countries')}</option>
                     {/* Assuming country list exists in leads data or separate state */}
                     {Array.from(new Set(leads.map(l => l.country).filter(Boolean))).map(country => (
-                      <option key={country} value={country}>{country}</option>
+                      <option key={country} value={country}>{t(country)}</option>
                     ))}
                   </select>
                   <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
@@ -1411,98 +1457,12 @@ export const Leads = () => {
 
           </div>
 
-          {/* Action Row - Bulk Controls and Reset */}
-          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-            {selectedLeads.length > 0 ? (
-              <div className="flex items-center gap-4 flex-wrap">
-                <span className="text-sm font-medium  dark:text-gray-300">
-                  {t('Selected')}: {selectedLeads.length} {t('Leads')}
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <select
-                    value={bulkStatus}
-                    onChange={(e) => setBulkStatus(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm text-gray-900 dark:text-white text-sm"
-                  >
-                    <option value="">{t('Change Status to')}</option>
-                    {statuses.map((s) => (
-                      <option key={s} value={s}>{t(s)}</option>
-                    ))}
-                  </select>
-                  <button onClick={applyBulkStatus} className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg text-sm transition-colors">
-                    {t('Apply Status')}
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <select
-                    value={bulkAssignTo}
-                    onChange={(e) => setBulkAssignTo(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-transparent backdrop-blur-sm  dark:text-white text-sm"
-                  >
-                    <option value="">{t('Bulk Assign to')}</option>
-                    {Array.from(new Set(leads.map(l => l.assignedTo).filter(Boolean))).map(owner => (
-                      <option key={owner} value={owner}>{owner}</option>
-                    ))}
-                  </select>
-                  <button onClick={applyBulkAssign} className="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-lg text-sm transition-colors">
-                    {t('Assign')}
-                  </button>
-                </div>
-
-                <button onClick={applyBulkConvert} className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg text-sm transition-colors">
-                  {t('Convert to Customer')}
-                </button>
-
-                <button onClick={applyBulkDelete} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg text-sm transition-colors">
-                  {t('Delete Selected')} ({selectedLeads.length})
-                </button>
-              </div>
-            ) : (
-              <span className="text-sm font-medium  dark:text-gray-400">{t('No leads selected for bulk actions')}</span>
-            )}
-
-            <button
-              onClick={() => {
-                setSearchTerm('')
-                setStatusFilter('all')
-                setSourceFilter('all')
-                setPriorityFilter('all')
-                setProjectFilter('all')
-                setStageFilter('all')
-                setManagerFilter('all')
-                setSalesPersonFilter('all')
-                setCreatedByFilter('all')
-                setAssignDateFilter('')
-                setActionDateFilter('')
-                setCreationDateFilter('')
-                setOldStageFilter('all')
-                setClosedDateFilter('')
-                setCampaignFilter('all')
-                setCountryFilter('all')
-                setExpectedRevenueFilter('')
-                setEmailFilter('')
-                setWhatsappIntentsFilter('all')
-                setCallTypeFilter('all')
-                setDuplicateStatusFilter('all')
-                setSortBy('createdAt')
-                setSortOrder('desc')
-                setCurrentPage(1)
-              }}
-              className="inline-flex items-center gap-1 text-xs font-semibold  dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              {t('Reset Filters & Sorting')}
-            </button>
-          </div>
-      </div>
+          
+        </div>
       </div>
 
       <div className={`flex items-center justify-between mb-3`}>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>Leads Pipline</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Leads Pipline')}</h2>
         <ColumnToggle
           columns={allColumns}
           visibleColumns={visibleColumns}
@@ -1518,7 +1478,7 @@ export const Leads = () => {
           onClick={() => setStageFilter('all')}
           className={`btn btn-glass text-sm inline-flex items-center justify-between gap-2 px-3 py-2 ${textColor}`}
         >
-          <span className="flex items-center gap-2"><span>Σ</span><span>total leads</span></span>
+          <span className="flex items-center gap-2"><span>Σ</span><span>{t('total leads')}</span></span>
           <span className="font-bold">{stageCounts.total}</span>
         </button>
         {sidebarStages.map((s) => (
@@ -1535,12 +1495,63 @@ export const Leads = () => {
 
       {/* Main Table */}
       <div className={`glass-panel rounded-2xl overflow-hidden`}>
-        <div ref={scrollXRef} className="overflow-x-auto relative backdrop-blur-lg" style={{ '--table-header-bg': theme === 'dark' ? 'transparent' : undefined, '--scroll-bg': theme === 'dark' ? '#0f172a' : '#f9fafb' }}>
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 dark:text-white">
-            <thead className={`bg-transparent backdrop-blur-md sticky top-0 z-30 shadow-md`}>
+        <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
+          {selectedLeads.length > 0 ? (
+            <div className="flex items-center gap-4 flex-wrap">
+              <span className="text-sm font-medium  dark:text-gray-300">
+                {t('Selected')}: {selectedLeads.length} {t('Leads')}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={bulkStatus}
+                  onChange={(e) => setBulkStatus(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm text-gray-900 dark:text-white text-sm"
+                >
+                  <option value="">{t('Change Status to')}</option>
+                  {statuses.map((s) => (
+                    <option key={s} value={s}>{t(s)}</option>
+                  ))}
+                </select>
+                <button onClick={applyBulkStatus} className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg text-sm transition-colors">
+                  {t('Apply Status')}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={bulkAssignTo}
+                  onChange={(e) => setBulkAssignTo(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-transparent backdrop-blur-sm  dark:text-white text-sm"
+                >
+                  <option value="">{t('Bulk Assign to')}</option>
+                  {Array.from(new Set(leads.map(l => l.assignedTo).filter(Boolean))).map(owner => (
+                    <option key={owner} value={owner}>{owner}</option>
+                  ))}
+                </select>
+                <button onClick={applyBulkAssign} className="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-lg text-sm transition-colors">
+                  {t('Assign')}
+                </button>
+              </div>
+
+              <button onClick={applyBulkConvert} className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg text-sm transition-colors">
+                {t('Convert to Customer')}
+              </button>
+
+              <button onClick={applyBulkDelete} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg text-sm transition-colors">
+                {t('Delete Selected')} ({selectedLeads.length})
+              </button>
+            </div>
+          ) : (
+            <span className="text-sm font-medium  dark:text-gray-400">{t('No leads selected for bulk actions')}</span>
+          )}
+        </div>
+        <div ref={scrollXRef} className="mt-4 w-full overflow-x-auto rounded-lg shadow-md backdrop-blur-lg" style={{ '--table-header-bg': theme === 'dark' ? 'transparent' : undefined, '--scroll-bg': theme === 'dark' ? '#0f172a' : '#f9fafb' }}>
+          <table className="w-max min-w-full divide-y divide-gray-200 dark:divide-gray-700 dark:text-white" style={{ tableLayout: 'auto' }}>
+            <thead className={` backdrop-blur-md sticky top-0 z-30 shadow-md`}>
               <tr>
                 {/* Checkbox Column */}
-                <th scope="col" className="w-10 px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white">
+                <th scope="col" className="w-10 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedLeads.length === paginatedLeads.length && paginatedLeads.length > 0}
@@ -1554,7 +1565,7 @@ export const Leads = () => {
                   <th
                     key="lead"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 w-40 cursor-pointer`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 w-40 whitespace-nowrap cursor-pointer`}
                     onClick={() => {
                       if (sortBy === 'lead') {
                         setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
@@ -1577,7 +1588,7 @@ export const Leads = () => {
                   <th
                     key="contact"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 w-48`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 w-48 whitespace-nowrap`}
                   >
                     <div className="flex items-center gap-1">{allColumns.contact}</div>
                   </th>
@@ -1587,7 +1598,7 @@ export const Leads = () => {
                   <th
                     key="actions"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 whitespace-nowrap sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} bg-[var(--scroll-bg)] z-30`}
                     style={{ minWidth: '160px' }}
                   >
                     {t('Actions')}
@@ -1599,7 +1610,8 @@ export const Leads = () => {
                     <th
                       key={key}
                       scope="col"
-                      className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 ${['lead','contact'].includes(key) ? '' : ''} ${['source','stage','priority','status','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
+                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 whitespace-nowrap ${['source','stage','priority','status','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
+                      style={{ minWidth: `${columnMinWidths[key] || 140}px` }}
                       onClick={['source','stage','priority','status','expectedRevenue'].includes(key) ? () => {
                         if (sortBy === key) {
                           setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
@@ -1660,10 +1672,7 @@ export const Leads = () => {
 
                   {/* Actions (after Contact) */}
                   {visibleColumns.actions && (
-                    <td
-                      className={`px-6 py-4 whitespace-nowrap text-sm font-medium border-l border-gray-200 dark:border-gray-700 ${isActionsSticky && hoveredLead?.id === lead.id ? `sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} bg-[var(--scroll-bg)] text-gray-900 dark:bg-slate-900 dark:text-white z-20` : ''}`}
-                      style={{ boxShadow: isActionsSticky && hoveredLead?.id === lead.id ? '0 0 10px rgba(0,0,0,0.08)' : 'none' }}
-                    >
+                    <td className={`px-6 py-4 whitespace-nowrap text-xs font-medium border-l border-gray-200 dark:border-gray-700 sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} bg-[var(--scroll-bg)] z-20`}>
                       <div className="flex items-center gap-2 flex-nowrap">
                         <button
                           title={t('Preview')}
@@ -1713,35 +1722,35 @@ export const Leads = () => {
 
                   {/* Source */}
                   {visibleColumns.source && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.source}px` }}>
                       <span className="text-base">{getSourceIcon(lead.source)}</span> {lead.source}
                     </td>
                   )}
 
                   {/* Project */}
                   {visibleColumns.project && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.project}px` }}>
                       {lead.project || '-'}
                     </td>
                   )}
 
                   {/* Sales Person */}
                   {visibleColumns.sales && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.sales}px` }}>
                       {lead.assignedTo || '-'}
                     </td>
                   )}
 
                   {/* Last Comment */}
                   {visibleColumns.lastComment && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white max-w-xs overflow-hidden text-ellipsis border-l border-gray-200 dark:border-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.lastComment}px` }}>
                       {lead.notes || '-'}
                     </td>
                   )}
 
                   {/* Stage */}
                   {visibleColumns.stage && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.stage}px` }}>
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold leading-5 rounded-full ${getStatusColor(lead.stage)}`}>
                         {t(lead.stage || 'N/A')}
                       </span>
@@ -1750,14 +1759,14 @@ export const Leads = () => {
 
                   {/* Expected Revenue */}
                   {visibleColumns.expectedRevenue && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.expectedRevenue}px` }}>
                       {lead.estimatedValue ? `${lead.estimatedValue.toLocaleString()} ${t('SAR')}` : '-'}
                     </td>
                   )}
 
                   {/* Priority */}
                   {visibleColumns.priority && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.priority}px` }}>
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold leading-5 rounded-full ${getPriorityColor(lead.priority)}`}>
                         {t(lead.priority || 'N/A')}
                       </span>
@@ -1766,7 +1775,7 @@ export const Leads = () => {
 
                   {/* Status */}
                   {visibleColumns.status && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.status}px` }}>
                       {t(lead.status || 'N/A')}
                     </td>
                   )}
@@ -1790,8 +1799,8 @@ export const Leads = () => {
       </div>
 
       {/* Pagination Controls */}
-      <nav className="flex flex md:flex-row justify-between items-center space-y-3 md:space-y-0 p-4 border-t border-gray-200 dark:border-gray-700  dark:bg-transparent rounded-b-lg backdrop-blur-sm">
-        <div className="flex items-center space-x-2 text-sm font-medium  dark:text-white">
+      <nav className="flex flex-col lg:flex-row lg:flex-nowrap justify-between items-stretch lg:items-center gap-3 lg:gap-0 p-3 lg:p-4 border-t border-gray-200 dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium  dark:text-white">
           <span style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Show')}</span>
           <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm text-gray-900 dark:text-white text-xs">
             <option value={10}>10</option>
@@ -1800,9 +1809,6 @@ export const Leads = () => {
             <option value={100}>100</option>
           </select>
           <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('entries')}</span>
-        </div>
-
-        <div className="flex items-center space-x-2">
           <label htmlFor="page-search" className="sr-only">{t('Search Page')}</label>
           <input
             id="page-search"
@@ -1819,13 +1825,17 @@ export const Leads = () => {
                 }
               }
             }}
-            className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
+            className="ml-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
+            style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
           />
+          <div className="spacer-row w-full">
+            <div className="h-2"></div>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row items-start lg:items-center gap-3 lg:gap-2 w-full lg:w-auto">
           {/* Export Controls */}
-          <div className="flex items-center gap-2 border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700">
+          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700">
             <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Export Pages')}</span>
             <input
               type="number"
@@ -1834,7 +1844,8 @@ export const Leads = () => {
               placeholder="From"
               value={exportFrom}
               onChange={(e) => setExportFrom(e.target.value)}
-              className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500 text-white focus:text-white"
+              className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
+              style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
             <span className="text-xs font-semibold  dark:text-white   style={{ color: theme === 'dark' ? '#ffffff' : undefined }}">{t('to')}</span>
             <input
@@ -1844,7 +1855,8 @@ export const Leads = () => {
               placeholder="To"
               value={exportTo}
               onChange={(e) => setExportTo(e.target.value)}
-              className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500 text-white focus:text-white"
+              className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
+              style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
             <button
               onClick={handleExportRange}
@@ -1856,7 +1868,7 @@ export const Leads = () => {
           </div>
 
           {/* Page Navigation */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-start">
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
@@ -1984,15 +1996,7 @@ export const Leads = () => {
         />
       )}
 
-      {/* Floating Add Button for Mobile/Accessibility */}
-      <button
-        onClick={() => { setEditingLead(null); setShowEditModal(true) }}
-        className="fixed bottom-4 right-4 md:hidden z-50 p-4 bg-blue-600 rounded-full text-white shadow-xl hover:bg-blue-700 transition-colors"
-        aria-label={t('Add New Lead')}
-      >
-        <FaPlus className="w-6 h-6" />
-        <span className="sr-only">{t('Add New Lead')}</span>
-      </button>
+      
 
       {/* Enhanced Lead Details Modal */}
       {showLeadModal && (

@@ -92,6 +92,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
       name: 'Ahmed Ali',
       email: 'ahmed@example.com',
       phone: '0501234567',
+      stage: 'new',
       company: 'Alpha Co',
       status: 'new',
       priority: 'high',
@@ -105,6 +106,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
       name: 'Sara Mohamed',
       email: 'sara@example.com',
       phone: '0559876543',
+      stage: 'Duplicate',
       company: 'Beta Ltd',
       status: 'in-progress',
       priority: 'medium',
@@ -118,6 +120,49 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
       name: 'Hassan Youssef',
       email: 'hassan@example.com',
       phone: '0563332211',
+      stage: 'Pending',
+      company: 'Gamma Inc',
+      status: 'qualified',
+      priority: 'low',
+      source: 'Referral',
+      createdAt: new Date(Date.now() - 30*24*3600*1000).toISOString(),
+      lastContact: new Date(Date.now() - 20*24*3600*1000).toISOString(),
+      notes: 'إعادة جدولة الاجتماع الأسبوع القادم',
+    },
+    {
+      id: 'DL-1003',
+      name: 'Hassan Youssef',
+      email: 'hassan@example.com',
+      phone: '0563332211',
+      stage: 'Cold Calls',
+      company: 'Gamma Inc',
+      status: 'qualified',
+      priority: 'low',
+      source: 'Referral',
+      createdAt: new Date(Date.now() - 30*24*3600*1000).toISOString(),
+      lastContact: new Date(Date.now() - 20*24*3600*1000).toISOString(),
+      notes: 'إعادة جدولة الاجتماع الأسبوع القادم',
+    },
+    {
+      id: 'DL-1003',
+      name: 'Hassan Youssef',
+      email: 'hassan@example.com',
+      phone: '0563332211',
+      stage: 'Cold Calls',
+      company: 'Gamma Inc',
+      status: 'qualified',
+      priority: 'low',
+      source: 'Referral',
+      createdAt: new Date(Date.now() - 30*24*3600*1000).toISOString(),
+      lastContact: new Date(Date.now() - 20*24*3600*1000).toISOString(),
+      notes: 'إعادة جدولة الاجتماع الأسبوع القادم',
+    },
+    {
+      id: 'DL-1003',
+      name: 'Hassan Youssef',
+      email: 'hassan@example.com',
+      phone: '0563332211',
+      stage: 'Cold Calls',
       company: 'Gamma Inc',
       status: 'qualified',
       priority: 'low',
@@ -131,20 +176,8 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
   // Use storage if available; otherwise show mock preview data
   const allLeads = allLeadsFromStorage.length > 0 ? allLeadsFromStorage : MOCK_LEADS;
 
-  // Load stage names from Settings (localStorage: crmStages)
-  const stageNames = useMemo(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('crmStages') || '[]');
-      if (Array.isArray(saved) && saved.length > 0) {
-        return saved
-          .map((s) => (typeof s === 'string' ? s : s?.name))
-          .filter(Boolean);
-      }
-      return ['new', 'qualified', 'in-progress', 'converted', 'lost'];
-    } catch (e) {
-      return ['new', 'qualified', 'in-progress', 'converted', 'lost'];
-    }
-  }, []);
+  // Pipeline stage names (align with Dashboard cards)
+  const stageNames = useMemo(() => ['new', 'duplicate', 'pending', 'coldcalls', 'followup'], []);
 
   const delayThresholdDays = 7; // عدد الأيام قبل اعتبار الليد متأخرًا
 
@@ -156,9 +189,42 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
     return 'followUp';
   };
 
+  // Map real lead data to pipeline stage categories (match Dashboard logic)
+  const derivePipelineStage = (l) => {
+    const status = String(l?.status || '').toLowerCase();
+    const stage = String(l?.stage || '').toLowerCase();
+    const source = String(l?.source || '').toLowerCase();
+    const callType = String(l?.callType || '').toLowerCase();
+    const normalize = (str) => String(str || '').toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
+    const ns = normalize(stage);
+    if (ns) {
+      if (ns === 'new') return 'new';
+      if (ns === 'duplicate') return 'duplicate';
+      if (ns === 'inprogress' || ns === 'pending') return 'pending';
+      if (ns === 'coldcalls' || ns === 'coldcall') return 'coldcalls';
+      if (ns === 'followup') return 'followup';
+    }
+    const sRaw = String(stage || '');
+    const stRaw = String(status || '');
+    if (sRaw.includes('جديد') || stRaw.includes('جديد')) return 'new';
+    if (sRaw.includes('مكرر') || stRaw.includes('مكرر')) return 'duplicate';
+    if (sRaw.includes('معلقة') || stRaw.includes('معلقة') || sRaw.includes('قيد') || stRaw.includes('قيد')) return 'pending';
+    if (sRaw.includes('عميل محتمل') || sRaw.includes('عميل محتمل') || sRaw.includes('مكالمات') || stRaw.includes('عميل محتمل') || stRaw.includes('العملاء المحتملون')) return 'coldcalls';
+    if (sRaw.includes('متابعة') || stRaw.includes('متابعة')) return 'followup';
+    if (stage === 'new' || status === 'new') return 'new';
+    if (l?.isDuplicate === true || String(l?.duplicateStatus || '').toLowerCase() === 'duplicate') return 'duplicate';
+    if (stage === 'in-progress' || status === 'in-progress' || status === 'pending') return 'pending';
+    if (source === 'cold-call' || source === 'direct' || source === 'coldcalls') return 'coldcalls';
+    if (callType === 'follow-up' || stage === 'follow-up' || status === 'follow-up') return 'followup';
+    return 'new';
+  };
+
   const isDelayedLead = (lead) => {
-    const activeStatuses = ['new', 'qualified', 'in-progress'];
-    if (!activeStatuses.includes(lead?.status)) return false;
+    const statusRaw = String(lead?.status || '');
+    const ns = statusRaw.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
+    const arActive = statusRaw.includes('جديد') || statusRaw.includes('مؤهل') || statusRaw.includes('قيد') || statusRaw.includes('قيد التنفيذ') || statusRaw.includes('جار');
+    const active = ns === 'new' || ns === 'qualified' || ns === 'inprogress' || arActive;
+    if (!active) return false;
     const lastActionStr = lead?.lastContact || lead?.createdAt;
     const lastAction = new Date(lastActionStr);
     if (isNaN(lastAction)) return false;
@@ -189,6 +255,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
       actionDate: l.lastContact || l.createdAt,
       lastComment: l.notes || '',
       category: deriveDelayCategory(l),
+      pipelineStage: derivePipelineStage(l),
     }));
   }, [allLeads]);
 
@@ -201,32 +268,33 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
     }
   }
 
-  const renderStageBadge = (status) => {
-    const s = String(status || '').toLowerCase()
-    const label = s === 'new' ? t('New')
-      : s === 'qualified' ? t('Qualified')
-      : s === 'in-progress' ? t('In Progress')
-      : s === 'converted' ? t('Converted')
-      : s === 'lost' ? t('Lost')
-      : (status || '-')
+  const renderStageBadge = (pipelineStage) => {
+    const s = String(pipelineStage || '').toLowerCase();
+    const isAr = i18n.language === 'ar';
+    const label = s === 'new' ? (isAr ? 'جديد' : 'New')
+      : s === 'duplicate' ? (isAr ? 'مكرر' : 'Duplicate')
+      : s === 'pending' ? (isAr ? 'معلقة' : 'Pending')
+      : s === 'coldcalls' ? (isAr ? 'مكالمات باردة' : 'Cold Calls')
+      : s === 'followup' ? (isAr ? 'متابعة' : 'Follow-up')
+      : (pipelineStage || '-')
 
     if (isLight) {
-      const map = s === 'new' ? 'new'
-        : s === 'qualified' ? 'qualified'
-        : s === 'in-progress' ? 'in-progress'
-        : s === 'converted' ? 'converted'
-        : s === 'lost' ? 'lost'
-        : 'new'
-      return <span className={`stage-badge ${map}`}>{label}</span>
+      const clsLight = s === 'new' ? 'bg-green-100/60 text-green-700 border border-green-300'
+        : s === 'duplicate' ? 'bg-red-100/60 text-red-700 border border-red-300'
+        : s === 'pending' ? 'bg-yellow-100/60 text-yellow-700 border border-yellow-300'
+        : s === 'coldcalls' ? 'bg-orange-100/60 text-orange-700 border border-orange-300'
+        : s === 'followup' ? 'bg-purple-100/60 text-purple-700 border border-purple-300'
+        : 'bg-gray-100 text-gray-700 border border-gray-300'
+      return <span className={`inline-flex items-center text-[11px] font-semibold px-1.5 py-[2px] rounded-md ${clsLight}`}>{label}</span>
     }
 
-    const cls = s === 'new' ? 'dark:bg-blue-900/30 dark:text-blue-200'
-      : s === 'qualified' ? 'dark:bg-emerald-900/30 dark:text-emerald-200'
-      : s === 'in-progress' ? 'dark:bg-amber-900/30 dark:text-amber-200'
-      : s === 'converted' ? 'dark:bg-purple-900/30 dark:text-purple-200'
-      : s === 'lost' ? 'dark:bg-red-900/30 dark:text-red-200'
-      : 'dark:bg-gray-900/30 dark:text-gray-200'
-    return <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded ${cls}`}>{label}</span>
+    const clsDark = s === 'new' ? 'dark:bg-green-500/20 dark:text-green-200 dark:border dark:border-green-500'
+      : s === 'duplicate' ? 'dark:bg-red-500/20 dark:text-red-200 dark:border dark:border-red-500'
+      : s === 'pending' ? 'dark:bg-yellow-500/20 dark:text-yellow-200 dark:border dark:border-yellow-500'
+      : s === 'coldcalls' ? 'dark:bg-orange-500/20 dark:text-orange-200 dark:border dark:border-orange-500'
+      : s === 'followup' ? 'dark:bg-purple-500/20 dark:text-purple-200 dark:border dark:border-purple-500'
+      : 'dark:bg-gray-500/20 dark:text-gray-200 dark:border dark:border-gray-500'
+    return <span className={`inline-flex items-center text-[11px] font-semibold px-1.5 py-[2px] rounded-md ${clsDark}`}>{label}</span>
   }
 
   // Helper: parse and compare dates safely
@@ -253,10 +321,10 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
   // Calculate counts per stage within the selected date range
   const stageCounts = useMemo(() => {
     const init = Object.fromEntries(stageNames.map((n) => [n, 0]));
-    const ranged = delayLeads.filter((lead) => inDateRange(lead.stageDate));
+    const ranged = delayLeads.filter((lead) => inDateRange(lead.actionDate));
     ranged.forEach((lead) => {
-      const statusKey = String(lead?.status || '').toLowerCase();
-      const matched = stageNames.find((n) => String(n).toLowerCase() === statusKey);
+      const key = String(lead?.pipelineStage || '').toLowerCase();
+      const matched = stageNames.find((n) => String(n).toLowerCase() === key);
       if (matched) init[matched] = (init[matched] || 0) + 1;
     });
     return init;
@@ -268,14 +336,9 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
     const matchesStage = (lead) => {
       const s = String(selectedFilter || '').toLowerCase();
       if (!s) return true;
-      const status = String(lead?.status || '').toLowerCase();
-      const category = String(lead?.category || '').toLowerCase();
-      const source = String(lead?.source || '').toLowerCase();
-      if (s === 'new') return status === 'new';
-      if (s === 'pending') return status === 'in-progress' || status === 'pending';
-      if (s === 'followup') return category.includes('followup') || status === 'follow-up';
-      if (s === 'coldcalls') return source === 'cold-call' || source === 'direct' || source === 'coldcalls';
-      if (s === 'duplicate') return String(lead?.duplicateStatus || lead?.isDuplicate || '').toLowerCase() === 'duplicate' || lead?.isDuplicate === true;
+      const ps = String(lead?.pipelineStage || '').toLowerCase();
+      if (!s) return true;
+      return ps === s;
       return true;
     };
     const primary = ranged.filter(matchesStage);
@@ -297,6 +360,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
       actionDate: l.lastContact || l.createdAt,
       lastComment: l.notes || '',
       category: deriveDelayCategory(l),
+      pipelineStage: derivePipelineStage(l),
     }));
     const rangedFallback = fallbackDelayLeads.filter((lead) => inDateRange(lead.actionDate));
     return rangedFallback.filter(matchesStage);
@@ -419,11 +483,11 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
               key={index}
               className={`p-3 mb-2 rounded-lg border ${isLight ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700'} cursor-default`}
             >
-              <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-start mb-2">
                 <div>
                   <div className="font-medium text-sm">{lead.leadName}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">{lead.mobile}</div>
-                  <div className="mt-1">{renderStageBadge(lead.status)}</div>
+                  <div className="mt-1">{renderStageBadge(lead.pipelineStage)}</div>
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">{formatDateSafe(lead.actionDate)}</div>
               </div>
@@ -543,7 +607,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
                       </button>
                     </div>
                   </td>
-                  <td className={`px-6 py-4 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} cell-divider ${isLight ? 'stage-cell' : ''} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{renderStageBadge(lead.status)}</td>
+                  <td className={`px-6 py-4 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} cell-divider ${isLight ? 'stage-cell' : ''} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{renderStageBadge(lead.pipelineStage)}</td>
                   <td className={`px-6 py-4 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{lead.lastComment}</td>
                   <td className={`px-6 py-4 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{formatDateSafe(lead.actionDate)}</td>
                 </tr>

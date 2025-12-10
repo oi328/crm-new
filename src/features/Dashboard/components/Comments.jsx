@@ -254,7 +254,7 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
               <div className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500 dark:text-gray-400">{t('Priority')}: {t(comment.priority)}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{t('Type')}: {t(comment.type)}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{t('Stage')}: {t(comment.type)}</span>
                 </div>
                 <button 
                   className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
@@ -274,9 +274,9 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
                 <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Lead')}</th>
                 <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Comment')}</th>
                 <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Priority')}</th>
-                <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Type')}</th>
+                <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Stage')}</th>
                 <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Actions')}</th>
-                <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Time')}</th>
+                <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Action time')}</th>
               </tr>
             </thead>
             <tbody>

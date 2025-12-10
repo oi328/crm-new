@@ -167,6 +167,8 @@ export default function Topbar({ onMobileToggle, mobileSidebarOpen, isSidebarExp
   const mobileExtrasTasks = isLight ? 'bg-green-50 border-green-200 hover:bg-green-100 text-green-700' : 'bg-green-900/20 border-green-600 hover:bg-green-900/30 text-green-300';
   const mobileExtrasLang = isLight ? 'bg-orange-50 border-orange-200 hover:bg-orange-100 text-orange-700' : 'bg-orange-900/20 border-orange-600 hover:bg-orange-900/30 text-orange-300';
 
+  
+
   const toggleTheme = () => {
     setTheme(isLight ? 'dark' : 'light');
   };
@@ -412,6 +414,25 @@ export default function Topbar({ onMobileToggle, mobileSidebarOpen, isSidebarExp
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
                 <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
                 <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
+              </svg>
+            </IconButton>
+            <IconButton label={t('Search')} className={`${mobileExtrasBase} ${mobileExtrasSearch}`} onClick={() => { setIsExtrasOpen(false); setIsSearchDropdownOpen(true); }}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                <circle cx="11" cy="11" r="6" />
+                <path d="M21 21l-4.5-4.5" />
+              </svg>
+            </IconButton>
+            <IconButton label={t('Calendar')} className={`${mobileExtrasBase} ${isLight ? 'bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700' : 'bg-blue-900/20 border-blue-600 hover:bg-blue-900/30 text-blue-300'}`} onClick={() => { setIsExtrasOpen(false); setCalendarOpen(true); }}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <path d="M3 10h18" />
+                <path d="M8 2v4M16 2v4" />
+              </svg>
+            </IconButton>
+            <IconButton label={t('Notifications')} className={`${mobileExtrasBase} ${isLight ? 'bg-red-50 border-red-200 hover:bg-red-100 text-red-700' : 'bg-red-900/20 border-red-600 hover:bg-red-900/30 text-red-300'}`} onClick={() => { setIsExtrasOpen(false); navigate('/notifications'); }}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                <path d="M18 8a6 6 0 10-12 0v4l-2 2h16l-2-2V8" />
+                <path d="M13.73 21a2 2 0 01-3.46 0" />
               </svg>
             </IconButton>
             <IconButton label={t('Language')} className={`${mobileExtrasBase} ${mobileExtrasLang}`} onClick={() => {

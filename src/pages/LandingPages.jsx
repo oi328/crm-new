@@ -83,7 +83,7 @@ export default function LandingPages() {
   return (
       <div className="space-y-4 bg-transparent text-[var(--content-text)] overflow-y-auto">
         {/* Page Title */}
-        <h1 className="text-2xl font-bold">{t('Landing Pages')}</h1>
+        <h1 className="page-title text-2xl font-bold">{t('Landing Pages')}</h1>
 
         {/* Actions */}
         <div className="flex items-center gap-3 flex-wrap">
