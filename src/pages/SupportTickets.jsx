@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import SearchableSelect from '@shared/components/SearchableSelect'
-import Layout from '@shared/layouts/Layout'
 import { api } from '../utils/api'
 
 export default function SupportTickets() {
@@ -45,10 +44,10 @@ export default function SupportTickets() {
     if (String(item.status) === 'Closed') return false
     try {
       return new Date(item.slaDeadline) < new Date()
-    } catch (_) { return false }
+    } catch { return false }
   }
 
-  const loadTickets = async () => {
+  const loadTickets = useCallback(async () => {
     try {
       setLoading(true)
       const params = {}
@@ -61,11 +60,11 @@ export default function SupportTickets() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedStatus, query])
 
-  useEffect(() => { loadTickets() }, [selectedStatus])
+  useEffect(() => { loadTickets() }, [loadTickets])
 
-  const searchCustomers = async () => {
+  const searchCustomers = useCallback(async () => {
     try {
       setCustomersLoading(true)
       const r = await api.get('/api/customers', { params: { q: customerSearch, limit: 10 } })
@@ -75,9 +74,9 @@ export default function SupportTickets() {
     } finally {
       setCustomersLoading(false)
     }
-  }
+  }, [customerSearch])
 
-  useEffect(() => { searchCustomers() }, [customerSearch])
+  useEffect(() => { searchCustomers() }, [searchCustomers])
 
   const onPickCustomer = (id) => setForm(prev => ({ ...prev, customerId: id }))
   const setField = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
@@ -106,7 +105,7 @@ export default function SupportTickets() {
       const payload = { ...form }
       // تحويل الـ datetime-local إلى ISO إن وُجد
       if (payload.slaDeadline) {
-        try { payload.slaDeadline = new Date(payload.slaDeadline).toISOString() } catch (_) {}
+        try { payload.slaDeadline = new Date(payload.slaDeadline).toISOString() } catch (e) { void e }
       }
       const r = await api.post('/api/tickets', payload)
       const item = r.data?.item
@@ -122,7 +121,7 @@ export default function SupportTickets() {
   }
 
   return (
-    <Layout>
+    <>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold">{t('Tickets')}</h1>
         <button className="btn btn-primary" onClick={() => setShowCreate(true)}>{t('Create New Ticket')}</button>
@@ -285,6 +284,6 @@ export default function SupportTickets() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   )
 }

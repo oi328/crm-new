@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
 
 export default function InventoryTransactions() {
@@ -48,7 +47,7 @@ export default function InventoryTransactions() {
 
   // Persist
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions)) } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions)) } catch (e) { void e }
   }, [transactions])
 
   const onChange = (e) => {
@@ -85,7 +84,6 @@ export default function InventoryTransactions() {
   }
 
   return (
-    <Layout>
       <div className="space-y-6">
         {/* Title */}
         <h1 className="text-2xl font-semibold">{labels.title}</h1>
@@ -171,6 +169,5 @@ export default function InventoryTransactions() {
           )}
         </div>
       </div>
-    </Layout>
   )
 }

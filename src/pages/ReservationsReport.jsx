@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
+// Layout removed per app-level layout usage
 import { useTranslation } from 'react-i18next'
 import * as XLSX from 'xlsx'
 import { PieChart } from '@shared/components/PieChart'
@@ -207,7 +207,7 @@ export default function ReservationsReport() {
   }
 
   return (
-    <Layout titleKey="Reservations">
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">{t('Reservations')}</h1>
@@ -342,6 +342,6 @@ export default function ReservationsReport() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   )
 }

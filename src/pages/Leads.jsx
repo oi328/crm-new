@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@shared/context/ThemeProvider'
 import { FaPlus, FaSearch, FaFilter, FaDownload, FaEye, FaEdit, FaTrash, FaPhone, FaEnvelope, FaWhatsapp, FaVideo, FaChevronDown } from 'react-icons/fa'
-import { SiGooglemeet } from 'react-icons/si'
 // import { api } from '../utils/api'
 import LeadModal from '../components/LeadModal'
 import AddActionModal from '../components/AddActionModal'
@@ -20,7 +19,8 @@ export const Leads = () => {
   const { theme } = useTheme()
   const navigate = useNavigate()
   const { stages, statuses } = useStages()
-  const isRtl = i18n.language === 'ar'
+  const isRtl = String(i18n.language || '').startsWith('ar')
+  const MEET_ICON_URL = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'><rect x='2' y='4' width='12' height='16' rx='3' fill='%23ffffff'/><rect x='2' y='4' width='12' height='4' rx='2' fill='%234285F4'/><rect x='2' y='4' width='4' height='16' rx='2' fill='%2334A853'/><rect x='10' y='4' width='4' height='16' rx='2' fill='%23FBBC05'/><rect x='2' y='16' width='12' height='4' rx='2' fill='%23EA4335'/><polygon points='14,9 22,5 22,19 14,15' fill='%2334A853'/></svg>"
   
   const [leads, setLeads] = useState([])
   const [filteredLeads, setFilteredLeads] = useState([])
@@ -905,15 +905,21 @@ export const Leads = () => {
 
   return (
     <div className={`px-2 max-[480px]:px-1 py-4 md:px-6 md:py-6 min-h-screen  ${textColor}` } dir={isRtl ? 'rtl' : 'ltr'}>
-      <div className={`glass-panel p-4 flex  justify-between items-center gap-4 mb-6`} dir={isRtl ? 'rtl' : 'ltr'}>
-        <h1 className={`page-title text-2xl md:text-3xl font-bold dark:text-white flex items-center gap-2 ${isRtl ? 'flex-row-reverse text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left' }}>
-         
-          {t('Leads')}
-        </h1>
+      <div className={`p-4 flex justify-between items-center gap-4 mb-6`} dir={isRtl ? 'rtl' : 'ltr'}>
+        <div className={`relative inline-flex items-center ${isRtl ? 'flex-row-reverse' : ''} gap-2`}>
+          <h1 className={`page-title text-2xl md:text-3xl font-bold text-white dark:text-white flex items-center gap-2 ${isRtl ? 'flex-row-reverse text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left' }}>
+            {t('Leads')}
+          </h1>
+          <span
+            aria-hidden
+            className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent"
+            style={{ width: 'calc(100% + 8px)', left: isRtl ? 'auto' : '-4px', right: isRtl ? '-4px' : 'auto', bottom: '-4px' }}
+          ></span>
+        </div>
         <div className={`flex items-center gap-2 flex-nowrap ${isRtl ? 'mr-auto' : 'ml-auto'}`}>
           <button
             onClick={() => navigate('/leads/new')}
-            className={`${primaryButton} btn-compact`}
+            className={`inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white shadow-md ${buttonBase} btn-compact`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12M6 12h12" />
@@ -1714,7 +1720,7 @@ export const Leads = () => {
                           onClick={(e) => { e.stopPropagation(); window.open('https://meet.google.com/', '_blank'); }}
                           className="inline-flex items-center justify-center  dark:text-gray-200 hover:text-blue-500"
                         >
-                          <SiGooglemeet size={16} style={{ color: '#00897B' }} />
+                          <img src={MEET_ICON_URL} alt="Google Meet" className="w-4 h-4" />
                         </button>
                       </div>
                     </td>

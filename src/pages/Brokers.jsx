@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
 
 export default function Brokers() {
@@ -31,9 +30,15 @@ export default function Brokers() {
   const [brokers, setBrokers] = useState([])
 
   useEffect(() => {
-    try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) setBrokers(parsed) } } catch {}
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) setBrokers(parsed)
+      }
+    } catch (e) { void e }
   }, [])
-  useEffect(() => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(brokers)) } catch {} }, [brokers])
+  useEffect(() => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(brokers)) } catch (e) { void e } }, [brokers])
 
   function onChange(e) { const { name, value } = e.target; setForm(prev => ({ ...prev, [name]: value })) }
   function onSubmit(e) {
@@ -50,7 +55,6 @@ export default function Brokers() {
   const statusOptions = useMemo(() => (isArabic ? ['نشط', 'متوقف'] : ['Active', 'Inactive']), [isArabic])
 
   return (
-    <Layout>
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">{labels.title}</h1>
         <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
@@ -116,7 +120,5 @@ export default function Brokers() {
           )}
         </div>
       </div>
-    </Layout>
   )
 }
-

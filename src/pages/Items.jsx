@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
 
 export default function Items() {
@@ -131,7 +130,7 @@ export default function Items() {
       stockCount: item.stockCount != null ? String(item.stockCount) : '',
       warehouse: item.warehouse || ''
     })
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch (e) { void e }
   }
 
   const warehouseOptions = useMemo(() => (
@@ -139,7 +138,6 @@ export default function Items() {
   ), [isArabic])
 
   return (
-    <Layout>
       <div className="space-y-6">
         {/* Page Title */}
         <h1 className="text-2xl font-semibold">{labels.title}</h1>
@@ -341,6 +339,5 @@ export default function Items() {
         </div>
 
       </div>
-    </Layout>
   )
 }

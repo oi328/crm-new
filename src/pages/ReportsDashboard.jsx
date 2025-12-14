@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
@@ -148,7 +147,7 @@ const ReportsDashboard = () => {
   }
 
   return (
-    <Layout>
+    <>
       <div className="p-4 space-y-4">
         {/* Header + Actions */}
         <div className="glass-panel rounded-xl p-4">
@@ -308,7 +307,7 @@ const ReportsDashboard = () => {
           ))}
         </div>
       </div>
-    </Layout>
+    </>
   )
 }
 

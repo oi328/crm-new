@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { FaWhatsapp, FaEnvelope, FaEye, FaPhone, FaPlus } from 'react-icons/fa';
-import { SiGooglemeet } from 'react-icons/si';
 import AddActionModal from '@components/AddActionModal';
 import { useTheme } from '@shared/context/ThemeProvider';
 import EnhancedLeadDetailsModal from '@shared/components/EnhancedLeadDetailsModal';
@@ -533,7 +532,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
                   onClick={(e) => { e.stopPropagation(); window.open('https://meet.google.com/', '_blank'); }}
                   className={`inline-flex items-center justify-center text-gray-700 dark:text-gray-200 hover:text-blue-500`}
                 >
-                  <SiGooglemeet size={16} className="icon-googlemeet" />
+                  <img src={MEET_ICON_URL} alt="Google Meet" className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -546,11 +545,11 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
             <thead className={`text-xs uppercase`}>
               <tr>
                 <th scope="col" className="px-6 py-3">{t('Lead Name')}</th>
-                <th scope="col" className={`px-6 py-3 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Mobile')}</th>
-                <th scope="col" className={`px-6 py-3 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Actions')}</th>
-                <th scope="col" className={`px-6 py-3 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Stage')}</th>
-                <th scope="col" className={`px-6 py-3 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Last Comment')}</th>
-                <th scope="col" className={`px-6 py-3 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Action Date')}</th>
+                <th scope="col" className="px-6 py-3">{t('Mobile')}</th>
+                <th scope="col" className="px-6 py-3">{t('Actions')}</th>
+                <th scope="col" className="px-6 py-3">{t('Stage')}</th>
+                <th scope="col" className="px-6 py-3">{t('Last Comment')}</th>
+                <th scope="col" className="px-6 py-3">{t('Action Date')}</th>
               </tr>
             </thead>
             <tbody>
@@ -559,9 +558,9 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
                   key={index}
                   className={`border-b ${isLight ? 'bg-white border-gray-200 hover:bg-gray-50' : 'bg-gray-800 border-gray-700 dark:hover:bg-blue-900/25 dark:hover:shadow-md dark:hover:shadow-black/40'}`}
                 >
-                  <td className="px-6 py-4 cell-divider">{lead.leadName}</td>
-                  <td className={`px-6 py-4 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} cell-divider ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{lead.mobile}</td>
-                  <td className={`px-6 py-4 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} cell-divider ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>
+                  <td className="px-6 py-4">{lead.leadName}</td>
+                  <td className={`px-6 py-4`}>{lead.mobile}</td>
+                  <td className={`px-6 py-4`}>
                     <div className="flex items-center gap-2 flex-nowrap">
                       <button
                         title={t('Preview')}
@@ -603,13 +602,13 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
                         onClick={(e) => { e.stopPropagation(); window.open('https://meet.google.com/', '_blank'); }}
                         className={`inline-flex items-center justify-center text-gray-700 dark:text-gray-200 hover:text-blue-500`}
                       >
-                        <SiGooglemeet size={16} className="icon-googlemeet" />
+                        <img src={MEET_ICON_URL} alt="Google Meet" className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
-                  <td className={`px-6 py-4 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} cell-divider ${isLight ? 'stage-cell' : ''} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{renderStageBadge(lead.pipelineStage)}</td>
-                  <td className={`px-6 py-4 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{lead.lastComment}</td>
-                  <td className={`px-6 py-4 ${i18n.dir() === 'rtl' ? 'border-r' : 'border-l'} ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{formatDateSafe(lead.actionDate)}</td>
+                  <td className={`px-6 py-4 ${isLight ? 'stage-cell' : ''}`}>{renderStageBadge(lead.pipelineStage)}</td>
+                  <td className={`px-6 py-4`}>{lead.lastComment}</td>
+                  <td className={`px-6 py-4`}>{formatDateSafe(lead.actionDate)}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
+// Layout removed per app-level layout usage
 import { useTranslation } from 'react-i18next'
 import * as XLSX from 'xlsx'
 import { Bar, Line } from 'react-chartjs-2'
@@ -304,7 +304,7 @@ export default function CustomersReport() {
   )
 
   return (
-    <Layout titleKey="Customers Report">
+    <>
       {/* Top actions under header (right aligned) */}
       <div className="flex justify-end gap-2 mb-4">
         <button onClick={exportPdf} className="btn btn-primary">{t('Download PDF')}</button>
@@ -486,6 +486,6 @@ export default function CustomersReport() {
       </div>
 
       <div className="h-6" aria-hidden="true"></div>
-    </Layout>
+    </>
   )
 }

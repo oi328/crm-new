@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
+// Layout removed per app-level layout usage
 import { useTranslation } from 'react-i18next'
 import * as XLSX from 'xlsx'
 import { Bar } from 'react-chartjs-2'
@@ -157,7 +157,7 @@ export default function SalesActivitiesReport() {
   }
 
   return (
-    <Layout titleKey="Sales Activities">
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">{t('Sales Activities')}</h1>
@@ -311,6 +311,6 @@ export default function SalesActivitiesReport() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   )
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import Layout from '@shared/layouts/Layout'; // Import Layout
+// Layout removed per app-level layout usage
 import { mockReservationData, mockCallsData, mockTeamsData, mockTotalAccounts } from '../data/mockData';
 import Tabs from '../components/LeadsReport/Tabs';
 import SalesActions from '../components/LeadsReport/SalesActions';
@@ -87,11 +87,11 @@ const LeadsReport = () => {
     XLSX.writeFile(workbook, 'leads-report.xlsx');
   };
 
-  if (loading) return <Layout><div>Loading...</div></Layout>;
-  if (error) return <Layout><div>{error}</div></Layout>;
+  if (loading) return <><div>Loading...</div></>;
+  if (error) return <><div>{error}</div></>;
 
   return (
-    <Layout>
+    <>
       <div className="p-4 md:p-6 bg-[#0f172a] text-[#f1f5f9] rounded-lg shadow-lg">
         {/* Header */}
         <div className="flex flex-col gap-2 md:flex-row items-start md:items-center md:justify-between">
@@ -147,7 +147,7 @@ const LeadsReport = () => {
           }
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
 
 export default function Categories() {
@@ -41,7 +40,7 @@ export default function Categories() {
   }, [])
 
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(categories)) } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(categories)) } catch (e) { void e }
   }, [categories])
 
   function onChange(e) {
@@ -69,7 +68,6 @@ export default function Categories() {
   const parentOptions = useMemo(() => [''].concat(categories.map(c => c.name)), [categories])
 
   return (
-    <Layout>
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">{labels.title}</h1>
         <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
@@ -136,7 +134,5 @@ export default function Categories() {
           )}
         </div>
       </div>
-    </Layout>
   )
 }
-

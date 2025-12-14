@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { FaTimes, FaPhone, FaEnvelope, FaCalendarAlt, FaComments, FaHandshake, FaFileAlt, FaCheck, FaMapMarkerAlt, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaTimes, FaPhone, FaEnvelope, FaCalendarAlt, FaComments, FaHandshake, FaFileAlt, FaCheck, FaMapMarkerAlt, FaToggleOn, FaToggleOff, FaChevronDown } from 'react-icons/fa';
 
 const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
   const { t, i18n } = useTranslation();
   
   const [actionData, setActionData] = useState({
     type: 'call',
+    actionType: 'call',
+    nextAction: 'follow_up',
     title: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
@@ -29,8 +31,20 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
 
   const actionTypes = [
     { value: 'call', label: isArabic ? 'مكالمة' : 'Call', icon: FaPhone, color: 'bg-blue-500' },
-    { value: 'follow_up', label: isArabic ? 'متابعة' : 'Follow up', icon: FaComments, color: 'bg-teal-500' },
-    { value: 'meeting', label: isArabic ? 'اجتماع' : 'Meeting', icon: FaCalendarAlt, color: 'bg-purple-500' }
+    { value: 'whatsapp', label: 'WhatsApp', icon: FaComments, color: 'bg-green-500' },
+    { value: 'email', label: isArabic ? 'بريد' : 'Email', icon: FaEnvelope, color: 'bg-yellow-500' },
+    { value: 'google_meet', label: 'Google Meet', icon: FaCalendarAlt, color: 'bg-purple-500' },
+    { value: 'send_offer', label: isArabic ? 'إرسال عرض سعر' : 'Send Offer', icon: FaFileAlt, color: 'bg-teal-500' }
+  ];
+
+  const nextActionOptions = [
+    { value: 'follow_up', label: isArabic ? 'متابعة' : 'Follow Up' },
+    { value: 'meeting', label: isArabic ? 'اجتماع' : 'Meeting' },
+    { value: 'proposal', label: isArabic ? 'عرض سعر' : 'Proposal' },
+    { value: 'reservation', label: isArabic ? 'حجز' : 'Reservation' },
+    { value: 'closing_deals', label: isArabic ? 'إغلاق الصفقات' : 'Closing Deals' },
+    { value: 'rent', label: isArabic ? 'إيجار' : 'Rent' },
+    { value: 'cancel', label: isArabic ? 'إلغاء' : 'Cancel' }
   ];
 
   const meetingTypes = [
@@ -51,7 +65,8 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
     const { name, value, type, checked } = e.target;
     setActionData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
+      ...(name === 'actionType' ? { type: value } : {})
     }));
   };
 
@@ -99,6 +114,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
     e.preventDefault();
     const newAction = {
       ...actionData,
+      type: actionData.actionType,
       id: Date.now(),
       leadId: lead?.id,
       leadName: lead?.name,
@@ -112,6 +128,8 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
     // إعادة تعيين النموذج
     setActionData({
       type: 'call',
+      actionType: 'call',
+      nextAction: 'follow_up',
       title: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
@@ -138,7 +156,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
     ? 'relative p-0'
     : 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-0 sm:p-6';
   const containerClasses = inline 
-    ? 'bg-gray-800 sm:rounded-lg shadow-xl w-full h-auto max-h-[85vh] overflow-y-auto'
+    ? 'bg-gray-800 sm:rounded-lg shadow-xl w-full h-auto'
     : 'bg-gray-800 sm:rounded-lg shadow-xl w-full sm:max-w-2xl max-h-[85vh] h-auto overflow-y-auto m-0 sm:m-4';
 
   useEffect(() => {
@@ -181,39 +199,67 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          {/* Next Action Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-3">
+              {isArabic ? 'الاجراء القادم ' : 'Next action'}
+            </label>
+            <div className="relative">
+              <select
+                name="nextAction"
+                value={actionData.nextAction}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+              >
+                {nextActionOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
+            </div>
+          </div>
+
           {/* Action Type Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-3">
-              {isArabic ? 'اختر النوع' : 'Select type'}
+              {isArabic ? 'نوع الأكشن' : 'Action Type'}
             </label>
-            <select
-              name="type"
-              value={actionData.type}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-            >
-              {actionTypes.map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                name="actionType"
+                value={actionData.actionType}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+              >
+                {actionTypes.map(type => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+              <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
+            </div>
           </div>
 
           {/* Answer Status Toggle */}
           {actionData.type && (
             <div className={`flex ${isArabic ? 'justify-start' : 'justify-end'}`}>
-               <button
-                 type="button"
-                 onClick={() => setActionData(prev => ({ 
-                   ...prev, 
-                   answerStatus: prev.answerStatus === 'answer' ? 'no_answer' : 'answer' 
-                 }))}
-                 className={`flex items-center gap-3 px-6 py-4 rounded-xl transition-all font-medium backdrop-blur-md bg-white/10 hover:bg-white/20 shadow-2xl shadow-black/30 hover:shadow-black/50 border ${
-                   actionData.answerStatus === 'answer'
-                     ? 'text-green-300 hover:text-green-200 shadow-green-500/20 border-green-400/40'
-                     : 'text-red-300 hover:text-red-200 shadow-red-500/20 border-red-400/40'
-                 }`}
+              <button
+                type="button"
+                onClick={() => setActionData(prev => ({
+                  ...prev,
+                  answerStatus: prev.answerStatus === 'answer' ? 'no_answer' : 'answer',
+                  notes: prev.answerStatus === 'answer'
+                    ? 'no answer'
+                    : (prev.notes === 'no answer' ? '' : prev.notes)
+                }))}
+                className={`flex items-center gap-3 px-6 py-4 rounded-xl transition-all font-medium backdrop-blur-md bg-white/10 hover:bg-white/20 shadow-2xl shadow-black/30 hover:shadow-black/50 border ${
+                  actionData.answerStatus === 'answer'
+                    ? 'text-green-300 hover:text-green-200 shadow-green-500/20 border-green-400/40'
+                    : 'text-red-300 hover:text-red-200 shadow-red-500/20 border-red-400/40'
+                }`}
                >
                  {actionData.answerStatus === 'answer' ? (
                    <>
@@ -231,41 +277,47 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
           )}
 
           {/* Meeting Type and Location (only show for meeting type) */}
-          {actionData.type === 'meeting' && (
+          {actionData.actionType === 'google_meet' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   {isArabic ? 'نوع الاجتماع' : 'Meeting Type'}
                 </label>
-                <select
-                  name="meetingType"
-                  value={actionData.meetingType}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                >
-                  {meetingTypes.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    name="meetingType"
+                    value={actionData.meetingType}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  >
+                    {meetingTypes.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                  <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   {isArabic ? 'مكان الاجتماع' : 'Meeting Location'}
                 </label>
-                <select
-                  name="meetingLocation"
-                  value={actionData.meetingLocation}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                >
-                  {meetingLocations.map(location => (
-                    <option key={location.value} value={location.value}>
-                      {location.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    name="meetingLocation"
+                    value={actionData.meetingLocation}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  >
+                    {meetingLocations.map(location => (
+                      <option key={location.value} value={location.value}>
+                        {location.label}
+                      </option>
+                    ))}
+                  </select>
+                  <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
+                </div>
               </div>
             </div>
           )}

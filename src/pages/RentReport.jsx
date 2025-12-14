@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
 import * as XLSX from 'xlsx'
 import { Bar, Line } from 'react-chartjs-2'
@@ -301,7 +300,7 @@ export default function RentReport() {
   }
 
   return (
-    <Layout titleKey="Rent">
+    <>
       <div className="p-4 space-y-4">
         {/* Top actions under header (right aligned) */}
         <div className="flex justify-end gap-2">
@@ -461,6 +460,6 @@ export default function RentReport() {
         {/* Spacer below table */}
         <div aria-hidden="true" className="h-6" />
       </div>
-    </Layout>
+    </>
   )
 }

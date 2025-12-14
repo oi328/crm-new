@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Layout from '../../../components/Layout'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../../i18n'
 
@@ -74,7 +73,7 @@ export default function SettingsRotation() {
   )
 
   return (
-    <Layout title={t('Rotation Settings')}>
+    <>
       <div className="p-6 space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
@@ -112,6 +111,6 @@ export default function SettingsRotation() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   )
 }

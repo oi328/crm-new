@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
 
 export default function Suppliers() {
@@ -100,7 +99,7 @@ export default function Suppliers() {
   }, [])
 
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(suppliers)) } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(suppliers)) } catch (e) { void e }
   }, [suppliers])
 
   const onChange = (e) => {
@@ -150,7 +149,7 @@ export default function Suppliers() {
       deliveryTime: '',
       attachments: { contractDoc: [], certificates: [], quotations: [], previousBills: [] }
     })
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch (e) { void e }
   }
 
   const onDelete = (id) => setSuppliers(prev => prev.filter(s => s.id !== id))
@@ -182,11 +181,10 @@ export default function Suppliers() {
         previousBills: s.attachments?.previousBills || []
       }
     })
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch (e) { void e }
   }
 
   return (
-    <Layout>
       <div className="space-y-6">
         {/* Title */}
         <h1 className="text-2xl font-semibold">{labels.title}</h1>
@@ -376,6 +374,5 @@ export default function Suppliers() {
           )}
         </div>
       </div>
-    </Layout>
   )
 }

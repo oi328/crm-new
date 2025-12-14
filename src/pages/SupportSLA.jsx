@@ -1,13 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import Layout from '@shared/layouts/Layout'
 import { api } from '../utils/api'
 
 const SERVICE_TYPES = ['Complaint', 'Inquiry', 'Request', 'VIP Support', 'Technical Issue']
 const PRIORITIES = ['Low', 'Medium', 'High', 'Urgent']
 
 export default function SupportSLA() {
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
   const isEN = String(i18n.language || '').startsWith('en')
   const S = {
     title: isEN ? 'SLA Management' : 'إدارة اتفاقيات مستوى الخدمة (SLA)',
@@ -106,7 +105,7 @@ export default function SupportSLA() {
     return v
   }, [form.responseValue, form.responseUnit])
 
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     setLoading(true)
     try {
       const resp = await api.get('/api/slas', { params: { q, serviceType, active } })
@@ -118,9 +117,9 @@ export default function SupportSLA() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [q, serviceType, active])
 
-  useEffect(() => { fetchAll() }, [q, serviceType, active])
+  useEffect(() => { fetchAll() }, [fetchAll])
 
   const openCreate = () => {
     setEditing(null)
@@ -242,7 +241,7 @@ export default function SupportSLA() {
   }
 
   return (
-    <Layout>
+    <>
       <section className="overflow-x-hidden">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold">{S.title}</h1>
@@ -483,6 +482,6 @@ export default function SupportSLA() {
           <div className="modal-backdrop" onClick={() => setShowForm(false)} />
         </div>
       )}
-    </Layout>
+    </>
   )
 }

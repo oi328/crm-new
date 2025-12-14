@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import Layout from '@shared/layouts/Layout'
 import { api } from '../utils/api'
 
 export default function SupportFeedbacks() {
@@ -69,7 +68,7 @@ export default function SupportFeedbacks() {
   }
 
   return (
-    <Layout>
+    <>
       <section className="px-2 sm:px-4">
         <h1 className="text-xl font-bold mb-3">{t('Feedback & Surveys')}</h1>
 
@@ -205,6 +204,6 @@ export default function SupportFeedbacks() {
           </div>
         </div>
       </section>
-    </Layout>
+    </>
   )
 }

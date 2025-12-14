@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../utils/api'
-import Layout from '@shared/layouts/Layout'
 import { useNavigate } from 'react-router-dom'
 
 export default function SalesOpportunities() {
@@ -199,7 +198,7 @@ export default function SalesOpportunities() {
   }
 
   return (
-    <Layout>
+    <>
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">{t('Opportunities')}</h1>
@@ -427,5 +426,5 @@ export default function SalesOpportunities() {
       </div>
     </div>
   )}
-    </Layout>
+    </>
   )}

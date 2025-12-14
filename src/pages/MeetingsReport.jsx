@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
+// Layout removed per app-level layout usage
 import { useTranslation } from 'react-i18next'
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts'
 import { PieChart as Donut } from '@shared/components/PieChart'
@@ -193,7 +193,7 @@ export default function MeetingsReport() {
   }, [checkins, filters])
 
   return (
-    <Layout>
+    <>
       <div className="space-y-4">
         {/* Page title + actions */}
         <div className="flex items-center justify-between relative">
@@ -479,6 +479,6 @@ export default function MeetingsReport() {
           </div>
         )}
       </div>
-    </Layout>
+    </>
   )
 }

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
 
 export default function Products() {
@@ -117,11 +116,10 @@ export default function Products() {
       supplier: product.supplier || (supplierOptions[0] || ''),
       price: product.price != null ? String(product.price) : ''
     })
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch (e) { void e }
   }
 
   return (
-    <Layout>
       <div className="space-y-6">
         {/* Page Title */}
         <h1 className="text-2xl font-semibold">{labels.title}</h1>
@@ -287,6 +285,5 @@ export default function Products() {
           )}
         </div>
       </div>
-    </Layout>
   )
 }

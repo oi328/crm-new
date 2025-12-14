@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import Layout from '@shared/layouts/Layout'
 import { api } from '../utils/api'
 import { PieChart } from '@shared/components/PieChart'
 
@@ -191,7 +190,7 @@ export default function SupportReports() {
   }
 
   return (
-    <Layout>
+    <>
       <h1 className="text-xl font-bold mb-4">{t('Support Reports & Analytics')}</h1>
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -292,7 +291,7 @@ export default function SupportReports() {
       </div>
 
       {loading && <div className="mt-2 text-sm opacity-70">{t('Loading...')}</div>}
-    </Layout>
+    </>
   )
 }
 import SearchableSelect from '@shared/components/SearchableSelect'

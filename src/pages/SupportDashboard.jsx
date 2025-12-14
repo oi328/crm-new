@@ -1,14 +1,13 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
 // Removed page-level tabs per request
 import { useTranslation } from 'react-i18next'
-import Layout from '@shared/layouts/Layout'
+ 
 import { api } from '../utils/api'
 import { PieChart } from '@shared/components/PieChart'
 import { AnimatePresence, motion } from 'framer-motion'
 
 export default function SupportDashboard() {
-  const { t, i18n } = useTranslation()
-  const isRTL = (i18n.language || '').toLowerCase() === 'ar'
+  const { t } = useTranslation()
 
   const [loading, setLoading] = useState(false)
   const [tickets, setTickets] = useState([])
@@ -30,7 +29,7 @@ export default function SupportDashboard() {
       }
     }
     load()
-  }, [])
+  }, [t])
 
   const filtered = useMemo(() => {
     const now = new Date()
@@ -53,7 +52,7 @@ export default function SupportDashboard() {
     const now = new Date()
     const startOfWeek = new Date(now)
     startOfWeek.setDate(now.getDate() - now.getDay())
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
     let start, end
@@ -75,7 +74,7 @@ export default function SupportDashboard() {
     return tickets.filter(x => x.createdAt && new Date(x.createdAt) >= start && new Date(x.createdAt) <= end)
   }, [tickets, range])
 
-  const computeMetrics = (list) => {
+  const computeMetrics = React.useCallback((list) => {
     const total = list.length
     const statusCount = (s) => list.filter(x => String(x.status) === String(s)).length
     const open = statusCount('Open')
@@ -127,10 +126,10 @@ export default function SupportDashboard() {
       total, open, inProgress, escalated, closed, overdue, avgResolutionHours, resolutionRate,
       priorityCounts, channelCounts, typeCounts, slaOnTimePct, teamRows
     }
-  }
+  }, [t])
 
-  const metrics = useMemo(() => computeMetrics(filtered), [filtered])
-  const prevMetrics = useMemo(() => computeMetrics(prevFiltered), [prevFiltered])
+  const metrics = useMemo(() => computeMetrics(filtered), [filtered, computeMetrics])
+  const prevMetrics = useMemo(() => computeMetrics(prevFiltered), [prevFiltered, computeMetrics])
 
   const pctDelta = (curr, prev) => {
     if (!prev || prev === 0) return curr ? 100 : 0
@@ -165,7 +164,7 @@ export default function SupportDashboard() {
   }, [metrics])
 
   return (
-    <Layout>
+    <>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold">{t('Customer Service Dashboard')}</h1>
         <div className="flex items-center gap-2 text-sm">
@@ -179,7 +178,8 @@ export default function SupportDashboard() {
       </div>
 
       <AnimatePresence mode="wait">
-        <motion.div
+        {(() => { const MotionDiv = motion.div; return (
+        <MotionDiv
           key={range}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -416,9 +416,10 @@ export default function SupportDashboard() {
           </div>
 
           {error && <div className="mt-3 text-xs text-rose-400">{error}</div>}
-        </motion.div>
+        </MotionDiv>
+        ) })()}
       </AnimatePresence>
-    </Layout>
+    </>
   )
 }
 
@@ -499,8 +500,4 @@ function CountUp({ value, duration = 600 }) {
   return <span>{display}</span>
 }
 
-function overdueHint(count) {
-  if (count > 50) return '⚠️ ' + (count) + ' ' + ' ' + 'critical'
-  if (count > 0) return `${count} ${'overdue'}`
-  return null
-}
+ 

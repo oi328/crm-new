@@ -1,12 +1,11 @@
 import React from 'react'
-import Layout from '../../../components/Layout'
 import { useTranslation } from 'react-i18next'
 import RentConfigurationManager from '../../../components/settings/RentConfigurationManager'
 
 export default function SettingsRentConfiguration() {
   const { t } = useTranslation()
   return (
-    <Layout title={t('Rent Configuration')}>
+    <>
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">{t('Rent Configuration')}</h2>
@@ -18,6 +17,6 @@ export default function SettingsRentConfiguration() {
 
         <RentConfigurationManager />
       </div>
-    </Layout>
+    </>
   )
 }

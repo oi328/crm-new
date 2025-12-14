@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
 
 export default function StockManagement() {
@@ -62,7 +61,7 @@ export default function StockManagement() {
 
   // Persist
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)) } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)) } catch (e) { void e }
   }, [records])
 
   const warehouseOptions = useMemo(() => (
@@ -109,7 +108,6 @@ export default function StockManagement() {
   }
 
   return (
-    <Layout>
       <div className="space-y-6">
         {/* Title */}
         <h1 className="text-2xl font-semibold">{labels.title}</h1>
@@ -221,6 +219,5 @@ export default function StockManagement() {
           )}
         </div>
       </div>
-    </Layout>
   )
 }

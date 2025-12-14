@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
 
 export default function Warehouse() {
@@ -97,7 +96,7 @@ export default function Warehouse() {
   }, [])
 
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(warehouses)) } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(warehouses)) } catch (e) { void e }
   }, [warehouses])
 
   const onChange = (e) => {
@@ -153,7 +152,7 @@ export default function Warehouse() {
       attachments: { validityCertificates: [], maintenanceReports: [] },
       note: ''
     })
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch (e) { void e }
   }
 
   const onDelete = (id) => setWarehouses(prev => prev.filter(s => s.id !== id))
@@ -187,11 +186,10 @@ export default function Warehouse() {
       },
       note: w.note || ''
     })
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch (e) { void e }
   }
 
   return (
-    <Layout>
       <div className="space-y-6">
         {/* Title */}
         <h1 className="text-2xl font-semibold">{labels.title}</h1>
@@ -374,6 +372,5 @@ export default function Warehouse() {
           )}
         </div>
       </div>
-    </Layout>
   )
 }

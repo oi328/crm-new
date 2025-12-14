@@ -1,5 +1,4 @@
 import React from 'react'
-import Layout from '../../../../components/Layout'
 import PageHeader from '../components/PageHeader'
 import Card from '../components/Card'
 import SaveButton from '../components/SaveButton'
@@ -10,7 +9,7 @@ export default function ModulesPage() {
   const { companySetup, toggleModule } = useCompanySetup()
 
   return (
-    <Layout>
+    <>
       <div className="company-setup-page p-3 sm:p-4">
         <PageHeader title="Modules Activation" description="Enable or disable modules" />
         <Card>
@@ -18,6 +17,6 @@ export default function ModulesPage() {
         </Card>
         <SaveButton onClick={() => {}} />
       </div>
-    </Layout>
+    </>
   )
 }

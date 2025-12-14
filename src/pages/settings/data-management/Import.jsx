@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
-import Layout from '../../../components/Layout'
 import { useTranslation } from 'react-i18next'
 import * as XLSX from 'xlsx'
 import { api } from '../../../utils/api'
@@ -109,7 +108,7 @@ export default function Import() {
   const disabled = !file || status === 'processing'
 
   return (
-    <Layout title={t('Import Data')}>
+    <>
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -279,6 +278,6 @@ export default function Import() {
           </ul>
         </div>
       </div>
-    </Layout>
+    </>
   )
 }

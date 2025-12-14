@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
+// Layout removed per app-level layout usage
 import { useTranslation } from 'react-i18next'
 import * as XLSX from 'xlsx'
 import { Bar, Line } from 'react-chartjs-2'
@@ -158,7 +158,7 @@ export default function ClosedDealsReport() {
   const allSalespeople = Array.from(new Set(deals.map(d => d.salesperson)))
 
   return (
-    <Layout>
+    <>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('Closed Deals Report')}</h1>
@@ -345,6 +345,6 @@ export default function ClosedDealsReport() {
           </table>
         </div>
       </div>
-    </Layout>
+    </>
   )
 }

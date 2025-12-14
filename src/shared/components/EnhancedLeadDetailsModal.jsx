@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { FaUser, FaTimes, FaCog, FaPlus, FaEdit, FaCheckCircle, FaClock, FaSearch, FaFilter, FaSortAmountDown, FaList, FaCalendarAlt, FaPhone, FaEnvelope, FaTrash, FaEye, FaEllipsisV, FaWhatsapp, FaVideo, FaComments, FaMapMarkerAlt, FaDollarSign, FaUserCheck } from 'react-icons/fa';
+import { FaUser, FaTimes, FaCog, FaPlus, FaEdit, FaCheckCircle, FaClock, FaSearch, FaFilter, FaSortAmountDown, FaList, FaCalendarAlt, FaPhone, FaEnvelope, FaTrash, FaEye, FaEllipsisV, FaWhatsapp, FaVideo, FaComments, FaMapMarkerAlt, FaDollarSign, FaUserCheck, FaChevronDown } from 'react-icons/fa';
 import AddActionModal from '@components/AddActionModal';
 import EditLeadModal from '@components/EditLeadModal';
 import { useStages } from '@hooks/useStages';
@@ -15,68 +15,101 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
   const [selectedActions, setSelectedActions] = useState([]);
   const [showAddActionModal, setShowAddActionModal] = useState(false);
   const [showEditLeadModal, setShowEditLeadModal] = useState(false);
-  const [actions, setActions] = useState([
+  const [commFilter, setCommFilter] = useState('all');
+  const [showCompose, setShowCompose] = useState(false);
+  const [composeSubject, setComposeSubject] = useState('');
+  const [composeText, setComposeText] = useState('');
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+  const headerMenuRef = useRef(null);
+  const headerMenuBtnRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!showHeaderMenu) return;
+      const menuEl = headerMenuRef.current;
+      const btnEl = headerMenuBtnRef.current;
+      if (menuEl && !menuEl.contains(e.target) && btnEl && !btnEl.contains(e.target)) {
+        setShowHeaderMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showHeaderMenu]);
+  const demoActions = [
     {
       id: 1,
       type: 'call',
-      title: 'مكالمة هاتفية مع العميل',
-      description: 'مناقشة تفاصيل المشروع والمتطلبات الأساسية',
+      title: isArabic ? 'مكالمة هاتفية مع العميل' : 'Phone call with client',
+      description: isArabic ? 'مناقشة تفاصيل المشروع والمتطلبات الأساسية' : 'Discuss project details and basic requirements',
       date: '2024-01-15',
       time: '10:30',
       status: 'completed',
       priority: 'high',
-      assignee: 'أحمد محمد',
-      duration: '25 دقيقة'
+      assignee: isArabic ? 'أحمد محمد' : 'Ahmed Mohamed',
+      duration: isArabic ? '25 دقيقة' : '25 min',
+      demo: true
     },
     {
       id: 2,
       type: 'email',
-      title: 'إرسال عرض سعر',
-      description: 'إرسال عرض سعر مفصل للمشروع المطلوب',
+      title: isArabic ? 'إرسال عرض سعر' : 'Send quotation',
+      description: isArabic ? 'إرسال عرض سعر مفصل للمشروع المطلوب' : 'Send detailed quotation for requested project',
       date: '2024-01-14',
       time: '14:15',
       status: 'completed',
       priority: 'medium',
-      assignee: 'سارة أحمد',
-      duration: null
+      assignee: isArabic ? 'سارة أحمد' : 'Sara Ahmed',
+      duration: null,
+      demo: true
     },
     {
       id: 3,
       type: 'meeting',
-      title: 'اجتماع مع فريق المبيعات',
-      description: 'مراجعة استراتيجية التعامل مع العميل',
+      title: isArabic ? 'اجتماع مع فريق المبيعات' : 'Meeting with sales team',
+      description: isArabic ? 'مراجعة استراتيجية التعامل مع العميل' : 'Review client handling strategy',
       date: '2024-01-16',
       time: '11:00',
       status: 'scheduled',
       priority: 'high',
-      assignee: 'محمد علي',
-      duration: '60 دقيقة'
+      assignee: isArabic ? 'محمد علي' : 'Mohamed Ali',
+      duration: isArabic ? '60 دقيقة' : '60 min',
+      demo: true
     },
     {
       id: 4,
       type: 'note',
-      title: 'ملاحظات المتابعة',
-      description: 'تسجيل ملاحظات حول اهتمام العميل بالمنتج',
+      title: isArabic ? 'ملاحظات المتابعة' : 'Follow-up notes',
+      description: isArabic ? 'تسجيل ملاحظات حول اهتمام العميل بالمنتج' : 'Record notes about client interest',
       date: '2024-01-13',
       time: '16:45',
       status: 'completed',
       priority: 'low',
-      assignee: 'فاطمة حسن',
-      duration: null
+      assignee: isArabic ? 'فاطمة حسن' : 'Fatma Hassan',
+      duration: null,
+      demo: true
     },
     {
       id: 5,
       type: 'task',
-      title: 'إعداد العرض التقديمي',
-      description: 'تحضير عرض تقديمي شامل للعميل',
+      title: isArabic ? 'إعداد العرض التقديمي' : 'Prepare presentation',
+      description: isArabic ? 'تحضير عرض تقديمي شامل للعميل' : 'Prepare comprehensive client presentation',
       date: '2024-01-17',
       time: '09:00',
       status: 'pending',
       priority: 'medium',
-      assignee: 'خالد أحمد',
-      duration: '120 دقيقة'
+      assignee: isArabic ? 'خالد أحمد' : 'Khaled Ahmed',
+      duration: isArabic ? '120 دقيقة' : '120 min',
+      demo: true
     }
-  ]);
+  ];
+  const [actions, setActions] = useState(demoActions);
+  React.useEffect(() => {
+    setActions(demoActions);
+  }, [isArabic]);
 
   if (!isOpen) return null;
 
@@ -205,10 +238,32 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return 'text-red-400 border-red-400';
+      case 'high': return 'text-green-400 border-green-400';
       case 'medium': return 'text-yellow-400 border-yellow-400';
-      case 'low': return 'text-green-400 border-green-400';
+      case 'low': return 'text-red-400 border-red-400';
       default: return 'text-gray-400 border-gray-400';
+    }
+  };
+
+  const getTypeColor = (type) => {
+    switch (String(type).toLowerCase()) {
+      case 'call': return 'text-blue-400 border-blue-400';
+      case 'email': return 'text-yellow-400 border-yellow-400';
+      case 'meeting': return 'text-purple-400 border-purple-400';
+      case 'task': return 'text-orange-400 border-orange-400';
+      case 'note': return 'text-slate-300 border-slate-400';
+      default: return 'text-gray-400 border-gray-400';
+    }
+  };
+
+  const getTypeLabel = (type) => {
+    switch (String(type).toLowerCase()) {
+      case 'call': return isArabic ? 'مكالمة' : 'Call';
+      case 'email': return isArabic ? 'بريد' : 'Email';
+      case 'meeting': return isArabic ? 'اجتماع' : 'Meeting';
+      case 'task': return isArabic ? 'مهمة' : 'Task';
+      case 'note': return isArabic ? 'ملاحظة' : 'Note';
+      default: return isArabic ? 'غير محدد' : 'Unknown';
     }
   };
 
@@ -226,46 +281,39 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
     { id: 'communication', label: 'Communication' }
   ];
 
+  const isLight = theme === 'light';
   return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-0">
-      <div className="bg-slate-800 text-white w-full sm:max-w-5xl max-h-[85vh] h-auto sm:rounded-3xl overflow-y-auto shadow-2xl p-3 sm:p-4">
+      <div className={`${isLight ? 'bg-white/70 backdrop-blur-md text-slate-800' : 'bg-slate-800 text-white'} w-full sm:max-w-5xl max-h-[85vh] h-auto sm:rounded-3xl overflow-y-auto shadow-2xl p-3 sm:p-4`}>
         {/* Header */}
-        <div className="bg-slate-800 p-6 border-b border-slate-700">
+        <div className={`${isLight ? 'bg-white/60 border-gray-200' : 'bg-slate-800 border-slate-700'} p-3 sm:p-4 border-b`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4 rtl:space-x-reverse">
               {/* Profile Picture */}
-              <div className="w-16 h-16 bg-slate-600 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-slate-600 rounded-full flex items-center justify-center">
                 <FaUser className="text-2xl text-slate-300" />
               </div>
               
               {/* Lead Info */}
               <div className="flex-1">
-                <h2 className="text-xl font-bold text-white mb-1">{leadData.name}</h2>
-                <p className="text-slate-300 text-sm mb-1">{leadData.phone}</p>
-                <p className="text-slate-400 text-sm">{leadData.email}</p>
+                <h2 className={`text-lg font-semibold mb-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>{leadData.name}</h2>
+                <p className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs mb-0.5`}>{leadData.phone}</p>
+                <p className={`${isLight ? 'text-slate-500' : 'text-slate-400'} text-xs`}>{leadData.email}</p>
               </div>
             </div>
             
-            {/* Actions Section */}
+              {/* Actions Section */}
             <div className="flex flex-col items-end space-y-3">
               {/* Action Buttons Row */}
-              <div className="flex items-center justify-between gap-4 w-[180px] sm:w-[210px]">
-                {showAddActionModal && (
-                  <button
-                    onClick={() => setShowAddActionModal(false)}
-                    title={isArabic ? 'الرجوع للمعاينة' : 'Back to Preview'}
-                    className="btn-icon"
-                  >
-                    <FaEye className="text-sm" />
-                  </button>
-                )}
+              <div className="flex items-center justify-between gap-4 w-[220px] sm:w-[280px] relative">
+                {/* Removed preview toggle button */}
                 {/* Add Action (icon-only) */}
                 {!showAddActionModal && (
                   <button
                     onClick={() => setShowAddActionModal(true)}
                     aria-label={isArabic ? 'إضافة إجراء' : 'Add Action'}
                     title={isArabic ? 'إضافة إجراء' : 'Add Action'}
-                    className="btn-icon"
+                    className="btn-icon bg-emerald-500 hover:bg-emerald-600 text-white"
                   >
                     <FaPlus className="text-sm" />
                   </button>
@@ -282,12 +330,54 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                 {/* Edit Lead (icon-only) */}
                 <button
                   onClick={() => setShowEditLeadModal(true)}
-                  aria-label={isArabic ? 'تعديل العميل' : 'Edit Lead'}
-                  title={isArabic ? 'تعديل العميل' : 'Edit Lead'}
+                  aria-label={isArabic ? 'تعديل' : 'Edit'}
+                  title={isArabic ? 'تعديل' : 'Edit'}
                   className="btn-icon"
                 >
                   <FaEdit className="text-sm" />
                 </button>
+                {/* Kebab Menu (three vertical dots) */}
+                <button
+                  ref={headerMenuBtnRef}
+                  onClick={() => setShowHeaderMenu(prev => !prev)}
+                  aria-label={isArabic ? 'المزيد' : 'More'}
+                  title={isArabic ? 'المزيد' : 'More'}
+                  className="btn-icon"
+                >
+                  <FaEllipsisV className="text-sm" />
+                </button>
+                {/* Dropdown Menu */}
+                {showHeaderMenu && (
+                  <div ref={headerMenuRef} className={`${isLight ? 'bg-white/70 backdrop-blur-md border border-gray-200 text-slate-800' : 'bg-slate-900/70 backdrop-blur-md border border-slate-700 text-white'} absolute right-12 top-10 z-50 rounded-xl shadow-xl min-w-[180px] p-2`}
+                       onMouseLeave={() => setShowHeaderMenu(false)}>
+                    <button onClick={() => { setShowHeaderMenu(false); setShowAddActionModal(true); }}
+                            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
+                      <FaList className="text-blue-500" />
+                      <span className="text-sm font-medium">{isArabic ? 'إضافة طلب' : 'Add Request'}</span>
+                    </button>
+                    <button onClick={() => { setShowHeaderMenu(false); setShowAddActionModal(true); }}
+                            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
+                      <FaDollarSign className="text-emerald-500" />
+                      <span className="text-sm font-medium">{isArabic ? 'خطة دفع' : 'Payment Plan'}</span>
+                    </button>
+                    <button onClick={() => { setShowHeaderMenu(false); setShowAddActionModal(true); }}
+                            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
+                      <FaPhone className="text-indigo-500" />
+                      <span className="text-sm font-medium">{isArabic ? 'إضافة مكالمة' : 'Add Call'}</span>
+                    </button>
+                    <button onClick={() => {
+                                setShowHeaderMenu(false);
+                                const ok = window.confirm(isArabic ? 'هل تريد تحويل العميل إلى عميل فعلي؟' : 'Convert this lead to a customer?');
+                                if (ok) {
+                                  console.log(isArabic ? 'تم التحويل إلى عميل' : 'Converted to customer');
+                                }
+                              }}
+                            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
+                      <FaUserCheck className="text-yellow-500" />
+                      <span className="text-sm font-medium">{isArabic ? 'تحويل إلى عميل' : 'Convert to Customer'}</span>
+                    </button>
+                  </div>
+                )}
                 {/* Close (X) - stays far right */}
                 <button 
                   onClick={onClose}
@@ -336,7 +426,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
         )}
 
         {/* Tabs */}
-        <div className={`bg-slate-800 px-6 border-b border-slate-700 ${showAddActionModal ? 'hidden' : ''}`}>
+        <div className={`${isLight ? 'bg-white/60 border-gray-200' : 'bg-slate-800 border-slate-700'} px-6 border-b ${showAddActionModal ? 'hidden' : ''}`}>
           <div className="flex justify-between w-full">
             {tabs.map((tab) => (
               <button
@@ -344,8 +434,8 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 py-4 px-4 text-sm font-medium border-b-2 transition-all duration-200 text-center ${
                   activeTab === tab.id
-                    ? 'border-emerald-400 text-white bg-emerald-500/20 rounded-t-lg shadow-lg shadow-emerald-500/10 font-semibold'
-                    : 'border-transparent text-slate-400 hover:text-white hover:border-slate-500 hover:bg-slate-700/30'
+                    ? `${isLight ? 'border-emerald-500 text-slate-900 bg-emerald-50 rounded-t-lg shadow-lg shadow-emerald-200/50 font-semibold' : 'border-emerald-400 text-white bg-emerald-500/20 rounded-t-lg shadow-lg shadow-emerald-500/10 font-semibold'}`
+                    : `${isLight ? 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-100' : 'border-transparent text-slate-400 hover:text-white hover:border-slate-500 hover:bg-slate-700/30'}`
                 }`}
               >
                 {tab.label}
@@ -355,66 +445,66 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
         </div>
 
         {/* Content */}
-        <div className={`flex-1 overflow-y-auto p-6 bg-slate-800 ${showAddActionModal ? 'hidden' : ''}`}>
+        <div className={`flex-1 overflow-y-auto p-6 ${isLight ? 'bg-white/70' : 'bg-slate-800'} ${showAddActionModal ? 'hidden' : ''}`}>
           {activeTab === 'overview' && (
             <div className="space-y-8">
               {/* Two Column: Current Status (left) and Lead Information (right) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left: Current Status */}
                 <div>
-                  <h3 className="text-white font-semibold mb-3 border-b border-slate-700 pb-2 text-left">Current Status</h3>
+                  <h3 className={`${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'} font-semibold mb-3 border-b pb-2 text-left`}>Current Status</h3>
                   <div className="flex justify-start items-center gap-16 mb-6">
                     {/* Stat 1 - Dark circle with 3 and "Total Actions" label */}
                     <div className="flex flex-col items-center">
                       <div className="relative w-24 h-24 rounded-full mb-2 bg-[conic-gradient(#34d399_0_12%,_#334155_12%)]">
-                        <div className="absolute inset-2 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center">
-                          <span className="text-2xl font-bold text-white">3</span>
+                        <div className={`absolute inset-2 rounded-full flex items-center justify-center ${isLight ? 'bg-white border border-gray-300' : 'bg-slate-700 border border-slate-600'}`}>
+                          <span className={`text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>3</span>
                         </div>
                       </div>
-                      <span className="text-xs text-slate-400 font-medium">Total Actions</span>
+                      <span className={`text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Total Actions</span>
                     </div>
                     
                     {/* Stat 2 - Green circle with 2 and "Completed" label */}
                     <div className="flex flex-col items-center">
                       <div className="relative w-24 h-24 rounded-full mb-2 bg-[conic-gradient(#10b981_0_100%)]">
-                        <div className="absolute inset-2 rounded-full bg-slate-700 border border-emerald-400 flex items-center justify-center">
-                          <span className="text-2xl font-bold text-white">2</span>
+                        <div className={`absolute inset-2 rounded-full flex items-center justify-center ${isLight ? 'bg-white border border-emerald-300' : 'bg-slate-700 border border-emerald-400'}`}>
+                          <span className={`text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>2</span>
                         </div>
                       </div>
-                      <span className="text-xs text-slate-400 font-medium">Completed</span>
+                      <span className={`text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Completed</span>
                     </div>
                     
                     {/* Stat 3 - Orange circle with 1 and "Pending" label */}
                     <div className="flex flex-col items-center">
                       <div className="relative w-24 h-24 rounded-full mb-2 bg-[conic-gradient(#f59e0b_0_100%)]">
-                        <div className="absolute inset-2 rounded-full bg-slate-700 border border-orange-400 flex items-center justify-center">
-                          <span className="text-2xl font-bold text-white">1</span>
+                        <div className={`absolute inset-2 rounded-full flex items-center justify-center ${isLight ? 'bg-white border border-orange-300' : 'bg-slate-700 border border-orange-400'}`}>
+                          <span className={`text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>1</span>
                         </div>
                       </div>
-                      <span className="text-xs text-slate-400 font-medium">Pending</span>
+                      <span className={`text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Pending</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right: Lead Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-white mb-4 border-b border-slate-700 pb-2">Lead Information</h3>
-                  <div className="space-y-4 bg-slate-700 p-4 rounded-lg">
+                  <h3 className={`text-lg font-semibold mb-4 border-b pb-2 ${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'}`}>Lead Information</h3>
+                  <div className={`space-y-4 p-4 rounded-lg ${isLight ? 'bg-white border border-gray-200' : 'bg-slate-700'}`}>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-300 text-sm">Company:</span>
-                      <span className="text-white text-sm font-medium text-right">{leadData.company}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Company:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm font-medium text-right`}>{leadData.company}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-300 text-sm">Location:</span>
-                      <span className="text-white text-sm">{leadData.location}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Location:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.location}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-300 text-sm">Source:</span>
-                      <span className="text-white text-sm">{leadData.source}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Source:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.source}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-300 text-sm">Created Date:</span>
-                      <span className="text-white text-sm">{leadData.createdDate}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Created Date:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.createdDate}</span>
                     </div>
                   </div>
                 </div>
@@ -423,22 +513,30 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
               {/* Quick Actions below */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h4 className="text-white font-semibold mb-3 border-b border-slate-700 pb-2">Quick Actions</h4>
+                  <h4 className={`${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'} font-semibold mb-3 border-b pb-2`}>Quick Actions</h4>
                   <div className="flex items-center justify-between gap-4 rtl:flex-row-reverse">
                     <button 
                       onClick={() => setShowAddActionModal(true)}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white py-3 px-5 rounded-full font-medium transition-colors flex items-center justify-center gap-3"
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2"
                     >
-                      <span className="w-6 h-6 rounded-full bg-emerald-400 flex items-center justify-center">
+                      <span className="w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center">
                         <FaPlus className="text-xs" />
                       </span>
-                      <span>+ Add New Action</span>
+                      <span className="text-sm">+ Add New Action</span>
                     </button>
-                    <button className="bg-slate-700 hover:bg-slate-600 text-slate-200 py-3 px-5 rounded-full font-medium transition-colors flex items-center justify-center gap-3 border border-slate-600">
-                      <span className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center">
-                        <FaEdit className="text-xs" />
+                    <button 
+                      onClick={() => {
+                        const ok = window.confirm(isArabic ? 'هل تريد تحويل العميل إلى عميل فعلي؟' : 'Convert this lead to a customer?');
+                        if (ok) {
+                          console.log(isArabic ? 'تم التحويل إلى عميل' : 'Converted to customer');
+                        }
+                      }}
+                      className={`${isLight ? 'bg-white text-slate-700 border border-gray-300 hover:bg-slate-100' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600'} py-2 px-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2`}
+                    >
+                      <span className="w-5 h-5 rounded-full bg-yellow-600 flex items-center justify-center">
+                        <FaUserCheck className="text-xs text-white" />
                       </span>
-                      <span>Edit Lead</span>
+                      <span className="text-sm">{isArabic ? 'تحويل إلى عميل' : 'Convert to Customer'}</span>
                     </button>
                   </div>
                 </div>
@@ -449,74 +547,86 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
           {/* Other tab contents */}
           {activeTab === 'all-actions' && (
             <div className="space-y-6">
-              {/* Summary counters styled like overview */}
+              {/* Type cards: All Actions / Calls Done / Messages / Meetings */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div className="bg-slate-700 p-5 rounded-xl text-center border border-slate-600">
-                  <div className="text-2xl font-bold text-white">{actionStats.total}</div>
-                  <div className="text-sm text-slate-400">إجمالي الإجراءات</div>
-                </div>
-                <div className="bg-slate-700 p-5 rounded-xl text-center border border-slate-600">
-                  <div className="text-2xl font-bold text-green-400">{actionStats.completed}</div>
-                  <div className="text-sm text-slate-400">مكتملة</div>
-                </div>
-                <div className="bg-slate-700 p-5 rounded-xl text-center border border-slate-600">
-                  <div className="text-2xl font-bold text-orange-400">{actionStats.pending}</div>
-                  <div className="text-sm text-slate-400">معلقة</div>
-                </div>
-                <div className="bg-slate-700 p-5 rounded-xl text-center border border-slate-600">
-                  <div className="text-2xl font-bold text-blue-400">{actionStats.scheduled}</div>
-                  <div className="text-sm text-slate-400">مجدولة</div>
-                </div>
+                <button
+                  onClick={() => { setFilterType('all'); setFilterStatus('all'); }}
+                  className={`${isLight ? 'bg-white border border-gray-200 hover:bg-slate-100' : 'bg-slate-700 border border-slate-600 hover:bg-slate-600'} p-5 rounded-xl text-center transition-colors`}
+                >
+                  <div className={`text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>{actions.length}</div>
+                  <div className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-sm`}>{isArabic ? 'كل الإجراءات' : 'All Actions'}</div>
+                </button>
+                <button
+                  onClick={() => { setFilterType('call'); setFilterStatus('completed'); }}
+                  className={`${isLight ? 'bg-white border border-green-300 hover:bg-slate-100' : 'bg-slate-700 border border-green-600 hover:bg-slate-600'} p-5 rounded-xl text-center transition-colors`}
+                >
+                  <div className="text-2xl font-bold text-green-400">{actions.filter(a => a.type === 'call' && a.status === 'completed').length}</div>
+                  <div className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-sm`}>{isArabic ? 'مكالمات مكتملة' : 'Calls Done'}</div>
+                </button>
+                <button
+                  onClick={() => { setFilterType('email'); setFilterStatus('all'); }}
+                  className={`${isLight ? 'bg-white border border-blue-300 hover:bg-slate-100' : 'bg-slate-700 border border-blue-600 hover:bg-slate-600'} p-5 rounded-xl text-center transition-colors`}
+                >
+                  <div className="text-2xl font-bold text-blue-400">{actions.filter(a => a.type === 'email').length}</div>
+                  <div className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-sm`}>{isArabic ? 'الرسائل' : 'Messages'}</div>
+                </button>
+                <button
+                  onClick={() => { setFilterType('meeting'); setFilterStatus('all'); }}
+                  className={`${isLight ? 'bg-white border border-purple-300 hover:bg-slate-100' : 'bg-slate-700 border border-purple-600 hover:bg-slate-600'} p-5 rounded-xl text-center transition-colors`}
+                >
+                  <div className="text-2xl font-bold text-purple-400">{actions.filter(a => a.type === 'meeting').length}</div>
+                  <div className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-sm`}>{isArabic ? 'الاجتماعات' : 'Meetings'}</div>
+                </button>
               </div>
 
               {/* Simple header with Add button */}
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-white font-semibold">Actions</h3>
+                <h3 className={`${isLight ? 'text-black' : 'text-white'} font-semibold`}>{isArabic ? 'الإجراءات' : 'Actions'}</h3>
                 <button 
                   onClick={() => setShowAddActionModal(true)}
                   className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
                   <FaPlus />
-                  إضافة إجراء جديد
+                  {isArabic ? 'إضافة إجراء جديد' : 'Add New Action'}
                 </button>
               </div>
 
               {/* Search and Filters (Status & Type) */}
-              <div className="bg-slate-700 p-4 rounded-lg space-y-3 mb-2">
+              <div className={`${isLight ? 'bg-white border border-gray-200' : 'bg-slate-700'} p-4 rounded-lg space-y-3 mb-2`}>
                 <div className="flex flex-col md:flex-row gap-3 items-center">
                   <div className="flex-1 relative w-full">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                    <FaSearch className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isLight ? 'text-slate-400' : 'text-slate-400'}`} />
                     <input
                       type="text"
-                      placeholder="البحث في الإجراءات..."
+                      placeholder={isArabic ? 'البحث في الإجراءات...' : 'Search actions...'}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-slate-600 border border-slate-500 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400"
+                      className={`w-full pl-10 pr-4 py-2 rounded-lg placeholder-slate-400 focus:outline-none ${isLight ? 'bg-white border border-gray-300 text-black focus:border-emerald-500' : 'bg-slate-600 border border-slate-500 text-white focus:border-emerald-400'}`}
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <FaFilter className="text-slate-400" />
+                    <FaFilter className={`${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                     <select
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                      className="bg-slate-600 border border-slate-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-400"
+                      className={`rounded-lg px-3 py-2 text-sm focus:outline-none ${isLight ? 'bg-white border border-gray-300 text-black focus:border-emerald-500' : 'bg-slate-600 border border-slate-500 text-white focus:border-emerald-400'}`}
                     >
-                      <option value="all">جميع الحالات</option>
-                      <option value="completed">مكتملة</option>
-                      <option value="pending">معلقة</option>
-                      <option value="scheduled">مجدولة</option>
+                      <option value="all">{isArabic ? 'جميع الحالات' : 'All statuses'}</option>
+                      <option value="completed">{isArabic ? 'مكتملة' : 'Completed'}</option>
+                      <option value="pending">{isArabic ? 'معلقة' : 'Pending'}</option>
+                      <option value="scheduled">{isArabic ? 'مجدولة' : 'Scheduled'}</option>
                     </select>
                     <select
                       value={filterType}
                       onChange={(e) => setFilterType(e.target.value)}
-                      className="bg-slate-600 border border-slate-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-400"
+                      className={`rounded-lg px-3 py-2 text-sm focus:outline-none ${isLight ? 'bg-white border border-gray-300 text-black focus:border-emerald-500' : 'bg-slate-600 border border-slate-500 text-white focus:border-emerald-400'}`}
                     >
-                      <option value="all">جميع الأنواع</option>
-                      <option value="call">مكالمة</option>
-                      <option value="email">بريد</option>
-                      <option value="meeting">اجتماع</option>
-                      <option value="task">مهمة</option>
-                      <option value="note">ملاحظة</option>
+                      <option value="all">{isArabic ? 'جميع الأنواع' : 'All types'}</option>
+                      <option value="call">{isArabic ? 'مكالمة' : 'Call'}</option>
+                      <option value="email">{isArabic ? 'بريد' : 'Email'}</option>
+                      <option value="meeting">{isArabic ? 'اجتماع' : 'Meeting'}</option>
+                      <option value="task">{isArabic ? 'مهمة' : 'Task'}</option>
+                      <option value="note">{isArabic ? 'ملاحظة' : 'Note'}</option>
                     </select>
                   </div>
                 </div>
@@ -525,11 +635,11 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
               {/* Actions List */}
               <div className="space-y-4">
                 {filteredActions.length === 0 ? (
-                  /* Empty State */
-                  <div className="text-center py-12 bg-slate-700 rounded-lg">
-                    <FaList className="mx-auto text-4xl text-slate-500 mb-4" />
-                    <h3 className="text-lg font-medium text-slate-300 mb-2">لا توجد إجراءات</h3>
-                    <p className="text-slate-400 mb-4">
+                /* Empty State */
+                <div className={`text-center py-12 rounded-lg ${isLight ? 'bg-white border border-gray-200' : 'bg-slate-700'}`}>
+                  <FaList className={`mx-auto text-4xl mb-4 ${isLight ? 'text-slate-500' : 'text-slate-500'}`} />
+                  <h3 className={`text-lg font-medium mb-2 ${isLight ? 'text-black' : 'text-slate-300'}`}>لا توجد إجراءات</h3>
+                  <p className={`${isLight ? 'text-slate-600' : 'text-slate-400'} mb-4`}>
                       {searchTerm || filterStatus !== 'all' || filterType !== 'all'
                         ? 'لم يتم العثور على إجراءات تطابق البحث أو الفلتر المحدد'
                         : 'لم يتم إنشاء أي إجراءات بعد'
@@ -544,63 +654,50 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                     </button>
                   </div>
                 ) : (
-                  /* Actions List redesigned closer to overview */
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`rounded-xl overflow-hidden ${isLight ? 'bg-white border border-gray-200 divide-y divide-gray-200' : 'border border-slate-600 divide-y divide-slate-700'}`}>
                     {filteredActions.map((action) => (
                       <div
                         key={action.id}
-                        className={`bg-slate-700 border border-slate-600 rounded-xl p-5 transition-all hover:bg-slate-600 ${
-                          selectedActions.includes(action.id) 
-                            ? 'border-emerald-400 bg-emerald-500/5' 
-                            : 'border-slate-600'
-                        }`}
+                        className={`flex items-start gap-4 p-4 transition-colors ${isLight ? 'bg-white hover:bg-slate-50' : 'bg-slate-700 hover:bg-slate-600'} ${selectedActions.includes(action.id) ? (isLight ? 'bg-emerald-50' : 'bg-emerald-500/5') : ''}`}
                       >
-                        <div className="flex items-start gap-4">
-                          {/* Action Icon styled like overview */}
-                          <div className="flex-shrink-0 w-12 h-12 bg-slate-600 rounded-xl flex items-center justify-center">
-                            {getActionIcon(action.type)}
-                          </div>
-
-                          {/* Action Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <h4 className="text-white font-medium mb-1">{action.title}</h4>
-                                <p className="text-slate-400 text-sm mb-2">{action.description}</p>
-                                
-                                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
-                                  <span>📅 {action.date}</span>
-                                  <span>🕐 {action.time}</span>
-                                  <span>👤 {action.assignee}</span>
-                                  {action.duration && <span>⏱️ {action.duration}</span>}
-                                </div>
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${isLight ? 'bg-slate-200' : 'bg-slate-600'}`}>
+                          {getActionIcon(action.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className={`${isArabic ? 'text-right' : ''}`}>
+                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 min-w-0">
+                              <div className="flex items-center gap-1 min-w-0">
+                                <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'اسم العميل:' : 'Lead Name:'}</span>
+                                <span className={`${isLight ? 'text-black' : 'text-white'} font-semibold max-w-[220px] break-words`}>{leadData.name}</span>
                               </div>
-
-                              {/* Status and Priority */}
-                              <div className="flex flex-col items-end gap-2">
-                                <span className={`px-2 py-1 rounded-full text-xs text-white ${getStatusColor(action.status)}`}>
-                                  {action.status === 'completed' && 'مكتمل'}
-                                  {action.status === 'pending' && 'معلق'}
-                                  {action.status === 'scheduled' && 'مجدول'}
-                                </span>
-                                <span className={`px-2 py-1 rounded border text-xs ${getPriorityColor(action.priority)}`}>
-                                  {action.priority === 'high' && 'عالية'}
-                                  {action.priority === 'medium' && 'متوسطة'}
-                                  {action.priority === 'low' && 'منخفضة'}
-                                </span>
+                              <div className="flex items-center gap-1">
+                                <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'المرحلة:' : 'Stage:'}</span>
+                                <span className={stageBadgeClass} style={stageColorStyle}>{leadData.stage}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'الأولوية:' : 'Priority:'}</span>
+                                <span className={`px-2 py-1 rounded border text-xs ${getPriorityColor(action.priority)}`}>{isArabic ? (action.priority === 'high' ? 'عالية' : action.priority === 'medium' ? 'متوسطة' : 'منخفضة') : (action.priority === 'high' ? 'High' : action.priority === 'medium' ? 'Medium' : 'Low')}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'نوع الإجراء:' : 'Action Type:'}</span>
+                                <span className={`px-2 py-1 rounded border text-xs ${getTypeColor(action.type)}`}>{getTypeLabel(action.type)}</span>
+                              </div>
+                              <div className="flex items-center gap-1 min-w-0">
+                                <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'مسؤول المبيعات:' : 'Sales Man:'}</span>
+                                <span className={`${isLight ? 'text-slate-800' : 'text-slate-300'} max-w-[200px] break-words`}>{action.assignee}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'التاريخ والوقت:' : 'Date & Time:'}</span>
+                                <span className={`${isLight ? 'text-slate-800' : 'text-slate-300'} whitespace-nowrap`}>{`${action.date} ${action.time || ''}`}</span>
                               </div>
                             </div>
-                          </div>
-                          {/* Quick Actions minimal */}
-                          <div className="flex items-center gap-1">
-                            <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors">
-                              <FaEye />
-                            </button>
-                            <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors">
-                              <FaEdit />
-                            </button>
+                            <div className="mt-2 w-full">
+                              <div className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs mb-1`}>{isArabic ? 'التعليق:' : 'Comment:'}</div>
+                              <div className={`${isLight ? 'text-black' : 'text-slate-300'} text-sm break-words whitespace-pre-line`}>{action.description}</div>
+                            </div>
                           </div>
                         </div>
+                        {/* Removed trailing preview/edit buttons */}
                       </div>
                     ))}
                   </div>
@@ -621,10 +718,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                     {isArabic ? 'التواصل مع العميل' : 'Client Communication'}
                     <span className="ml-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full">3</span>
                   </h3>
-                  <div className="flex items-center space-x-2">
-                    <button className="p-2 text-gray-500 hover:text-blue-500 transition-colors">
-                      <FaSearch />
-                    </button>
+                <div className="flex items-center space-x-2">
                     <button className="p-2 text-gray-500 hover:text-blue-500 transition-colors">
                       <FaFilter />
                     </button>
@@ -632,84 +726,138 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                 </div>
               </div>
 
-              {/* Quick Actions */}
+              {/* Quick Actions (ordered: Call / WhatsApp / Email / Google Meet) */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <button 
-                  onClick={() => window.open(`https://wa.me/${lead?.phone}`, '_blank')}
-                  className="flex flex-col items-center justify-center p-4 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  onClick={() => { const raw = lead?.phone || ''; const digits = String(raw).replace(/[^0-9]/g, ''); if (digits) window.open(`tel:${digits}`, '_blank'); }}
+                  className={`${isLight ? 'bg-white/70 backdrop-blur-md text-slate-800 border border-gray-200 hover:bg-white/80' : 'bg-slate-800/70 backdrop-blur-md text-white border border-slate-700 hover:bg-slate-800/80'} flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl`}
                 >
-                  <FaWhatsapp className="text-2xl mb-2" />
-                  <span className="text-sm font-medium">{isArabic ? 'واتساب' : 'WhatsApp'}</span>
-                </button>
-                <button 
-                  onClick={() => window.open(`mailto:${lead?.email}`, '_blank')}
-                  className="flex flex-col items-center justify-center p-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                >
-                  <FaEnvelope className="text-2xl mb-2" />
-                  <span className="text-sm font-medium">{isArabic ? 'بريد إلكتروني' : 'Email'}</span>
-                </button>
-                <button 
-                  onClick={() => window.open(`tel:${lead?.phone}`, '_blank')}
-                  className="flex flex-col items-center justify-center p-4 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                >
-                  <FaPhone className="text-2xl mb-2" />
+                  <FaPhone className="text-2xl mb-2" style={{ color: '#2563EB' }} />
                   <span className="text-sm font-medium">{isArabic ? 'مكالمة' : 'Call'}</span>
                 </button>
                 <button 
-                  onClick={() => window.open('https://meet.google.com/new', '_blank')}
-                  className="flex flex-col items-center justify-center p-4 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  onClick={() => { const raw = lead?.phone || ''; const digits = String(raw).replace(/[^0-9]/g, ''); if (digits) window.open(`https://wa.me/${digits}`, '_blank'); }}
+                  className={`${isLight ? 'bg-white/70 backdrop-blur-md text-slate-800 border border-gray-200 hover:bg-white/80' : 'bg-slate-800/70 backdrop-blur-md text-white border border-slate-700 hover:bg-slate-800/80'} flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl`}
                 >
-                  <FaVideo className="text-2xl mb-2" />
-                  <span className="text-sm font-medium">{isArabic ? 'Google Meet' : 'Google Meet'}</span>
+                  <FaWhatsapp className="text-2xl mb-2" style={{ color: '#25D366' }} />
+                  <span className="text-sm font-medium">{isArabic ? 'واتساب' : 'WhatsApp'}</span>
+                </button>
+                <button 
+                  onClick={() => { if (lead?.email) window.open(`mailto:${lead.email}`, '_blank'); }}
+                  className={`${isLight ? 'bg-white/70 backdrop-blur-md text-slate-800 border border-gray-200 hover:bg-white/80' : 'bg-slate-800/70 backdrop-blur-md text-white border border-slate-700 hover:bg-slate-800/80'} flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl`}
+                >
+                  <FaEnvelope className="text-2xl mb-2" style={{ color: '#FFA726' }} />
+                  <span className="text-sm font-medium">{isArabic ? 'بريد إلكتروني' : 'Email'}</span>
+                </button>
+                <button 
+                  onClick={() => window.open('https://meet.google.com/new', '_blank')}
+                  className={`${isLight ? 'bg-white/70 backdrop-blur-md text-slate-800 border border-gray-200 hover:bg-white/80' : 'bg-slate-800/70 backdrop-blur-md text-white border border-slate-700 hover:bg-slate-800/80'} flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl`}
+                >
+                  <img alt="Google Meet" className="w-6 h-6 mb-2" src={"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'><rect x='2' y='4' width='12' height='16' rx='3' fill='%23ffffff'/><rect x='2' y='4' width='12' height='4' rx='2' fill='%234285F4'/><rect x='2' y='4' width='4' height='16' rx='2' fill='%2334A853'/><rect x='10' y='4' width='4' height='16' rx='2' fill='%23FBBC05'/><rect x='2' y='16' width='12' height='4' rx='2' fill='%23EA4335'/><polygon points='14,9 22,5 22,19 14,15' fill='%2334A853'/></svg>"} />
+                  <span className="text-sm font-medium">Google Meet</span>
                 </button>
               </div>
 
-              {/* Filters & Search */}
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-600">{isArabic ? 'فلترة:' : 'Filter:'}</span>
-                    <button className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs hover:bg-blue-200 transition-colors">
-                      {isArabic ? 'الكل' : 'All'}
-                    </button>
-                    <button className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs hover:bg-gray-200 transition-colors">
-                      WhatsApp
-                    </button>
-                    <button className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs hover:bg-gray-200 transition-colors">
-                      Email
-                    </button>
-                    <button className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs hover:bg-gray-200 transition-colors">
-                      {isArabic ? 'مكالمات' : 'Calls'}
-                    </button>
-                    <button className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs hover:bg-gray-200 transition-colors">
-                      {isArabic ? 'غير مقروء' : 'Unread'}
-                    </button>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="text" 
-                      placeholder={isArabic ? 'البحث في المحادثات...' : 'Search conversations...'}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+              {/* Filters */}
+              <div className={`${isLight ? 'bg-white rounded-xl p-4 border border-gray-100 shadow-sm' : 'bg-slate-900/60 backdrop-blur-md rounded-xl p-4 border border-slate-700 shadow-sm'}`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`text-sm font-medium ${isLight ? 'text-gray-600' : 'text-white'}`}>{isArabic ? 'فلترة:' : 'Filter:'}</span>
+                  <button onClick={() => setCommFilter('all')} className={`px-3 py-1 rounded-full text-xs transition-colors ${commFilter==='all' ? (isLight ? 'bg-blue-100 text-blue-700' : 'bg-blue-500/30 text-white border border-blue-500') : (isLight ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-slate-800/60 text-white border border-slate-700 hover:bg-slate-800/80')}`}>
+                    {isArabic ? 'الكل' : 'All'}
+                  </button>
+                  <button onClick={() => setCommFilter('whatsapp')} className={`px-3 py-1 rounded-full text-xs transition-colors ${commFilter==='whatsapp' ? (isLight ? 'bg-green-100 text-green-700' : 'bg-green-500/30 text-white border border-green-500') : (isLight ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-slate-800/60 text-white border border-slate-700 hover:bg-slate-800/80')}`}>
+                    WhatsApp
+                  </button>
+                  <button onClick={() => setCommFilter('email')} className={`px-3 py-1 rounded-full text-xs transition-colors ${commFilter==='email' ? (isLight ? 'bg-blue-100 text-blue-700' : 'bg-blue-500/30 text-white border border-blue-500') : (isLight ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-slate-800/60 text-white border border-slate-700 hover:bg-slate-800/80')}`}>
+                    Email
+                  </button>
+                  <button onClick={() => setCommFilter('meet')} className={`px-3 py-1 rounded-full text-xs transition-colors ${commFilter==='meet' ? (isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500/30 text-white border border-emerald-500') : (isLight ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-slate-800/60 text-white border border-slate-700 hover:bg-slate-800/80')}`}>
+                    Google Meet
+                  </button>
+                  <button onClick={() => setCommFilter('calls')} className={`px-3 py-1 rounded-full text-xs transition-colors ${commFilter==='calls' ? (isLight ? 'bg-purple-100 text-purple-700' : 'bg-purple-500/30 text-white border border-purple-500') : (isLight ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-slate-800/60 text-white border border-slate-700 hover:bg-slate-800/80')}`}>
+                    {isArabic ? 'مكالمات' : 'Calls'}
+                  </button>
+                  <button onClick={() => setCommFilter('unread')} className={`px-3 py-1 rounded-full text-xs transition-colors ${commFilter==='unread' ? (isLight ? 'bg-red-100 text-red-700' : 'bg-red-500/30 text-white border border-red-500') : (isLight ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-slate-800/60 text-white border border-slate-700 hover:bg-slate-800/80')}`}>
+                    {isArabic ? 'غير مقروء' : 'Unread'}
+                  </button>
                 </div>
               </div>
 
               {/* Communication Feed */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className={`${isLight ? 'bg-white rounded-2xl p-6 border border-gray-100 shadow-sm' : 'bg-slate-900/60 backdrop-blur-md rounded-2xl p-6 border border-slate-700 shadow-sm'}`}>
                 <div className="flex justify-between items-center mb-6">
-                  <h4 className="text-lg font-medium text-gray-700">{isArabic ? 'سجل التواصل' : 'Communication Timeline'}</h4>
+                  <h4 className={`text-lg font-medium ${isLight ? 'text-black' : 'text-white'}`}>{isArabic ? 'سجل التواصل' : 'Communication Timeline'}</h4>
                   <button 
-                    onClick={() => alert(isArabic ? 'سيتم إضافة رسالة جديدة' : 'New message will be added')}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
+                    onClick={() => setShowCompose(prev => !prev)}
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2"
                   >
                     <FaPlus className="text-sm" />
                     <span className="text-sm">{isArabic ? 'إضافة رسالة' : 'Add Message'}</span>
                   </button>
                 </div>
+                {showCompose && (
+                  <div className={`${isLight ? 'bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-6' : 'bg-slate-900/60 backdrop-blur-md rounded-2xl p-6 border border-slate-700 shadow-sm mb-6'}`}>
+                    <h4 className={`text-lg font-medium mb-4 ${isLight ? 'text-black' : 'text-white'}`}>{isArabic ? 'إرسال رسالة جديدة' : 'Compose New Message'}</h4>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-gray-700' : 'text-white'}`}>{isArabic ? 'القناة' : 'Channel'}</label>
+                          <div className="relative">
+                            <select className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLight ? 'border-gray-300' : 'bg-slate-800/70 text-white border-slate-700'}`}>
+                              <option>{isArabic ? 'واتساب' : 'WhatsApp'}</option>
+                              <option>{isArabic ? 'بريد إلكتروني' : 'Email'}</option>
+                              <option>{isArabic ? 'جوجل ميت' : 'Google Meet'}</option>
+                              <option>{isArabic ? 'مكالمات' : 'Calls'}</option>
+                            </select>
+                            <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-slate-500' : 'text-white/70'}`} />
+                          </div>
+                        </div>
+                        <div>
+                          <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-gray-700' : 'text-white'}`}>{isArabic ? 'القالب' : 'Template'}</label>
+                          <div className="relative">
+                            <select className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLight ? 'border-gray-300' : 'bg-slate-800/70 text-white border-slate-700'}`}>
+                              <option>{isArabic ? 'رسالة مخصصة' : 'Custom Message'}</option>
+                              <option>{isArabic ? 'متابعة عرض سعر' : 'Quote Follow-up'}</option>
+                              <option>{isArabic ? 'تأكيد موعد' : 'Appointment Confirmation'}</option>
+                              <option>{isArabic ? 'طلب مستندات' : 'Document Request'}</option>
+                              <option>{isArabic ? 'شكر بعد مكالمة' : 'Post-call Thank You'}</option>
+                            </select>
+                            <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-slate-500' : 'text-white/70'}`} />
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-gray-700' : 'text-white'}`}>{isArabic ? 'الموضوع (للإيميل)' : 'Subject (for Email)'}</label>
+                        <input type="text" placeholder={isArabic ? 'موضوع الرسالة...' : 'Message subject...'} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLight ? 'border-gray-300' : 'bg-slate-800/70 text-white border-slate-700 placeholder-slate-300'}`} />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-gray-700' : 'text-white'}`}>{isArabic ? 'نص الرسالة' : 'Message Content'}</label>
+                        <textarea rows="4" placeholder={isArabic ? 'اكتب رسالتك هنا... يمكنك استخدام {الاسم} و {رقم_العرض} كمتغيرات ديناميكية' : 'Type your message here... You can use {name} and {quote_number} as dynamic variables'} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLight ? 'border-gray-300' : 'bg-slate-800/70 text-white border-slate-700 placeholder-slate-300'}`}></textarea>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className={`text-sm ${isLight ? 'text-gray-600' : 'text-white'}`}>{isArabic ? 'جدولة الإرسال' : 'Schedule Send'}</span>
+                          </label>
+                          <input type="datetime-local" className={`px-3 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLight ? 'border-gray-300' : 'bg-slate-800/70 text-white border-slate-700'}`} />
+                        </div>
+                        <div className="flex space-x-2">
+                          <button className={`px-4 py-2 rounded-lg transition-colors ${isLight ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : 'bg-slate-800/70 text-white border border-slate-700 hover:bg-slate-800/80'}`}>
+                            {isArabic ? 'حفظ كمسودة' : 'Save Draft'}
+                          </button>
+                          <button onClick={() => setShowCompose(false)} className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                            {isArabic ? 'إرسال' : 'Send'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="space-y-4">
                   {/* WhatsApp Message */}
+                  {(commFilter === 'all' || commFilter === 'whatsapp' || commFilter === 'unread') && (
                   <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border-l-4 border-green-500 hover:shadow-md transition-shadow cursor-pointer">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -718,11 +866,11 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                             <FaWhatsapp className="text-white text-sm" />
                           </div>
                           <div>
-                            <h5 className="font-semibold text-gray-800">{lead?.name || (isArabic ? 'محمد علي' : 'Mohamed Ali')}</h5>
+                            <h5 className={`font-semibold ${isLight ? 'text-black' : 'text-gray-800'}`}>{lead?.name || (isArabic ? 'محمد علي' : 'Mohamed Ali')}</h5>
                             <p className="text-xs text-gray-500">{isArabic ? 'رسالة واتساب • وارد' : 'WhatsApp Message • Incoming'}</p>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-700 bg-white p-3 rounded-lg shadow-sm">
+                        <p className={`text-sm ${isLight ? 'text-black' : 'text-gray-700'} bg-white p-3 rounded-lg shadow-sm`}>
                           {isArabic ? 'مرحباً، شكراً لك على العرض المرسل. هل يمكننا تحديد موعد لاجتماع لمناقشة تفاصيل المشروع والأسعار؟' : 'Hello, thank you for the proposal. Can we schedule a meeting to discuss the project details and pricing?'}
                         </p>
                         <div className="flex items-center mt-2 space-x-2">
@@ -737,8 +885,10 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                       </div>
                     </div>
                   </div>
+                  )}
                   
                   {/* Email */}
+                  {(commFilter === 'all' || commFilter === 'email') && (
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-500 hover:shadow-md transition-shadow cursor-pointer">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -747,13 +897,13 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                             <FaEnvelope className="text-white text-sm" />
                           </div>
                           <div>
-                            <h5 className="font-semibold text-gray-800">{isArabic ? 'أنت' : 'You'}</h5>
+                            <h5 className={`font-semibold ${isLight ? 'text-black' : 'text-gray-800'}`}>{isArabic ? 'أنت' : 'You'}</h5>
                             <p className="text-xs text-gray-500">{isArabic ? 'بريد إلكتروني • صادر' : 'Email • Outgoing'}</p>
                           </div>
                         </div>
                         <div className="bg-white p-3 rounded-lg shadow-sm">
-                          <h6 className="font-medium text-gray-800 mb-1">{isArabic ? 'الموضوع: العرض المالي المحدث' : 'Subject: Updated Financial Proposal'}</h6>
-                          <p className="text-sm text-gray-700">
+                          <h6 className={`font-medium mb-1 ${isLight ? 'text-black' : 'text-gray-800'}`}>{isArabic ? 'الموضوع: العرض المالي المحدث' : 'Subject: Updated Financial Proposal'}</h6>
+                          <p className={`text-sm ${isLight ? 'text-black' : 'text-gray-700'}`}>
                             {isArabic ? 'تم إرسال العرض المالي المحدث مع التعديلات المطلوبة. يرجى المراجعة والرد في أقرب وقت ممكن. مرفق: عرض_سعر_محدث.pdf' : 'Updated financial proposal sent with requested modifications. Please review and respond at your earliest convenience. Attachment: updated_quote.pdf'}
                           </p>
                         </div>
@@ -769,8 +919,10 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                       </div>
                     </div>
                   </div>
+                  )}
                   
                   {/* Phone Call */}
+                  {(commFilter === 'all' || commFilter === 'calls') && (
                   <div className="p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border-l-4 border-purple-500 hover:shadow-md transition-shadow cursor-pointer">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -779,11 +931,11 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                             <FaPhone className="text-white text-sm" />
                           </div>
                           <div>
-                            <h5 className="font-semibold text-gray-800">{isArabic ? 'مكالمة هاتفية' : 'Phone Call'}</h5>
+                            <h5 className={`font-semibold ${isLight ? 'text-black' : 'text-gray-800'}`}>{isArabic ? 'مكالمة هاتفية' : 'Phone Call'}</h5>
                             <p className="text-xs text-gray-500">{isArabic ? 'مكالمة صادرة • 15 دقيقة' : 'Outgoing Call • 15 minutes'}</p>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-700 bg-white p-3 rounded-lg shadow-sm">
+                        <p className={`text-sm ${isLight ? 'text-black' : 'text-gray-700'} bg-white p-3 rounded-lg shadow-sm`}>
                           {isArabic ? 'مكالمة ناجحة مع العميل. تم مناقشة جميع النقاط المهمة وتوضيح تفاصيل المشروع. العميل مهتم ويريد المضي قدماً.' : 'Successful call with client. Discussed all important points and clarified project details. Client is interested and wants to proceed.'}
                         </p>
                         <div className="flex items-center mt-2 space-x-2">
@@ -798,6 +950,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                       </div>
                     </div>
                   </div>
+                  )}
                   
                   {/* Video Meeting */}
                   <div className="p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl border-l-4 border-red-500 hover:shadow-md transition-shadow cursor-pointer">
@@ -830,75 +983,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                 </div>
               </div>
 
-              {/* Compose Panel */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h4 className="text-lg font-medium text-gray-700 mb-4">{isArabic ? 'إرسال رسالة جديدة' : 'Compose New Message'}</h4>
-                
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">{isArabic ? 'القناة' : 'Channel'}</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option>WhatsApp</option>
-                        <option>Email</option>
-                        <option>SMS</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">{isArabic ? 'القالب' : 'Template'}</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option>{isArabic ? 'رسالة مخصصة' : 'Custom Message'}</option>
-                        <option>{isArabic ? 'متابعة عرض سعر' : 'Quote Follow-up'}</option>
-                        <option>{isArabic ? 'تأكيد موعد' : 'Appointment Confirmation'}</option>
-                        <option>{isArabic ? 'طلب مستندات' : 'Document Request'}</option>
-                        <option>{isArabic ? 'شكر بعد مكالمة' : 'Post-call Thank You'}</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{isArabic ? 'الموضوع (للإيميل)' : 'Subject (for Email)'}</label>
-                    <input 
-                      type="text" 
-                      placeholder={isArabic ? 'موضوع الرسالة...' : 'Message subject...'}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{isArabic ? 'نص الرسالة' : 'Message Content'}</label>
-                    <textarea 
-                      rows="4"
-                      placeholder={isArabic ? 'اكتب رسالتك هنا... يمكنك استخدام {الاسم} و {رقم_العرض} كمتغيرات ديناميكية' : 'Type your message here... You can use {name} and {quote_number} as dynamic variables'}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    ></textarea>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <label className="flex items-center">
-                        <input type="checkbox" className="mr-2" />
-                        <span className="text-sm text-gray-600">{isArabic ? 'جدولة الإرسال' : 'Schedule Send'}</span>
-                      </label>
-                      <input 
-                        type="datetime-local" 
-                        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="flex space-x-2">
-                      <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
-                        {isArabic ? 'حفظ كمسودة' : 'Save Draft'}
-                      </button>
-                      <button 
-                        onClick={() => alert(isArabic ? 'تم إرسال الرسالة بنجاح!' : 'Message sent successfully!')}
-                        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                      >
-                        {isArabic ? 'إرسال' : 'Send'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* Compose Panel moved near Add Message button */}
 
               {/* Quick Analytics */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

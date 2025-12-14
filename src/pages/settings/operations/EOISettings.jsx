@@ -1,12 +1,11 @@
 import React from 'react'
-import Layout from '../../../components/Layout'
 import { useTranslation } from 'react-i18next'
 import EoiSettingsManager from '../../../components/settings/EoiSettingsManager'
 
 export default function SettingsEoi() {
   const { t } = useTranslation()
   return (
-    <Layout title={t('EOI Settings')}>
+    <>
       <div className="p-4 space-y-6">
         <div className="flex items-start justify-between">
           <div>
@@ -19,6 +18,6 @@ export default function SettingsEoi() {
         </div>
         <EoiSettingsManager />
       </div>
-    </Layout>
+    </>
   )
 }

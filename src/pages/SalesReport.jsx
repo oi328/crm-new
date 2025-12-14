@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react'
-import Layout from '@shared/layouts/Layout'
+// Layout removed per app-level layout usage
 import { useTranslation } from 'react-i18next'
 import { FaBullseye, FaClipboardList, FaFileSignature, FaClipboardCheck, FaHandshake, FaTimesCircle } from 'react-icons/fa'
 
@@ -337,7 +337,7 @@ export default function SalesReport() {
   }
 
   return (
-    <Layout>
+    <>
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('Sales Report')}</h1>
         <div className="flex items-center gap-2">
@@ -663,6 +663,6 @@ export default function SalesReport() {
           </nav>
         </div>
       </div>
-    </Layout>
+    </>
   )
 }

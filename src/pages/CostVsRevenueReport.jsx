@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
+// Layout removed per app-level layout usage
 import { useTranslation } from 'react-i18next'
 import { Bar } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
@@ -90,7 +90,7 @@ export default function CostVsRevenueReport() {
   }
 
   return (
-    <Layout>
+    <>
       <div id="report-root" className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">{t('Cost vs Revenue by Platform')}</h1>
@@ -280,6 +280,6 @@ export default function CostVsRevenueReport() {
           </section>
         </div>
       </div>
-    </Layout>
+    </>
   )
 }

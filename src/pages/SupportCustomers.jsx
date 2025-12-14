@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import Layout from '@shared/layouts/Layout'
 import { api } from '../utils/api'
 
 export default function SupportCustomers() {
@@ -70,7 +69,7 @@ export default function SupportCustomers() {
   )
 
   return (
-    <Layout>
+    <>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold">{t('Customers')}</h1>
         <div className="flex gap-2 items-center">
@@ -145,6 +144,6 @@ export default function SupportCustomers() {
           <div className="mt-3 text-sm opacity-70">{t('No customers found')}</div>
         )}
       </div>
-    </Layout>
+    </>
   )
 }

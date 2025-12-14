@@ -1,12 +1,11 @@
 import React from 'react'
-import Layout from '../../../components/Layout'
 import { useTranslation } from 'react-i18next'
 import MatchingSettingsManager from '../../../components/settings/MatchingSettingsManager'
 
 export default function SettingsMatching() {
   const { t } = useTranslation()
   return (
-    <Layout title={t('Matching Settings')}>
+    <>
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">{t('Matching Settings')}</h2>
@@ -18,6 +17,6 @@ export default function SettingsMatching() {
 
         <MatchingSettingsManager />
       </div>
-    </Layout>
+    </>
   )
 }

@@ -3,8 +3,9 @@ import { initReactI18next } from 'react-i18next';
 
 // Function to set document direction based on language
 const setDocumentDirection = (language) => {
-  document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-  document.documentElement.lang = language;
+  const lng = String(language || 'en');
+  document.documentElement.dir = lng.startsWith('ar') ? 'rtl' : 'ltr';
+  document.documentElement.lang = lng;
 };
 
 // Set initial direction with safe fallback
@@ -349,6 +350,7 @@ const resources = {
       'All Time': 'All Time',
       'Quick Numbers': 'Pipeline stages',
       'Duplicate Leads': 'Duplicate Leads',
+      'Deleted Leads': 'Deleted Leads',
       'Fresh Leads': 'Fresh Leads',
       'New Leads': 'New Leads',
       'Pending Leads': 'Pending Leads',
@@ -1019,6 +1021,7 @@ const resources = {
       'All Time': 'طوال الوقت',
       'Quick Numbers': 'مراحل العملاء',
       'Duplicate Leads': 'العملاء المكررون',
+      'Deleted Leads': 'العملاء المحذوفون',
       'Fresh Leads': 'العملاء الجدد',
       'New Leads': 'العملاء الجدد',
       'Pending Leads': 'العملاء قيد الانتظار',

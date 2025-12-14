@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../utils/api'
-import Layout from '@shared/layouts/Layout'
 
 export default function SalesInvoices() {
   const { t } = useTranslation()
@@ -89,7 +88,7 @@ export default function SalesInvoices() {
   }, [])
 
   return (
-    <Layout>
+    <>
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">{t('Invoices')}</h1>
@@ -150,6 +149,6 @@ export default function SalesInvoices() {
         </div>
       )}
     </div>
-    </Layout>
+    </>
   )
 }

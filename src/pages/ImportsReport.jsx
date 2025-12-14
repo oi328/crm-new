@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import * as XLSX from 'xlsx'
@@ -180,7 +179,7 @@ const ImportsReport = () => {
   )
 
   return (
-    <Layout>
+    <>
       {/* عنوان الصفحة */}
       <div className="mb-4">
         <h1 className="text-2xl font-bold">
@@ -444,7 +443,7 @@ const ImportsReport = () => {
           </form>
         </div>
       )}
-    </Layout>
+    </>
   )
 }
 

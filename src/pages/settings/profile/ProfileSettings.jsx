@@ -1,11 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import Layout from '../../../components/Layout'
 import ProfileSettingsPanel from '../../../components/settings/ProfileSettingsPanel'
 
 export default function SettingsProfile() {
   const { t } = useTranslation()
   return (
-    <Layout>
+    <>
       <div className="p-3 sm:p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] space-y-4 sm:space-y-6">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="w-1 h-6 sm:h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
@@ -15,6 +14,6 @@ export default function SettingsProfile() {
         </div>
         <ProfileSettingsPanel />
       </div>
-    </Layout>
+    </>
   )
 }

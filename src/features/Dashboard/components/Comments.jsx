@@ -271,23 +271,23 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
             <thead className={`text-xs uppercase sticky top-0 ${isLight ? 'bg-gray-50' : 'bg-gray-800'}`}>
               <tr>
                 <th scope="col" className="px-6 py-3">{t('Employee')}</th>
-                <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Lead')}</th>
-                <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Comment')}</th>
-                <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Priority')}</th>
-                <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Stage')}</th>
-                <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Actions')}</th>
-                <th scope="col" className={`px-6 py-3 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t('Action time')}</th>
+                <th scope="col" className="px-6 py-3">{t('Lead')}</th>
+                <th scope="col" className="px-6 py-3">{t('Comment')}</th>
+                <th scope="col" className="px-6 py-3">{t('Priority')}</th>
+                <th scope="col" className="px-6 py-3">{t('Stage')}</th>
+                <th scope="col" className="px-6 py-3">{t('Actions')}</th>
+                <th scope="col" className="px-6 py-3">{t('Action time')}</th>
               </tr>
             </thead>
             <tbody>
               {displayComments.map((comment) => (
                 <tr key={comment.id} className={`border-b ${isLight ? 'bg-white border-gray-200 hover:bg-gray-50' : 'bg-gray-800 border-gray-700 dark:hover:bg-blue-900/25'}`}>
                   <td className="px-6 py-4">{comment.employeeName}</td>
-                  <td className={`px-6 py-4 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{comment.leadName}</td>
-                  <td className={`px-6 py-4 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{comment.comment}</td>
-                  <td className={`px-6 py-4 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t(comment.priority)}</td>
-                  <td className={`px-6 py-4 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{t(comment.type)}</td>
-                  <td className={`px-6 py-4 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>
+                  <td className={`px-6 py-4`}>{comment.leadName}</td>
+                  <td className={`px-6 py-4`}>{comment.comment}</td>
+                  <td className={`px-6 py-4`}>{t(comment.priority)}</td>
+                  <td className={`px-6 py-4`}>{t(comment.type)}</td>
+                  <td className={`px-6 py-4`}>
                     <button 
                       className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
                       onClick={() => { setSelectedLead({ fullName: comment.leadName }); setIsLeadModalOpen(true); }}
@@ -295,7 +295,7 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
                       {t('View Lead')}
                     </button>
                   </td>
-                  <td className={`px-6 py-4 border-l ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>{comment.timestamp}</td>
+                  <td className={`px-6 py-4`}>{comment.timestamp}</td>
                 </tr>
               ))}
             </tbody>
