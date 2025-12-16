@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://github.com/oi328/besouhoula",
+  "homepage": "https://oi328.github.io/crm-new/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
