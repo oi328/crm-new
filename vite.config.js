@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename)
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/new/',
+  base: '/crm-new/',
   plugins: [react()],
   optimizeDeps: {
     exclude: ['react-icons/si']
