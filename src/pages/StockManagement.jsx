@@ -110,7 +110,10 @@ export default function StockManagement() {
   return (
       <div className="space-y-6">
         {/* Title */}
-        <h1 className="text-2xl font-semibold">{labels.title}</h1>
+        <div className={`relative inline-flex items-center ${isArabic ? 'flex-row-reverse' : ''} gap-2`}>
+          <h1 className={`page-title text-2xl font-semibold ${isArabic ? 'text-right' : 'text-left'}`}>{labels.title}</h1>
+          <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
+        </div>
 
         {/* Form */}
         <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>

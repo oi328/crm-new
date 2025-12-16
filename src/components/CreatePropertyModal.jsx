@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import { FaTimes } from 'react-icons/fa'
-import { useTranslation } from 'react-i18next'
+ 
 
 export default function CreatePropertyModal({ onClose, isRTL, onSave }) {
-  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('basic')
   const [form, setForm] = useState({
     name: '', city: '', developer: '', status: 'Available', units: '', area: '', price: '', description: '',
@@ -46,9 +45,9 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave }) {
   )
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-50 glass-panel rounded-xl p-4 w-[1000px] max-w-[95vw]">
+      <div className="relative z-[210] glass-panel rounded-xl p-4 w-[800px] max-w-[90vw] max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">{isRTL ? 'إنشاء عقار' : 'Create Property'}</h2>
           <button className="btn btn-glass" onClick={onClose}><FaTimes /></button>

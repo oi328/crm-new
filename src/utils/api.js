@@ -41,7 +41,7 @@ api.interceptors.response.use(
 // Demo mode: intercept calls and return dummy data to allow browsing without backend
 const DEMO_MODE = true
 
-function mockData(method, url, body) {
+function mockData(method, url) {
   if (url.startsWith('/api/users')) {
     if (method === 'GET') {
       if (/\/api\/users\/.+/.test(url)) return { id: 1, name: 'Demo User', email: 'demo@example.com', role: 'admin' }

@@ -7,6 +7,7 @@ import invoicesRouter from './invoices.js'
 import customersRouter from './customers.js'
 import ticketsRouter from './tickets.js'
 import slasRouter from './slas.js'
+import paymentPlansRouter from './paymentPlans.js'
 import feedbacksRouter from './feedbacks.js'
 import { ok } from '../lib/response.js'
 import { getActivity } from '../lib/activity.js'
@@ -27,6 +28,7 @@ r.use('/customers', customersRouter)
 r.use('/tickets', ticketsRouter)
 r.use('/slas', slasRouter)
 r.use('/feedbacks', feedbacksRouter)
+r.use('/payment-plans', paymentPlansRouter)
 
 // Customers Module namespace: mirror sales endpoints under /api/customers/*
 // This satisfies REST paths like /api/customers/opportunities, /api/customers/quotations, etc.
@@ -34,5 +36,6 @@ r.use('/customers/opportunities', opportunitiesRouter)
 r.use('/customers/quotations', quotationsRouter)
 r.use('/customers/sales-orders', salesOrdersRouter)
 r.use('/customers/invoices', invoicesRouter)
+r.use('/customers/payment-plans', paymentPlansRouter)
 
 export default r

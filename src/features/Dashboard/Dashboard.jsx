@@ -468,7 +468,7 @@ export const Dashboard = () => {
       
           <div className="mt-1 mb-3">
             <div className={`relative inline-flex items-center ${i18n.language === 'ar' ? 'flex-row-reverse' : ''} gap-2`}>
-              <h1 className="page-title text-[16px] font-bold text-primary">{t('Dashboard')}</h1>
+              <h1 className="page-title text-[18px] font-bold text-primary">{t('Dashboard')}</h1>
               <span
                 aria-hidden
                 className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent"
@@ -1008,12 +1008,15 @@ export const Dashboard = () => {
 
             {/* Leads Status (second) */}
             <div ref={leadsPanelRef} className="p-3 glass-panel rounded-lg shadow-md lg:col-span-3 h-full flex flex-col min-h-0">
-              <div dir={i18n.dir() === 'rtl' ? 'rtl' : 'ltr'} className={`flex items-center w-full ${i18n.dir() === 'rtl' ? 'flex-row-reverse' : ''} gap-2 mb-2`}>
+              <div dir={i18n.dir() === 'rtl' ? 'rtl' : 'ltr'} className={`section-header flex items-center w-full ${i18n.dir() === 'rtl' ? 'flex-row-reverse' : ''} gap-2 mb-2 rounded-md p-2 ${isLight ? 'bg-gray-100 border border-gray-200 shadow-sm' : 'bg-gray-800/40 border border-gray-700 shadow-sm'}`}>
+                <div className={`p-1.5 rounded-md ${isLight ? 'bg-blue-100 border border-blue-200' : 'bg-gray-700 border border-gray-600'}`}>
+                  <RiBarChart2Line className={`${isLight ? 'text-blue-600' : 'text-blue-300'} w-4 h-4`} />
+                </div>
                 <h3 className={`flex-1 text-lg font-bold text-primary ${i18n.dir() === 'rtl' ? 'text-right' : 'text-left'}`}>{t('Leads Status')}</h3>
               </div>
 
               {/* Enhanced Leads Statistics */}
-              <div className="flex-1 text-white min-h-0 grid grid-rows-4 gap-2">
+              <div className={`flex-1 min-h-0 grid grid-rows-4 gap-2 ${isLight ? 'text-black' : 'text-white'}`}>
                 <LeadsStatsCard
                   title={t('Total Leads')}
                   value="16,766"

@@ -70,7 +70,7 @@ export const Leads = () => {
   const textColor = 'text-gray-900 dark:text-white'
   const bgColor = 'bg-white dark:bg-gray-900'
   
-  const tableHeaderBgClass = 'bg-gray-100 dark:bg-gray-800/80'
+  const tableHeaderBgClass = 'bg-gray-100 dark:bg-gray-900/95'
   const buttonBase = 'text-sm font-semibold rounded-lg transition-all duration-200 ease-out'
   const primaryButton = `inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md ${buttonBase}`
   
@@ -588,12 +588,12 @@ export const Leads = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-      case 'qualified': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-      case 'in-progress': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-      case 'converted': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-      case 'lost': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      case 'new': return 'bg-blue-100 text-black dark:bg-blue-900 dark:text-blue-200'
+      case 'qualified': return 'bg-green-100 text-black dark:bg-green-900 dark:text-green-200'
+      case 'in-progress': return 'bg-yellow-100 text-black dark:bg-yellow-900 dark:text-yellow-200'
+      case 'converted': return 'bg-purple-100 text-black dark:bg-purple-900 dark:text-purple-200'
+      case 'lost': return 'bg-red-100 text-black dark:bg-red-900 dark:text-red-200'
+      default: return 'bg-gray-100 text-black dark:bg-gray-900 dark:text-gray-200'
     }
   }
 
@@ -907,7 +907,7 @@ export const Leads = () => {
     <div className={`px-2 max-[480px]:px-1 py-4 md:px-6 md:py-6 min-h-screen  ${textColor}` } dir={isRtl ? 'rtl' : 'ltr'}>
       <div className={`p-4 flex justify-between items-center gap-4 mb-6`} dir={isRtl ? 'rtl' : 'ltr'}>
         <div className={`relative inline-flex items-center ${isRtl ? 'flex-row-reverse' : ''} gap-2`}>
-          <h1 className={`page-title text-2xl md:text-3xl font-bold text-white dark:text-white flex items-center gap-2 ${isRtl ? 'flex-row-reverse text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left' }}>
+          <h1 className={`page-title text-2xl md:text-3xl font-bold text-black dark:text-white flex items-center gap-2 ${isRtl ? 'flex-row-reverse text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left', color: theme === 'dark' ? '#ffffff' : '#000000' }}>
             {t('Leads')}
           </h1>
           <span
@@ -1554,10 +1554,10 @@ export const Leads = () => {
         </div>
         <div ref={scrollXRef} className="mt-4 w-full overflow-x-auto rounded-lg shadow-md backdrop-blur-lg" style={{ '--table-header-bg': theme === 'dark' ? 'transparent' : undefined, '--scroll-bg': theme === 'dark' ? '#0f172a' : '#f9fafb' }}>
           <table className="w-max min-w-full divide-y divide-gray-200 dark:divide-gray-700 dark:text-white" style={{ tableLayout: 'auto' }}>
-            <thead className={` backdrop-blur-md sticky top-0 z-30 shadow-md`}>
+            <thead className={` ${tableHeaderBgClass} backdrop-blur-md sticky top-0 z-30 shadow-md`} style={{ backgroundColor: 'var(--table-header-bg)' }}>
               <tr>
                 {/* Checkbox Column */}
-                <th scope="col" className="w-10 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white whitespace-nowrap">
+                <th scope="col" className="w-10 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white whitespace-nowrap" style={{ backgroundColor: 'var(--table-header-bg)' }}>
                   <input
                     type="checkbox"
                     checked={selectedLeads.length === paginatedLeads.length && paginatedLeads.length > 0}
@@ -1571,7 +1571,8 @@ export const Leads = () => {
                   <th
                     key="lead"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 w-40 whitespace-nowrap cursor-pointer`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white w-40 whitespace-nowrap cursor-pointer`}
+                    style={{ backgroundColor: 'var(--table-header-bg)' }}
                     onClick={() => {
                       if (sortBy === 'lead') {
                         setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
@@ -1594,7 +1595,8 @@ export const Leads = () => {
                   <th
                     key="contact"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 w-48 whitespace-nowrap`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white w-48 whitespace-nowrap`}
+                    style={{ backgroundColor: 'var(--table-header-bg)' }}
                   >
                     <div className="flex items-center gap-1">{allColumns.contact}</div>
                   </th>
@@ -1604,8 +1606,8 @@ export const Leads = () => {
                   <th
                     key="actions"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 whitespace-nowrap sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} bg-[var(--scroll-bg)] z-30`}
-                    style={{ minWidth: '160px' }}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white whitespace-nowrap sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-30`}
+                    style={{ minWidth: '160px', backgroundColor: 'var(--table-header-bg)' }}
                   >
                     {t('Actions')}
                   </th>
@@ -1616,8 +1618,8 @@ export const Leads = () => {
                     <th
                       key={key}
                       scope="col"
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white border-l border-gray-200 dark:border-gray-700 whitespace-nowrap ${['source','stage','priority','status','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
-                      style={{ minWidth: `${columnMinWidths[key] || 140}px` }}
+                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white whitespace-nowrap ${['source','stage','priority','status','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
+                      style={{ minWidth: `${columnMinWidths[key] || 140}px`, backgroundColor: 'var(--table-header-bg)' }}
                       onClick={['source','stage','priority','status','expectedRevenue'].includes(key) ? () => {
                         if (sortBy === key) {
                           setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
@@ -1662,7 +1664,7 @@ export const Leads = () => {
 
                   {/* Lead Info */}
                   {visibleColumns.lead && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium  dark:text-white border-l border-gray-200 dark:border-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium  dark:text-white">
                       <div className="font-semibold text-base">{lead.name}</div>
                       <div className=" dark:text-gray-400 text-xs mt-0.5">{lead.company}</div>
                     </td>
@@ -1670,7 +1672,7 @@ export const Leads = () => {
 
                   {/* Contact Info */}
                   {visibleColumns.contact && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
                       <div className="font-normal dark:text-white">{lead.email}</div>
                       <div className="font-normal dark:text-white">{lead.phone}</div>
                     </td>
@@ -1678,7 +1680,7 @@ export const Leads = () => {
 
                   {/* Actions (after Contact) */}
                   {visibleColumns.actions && (
-                    <td className={`px-6 py-4 whitespace-nowrap text-xs font-medium border-l border-gray-200 dark:border-gray-700 sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} bg-[var(--scroll-bg)] z-20`}>
+                    <td className={`px-6 py-4 whitespace-nowrap text-xs font-medium sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-transparent`}>
                       <div className="flex items-center gap-2 flex-nowrap">
                         <button
                           title={t('Preview')}
@@ -1728,35 +1730,35 @@ export const Leads = () => {
 
                   {/* Source */}
                   {visibleColumns.source && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.source}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.source}px` }}>
                       <span className="text-base">{getSourceIcon(lead.source)}</span> {lead.source}
                     </td>
                   )}
 
                   {/* Project */}
                   {visibleColumns.project && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.project}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.project}px` }}>
                       {lead.project || '-'}
                     </td>
                   )}
 
                   {/* Sales Person */}
                   {visibleColumns.sales && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.sales}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.sales}px` }}>
                       {lead.assignedTo || '-'}
                     </td>
                   )}
 
                   {/* Last Comment */}
                   {visibleColumns.lastComment && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.lastComment}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.lastComment}px` }}>
                       {lead.notes || '-'}
                     </td>
                   )}
 
                   {/* Stage */}
                   {visibleColumns.stage && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.stage}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.stage}px` }}>
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold leading-5 rounded-full ${getStatusColor(lead.stage)}`}>
                         {t(lead.stage || 'N/A')}
                       </span>
@@ -1765,14 +1767,14 @@ export const Leads = () => {
 
                   {/* Expected Revenue */}
                   {visibleColumns.expectedRevenue && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.expectedRevenue}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.expectedRevenue}px` }}>
                       {lead.estimatedValue ? `${lead.estimatedValue.toLocaleString()} ${t('SAR')}` : '-'}
                     </td>
                   )}
 
                   {/* Priority */}
                   {visibleColumns.priority && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.priority}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.priority}px` }}>
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold leading-5 rounded-full ${getPriorityColor(lead.priority)}`}>
                         {t(lead.priority || 'N/A')}
                       </span>
@@ -1781,7 +1783,7 @@ export const Leads = () => {
 
                   {/* Status */}
                   {visibleColumns.status && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white border-l border-gray-200 dark:border-gray-700" style={{ minWidth: `${columnMinWidths.status}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.status}px` }}>
                       {t(lead.status || 'N/A')}
                     </td>
                   )}
@@ -1805,7 +1807,7 @@ export const Leads = () => {
       </div>
 
       {/* Pagination Controls */}
-      <nav className="flex flex-col lg:flex-row lg:flex-nowrap justify-between items-stretch lg:items-center gap-3 lg:gap-0 p-3 lg:p-4 border-t border-gray-200 dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
+      <nav className="flex flex-col lg:flex-row lg:flex-nowrap justify-between items-stretch lg:items-center gap-3 lg:gap-2 p-3 lg:p-4 border-t border-gray-200 dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium  dark:text-white">
           <span style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Show')}</span>
           <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm text-gray-900 dark:text-white text-xs">
@@ -1834,12 +1836,12 @@ export const Leads = () => {
             className="ml-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
             style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
           />
-          <div className="spacer-row w-full">
+          <div className="spacer-row w-full lg:hidden">
             <div className="h-2"></div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row items-start lg:items-center gap-3 lg:gap-2 w-full lg:w-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row lg:flex-nowrap items-start lg:items-center gap-3 lg:gap-2 w-full lg:w-auto">
           {/* Export Controls */}
           <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700">
             <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Export Pages')}</span>
@@ -1883,8 +1885,8 @@ export const Leads = () => {
               <span className="sr-only text-white focus:text-white">{t('Previous')}</span>
               <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
             </button>
-            <span className="text-sm font-medium  dark:text-white text-white focus:text-white">
-              {t('Page')} <span className="font-boldv text-white focus:text-white">{currentPage}</span> {t('of')} <span className="font-bold text-white focus:text-white">{Math.ceil(filteredLeads.length / itemsPerPage)}</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">
+              {t('Page')} <span className="font-semibold text-gray-900 dark:text-white">{currentPage}</span> {t('of')} <span className="font-semibold text-gray-900 dark:text-white">{Math.ceil(filteredLeads.length / itemsPerPage)}</span>
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}

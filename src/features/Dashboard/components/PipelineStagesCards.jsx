@@ -27,8 +27,8 @@ export const LeadsStatsCard = ({ title, value, change, changeType, icon, color, 
           {getChangeIcon()} {change}
         </div>
       </div>
-      <h4 className={`${compact ? 'text-[11px]' : 'text-xs'} font-semibold text-white ${compact ? 'mb-0' : 'mb-1'}`}>{title}</h4>
-      <p className={`${compact ? 'text-base' : 'text-xl'} font-bold text-white`}>{value}</p>
+      <h4 className={`${compact ? 'text-[11px]' : 'text-xs'} font-semibold ${isLight ? 'text-black' : 'text-white'} ${compact ? 'mb-0' : 'mb-1'}`}>{title}</h4>
+      <p className={`${compact ? 'text-base' : 'text-xl'} font-bold ${isLight ? 'text-black' : 'text-white'}`}>{value}</p>
     </div>
   );
 };

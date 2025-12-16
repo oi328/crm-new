@@ -21,7 +21,7 @@ app.use((req, res, next) => {
     "script-src 'self' 'unsafe-inline' 'unsafe-eval';",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
     "font-src 'self' https://fonts.gstatic.com;",
-    "img-src 'self' data: blob: https://i.pravatar.cc https://img.icons8.com;",
+    "img-src 'self' data: blob: https://i.pravatar.cc https://img.icons8.com https://images.unsplash.com https://source.unsplash.com https://dummyimage.com;",
     "connect-src 'self';",
     "frame-ancestors 'self';",
     "base-uri 'self';",

@@ -1,5 +1,4 @@
-import React, { useMemo, useState } from 'react'
-import Layout from '@shared/layouts/Layout'
+import React, { useMemo, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import PropertyCard from '../components/PropertyCard'
 import PropertiesSummaryPanel from '../components/PropertiesSummaryPanel'
@@ -8,8 +7,11 @@ import CreatePropertyModal from '../components/CreatePropertyModal'
 // removed local theme toggle
 
 export default function Properties() {
-  const { t, i18n } = useTranslation()
-  const isRTL = i18n.language === 'ar'
+  const { i18n } = useTranslation()
+  const isRTL = String(i18n.language || '').startsWith('ar')
+  useEffect(() => {
+    try { document.documentElement.dir = isRTL ? 'rtl' : 'ltr' } catch {}
+  }, [isRTL])
   // theme toggle removed on this page per request
 
   const SAMPLE_PROPERTIES = useMemo(()=>[
@@ -55,7 +57,7 @@ export default function Properties() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selected, setSelected] = useState(null)
 
-  const statuses = ['Available','Sold','Reserved']
+  
   const cities = ['Cairo','Giza','New Cairo','Alexandria']
   const developers = ['Hima Dev','TechBuild','SeaSide Dev']
   const types = ['Apartment','Villa','Office']
@@ -124,17 +126,19 @@ export default function Properties() {
   const paged = useMemo(()=> filtered.slice((page-1)*perPage, page*perPage), [filtered, page])
 
   return (
-    <Layout>
-      <div className="p-6 bg-[var(--content-bg)] text-[var(--content-text)]">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{isRTL ? 'لوحة العقارات' : 'Properties Dashboard'}</h1>
+    <div className="p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-x-hidden min-w-0">
+        <div className="glass-panel rounded-xl p-4 mb-4">
+          <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}> 
+            <div className={`relative inline-flex flex-col ${isRTL ? 'items-end' : 'items-start'} gap-1`}>
+              <h1 className={`page-title text-2xl font-bold ${isRTL ? 'text-end' : 'text-start'}`}>{isRTL ? 'لوحة العقارات' : 'Properties Dashboard'}</h1>
+              <span aria-hidden className={`block h-[1px] w-full rounded ${isRTL ? 'bg-gradient-to-l' : 'bg-gradient-to-r'} from-blue-500 via-purple-500 to-transparent`}></span>
+            </div>
+          <div className={`flex flex-wrap items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <button className="btn btn-primary btn-compact" onClick={()=>setShowCreateModal(true)}>{isRTL ? 'إنشاء عقار' : 'Create Property'}</button>
+            <button className="btn btn-glass btn-compact" onClick={()=>setShowImportModal(true)}>{isRTL ? 'استيراد' : 'Import'}</button>
+            <button className="btn btn-glass btn-compact" onClick={exportCSV}>{isRTL ? 'تصدير CSV' : 'Export CSV'}</button>
+            <button className="btn btn-glass btn-compact" onClick={exportPDF}>{isRTL ? 'تصدير PDF' : 'Export PDF'}</button>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="btn btn-primary" onClick={()=>setShowCreateModal(true)}>{isRTL ? 'إنشاء عقار' : 'Create Property'}</button>
-            <button className="btn btn-glass" onClick={()=>setShowImportModal(true)}>{isRTL ? 'استيراد' : 'Import'}</button>
-            <button className="btn btn-glass" onClick={exportCSV}>{isRTL ? 'تصدير CSV' : 'Export CSV'}</button>
-            <button className="btn btn-glass" onClick={exportPDF}>{isRTL ? 'تصدير PDF' : 'Export PDF'}</button>
           </div>
         </div>
 
@@ -219,7 +223,7 @@ export default function Properties() {
               </div>
               <div className="text-xs text-[var(--muted-text)]">{roomsRange[0]} - {roomsRange[1]}</div>
             </div>
-            <div className="md:col-span-2 flex items-center justify-end">
+            <div className={`md:col-span-2 flex items-center ${isRTL ? 'justify-start' : 'justify-end'}`}>
               <button className="btn btn-glass" onClick={clearFilters}>{isRTL ? 'مسح الفلاتر' : 'Clear Filters'}</button>
             </div>
           </div>
@@ -257,9 +261,9 @@ export default function Properties() {
           <CreatePropertyModal onClose={()=>setShowCreateModal(false)} isRTL={isRTL} onSave={(payload)=> console.log('New property', payload)} />
         )}
         {selected && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
             <div className="absolute inset-0 bg-black/40" onClick={()=>setSelected(null)} />
-            <div className="relative z-50 glass-panel rounded-xl p-4 w-[900px] max-w-[95vw]">
+            <div className="relative z-[210] glass-panel rounded-xl p-4 w-[800px] max-w-[90vw] max-h-[85vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold">{isRTL ? 'تفاصيل العقار' : 'Property Details'}</h2>
                 <button className="btn btn-glass" onClick={()=>setSelected(null)}>{isRTL ? 'إغلاق' : 'Close'}</button>
@@ -283,6 +287,5 @@ export default function Properties() {
           </div>
         )}
       </div>
-    </Layout>
   )
 }

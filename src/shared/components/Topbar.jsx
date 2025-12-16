@@ -5,7 +5,6 @@ import SearchModal from './SearchModal'
 import { useTheme } from '@shared/context/ThemeProvider'
 import { useAppState } from '@shared/context/AppStateProvider'
 import { logout as svcLogout } from '@services/auth'
-import avatar from '@assets/react.svg'
 const AVATAR_PLACEHOLDER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect width='100%' height='100%' fill='%239ca3af'/><text x='50%' y='54%' font-family='system-ui,Segoe UI,Arial' font-size='28' fill='white' text-anchor='middle'>I</text></svg>";
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom'
@@ -33,13 +32,6 @@ const IconButton = ({ children, label, className, onClick, showLabel = true }) =
 )
 
 function WelcomeSection({ isLight, text }) {
-  const [isDesktop, setIsDesktop] = useState(false)
-  useEffect(() => {
-    const update = () => setIsDesktop(window.matchMedia('(min-width: 768px)').matches)
-    update()
-    window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
-  }, [])
   return (
     <div className="flex items-center gap-3 max-[800px]:gap-2 max-[480px]:gap-1 max-[320px]:gap-1 pl-0 ml-0" style={{ paddingInlineStart: 0, marginInlineStart: 0 }}>
       
@@ -48,21 +40,17 @@ function WelcomeSection({ isLight, text }) {
   )
 }
 
-export default function Topbar({ onMobileToggle, mobileSidebarOpen, isSidebarExpanded }) {
+export default function Topbar({ onMobileToggle, mobileSidebarOpen }) {
   const { theme, setTheme } = useTheme()
   const isLight = theme === 'light'
   const { t, i18n } = useTranslation()
   const isRTL = i18n.language === 'ar'
   const navigate = useNavigate()
   const { user } = useAppState()
-  
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
-  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchType, setSearchType] = useState('All')
-  const [isTypeMenuOpen, setIsTypeMenuOpen] = useState(false)
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isExtrasOpen, setIsExtrasOpen] = useState(false)
+  
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false)
+  
   const [isProfileMobileOpen, setIsProfileMobileOpen] = useState(false)
   const [profileMenuPos, setProfileMenuPos] = useState({ top: 64, left: 8, right: 8 })
   const [profilePreviewOpen, setProfilePreviewOpen] = useState(false)
@@ -77,10 +65,6 @@ export default function Topbar({ onMobileToggle, mobileSidebarOpen, isSidebarExp
   const profileMobileRef = useRef(null)
   const mobileLanguageRef = useRef(null)
 
-  const handleSearch = () => {
-    console.log('Search:', { query: searchQuery, filter: searchType })
-  }
-
   useEffect(() => {
     try {
       const savedLang = localStorage.getItem('language') || localStorage.getItem('lang')
@@ -89,8 +73,6 @@ export default function Topbar({ onMobileToggle, mobileSidebarOpen, isSidebarExp
       }
     } catch {}
   }, [])
-
-  const isRtl = isRTL; // Use the reactive isRTL instead of static check
 
   const [calendarOpen, setCalendarOpen] = useState(false)
 
@@ -149,9 +131,6 @@ export default function Topbar({ onMobileToggle, mobileSidebarOpen, isSidebarExp
       document.removeEventListener('mousedown', onDocClick)
       document.removeEventListener('touchstart', onDocClick)
     }
-      if (isProfileMobileOpen && profileMobileRef.current && !profileMobileRef.current.contains(e.target)) {
-        setIsProfileMobileOpen(false)
-      }
   }, [isSearchDropdownOpen, isNotificationsOpen, isLanguageOpen, profilePreviewOpen, isProfileMobileOpen])
 
   // Header buttons unified styles with glass morphism effects
@@ -196,10 +175,15 @@ export default function Topbar({ onMobileToggle, mobileSidebarOpen, isSidebarExp
               </svg>
             )}
           </button>
-          <div className="md:hidden flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            aria-label={t('Dashboard')}
+            className="md:hidden flex items-center gap-2 cursor-pointer"
+          >
             <img src={logo} alt="Be Souhola" className="w-8 h-8" />
             <span className={`text-sm font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Be Souhola</span>
-          </div>
+          </button>
           <div className="hidden md:flex">
             <WelcomeSection
               isLight={isLight}

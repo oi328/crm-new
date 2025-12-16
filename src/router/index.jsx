@@ -58,6 +58,10 @@ import BuyerRequestReset from '../pages/settings/operations/BuyerRequestReset'
 import MatchingSettings from '../pages/settings/operations/MatchingSettings'
 import RentConfiguration from '../pages/settings/operations/RentConfiguration'
 import CILSettings from '../pages/settings/operations/CILSettings'
+import SettingsConfiguration from '../pages/SettingsConfiguration'
+import StagesSetup from '../pages/StagesSetup'
+import CancelReasons from '../pages/CancelReasons'
+import PaymentPlans from '../pages/PaymentPlans'
 import Products from '../pages/Products'
 import Items from '../pages/Items'
 import Categories from '../pages/Categories'
@@ -110,7 +114,7 @@ import UserManagementAccessLogs from '../pages/UserManagementAccessLogs'
 import UserManagementRoles from '../pages/UserManagementRoles'
 import UserManagementRoleEdit from '../pages/UserManagementRoleEdit'
 
-function ProtectedModuleRoute({ moduleKey }) { return <Outlet /> }
+function ProtectedModuleRoute() { return <Outlet /> }
 function SubscriptionGuard() { return <Outlet /> }
 function BillingAdminRoute() { return <Outlet /> }
 
@@ -148,6 +152,7 @@ export default function AppRouter() {
               <Route path="/leads" element={<Leads />} />
               <Route path="/leads/new" element={<AddNewLead />} />
               <Route path="/recycle" element={<Recycle />} />
+              <Route path="/stages-setup" element={<StagesSetup />} />
             </Route>
 
             <Route path="/inventory/projects" element={<Projects />} />
@@ -202,6 +207,9 @@ export default function AppRouter() {
               <Route path="/settings/system/security" element={<SecuritySettings />} />
               <Route path="/settings/system/custom-fields" element={<CustomFields />} />
               <Route path="/settings/system/audit-logs" element={<AuditLogs />} />
+              <Route path="/settings/configuration" element={<SettingsConfiguration />} />
+              <Route path="/settings/configuration/cancel-reasons" element={<CancelReasons />} />
+              <Route path="/settings/configuration/payment-plans" element={<PaymentPlans />} />
 
               <Route path="/settings/company-setup" element={<Navigate to="/settings/company-setup/info" replace />} />
               <Route path="/settings/company-setup/info" element={<Suspense fallback={<div className="p-4 text-sm">Loading…</div>}><CompanyInfoPage /></Suspense>} />

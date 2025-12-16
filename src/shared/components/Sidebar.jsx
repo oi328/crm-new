@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react'
- import { NavLink, useLocation } from 'react-router-dom'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '@shared/context/ThemeProvider'
 import { useAppState } from '@shared/context/AppStateProvider'
 import { useTranslation } from 'react-i18next';
@@ -358,10 +358,12 @@ export const Sidebar = ({ isOpen, onClose = () => {}, className }) => {
   const { theme } = useTheme()
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
   const isLight = theme === 'light'
   const langCode = (i18n.language || '').toLowerCase();
   const isRTL = (typeof i18n.dir === 'function' ? i18n.dir(langCode) === 'rtl' : langCode.startsWith('ar'))
     || (typeof document !== 'undefined' && document.documentElement.dir === 'rtl');
+  const navRef = useRef(null)
   const [inventoryOpen, setInventoryOpen] = useState(false)
   const isInventoryActive = location.pathname.startsWith('/inventory');
   const [leadMgmtOpen, setLeadMgmtOpen] = useState(() => {
@@ -371,7 +373,7 @@ export const Sidebar = ({ isOpen, onClose = () => {}, className }) => {
         if (saved === 'true') return true;
         if (saved === 'false') return false;
       }
-    } catch (err) {}
+    } catch {}
     return false; // مقفولة افتراضيًا
   })
   const isLeadMgmtActive = location.pathname.startsWith('/leads') || location.pathname.startsWith('/recycle');
@@ -379,14 +381,14 @@ export const Sidebar = ({ isOpen, onClose = () => {}, className }) => {
   useEffect(() => {
     if (!isLeadMgmtActive) {
       setLeadMgmtOpen(false);
-      try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('leadMgmtOpen', 'false') } } catch (err) {}
+      try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('leadMgmtOpen', 'false') } } catch {}
     }
-  }, [location.pathname])
+  }, [location.pathname, isLeadMgmtActive])
   // افتح قسم إدارة العملاء تلقائيًا عند التواجد في مسارات الليد/الريسايكل
   useEffect(() => {
     if (isLeadMgmtActive) {
       setLeadMgmtOpen(true)
-      try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('leadMgmtOpen', 'true') } } catch (err) {}
+      try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('leadMgmtOpen', 'true') } } catch {}
     }
   }, [isLeadMgmtActive])
   const [stagesOpen, setStagesOpen] = useState(true)
@@ -436,6 +438,12 @@ const [dataMgmtOpen, setDataMgmtOpen] = useState(false)
     }
   }
 
+  const onSidebarItemClick = (e) => {
+    try {
+      e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    } catch {}
+  }
+
 // Active flags for top-level sections
 // إبقاء قائمة Customers مفتوحة عند التنقل في مسارات العملاء والمبيعات الفرعية
 const isCustomersActive = location.pathname.startsWith('/customers') || location.pathname.startsWith('/sales')
@@ -464,17 +472,17 @@ const isUsersActive = location.pathname.startsWith('/user-management')
          if (saved === 'true') return true
          if (saved === 'false') return false
      }
-    } catch (err) {}
+    } catch {}
     return false
   })
    
    // Auto-close Marketing submenu when navigating away from marketing routes
-   useEffect(() => {
-     if (!isMarketingActive) {
-       setMarketingOpen(false)
-       try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('marketingOpen', 'false') } } catch (err) {}
-     }
-  }, [location.pathname])
+  useEffect(() => {
+    if (!isMarketingActive) {
+      setMarketingOpen(false)
+      try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('marketingOpen', 'false') } } catch {}
+    }
+  }, [location.pathname, isMarketingActive])
 
   // Ensure Marketing-only mode: close other module menus when on marketing routes
   useEffect(() => {
@@ -486,7 +494,7 @@ const isUsersActive = location.pathname.startsWith('/user-management')
       setUsersOpen(false)
       setSupportOpen(false)
       setSettingsOpen(false)
-      try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('leadMgmtOpen', 'false') } } catch (err) {}
+      try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('leadMgmtOpen', 'false') } } catch {}
     }
   }, [isMarketingActive])
 
@@ -517,7 +525,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
           window.localStorage.setItem('marketingOpen', 'false')
           window.localStorage.setItem('marketingReportsOpen', 'false')
         }
-      } catch (err) {}
+      } catch {}
     }
   }, [isCoreReportsActive])
 
@@ -588,12 +596,12 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
         if (saved === 'true') return true
         if (saved === 'false') return false
       }
-    } catch (err) {}
+    } catch {}
     return false
   })
   useEffect(() => {
     if (!isMarketingReportsActive) {
-      try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('marketingReportsOpen', String(marketingReportsOpen)) } } catch (err) {}
+      try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('marketingReportsOpen', String(marketingReportsOpen)) } } catch {}
     }
   }, [isMarketingReportsActive, marketingReportsOpen])
    
@@ -724,7 +732,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
     <aside 
       id="app-sidebar"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className={`nova-sidebar group fixed inset-y-0 z-[130] md:z-[100] p-4 ${asideTone} flex flex-col h-full relative overflow-x-hidden ${
+      className={`nova-sidebar group fixed inset-y-0 z-[130] md:z-[100] p-4 ${asideTone} flex flex-col h-full relative overflow-x-hidden overflow-y-hidden ${
         isRTL ? 'right-0 border-l' : 'left-0 border-r'
       } ${isOpen ? 'sidebar-open' : ''} ${className || ''}`}
     >
@@ -739,17 +747,22 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
       
 
       {/* Logo and company name */}
-        <div className="logo-brand flex items-center gap-1 mb-1 mt-0">
-        <img src={logo} alt="Be Souhola" className="w-11 h-11 flex-shrink-0" style={{ backgroundColor: 'transparent' }} />
-        <div className="flex flex-col leading-tight min-w-0">
-          <span className={`sidebar-label whitespace-nowrap hidden md:block ${isLight ? 'text-[11px] text-[#0b2b4f]' : 'text-[10px] text-white'}`}>Make everything...</span>
-          <span className="sidebar-label font-semibold text-base truncate bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent drop-shadow-sm">Be Souhola</span>
-        </div>
-      </div>
+        <button
+          type="button"
+          aria-label={t('Dashboard')}
+          onClick={() => navigate('/dashboard')}
+          className="logo-brand flex items-center gap-1 mb-1 mt-0 cursor-pointer"
+        >
+          <img src={logo} alt="Be Souhola" className="w-11 h-11 flex-shrink-0" style={{ backgroundColor: 'transparent' }} />
+          <div className="flex flex-col leading-tight min-w-0">
+            <span className={`sidebar-label whitespace-nowrap hidden md:block ${isLight ? 'text-[11px] text-[#0b2b4f]' : 'text-[10px] text-white'}`}>Make everything...</span>
+            <span className="sidebar-label font-semibold text-base truncate bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent drop-shadow-sm">Be Souhola</span>
+          </div>
+        </button>
       {/* Spacer below brand to push menu down */}
         <div className="sidebar-brand-spacer h-2"></div>
       
-        <nav className={`flex-1 pt-2 md:pt-3 overflow-y-hidden overflow-x-hidden mt-0 pb-16 ${inventoryOpen ? 'inventory-open' : ''}`}>
+        <nav ref={navRef} className={`flex-1 pt-2 md:pt-3 overflow-y-auto overflow-x-hidden mt-0 pb-3 ${inventoryOpen ? 'inventory-open' : ''}`}>
         {/* Dashboard */}
         {!isSectionViewOpen && !isMarketingActive && !isCoreReportsActive && (
           <NavLink
@@ -783,6 +796,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
           {!leadMgmtOpen && (
             <NavLink
               to="/leads"
+              end
               onClick={() => setLeadMgmtOpen(true)}
               className={({ isActive }) => `${baseLink} w-full justify-between`}
             >
@@ -804,6 +818,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
           >
             <NavLink
               to="/leads"
+              end
               className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}
             >
               <span className="nova-icon-label">
@@ -955,7 +970,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 type="button"
                 onClick={() => {
                   setMarketingOpen(false);
-                  try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('marketingOpen', 'false') } } catch (err) {}
+                  try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('marketingOpen', 'false') } } catch {}
                 }}
                 className={`close-btn text-sm font-semibold ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
               >
@@ -974,7 +989,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 e.stopPropagation();
                 setMarketingOpen(v => {
                   const next = !v;
-                  try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('marketingOpen', String(next)); } } catch (err) {}
+                  try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('marketingOpen', String(next)); } } catch {}
                   return next;
                 })
               }}
@@ -1505,19 +1520,19 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
               className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
               style={{ maxHeight: companySetupOpen ? '360px' : '0', overflow: 'hidden', opacity: companySetupOpen ? 1 : 0 }}
             >
-              <NavLink to="/settings/company-setup/info" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/company-setup/info" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🏢</span><span className="text-[15px] link-label">{t('Company Info')}</span></span>
               </NavLink>
-              <NavLink to="/settings/company-setup/subscription" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/company-setup/subscription" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>💼</span><span className="text-[15px] link-label">{t('Subscription')}</span></span>
               </NavLink>
-              <NavLink to="/settings/company-setup/modules" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/company-setup/modules" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🧩</span><span className="text-[15px] link-label">{t('Enabled Modules')}</span></span>
               </NavLink>
-              <NavLink to="/settings/company-setup/departments" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/company-setup/departments" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🏢</span><span className="text-[15px] link-label">{t('Departments')}</span></span>
               </NavLink>
-              <NavLink to="/settings/company-setup/visibility" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/company-setup/visibility" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>👁️</span><span className="text-[15px] link-label">{t('Visibility')}</span></span>
               </NavLink>
             </div>
@@ -1547,16 +1562,16 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
               className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
               style={{ maxHeight: notificationsOpen ? '360px' : '0', overflow: 'hidden', opacity: notificationsOpen ? 1 : 0 }}
             >
-              <NavLink end to="/settings/notifications" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink end to="/settings/notifications" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🔔</span><span className="text-[15px] link-label">{t('Notifications Settings')}</span></span>
               </NavLink>
-              <NavLink to="/settings/notifications/sms-templates" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/notifications/sms-templates" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📱</span><span className="text-[15px] link-label">{t('SMS Templates')}</span></span>
               </NavLink>
-              <NavLink to="/settings/notifications/email-templates" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/notifications/email-templates" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>✉️</span><span className="text-[15px] link-label">{t('Email Templates')}</span></span>
               </NavLink>
-              <NavLink to="/settings/notifications/whatsapp-templates" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/notifications/whatsapp-templates" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🟢</span><span className="text-[15px] link-label">{t('WhatsApp Templates')}</span></span>
               </NavLink>
             </div>
@@ -1583,14 +1598,14 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
               style={{ maxHeight: billingOpen ? '320px' : '0', overflow: 'hidden', opacity: billingOpen ? 1 : 0 }}
             >
               {isAdminOwnerUser && (
-                <NavLink to="/settings/billing/subscription" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+                <NavLink to="/settings/billing/subscription" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                   <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>💳</span><span className="text-[15px] link-label">{t('Billing & Subscription')}</span></span>
                 </NavLink>
               )}
-              <NavLink to="/settings/billing/payment-history" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/billing/payment-history" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📒</span><span className="text-[15px] link-label">{t('Payment History')}</span></span>
               </NavLink>
-              <NavLink to="/settings/billing/plans-upgrade" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/billing/plans-upgrade" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>⬆️</span><span className="text-[15px] link-label">{t('Plans & Upgrade')}</span></span>
               </NavLink>
             </div>
@@ -1616,19 +1631,19 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
               className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
               style={{ maxHeight: integrationOpen ? '400px' : '0', overflow: 'hidden', opacity: integrationOpen ? 1 : 0 }}
             >
-              <NavLink to="/settings/integrations/api-keys" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}>
+              <NavLink to="/settings/integrations/api-keys" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🔑</span><span className="text-[15px] link-label">{t('API Keys')}</span></span>
               </NavLink>
-              <NavLink to="/settings/integrations/webhooks" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}>
+              <NavLink to="/settings/integrations/webhooks" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🪝</span><span className="text-[15px] link-label">{t('Webhooks')}</span></span>
               </NavLink>
-              <NavLink to="/settings/integrations/whatsapp" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}>
+              <NavLink to="/settings/integrations/whatsapp" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🟢</span><span className="text-[15px] link-label">{t('WhatsApp Integration')}</span></span>
               </NavLink>
-              <NavLink to="/settings/integrations/payment-gateway" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}>
+              <NavLink to="/settings/integrations/payment-gateway" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>💳</span><span className="text-[15px] link-label">{t('Payment Gateway Integration')}</span></span>
               </NavLink>
-              <NavLink to="/settings/integrations/google-slack" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}>
+              <NavLink to="/settings/integrations/google-slack" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🧰</span><span className="text-[15px] link-label">{t('Google / Slack Integrations')}</span></span>
               </NavLink>
             </div>
@@ -1654,13 +1669,13 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
               className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
               style={{ maxHeight: dataMgmtOpen ? '320px' : '0', overflow: 'hidden', opacity: dataMgmtOpen ? 1 : 0 }}
             >
-              <NavLink to="/settings/data/import" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/data/import" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>⬇️</span><span className="text-[15px] link-label">{t('Import')}</span></span>
               </NavLink>
-              <NavLink to="/settings/data/export" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/data/export" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>⬆️</span><span className="text-[15px] link-label">{t('Export')}</span></span>
               </NavLink>
-              <NavLink to="/settings/data/backup" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+              <NavLink to="/settings/data/backup" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>💾</span><span className="text-[15px] link-label">{t('Backup')}</span></span>
               </NavLink>
             </div>
@@ -1684,8 +1699,17 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
             </button>
             <div
               className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
-              style={{ maxHeight: operationsOpen ? '800px' : '0', overflow: 'hidden', opacity: operationsOpen ? 1 : 0 }}
+              style={{ maxHeight: operationsOpen ? 'none' : '0', overflow: 'hidden', opacity: operationsOpen ? 1 : 0 }}
             >
+              <NavLink end to="/settings/configuration" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+                <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📈</span><span className="text-[15px] link-label">{t('Pipeline Setup Stages')}</span></span>
+              </NavLink>
+              <NavLink to="/settings/configuration/cancel-reasons" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+                <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🗑️</span><span className="text-[15px] link-label">{t('Cancel Reasons')}</span></span>
+              </NavLink>
+              <NavLink to="/settings/configuration/payment-plans" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
+                <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>💳</span><span className="text-[15px] link-label">{t('Payment Plans')}</span></span>
+              </NavLink>
               <NavLink to="/settings/operations/scripting" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}>
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📝</span><span className="text-[15px] link-label">{t('Scripting')}</span></span>
               </NavLink>

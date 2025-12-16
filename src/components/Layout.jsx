@@ -6,7 +6,7 @@ import Topbar from '@shared/components/Topbar'
 
 export default function Layout({ children }) {
   const { i18n } = useTranslation()
-  const isRtl = i18n.language === 'ar'
+  const isRtl = String(i18n.language || '').startsWith('ar')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [isMobileView, setIsMobileView] = useState(() => window.matchMedia('(max-width: 768px)').matches)
 
@@ -28,6 +28,13 @@ export default function Layout({ children }) {
     setIsMobileView(mq.matches)
     return () => mq.removeEventListener('change', handler)
   }, [])
+
+  useEffect(() => {
+    try {
+      document.documentElement.dir = isRtl ? 'rtl' : 'ltr'
+      document.documentElement.lang = String(i18n.language || 'en')
+    } catch {}
+  }, [isRtl, i18n.language])
 
   return (
     <div
@@ -51,9 +58,8 @@ export default function Layout({ children }) {
           onClose={() => setIsMobileSidebarOpen(false)}
         />
 
-        {/* Content container (aligned with sidebar) */}
-        <div className="content-container flex flex-col  min-h-0">
-          <main className="main-pane flex-1 px-0 m-0">
+        <div className={`content-container flex flex-col min-h-0 flex-1 min-w-0`}>
+          <main className="main-pane flex-1 px-0 m-0 overflow-x-hidden min-w-0">
             <div className="w-full">
               {children ?? <Outlet />}
             </div>

@@ -237,7 +237,7 @@ export default function LeadsPipelineReport() {
         <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div className="w-full overflow-x-auto">
             <table className="min-w-max table-fixed text-sm whitespace-nowrap">
-              <thead>
+              <thead className="bg-gray-100 dark:bg-gray-900/95" style={{ backgroundColor: 'var(--table-header-bg)' }}>
                 <tr className="text-left border-b border-gray-200 dark:border-gray-700">
                   {[t('Lead Name'), t('Sales Stage'), t('Expected Value'), t('Salesperson'), t('Date Created'), t('Status')].map((h, idx) => (
                     <th key={idx} className="px-3 py-2 text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap">{h}</th>

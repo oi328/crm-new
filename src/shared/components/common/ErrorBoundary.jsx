@@ -10,7 +10,7 @@ export class ErrorBoundary extends React.Component {
     return { hasError: true }
   }
 
-  componentDidCatch(error, info) {
+  componentDidCatch(error) {
     try {
       const evt = new CustomEvent('app:toast', { detail: { type: 'error', message: error?.message || 'Unexpected error' } })
       window.dispatchEvent(evt)

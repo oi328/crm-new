@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react'
-import { api } from '@utils/api'
 import { login as svcLogin, getProfile } from '@services/auth'
 import { captureDeviceInfo, saveDeviceForUser } from '@utils/device'
 
@@ -60,7 +59,7 @@ export function AppStateProvider({ children }) {
     login,
     canAccess,
     bootstrapped,
-  }), [user, company, subscription, activeModules, isSubscriptionActive, setProfile, fetchCompanyInfo, login, canAccess])
+  }), [user, company, subscription, activeModules, isSubscriptionActive, setProfile, fetchCompanyInfo, login, canAccess, bootstrapped])
 
   useEffect(() => {
     setBootstrapped(true)

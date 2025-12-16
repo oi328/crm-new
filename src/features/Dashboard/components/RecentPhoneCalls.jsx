@@ -137,6 +137,19 @@ const RecentPhoneCalls = ({ employee, dateFrom, dateTo, stageFilter }) => {
     createdAt: new Date(Date.now() - (idx + 1) * 15 * 60 * 1000).toISOString()
   }))
 
+  const formatDateTimeSafe = (iso) => {
+    try {
+      const d = new Date(iso)
+      const locale = i18n.language === 'ar' ? 'ar-EG' : 'en-US'
+      return new Intl.DateTimeFormat(locale, {
+        year: 'numeric', month: 'short', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      }).format(d)
+    } catch {
+      return iso || ''
+    }
+  }
+
   const inDateRange = (iso) => {
     if (!dateFrom && !dateTo) return true
     const d = new Date(iso)
@@ -238,7 +251,7 @@ const RecentPhoneCalls = ({ employee, dateFrom, dateTo, stageFilter }) => {
                 </span>
               </div>
               <span className={`text-xs ${isLight ? 'text-gray-800' : 'dark:text-gray-200'}`}>
-                {call.timestamp}
+                {formatDateTimeSafe(call.createdAt)}
               </span>
             </div>
             

@@ -270,6 +270,38 @@ input[type="number"]::-webkit-outer-spin-button {
   color: #e5e7eb; /* ensure high-contrast text in dark glass panels */
 }
 
+/* Tinted glass utilities */
+.glass-panel.tinted-blue { background-color: rgba(59, 130, 246, 0.16); border-color: rgba(59, 130, 246, 0.28); }
+.dark .glass-panel.tinted-blue { background-color: rgba(59, 130, 246, 0.22); border-color: rgba(59, 130, 246, 0.35); }
+
+.glass-panel.tinted-indigo { background-color: rgba(79, 70, 229, 0.16); border-color: rgba(79, 70, 229, 0.28); }
+.dark .glass-panel.tinted-indigo { background-color: rgba(79, 70, 229, 0.22); border-color: rgba(79, 70, 229, 0.35); }
+
+.glass-panel.tinted-emerald { background-color: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.28); }
+.dark .glass-panel.tinted-emerald { background-color: rgba(16, 185, 129, 0.22); border-color: rgba(16, 185, 129, 0.35); }
+
+.glass-panel.tinted-amber { background-color: rgba(245, 158, 11, 0.16); border-color: rgba(245, 158, 11, 0.28); }
+.dark .glass-panel.tinted-amber { background-color: rgba(245, 158, 11, 0.22); border-color: rgba(245, 158, 11, 0.35); }
+
+.glass-panel.tinted-violet { background-color: rgba(139, 92, 246, 0.16); border-color: rgba(139, 92, 246, 0.28); }
+.dark .glass-panel.tinted-violet { background-color: rgba(139, 92, 246, 0.22); border-color: rgba(139, 92, 246, 0.35); }
+
+/* Tinted solid card variant */
+.card.tinted-blue { background-color: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.28); }
+.dark .card.tinted-blue { background-color: rgba(59, 130, 246, 0.20); border-color: rgba(59, 130, 246, 0.35); }
+
+.card.tinted-indigo { background-color: rgba(79, 70, 229, 0.12); border-color: rgba(79, 70, 229, 0.28); }
+.dark .card.tinted-indigo { background-color: rgba(79, 70, 229, 0.20); border-color: rgba(79, 70, 229, 0.35); }
+
+.card.tinted-emerald { background-color: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.28); }
+.dark .card.tinted-emerald { background-color: rgba(16, 185, 129, 0.20); border-color: rgba(16, 185, 129, 0.35); }
+
+.card.tinted-amber { background-color: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.28); }
+.dark .card.tinted-amber { background-color: rgba(245, 158, 11, 0.20); border-color: rgba(245, 158, 11, 0.35); }
+
+.card.tinted-violet { background-color: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.28); }
+.dark .card.tinted-violet { background-color: rgba(139, 92, 246, 0.20); border-color: rgba(139, 92, 246, 0.35); }
+
 /* Transition compatibility */
 .transition {
   -webkit-transition: all 0.15s ease-in-out;
@@ -1185,24 +1217,23 @@ body {
   width: 280px; /* نفس العرض للحالات كلها */
 }
 
-/* Adjust content container margin and width when sidebar is expanded */
+/* Adjust content container when sidebar is present (flex layout handles width) */
 #app-sidebar ~ .content-container {
   position: relative;
-  left: var(--sidebar-desktop-width);
-  margin-left: 0 !important;
-  width: calc(100% - var(--sidebar-desktop-width)) !important;
-  transition: left 200ms ease, width 200ms ease;
+  left: 0;
+  margin-left: 0;
+  transition: left 200ms ease;
 }
 
-/* RTL support: عندما يكون اتجاه الصفحة RTL، يجب إزاحة المحتوى يمينًا بدل اليسار */
+/* RTL support: لا حاجة لإزاحة إضافية مع تخطيط flex */
 [dir='rtl'] #app-sidebar ~ .content-container {
   position: relative;
-  right: var(--sidebar-desktop-width);
-  margin-right: 0 !important;
-  margin-left: 0 !important;
-  width: calc(100% - var(--sidebar-desktop-width)) !important;
-  transition: right 200ms ease, width 200ms ease;
+  right: 0;
+  margin-right: 0;
+  margin-left: 0;
+  transition: right 200ms ease;
 }
+
 
 .app-glass-neon > .content-container {
   position: relative;
@@ -1311,6 +1342,14 @@ body {
   [dir='rtl'] #app-sidebar {
     right: 0 !important;
     left: auto !important;
+  }
+  /* Offset main content to avoid being under the fixed sidebar */
+  #app-sidebar ~ .content-container {
+    margin-left: var(--sidebar-desktop-width) !important;
+  }
+  [dir='rtl'] #app-sidebar ~ .content-container {
+    margin-right: var(--sidebar-desktop-width) !important;
+    margin-left: 0 !important;
   }
 }
 
@@ -2148,6 +2187,12 @@ body {
   --text-muted: rgba(75, 85, 99, 0.85); /* gray-600 */
   --border-color: rgba(0, 0, 0, 0.08);
 
+  /* Content theme variables */
+  --content-bg: #ffffff;
+  --content-text: var(--text-primary);
+  --muted-text: var(--text-muted);
+  --dropdown-bg: rgba(255, 255, 255, 0.96);
+
   /* Buttons */
   --btn-primary-bg: #2563eb; /* blue-600 */
   --btn-primary-hover: #1d4ed8; /* blue-700 */
@@ -2165,6 +2210,12 @@ body {
   --text-secondary: rgba(229, 231, 235, 0.92); /* gray-200 */
   --text-muted: rgba(156, 163, 175, 0.85); /* gray-400 */
   --border-color: rgba(255, 255, 255, 0.12);
+
+  /* Content theme variables */
+  --content-bg: #111827;
+  --content-text: var(--text-primary);
+  --muted-text: var(--text-muted);
+  --dropdown-bg: rgba(17, 24, 39, 0.35);
 
   /* Buttons */
   --btn-primary-bg: #3b82f6; /* blue-500 */
@@ -2265,7 +2316,7 @@ body {
 /* Glass container for app content */
 .content-container {
   position: relative;
-  z-index: 1;
+  z-index: auto; /* allow modals inside to escape stacking context and sit above header/sidebar */
   background: transparent;
   border: none;
   backdrop-filter: none;

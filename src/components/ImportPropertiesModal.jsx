@@ -57,9 +57,9 @@ export default function ImportPropertiesModal({ onClose, isRTL, onImported }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-50 glass-panel rounded-xl p-4 w-[900px] max-w-[95vw]">
+      <div className="relative z-[210] glass-panel rounded-xl p-4 w-[800px] max-w-[90vw] max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">{isRTL ? 'استيراد العقارات' : 'Import Properties'}</h2>
           <button className="btn btn-glass" onClick={onClose}>{isRTL ? 'إغلاق' : 'Close'}</button>

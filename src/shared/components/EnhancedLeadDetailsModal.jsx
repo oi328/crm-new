@@ -305,7 +305,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
               {/* Actions Section */}
             <div className="flex flex-col items-end space-y-3">
               {/* Action Buttons Row */}
-              <div className="flex items-center justify-between gap-4 w-[220px] sm:w-[280px] relative">
+              <div className="flex items-center justify-between gap-2 w-[220px] sm:w-[280px] relative">
                 {/* Removed preview toggle button */}
                 {/* Add Action (icon-only) */}
                 {!showAddActionModal && (
@@ -414,7 +414,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
         />
 
         {showAddActionModal && (
-          <div className="px-6">
+          <div className="px-0 sm:px-0">
             <AddActionModal
               isOpen={showAddActionModal}
               onClose={() => setShowAddActionModal(false)}

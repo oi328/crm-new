@@ -183,6 +183,25 @@ export default function ActiveUsersChart({ users = [] }) {
     return `${hours}h ${rem}m ago`
   }
 
+  const formatDuration = (mins) => {
+    const h = Math.floor(Math.max(mins, 0) / 60)
+    const m = Math.max(mins, 0) % 60
+    if (lang === 'ar') return `${h} ساعة ${m} دقيقة`
+    return `${h}h ${m}m`
+  }
+
+  const getWorkStartOfDay = () => {
+    const d = new Date()
+    d.setHours(9, 0, 0, 0)
+    return d
+  }
+
+  const getWorkingMinutes = (u) => {
+    const start = getWorkStartOfDay().getTime()
+    const end = (u.active ? Date.now() : (u.lastSeen?.getTime?.() || Date.now()))
+    return Math.floor((end - start) / 60000)
+  }
+
 
   const activeCount = dataUsers.filter(u => u.active).length
   const totalCount = dataUsers.length
@@ -265,7 +284,10 @@ export default function ActiveUsersChart({ users = [] }) {
                     </div>
                     <div className={`flex items-center gap-2 text-xs text-black mt-0.5`}>
                       <RiTimeLine className={`text-xs ${isLight ? (u.active ? 'text-emerald-700' : 'text-red-700') : 'text-gray-300'}`} />
-                      <span>{formatHM(u.lastSeen)}</span>
+                      <span>{lang === 'ar' ? 'مدة العمل' : 'Working Hours'}: {formatDuration(getWorkingMinutes(u))}</span>
+                      {!u.active && (
+                        <span className="opacity-80">• {lang === 'ar' ? 'آخر نشاط' : 'Last Active'}: {formatHM(u.lastSeen)}</span>
+                      )}
                     </div>
                     <div className={`text-[11px] mt-0.5 text-black`}>
                       {formatRelative(u.lastSeen)}

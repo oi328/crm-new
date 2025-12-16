@@ -248,6 +248,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
       createdAt: l.createdAt,
       lastContact: l.lastContact,
       notes: l.notes,
+      employeeName: l.assignedTo || l.employee || '',
       // fields used by DelayLeads table rendering
       leadName: l.name,
       mobile: l.phone ? `(${String(l.phone).slice(0, 3)}*****)` : '',
@@ -547,6 +548,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
                 <th scope="col" className="px-6 py-3">{t('Lead Name')}</th>
                 <th scope="col" className="px-6 py-3">{t('Mobile')}</th>
                 <th scope="col" className="px-6 py-3">{t('Actions')}</th>
+                <th scope="col" className="px-6 py-3">{t('Employee')}</th>
                 <th scope="col" className="px-6 py-3">{t('Stage')}</th>
                 <th scope="col" className="px-6 py-3">{t('Last Comment')}</th>
                 <th scope="col" className="px-6 py-3">{t('Action Date')}</th>
@@ -606,6 +608,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
                       </button>
                     </div>
                   </td>
+                  <td className={`px-6 py-4`}>{lead.employeeName || '-'}</td>
                   <td className={`px-6 py-4 ${isLight ? 'stage-cell' : ''}`}>{renderStageBadge(lead.pipelineStage)}</td>
                   <td className={`px-6 py-4`}>{lead.lastComment}</td>
                   <td className={`px-6 py-4`}>{formatDateSafe(lead.actionDate)}</td>

@@ -140,8 +140,11 @@ export default function Requests() {
   return (
     <div dir={dir} className="p-4 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Requests Dashboard</h1>
+      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`relative inline-flex items-center ${isRTL ? 'flex-row-reverse' : ''} gap-2`}>
+          <h1 className={`page-title text-2xl font-semibold text-gray-800 dark:text-gray-100 ${isRTL ? 'text-right' : 'text-left'}`}>Requests Dashboard</h1>
+          <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isRTL ? 'auto' : '-4px', right: isRTL ? '-4px' : 'auto', bottom: '-4px' }}></span>
+        </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setIsRTL((v) => !v)} className="px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">{isRTL ? 'EN' : 'RTL'}</button>
           <button onClick={toggleTheme} className="px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">Theme</button>

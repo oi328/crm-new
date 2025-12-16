@@ -216,17 +216,20 @@ export const AddNewLead = () => {
   // مكوّن اختيار كود الدولة مع العلم فقط
   const CountryCodeSelect = ({ value, onChange }) => {
     return (
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-20 rounded-md border px-2 py-2 ${inputTone}`}
-      >
-        {COUNTRY_CODES.map((c) => (
-          <option key={c.iso2 + c.dialCode} value={c.dialCode}>
-            {c.flag} {c.dialCode}
-          </option>
-        ))}
-      </select>
+      <div className="relative w-20">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`w-full appearance-none rounded-md border pl-2 pr-8 py-2 ${inputTone}`}
+        >
+          {COUNTRY_CODES.map((c) => (
+            <option key={c.iso2 + c.dialCode} value={c.dialCode}>
+              {c.flag} {c.dialCode}
+            </option>
+          ))}
+        </select>
+        <FaChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+      </div>
     );
   };
 
@@ -328,7 +331,7 @@ export const AddNewLead = () => {
   return (
     <div className={`p-6 pb-24 bg-[var(--content-bg)] text-[var(--content-text)]`}>
       <div className={`relative inline-flex items-center ${i18n.language === 'ar' ? 'flex-row-reverse' : ''} gap-2 mb-2`}>
-        <h1 className="page-title text-2xl font-bold text-white">{t('Add New Lead')}</h1>
+        <h1 className={`page-title text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>{t('Add New Lead')}</h1>
         <span
           aria-hidden
           className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent"
@@ -373,17 +376,20 @@ export const AddNewLead = () => {
                   {/* Source (select) */}
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Source')}</label>
-                    <select
-                      value={source}
-                      onChange={(e) => setSource(e.target.value)}
-                      className={`w-full rounded-md border px-3 py-2 ${inputTone}`}
-                    >
-                      <option value="">{t('Select')}</option>
-                      <option value="social-media">Facebook</option>
-                      <option value="website">Website</option>
-                      <option value="referral">Referral</option>
-                      <option value="email-campaign">Campaign</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={source}
+                        onChange={(e) => setSource(e.target.value)}
+                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
+                      >
+                        <option value="">{t('Select')}</option>
+                        <option value="social-media">Facebook</option>
+                        <option value="website">Website</option>
+                        <option value="referral">Referral</option>
+                        <option value="email-campaign">Campaign</option>
+                      </select>
+                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                    </div>
                   </div>
 
                   {/* Project */}
@@ -401,15 +407,18 @@ export const AddNewLead = () => {
                   {/* Type */}
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Type')}</label>
-                    <select
-                      value={type}
-                      onChange={(e) => setType(e.target.value)}
-                      className={`w-full rounded-md border px-3 py-2 ${inputTone}`}
-                    >
-                      <option value="">{t('Select')}</option>
-                      <option value="Company">{t('Company')}</option>
-                      <option value="Individual">{t('Individual')}</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={type}
+                        onChange={(e) => setType(e.target.value)}
+                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
+                      >
+                        <option value="">{t('Select')}</option>
+                        <option value="Company">{t('Company')}</option>
+                        <option value="Individual">{t('Individual')}</option>
+                      </select>
+                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                    </div>
                   </div>
 
                   {/* Company */}
@@ -439,32 +448,38 @@ export const AddNewLead = () => {
                   {/* Stage */}
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Stage')}</label>
-                    <select
-                      value={stage}
-                      onChange={(e) => setStage(e.target.value)}
-                      className={`w-full rounded-md border px-3 py-2 ${inputTone}`}
-                    >
-                      <option value="">{t('Select')}</option>
-                      {stages.map((s) => (
-                        <option key={s.name} value={s.name}>
-                          {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={stage}
+                        onChange={(e) => setStage(e.target.value)}
+                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
+                      >
+                        <option value="">{t('Select')}</option>
+                        {stages.map((s) => (
+                          <option key={s.name} value={s.name}>
+                            {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
+                          </option>
+                        ))}
+                      </select>
+                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                    </div>
                   </div>
 
                   {/* Priority */}
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Priority')}</label>
-                    <select
-                      value={priority}
-                      onChange={(e) => setPriority(e.target.value)}
-                      className={`w-full rounded-md border px-3 py-2 ${inputTone}`}
-                    >
-                      <option value="low">{t('Low')}</option>
-                      <option value="medium">{t('Medium')}</option>
-                      <option value="high">{t('High')}</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={priority}
+                        onChange={(e) => setPriority(e.target.value)}
+                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
+                      >
+                        <option value="low">{t('Low')}</option>
+                        <option value="medium">{t('Medium')}</option>
+                        <option value="high">{t('High')}</option>
+                      </select>
+                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                    </div>
                   </div>
                 </div>
 
@@ -555,18 +570,21 @@ export const AddNewLead = () => {
                   {/* Status */}
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Status')}</label>
-                    <select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value)}
-                      className={`w-full rounded-md border px-3 py-2 ${inputTone}`}
-                    >
-                      <option value="">{t('Select')}</option>
-                      {statuses.map((s) => (
-                        <option key={s.name} value={s.name}>
-                          {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value)}
+                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
+                      >
+                        <option value="">{t('Select')}</option>
+                        {statuses.map((s) => (
+                          <option key={s.name} value={s.name}>
+                            {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
+                          </option>
+                        ))}
+                      </select>
+                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                    </div>
                   </div>
 
                   {/* Note */}
@@ -618,13 +636,16 @@ export const AddNewLead = () => {
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Source')}</label>
-                          <select value={l.source} onChange={(e) => updateExtraLeadField(i, 'source', e.target.value)} className={`w-full rounded-md border px-3 py-2 ${inputTone}`}>
-                            <option value="">{t('Select')}</option>
-                            <option value="social-media">Facebook</option>
-                            <option value="website">Website</option>
-                            <option value="referral">Referral</option>
-                            <option value="email-campaign">Campaign</option>
-                          </select>
+                          <div className="relative">
+                            <select value={l.source} onChange={(e) => updateExtraLeadField(i, 'source', e.target.value)} className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}>
+                              <option value="">{t('Select')}</option>
+                              <option value="social-media">Facebook</option>
+                              <option value="website">Website</option>
+                              <option value="referral">Referral</option>
+                              <option value="email-campaign">Campaign</option>
+                            </select>
+                            <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                          </div>
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Project')}</label>
@@ -632,11 +653,14 @@ export const AddNewLead = () => {
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Type')}</label>
-                          <select value={l.type || ''} onChange={(e) => updateExtraLeadField(i, 'type', e.target.value)} className={`w-full rounded-md border px-3 py-2 ${inputTone}`}>
-                            <option value="">{t('Select')}</option>
-                            <option value="Company">{t('Company')}</option>
-                            <option value="Individual">{t('Individual')}</option>
-                          </select>
+                          <div className="relative">
+                            <select value={l.type || ''} onChange={(e) => updateExtraLeadField(i, 'type', e.target.value)} className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}>
+                              <option value="">{t('Select')}</option>
+                              <option value="Company">{t('Company')}</option>
+                              <option value="Individual">{t('Individual')}</option>
+                            </select>
+                            <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                          </div>
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Company')}</label>
@@ -678,33 +702,42 @@ export const AddNewLead = () => {
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Stage')}</label>
-                          <select value={l.stage} onChange={(e) => updateExtraLeadField(i, 'stage', e.target.value)} className={`w-full rounded-md border px-3 py-2 ${inputTone}`}>
-                            <option value="">{t('Select')}</option>
-                            {stages.map((s) => (
-                              <option key={s.name} value={s.name}>
-                                {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <select value={l.stage} onChange={(e) => updateExtraLeadField(i, 'stage', e.target.value)} className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}>
+                              <option value="">{t('Select')}</option>
+                              {stages.map((s) => (
+                                <option key={s.name} value={s.name}>
+                                  {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
+                                </option>
+                              ))}
+                            </select>
+                            <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                          </div>
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Priority')}</label>
-                          <select value={l.priority} onChange={(e) => updateExtraLeadField(i, 'priority', e.target.value)} className={`w-full rounded-md border px-3 py-2 ${inputTone}`}>
-                            <option value="low">{t('Low')}</option>
-                            <option value="medium">{t('Medium')}</option>
-                            <option value="high">{t('High')}</option>
-                          </select>
+                          <div className="relative">
+                            <select value={l.priority} onChange={(e) => updateExtraLeadField(i, 'priority', e.target.value)} className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}>
+                              <option value="low">{t('Low')}</option>
+                              <option value="medium">{t('Medium')}</option>
+                              <option value="high">{t('High')}</option>
+                            </select>
+                            <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                          </div>
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Status')}</label>
-                          <select value={l.status} onChange={(e) => updateExtraLeadField(i, 'status', e.target.value)} className={`w-full rounded-md border px-3 py-2 ${inputTone}`}>
-                            <option value="">{t('Select')}</option>
-                            {statuses.map((s) => (
-                              <option key={s.name} value={s.name}>
-                                {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <select value={l.status} onChange={(e) => updateExtraLeadField(i, 'status', e.target.value)} className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}>
+                              <option value="">{t('Select')}</option>
+                              {statuses.map((s) => (
+                                <option key={s.name} value={s.name}>
+                                  {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
+                                </option>
+                              ))}
+                            </select>
+                            <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                          </div>
                         </div>
                         <div className="md:col-span-2">
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Last Comment')}</label>

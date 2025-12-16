@@ -268,11 +268,11 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
         </div>
         <div className="hidden sm:block">
           <table className="comments-table w-full min-w-max text-sm text-left">
-            <thead className={`text-xs uppercase sticky top-0 ${isLight ? 'bg-gray-50' : 'bg-gray-800'}`}>
+            <thead className={`text-xs uppercase sticky top-0 ${isLight ? 'bg-gray-200' : 'bg-gray-900'}`}>
               <tr>
                 <th scope="col" className="px-6 py-3">{t('Employee')}</th>
                 <th scope="col" className="px-6 py-3">{t('Lead')}</th>
-                <th scope="col" className="px-6 py-3">{t('Comment')}</th>
+                <th scope="col" className="px-6 py-3">{t('Last Comments')}</th>
                 <th scope="col" className="px-6 py-3">{t('Priority')}</th>
                 <th scope="col" className="px-6 py-3">{t('Stage')}</th>
                 <th scope="col" className="px-6 py-3">{t('Actions')}</th>
