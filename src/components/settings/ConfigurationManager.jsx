@@ -1,7 +1,46 @@
 import React, { useEffect, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { 
+  ChevronDown, 
+  Users, 
+  Sparkles, 
+  Copy, 
+  Clock, 
+  Phone, 
+  CalendarClock, 
+  TrendingUp, 
+  Timer, 
+  Flame, 
+  CheckCircle, 
+  XCircle, 
+  Target, 
+  BarChart2, 
+  FileText, 
+  PhoneOff, 
+  Calendar, 
+  Bookmark 
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@shared/context/ThemeProvider'
+
+const ICON_OPTIONS = {
+  Users: <Users className="w-5 h-5" />,
+  Sparkles: <Sparkles className="w-5 h-5" />,
+  Copy: <Copy className="w-5 h-5" />,
+  Clock: <Clock className="w-5 h-5" />,
+  Phone: <Phone className="w-5 h-5" />,
+  CalendarClock: <CalendarClock className="w-5 h-5" />,
+  TrendingUp: <TrendingUp className="w-5 h-5" />,
+  Timer: <Timer className="w-5 h-5" />,
+  Flame: <Flame className="w-5 h-5" />,
+  CheckCircle: <CheckCircle className="w-5 h-5" />,
+  XCircle: <XCircle className="w-5 h-5" />,
+  Target: <Target className="w-5 h-5" />,
+  BarChart2: <BarChart2 className="w-5 h-5" />,
+  FileText: <FileText className="w-5 h-5" />,
+  PhoneOff: <PhoneOff className="w-5 h-5" />,
+  Calendar: <Calendar className="w-5 h-5" />,
+  Bookmark: <Bookmark className="w-5 h-5" />
+};
 
 const STORAGE_KEY = 'crmStages'
 
@@ -37,7 +76,7 @@ function normalizeStages(list) {
     type: s?.type || 'follow_up',
     order: s?.order ?? 0,
     color: s?.color || '#3B82F6',
-    icon: s?.icon || '📊',
+    icon: s?.icon || 'BarChart2',
     iconUrl: s?.iconUrl || '',
   }))
 }
@@ -45,13 +84,13 @@ function normalizeStages(list) {
 
 function defaultPipelineStages() {
   return [
-    { name: 'Follow up',    nameAr: '', type: 'follow_up',   order: 2, color: '#3B82F6', icon: '🔁' },
-    { name: 'No Answer',    nameAr: '', type: 'follow_up',   order: 3, color: '#EF4444', icon: '📵' },
-    { name: 'Meeting',      nameAr: '', type: 'meeting',     order: 4, color: '#8B5CF6', icon: '📅' },
-    { name: 'Proposal',     nameAr: '', type: 'proposal',    order: 6, color: '#F59E0B', icon: '📄' },
-    { name: 'Reservation',  nameAr: '', type: 'reservation', order: 7, color: '#10B981', icon: '📌' },
-    { name: 'Closing Deal', nameAr: '', type: 'deal',        order: 8, color: '#22C55E', icon: '🤝' },
-    { name: 'Cancelation',  nameAr: '', type: 'cancel',      order: 9, color: '#F97316', icon: '❌' },
+    { name: 'Follow up',    nameAr: '', type: 'follow_up',   order: 2, color: '#3B82F6', icon: 'CalendarClock' },
+    { name: 'No Answer',    nameAr: '', type: 'follow_up',   order: 3, color: '#EF4444', icon: 'PhoneOff' },
+    { name: 'Meeting',      nameAr: '', type: 'meeting',     order: 4, color: '#8B5CF6', icon: 'Calendar' },
+    { name: 'Proposal',     nameAr: '', type: 'proposal',    order: 6, color: '#F59E0B', icon: 'FileText' },
+    { name: 'Reservation',  nameAr: '', type: 'reservation', order: 7, color: '#10B981', icon: 'Bookmark' },
+    { name: 'Closing Deal', nameAr: '', type: 'deal',        order: 8, color: '#22C55E', icon: 'CheckCircle' },
+    { name: 'Cancelation',  nameAr: '', type: 'cancel',      order: 9, color: '#F97316', icon: 'XCircle' },
   ]
 }
 
@@ -145,38 +184,27 @@ function StageTableRow({ s, idx, editingIndex, setEditingIndex, pipelineStages, 
       <td className="p-2">
         {isEditing ? (
           <div className="flex items-center gap-2">
-            <input
-              className="w-16 h-8 text-center border rounded p-1"
-              value={s.icon || ''}
-              placeholder={t('Icon')}
+            <select
+              className="w-full border rounded p-1"
+              value={s.icon || 'BarChart2'}
               onChange={e => {
                 const next = [...pipelineStages]
                 next[idx] = { ...next[idx], icon: e.target.value, iconUrl: '' }
                 setPipelineStages(next)
               }}
-            />
-            <input
-              className="w-full border rounded p-1"
-              type="file"
-              accept="image/*"
-              onChange={e => {
-                const file = e.target.files && e.target.files[0]
-                if (!file) return
-                const reader = new FileReader()
-                reader.onload = () => {
-                  const next = [...pipelineStages]
-                  next[idx] = { ...next[idx], iconUrl: String(reader.result || ''), icon: '' }
-                  setPipelineStages(next)
-                }
-                reader.readAsDataURL(file)
-              }}
-            />
+            >
+              {Object.keys(ICON_OPTIONS).map(k => (
+                <option key={k} value={k}>{k}</option>
+              ))}
+            </select>
           </div>
         ) : (
           s.iconUrl ? (
             <img src={s.iconUrl} alt="icon" className="w-6 h-6 inline-block rounded" />
           ) : (
-            <span className="text-lg inline-block">{s.icon || '📊'}</span>
+            <span className="text-lg inline-block">
+              {ICON_OPTIONS[s.icon] ? ICON_OPTIONS[s.icon] : (s.icon || <BarChart2 className="w-5 h-5" />)}
+            </span>
           )
         )}
       </td>
@@ -226,7 +254,7 @@ function StagesSetup() {
   const isRtl = String(i18n.language || '').startsWith('ar')
 
   const [pipelineStages, setPipelineStages] = useState(() => normalizeStages(sortByOrder(loadStages())))
-  const [newStage, setNewStage] = useState({ name: '', nameAr: '', type: 'follow_up', order: '', color: '#3B82F6', icon: '📊', iconUrl: '' })
+  const [newStage, setNewStage] = useState({ name: '', nameAr: '', type: 'follow_up', order: '', color: '#3B82F6', icon: 'BarChart2', iconUrl: '' })
   const [editingIndex, setEditingIndex] = useState(null)
   const [showNewStage, setShowNewStage] = useState(false)
 
@@ -252,7 +280,7 @@ function StagesSetup() {
     const sorted = sortByOrder(next)
     setPipelineStages(sorted)
     persistStages(sorted)
-    setNewStage({ name: '', nameAr: '', type: 'follow_up', order: '', color: '#3B82F6', icon: '📊', iconUrl: '' })
+    setNewStage({ name: '', nameAr: '', type: 'follow_up', order: '', color: '#3B82F6', icon: 'BarChart2', iconUrl: '' })
     setShowNewStage(false)
   }
 
@@ -350,31 +378,22 @@ function StagesSetup() {
             <div className="col-span-12 md:col-span-6 flex flex-col gap-1">
               <span className="text-xs font-medium opacity-70">{t('Stage Icon')}</span>
               <div className="flex items-center gap-2">
-                <input
-                  className="w-16 h-10 text-center border rounded p-2 dark:bg-gray-800 dark:text-white"
-                  placeholder={t('Icon')}
-                  value={newStage.icon}
-                  onChange={e => setNewStage(s => ({ ...s, icon: e.target.value }))}
-                />
-                <input
-                  id="new-stage-icon-file"
-                  className="hidden"
-                  type="file"
-                  accept="image/*"
-                  onChange={e => {
-                    const file = e.target.files && e.target.files[0]
-                    if (!file) return
-                    const reader = new FileReader()
-                    reader.onload = () => setNewStage(s => ({ ...s, iconUrl: String(reader.result || ''), icon: '' }))
-                    reader.readAsDataURL(file)
-                  }}
-                />
-                <label htmlFor="new-stage-icon-file" className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer whitespace-nowrap">{t('Upload Icon')}</label>
+                <select
+                  className="w-full border rounded p-2 dark:bg-gray-800 dark:text-white"
+                  value={newStage.icon || 'BarChart2'}
+                  onChange={e => setNewStage(s => ({ ...s, icon: e.target.value, iconUrl: '' }))}
+                >
+                  {Object.keys(ICON_OPTIONS).map(k => (
+                    <option key={k} value={k}>{k}</option>
+                  ))}
+                </select>
                 {(newStage.iconUrl || newStage.icon) && (
                   newStage.iconUrl ? (
                     <img src={newStage.iconUrl} alt="icon" className="w-7 h-7 rounded" />
                   ) : (
-                    <span className="text-xl">{newStage.icon}</span>
+                    <span className="text-xl">
+                      {ICON_OPTIONS[newStage.icon] || <BarChart2 className="w-5 h-5" />}
+                    </span>
                   )
                 )}
               </div>

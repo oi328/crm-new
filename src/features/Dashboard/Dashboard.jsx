@@ -19,6 +19,45 @@ import {
   RiCalendarLine,
   RiFilterLine
 } from 'react-icons/ri';
+import { 
+  Users, 
+  Sparkles, 
+  Copy, 
+  Clock, 
+  Phone, 
+  CalendarClock, 
+  TrendingUp, 
+  Timer, 
+  Flame,
+  CheckCircle,
+  XCircle,
+  Target,
+  BarChart2,
+  FileText,
+  PhoneOff,
+  Calendar,
+  Bookmark
+} from 'lucide-react';
+
+const ICON_MAP = {
+  Users: <Users className="w-5 h-5" />,
+  Sparkles: <Sparkles className="w-5 h-5" />,
+  Copy: <Copy className="w-5 h-5" />,
+  Clock: <Clock className="w-5 h-5" />,
+  Phone: <Phone className="w-5 h-5" />,
+  CalendarClock: <CalendarClock className="w-5 h-5" />,
+  TrendingUp: <TrendingUp className="w-5 h-5" />,
+  Timer: <Timer className="w-5 h-5" />,
+  Flame: <Flame className="w-5 h-5" />,
+  CheckCircle: <CheckCircle className="w-5 h-5" />,
+  XCircle: <XCircle className="w-5 h-5" />,
+  Target: <Target className="w-5 h-5" />,
+  BarChart2: <BarChart2 className="w-5 h-5" />,
+  FileText: <FileText className="w-5 h-5" />,
+  PhoneOff: <PhoneOff className="w-5 h-5" />,
+  Calendar: <Calendar className="w-5 h-5" />,
+  Bookmark: <Bookmark className="w-5 h-5" />
+};
 
 export const Dashboard = () => {
   const { t, i18n } = useTranslation();
@@ -91,13 +130,20 @@ export const Dashboard = () => {
   // Load pipeline stages with colors/icons from Settings
   const defaultIconForName = (name) => {
     const key = (name || '').toLowerCase();
-    if (key.includes('convert')) return '✅';
-    if (key.includes('progress')) return '⏳';
-    if (key.includes('lost')) return '❌';
-    if (key.includes('new')) return '🆕';
-    if (key.includes('qual')) return '🎯';
-    return '📊';
+    if (key.includes('convert')) return <CheckCircle className="w-5 h-5" />;
+    if (key.includes('progress')) return <Clock className="w-5 h-5" />;
+    if (key.includes('lost')) return <XCircle className="w-5 h-5" />;
+    if (key.includes('new')) return <Sparkles className="w-5 h-5" />;
+    if (key.includes('qual')) return <Target className="w-5 h-5" />;
+    return <BarChart2 className="w-5 h-5" />;
   };
+
+  const resolveIcon = (icon, name) => {
+    if (icon && ICON_MAP[icon]) return ICON_MAP[icon];
+    if (icon) return icon;
+    return defaultIconForName(name);
+  };
+
   const defaultColorForName = (name) => {
     const key = (name || '').toLowerCase();
     if (key.includes('convert')) return '#10b981'; // green-500
@@ -195,7 +241,11 @@ export const Dashboard = () => {
       const normalized = Array.isArray(saved)
         ? (typeof saved[0] === 'string'
             ? saved.map((name) => ({ name, color: defaultColorForName(name), icon: defaultIconForName(name) }))
-            : saved.map((s) => ({ name: s.name || String(s), color: s.color || defaultColorForName(s.name || String(s)), icon: s.icon || defaultIconForName(s.name || String(s)) }))
+            : saved.map((s) => ({ 
+                name: s.name || String(s), 
+                color: s.color || defaultColorForName(s.name || String(s)), 
+                icon: resolveIcon(s.icon, s.name || String(s))
+              }))
           )
         : [];
       setStageDefs(normalized);
@@ -399,7 +449,7 @@ export const Dashboard = () => {
     {
       title: i18n.language === 'ar' ? 'أجمالى العملاء' : 'All Leads',
       value: leadsStats.total.toLocaleString(),
-      icon: '👥',
+      icon: <Users className="w-6 h-6" />,
       color: 'text-blue-800',
       bgColor: 'bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300 dark:from-blue-800 dark:via-blue-700 dark:to-blue-600',
       borderColor: 'border-blue-400 dark:border-blue-500',
@@ -411,7 +461,7 @@ export const Dashboard = () => {
     {
       title: 'Duplicate Leads',
       value: leadsStats.duplicate.toLocaleString(),
-      icon: '🔄',
+      icon: <Copy className="w-6 h-6" />,
       color: 'text-red-800',
       bgColor: 'bg-gradient-to-br from-red-100 via-red-200 to-red-300 dark:from-red-800 dark:via-red-700 dark:to-red-600',
       borderColor: 'border-red-400 dark:border-red-500',
@@ -423,7 +473,7 @@ export const Dashboard = () => {
     {
       title: 'New Leads',
       value: leadsStats.new.toLocaleString(),
-      icon: '✨',
+      icon: <Sparkles className="w-6 h-6" />,
       color: 'text-green-800',
       bgColor: 'bg-gradient-to-br from-green-100 via-green-200 to-green-300 dark:from-green-800 dark:via-green-700 dark:to-green-600',
       borderColor: 'border-green-400 dark:border-green-500',
@@ -435,7 +485,7 @@ export const Dashboard = () => {
     {
       title: 'Cold Calls',
       value: leadsStats.coldCall.toLocaleString(),
-      icon: '📱',
+      icon: <Phone className="w-6 h-6" />,
       color: 'text-orange-800',
       bgColor: 'bg-gradient-to-br from-orange-100 via-orange-200 to-orange-300 dark:from-orange-800 dark:via-orange-700 dark:to-orange-600',
       borderColor: 'border-orange-400 dark:border-orange-500',
@@ -447,7 +497,7 @@ export const Dashboard = () => {
     {
       title: i18n.language === 'ar' ? 'معلقة' : 'Pending Leads',
       value: leadsStats.pending.toLocaleString(),
-      icon: '⏳',
+      icon: <Clock className="w-6 h-6" />,
       color: 'text-yellow-500',
       subtitle: `${leadsStats.total > 0 ? ((leadsStats.pending / leadsStats.total) * 100).toFixed(1) : 0}% ${t('of all system leads')}`
     }
@@ -759,8 +809,8 @@ export const Dashboard = () => {
                         <span className={`text-[11px] font-semibold uppercase tracking-wider mb-0.5 block text-black`}>{t('Total Leads')}</span>
                         <div className={`text-xl font-black mb-0 tracking-tight text-black`}>{allLeads.length}</div>
                       </div>
-                      <div className={`flex items-center justify-center w-6 h-6 ${isLight ? 'bg-blue-600/80' : 'bg-blue-500'} rounded-md shadow-xl group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 border-2 border-white/30`}>
-                        <span className="text-lg text-white">👥</span>
+                      <div className={`flex items-center justify-center w-8 h-8 ${isLight ? 'bg-blue-600/80' : 'bg-blue-500'} rounded-md shadow-xl group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 border-2 border-white/30`}>
+                        <Users className="w-5 h-5 text-white" />
                       </div>
                     </div>
                   </div>
@@ -774,7 +824,7 @@ export const Dashboard = () => {
                   title: t('New'),
                   count: newCount,
                   percent: allLeads.length > 0 ? Math.round((newCount / allLeads.length) * 100) : 0,
-                  icon: '✨',
+                  icon: <Sparkles className="w-5 h-5" />,
                   color: 'green',
                   borderClass: 'border-green-400 dark:border-green-500',
                 },
@@ -783,7 +833,7 @@ export const Dashboard = () => {
                   title: t('Duplicate'),
                   count: duplicateCount,
                   percent: allLeads.length > 0 ? Math.round((duplicateCount / allLeads.length) * 100) : 0,
-                  icon: '🔄',
+                  icon: <Copy className="w-5 h-5" />,
                   color: 'red',
                   borderClass: 'border-red-400 dark:border-red-500',
                 },
@@ -792,7 +842,7 @@ export const Dashboard = () => {
                   title: i18n.language === 'ar' ? 'معلقة' : t('Pending'),
                   count: pendingCount,
                   percent: allLeads.length > 0 ? Math.round((pendingCount / allLeads.length) * 100) : 0,
-                  icon: '⏳',
+                  icon: <Clock className="w-5 h-5" />,
                   color: 'yellow',
                   borderClass: 'border-yellow-400 dark:border-yellow-500',
                 },
@@ -801,7 +851,7 @@ export const Dashboard = () => {
                   title: t('Cold Calls'),
                   count: coldCallCount,
                   percent: allLeads.length > 0 ? Math.round((coldCallCount / allLeads.length) * 100) : 0,
-                  icon: '📱',
+                  icon: <Phone className="w-5 h-5" />,
                   color: 'orange',
                   borderClass: 'border-orange-400 dark:border-orange-500',
                 },
@@ -810,7 +860,7 @@ export const Dashboard = () => {
                   title: i18n.language === 'ar' ? 'متابعة' : t('Follow-up'),
                   count: followUpCount,
                   percent: allLeads.length > 0 ? Math.round((followUpCount / allLeads.length) * 100) : 0,
-                  icon: '📞',
+                  icon: <CalendarClock className="w-5 h-5" />,
                   color: 'purple',
                   borderClass: 'border-purple-400 dark:border-purple-500',
                 },
@@ -840,8 +890,8 @@ export const Dashboard = () => {
                         <span className={`text-[11px] font-semibold uppercase tracking-wider mb-0.5 block text-black`}>{title}</span>
                         <div className={`text-xl font-black mb-0 tracking-tight text-black`}>{count}</div>
                         </div>
-                        <div className={`flex items-center justify-center w-6 h-6 rounded-md shadow-xl group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 border-2 border-white/30 ${style.iconBgLight}`}>
-                          <span className="text-lg text-white">{icon}</span>
+                        <div className={`flex items-center justify-center w-8 h-8 rounded-md shadow-xl group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 border-2 border-white/30 ${style.iconBgLight}`}>
+                          <span className="text-white">{icon}</span>
                         </div>
                       </div>
                       <div className={`inline-flex items-center text-[11px] font-semibold px-1.5 py-[2px] rounded-md border ${style.badgeLightBg} ${style.badgeLightText} ${style.badgeLightBorder}`}>
@@ -1022,7 +1072,7 @@ export const Dashboard = () => {
                   value="16,766"
                   change="+12.5%"
                   changeType="positive"
-                  icon="👥"
+                  icon={<Users className="w-5 h-5" />}
                   color="bg-blue-500"
                   compact
                 />
@@ -1031,7 +1081,7 @@ export const Dashboard = () => {
                   value="24.3%"
                   change="+3.2%"
                   changeType="positive"
-                  icon="📈"
+                  icon={<TrendingUp className="w-5 h-5" />}
                   color="bg-green-500"
                   compact
                 />
@@ -1040,7 +1090,7 @@ export const Dashboard = () => {
                   value="2.4h"
                   change="-15min"
                   changeType="positive"
-                  icon="⏱️"
+                  icon={<Timer className="w-5 h-5" />}
                   color="bg-purple-500"
                   compact
                 />
@@ -1049,7 +1099,7 @@ export const Dashboard = () => {
                   value="253"
                   change="+18"
                   changeType="positive"
-                  icon="🔥"
+                  icon={<Flame className="w-5 h-5" />}
                   color="bg-red-500"
                   compact
                 />
