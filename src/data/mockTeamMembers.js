@@ -1,0 +1,51 @@
+export const mockTeamMembers = [
+  {
+    id: 1,
+    name: 'Ibrahim Mohamed',
+    role: 'Team Lead',
+    department: 'Sales',
+    email: 'ibrahim@example.com',
+    phone: '+2010XXXXXXX',
+    join_date: '2024-03-15',
+    status: 'Active',
+    performance_score: 89,
+    tasks_assigned: 120,
+    tasks_completed_pct: 86,
+    avg_response_time: '1.8h',
+    attendance_rate: 92,
+    last_evaluation_date: '2025-10-30',
+    projects: [
+      { name: 'CRM System', start: '2025-05-01', status: 'Ongoing', tasks: 24 },
+      { name: 'Portfolio Website', start: '2024-09-01', status: 'Completed', tasks: 12 },
+    ],
+    permissions: ['CRM', 'Reports', 'Dashboard'],
+    region: 'Cairo',
+    modules: ['CRM', 'Projects', 'Reports'],
+    last_activity: '2025-11-10 14:32',
+    photo_url: ''
+  },
+  {
+    id: 2,
+    name: 'Sara Hassan',
+    role: 'Sales Manager',
+    department: 'Sales',
+    email: 'sara@example.com',
+    phone: '+2011XXXXXXX',
+    join_date: '2023-08-01',
+    status: 'Active',
+    performance_score: 93,
+    tasks_assigned: 140,
+    tasks_completed_pct: 90,
+    avg_response_time: '1.2h',
+    attendance_rate: 95,
+    last_evaluation_date: '2025-10-10',
+    projects: [
+      { name: 'Sales Ops Revamp', start: '2025-02-01', status: 'Ongoing', tasks: 30 },
+    ],
+    permissions: ['CRM', 'Reports', 'Dashboard'],
+    region: 'Giza',
+    modules: ['CRM', 'Reports'],
+    last_activity: '2025-11-10 12:05',
+    photo_url: ''
+  }
+]
