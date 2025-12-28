@@ -509,7 +509,7 @@ export default function InventoryTransactions() {
                     <label className="text-sm font-medium text-[var(--muted-text)]">{labels.username}</label>
                     <input className="input w-full" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
                   </div>
-                  <div className={`md:col-span-2 flex gap-2 ${isArabic ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
+                  <div className={`md:col-span-2 flex gap-2 justify-end`}>
                     <button type="submit" className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none">{labels.save}</button>
                   </div>
                 </form>

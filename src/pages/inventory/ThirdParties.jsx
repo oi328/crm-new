@@ -157,9 +157,9 @@ export default function ThirdParties() {
     <div className="space-y-6 pt-4">
       
       {/* Header */}
-      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div className="flex items-center justify-between">
         <div className="relative inline-block">
-          <h1 className={`page-title text-2xl font-semibold ${isRTL ? 'text-right' : 'text-left'}`}>{labels.title}</h1>
+          <h1 className="page-title text-2xl font-semibold">{labels.title}</h1>
           <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isRTL ? 'auto' : '-4px', right: isRTL ? '-4px' : 'auto', bottom: '-4px' }}></span>
         </div>
         <div className="flex items-center gap-2">

@@ -248,7 +248,7 @@ const ReportsDashboard = () => {
         {/* Dashboard charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <div className="glass-panel rounded-xl p-4">
-            <div className={`flex items-center gap-2 mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 mb-2`}>
               <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
               <div className={`${isRTL ? 'text-right' : ''} font-semibold`}>{isRTL ? 'الإجراءات والعمليات عبر التقارير' : 'Actions & Leads Across Reports'}</div>
             </div>

@@ -109,7 +109,7 @@ export default function MonthlyMarketingOverview() {
       <div id="report-root" className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">{t('Monthly Marketing Overview')}</h1>
-          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-2`}>
             <button
               onClick={exportPdf}
               aria-label={t('Export PDF')}
@@ -160,7 +160,7 @@ export default function MonthlyMarketingOverview() {
 
         {/* Summary table */}
         <section className="glass-panel p-4">
-          <div className={`flex items-center gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-2 mb-3`}>
             <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
             <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold`}>{t('Monthly Summary')}</h3>
           </div>
@@ -211,7 +211,7 @@ export default function MonthlyMarketingOverview() {
         {/* Charts grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <section className="glass-panel p-4 md:col-span-2">
-            <div className={`flex items-center gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 mb-3`}>
               <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
               <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold`}>{t('Spend vs Revenue Trend')}</h3>
             </div>
@@ -251,7 +251,7 @@ export default function MonthlyMarketingOverview() {
         {/* Insights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <section className="glass-panel p-4">
-            <div className={`flex items-center gap-2 mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 mb-2`}>
               <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
               <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold`}>📈 {t('Best Growth Area')}</h3>
             </div>

@@ -23,9 +23,9 @@ export default function AdvancedDateFilter({ startDate, endDate, onChange, class
 
   return (
     <div className={`rounded-lg border border-[var(--panel-border)] bg-[var(--dropdown-bg)] p-3 ${className}`}>
-      <div className={`flex flex-wrap items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex flex-wrap items-center gap-2`}>
         <span className="text-sm opacity-70">{t('Advanced Date Filter')}</span>
-        <div className={`flex flex-wrap items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex flex-wrap items-center gap-2`}>
           {presets.map(p => (
             <button
               key={p.key}

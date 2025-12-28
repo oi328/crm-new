@@ -87,13 +87,13 @@ export default function LandingPages() {
 
         {/* Actions */}
         <div className="flex items-center gap-3 flex-wrap">
-          <button className={`btn btn-primary inline-flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`} onClick={() => navigate('/marketing/landing-pages/add')}>
+          <button className={`btn btn-primary inline-flex items-center gap-2`} onClick={() => navigate('/marketing/landing-pages/add')}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
               <path d="M12 5v14M5 12h14" />
             </svg>
             <span>{t('Add Landing Page')}</span>
           </button>
-          <button className={`btn inline-flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`} onClick={handleSync} disabled={syncing}>
+          <button className={`btn inline-flex items-center gap-2`} onClick={handleSync} disabled={syncing}>
             {syncing ? (
               <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
             ) : (
@@ -104,7 +104,7 @@ export default function LandingPages() {
             )}
             <span>{syncing ? t('Syncing...') : t('Sync Data')}</span>
           </button>
-          <button className={`btn inline-flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`} onClick={() => setFiltersOpen(v => !v)}>
+          <button className={`btn inline-flex items-center gap-2`} onClick={() => setFiltersOpen(v => !v)}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
               <path d="M3 4h18l-7 8v6l-4 2v-8z" />
             </svg>

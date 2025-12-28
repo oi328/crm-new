@@ -240,7 +240,7 @@ export default function SalesActivitiesReport() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <div className="flex items-center justify-between mb-3">
-              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}> 
+              <div className={`flex items-center gap-2`}> 
                 <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
                 <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold text-gray-900 dark:text-gray-100`}>{t('Calls & Actions')}</h3>
               </div>
@@ -252,7 +252,7 @@ export default function SalesActivitiesReport() {
           </div>
           <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <div className="flex items-center justify-between mb-3">
-              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}> 
+              <div className={`flex items-center gap-2`}> 
                 <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
                 <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold text-gray-900 dark:text-gray-100`}>{t('Actions by Stage')}</h3>
               </div>

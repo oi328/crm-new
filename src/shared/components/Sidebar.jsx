@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTheme } from '@shared/context/ThemeProvider'
 import { useAppState } from '@shared/context/AppStateProvider'
 import { useTranslation } from 'react-i18next';
-import logo from '@assets/be-souhola-logo.svg';
 import { useStages } from '@hooks/useStages';
 import { RiCloseLine } from 'react-icons/ri'
 
@@ -868,12 +867,25 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
           type="button"
           aria-label={t('Dashboard')}
           onClick={() => navigate('/dashboard')}
-          className={`logo-brand flex items-center gap-1 mb-1 mt-0 cursor-pointer ${isCollapsed ? 'hidden' : ''}`}
+          className={`logo-brand flex items-center gap-2 mb-1 mt-0 cursor-pointer ${isCollapsed ? 'hidden' : ''}`}
         >
-          <img src={logo} alt="Be Souhola" className="w-11 h-11 flex-shrink-0" style={{ backgroundColor: 'transparent' }} />
+          {/* Inlined Logo SVG for dynamic coloring */}
+          <svg width="36" height="36" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" fill="none" className="flex-shrink-0">
+            <defs>
+              <linearGradient id="brandGradientSidebar" x1="12" y1="12" x2="116" y2="116" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor={isLight ? '#0b2b4f' : '#ffffff'}/>
+                <stop offset="45%" stopColor={isLight ? '#4f46e5' : '#c7d2fe'}/>
+                <stop offset="100%" stopColor="#7c3aed"/>
+              </linearGradient>
+            </defs>
+            <rect x="12" y="12" width="104" height="104" rx="18" stroke="url(#brandGradientSidebar)" strokeWidth="10" />
+            <path d="M44 32 h24 c14 0 22 8 22 20 c0 8 -5 14 -12 16 c8 2 14 8 14 18 c0 12 -10 20 -24 20 H44 V32 Z" stroke="url(#brandGradientSidebar)" strokeWidth="10"/>
+            <path d="M24 64 H64" stroke="url(#brandGradientSidebar)" strokeWidth="10"/>
+            <path d="M64 64 l10 -6 l-4 6 l4 6 z" fill="url(#brandGradientSidebar)"/>
+          </svg>
           <div className={`flex flex-col leading-tight min-w-0 transition-opacity duration-200 ${isCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
-            <span className={`sidebar-label whitespace-nowrap hidden md:block ${isLight ? 'text-[11px] text-[#0b2b4f]' : 'text-[10px] text-white'}`}>Make everything...</span>
-            <span className="sidebar-label font-semibold text-base truncate bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent drop-shadow-sm">Be Souhola</span>
+            <span className={`sidebar-label whitespace-nowrap hidden md:block ${isLight ? 'text-[9px] text-[#0b2b4f]' : 'text-[8px] text-white'} opacity-90`}>Make everything...</span>
+            <span className={`sidebar-label font-bold text-sm truncate bg-clip-text text-transparent bg-gradient-to-r ${isLight ? 'from-[#0b2b4f] via-[#4f46e5] to-[#7c3aed]' : 'from-[#ffffff] via-[#c7d2fe] to-[#7c3aed]'} drop-shadow-sm`}>Be Souhola</span>
           </div>
         </button>
       {/* Spacer below brand to push menu down */}

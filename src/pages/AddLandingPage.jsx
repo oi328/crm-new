@@ -155,7 +155,7 @@ export default function AddLandingPage() {
             )}
 
             {/* Actions */}
-            <div className={`mt-4 flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`mt-4 flex items-center gap-2`}>
               <button type="button" className="btn" onClick={onCancel}>{t('Cancel')}</button>
               <button type="button" className="btn btn-primary inline-flex items-center gap-2" onClick={onSave} disabled={saving}>
                 {saving ? (

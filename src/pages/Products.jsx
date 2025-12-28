@@ -305,7 +305,7 @@ export default function Products() {
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowForm(false)} />
             <div className="absolute inset-0 flex items-start justify-center p-6 md:p-6">
               <div className="card p-4 sm:p-6 mt-4 w-[92vw] sm:w-[80vw] lg:w-[60vw] xl:max-w-3xl">
-                <div className={`flex items-center justify-between ${isArabic ? 'flex-row-reverse' : ''} mb-4`}>
+                <div className={`flex items-center justify-between mb-4`}>
                   <h2 className="text-xl font-medium">{labels.formTitle}</h2>
                   <button type="button" className="btn btn-sm btn-circle bg-white text-red-600 hover:bg-red-50 shadow-md" onClick={() => setShowForm(false)} aria-label={labels.close}>
                     <FaTimes size={20} />
@@ -397,7 +397,7 @@ export default function Products() {
                 />
               </div>
 
-                  <div className={`md:col-span-2 flex gap-2 ${isArabic ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
+                  <div className={`md:col-span-2 flex gap-2 ${isArabic ? 'justify-start' : 'justify-end'}`}>
                     <button type="submit" className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none">
                       {labels.save}
                     </button>

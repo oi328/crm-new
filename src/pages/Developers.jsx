@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import SearchableSelect from '../components/SearchableSelect'
-import { FaFilter, FaSearch, FaChevronDown, FaTimes, FaEdit, FaTrash } from 'react-icons/fa'
+import { Plus, Search, Edit2, Trash2, X, Users, Phone, Mail, MapPin, Building2, Filter, ChevronDown } from 'lucide-react'
 
 export default function Developers() {
   const { i18n } = useTranslation()
   const isArabic = i18n.language === 'ar'
+  const isRTL = isArabic
 
   const labels = useMemo(() => ({
     title: isArabic ? ' المطورون' : ' Developers',
@@ -27,6 +28,8 @@ export default function Developers() {
     actions: isArabic ? 'الإجراءات' : 'Actions',
     delete: isArabic ? 'حذف' : 'Delete',
     edit: isArabic ? 'تعديل' : 'Edit',
+    show: isArabic ? 'إظهار' : 'Show',
+    hide: isArabic ? 'إخفاء' : 'Hide',
   }), [isArabic])
 
   const STORAGE_KEY = 'inventoryDevelopers'
@@ -119,7 +122,7 @@ export default function Developers() {
 
   return (
       <div className="space-y-6 pt-4">
-        <div className={`flex items-center justify-between ${isArabic ? 'flex-row-reverse' : ''}`}>
+        <div className="flex items-center justify-between">
           <div className="relative inline-block">
             <h1 className={`page-title text-2xl font-semibold ${isArabic ? 'text-right' : 'text-left'}`}>{labels.title}</h1>
             <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
@@ -127,14 +130,14 @@ export default function Developers() {
           <button className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none" onClick={() => setShowForm(true)}>{labels.add}</button>
         </div>
 
-        <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
+        <div className="glass-panel p-4 rounded-xl mb-6">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-sm font-semibold flex items-center gap-2">
-              <FaFilter className="text-blue-500" /> {labels.filter}
+              <Filter className="text-blue-500" size={16} /> {labels.filter}
             </h2>
             <div className="flex items-center gap-2">
-              <button onClick={() => setShowAllFilters(prev => !prev)} className="btn btn-glass btn-compact text-blue-600">
-                {showAllFilters ? (isArabic ? 'إخفاء' : 'Hide') : (isArabic ? 'إظهار' : 'Show')} <FaChevronDown className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
+              <button onClick={() => setShowAllFilters(prev => !prev)} className="btn btn-glass btn-compact text-blue-600 flex items-center gap-1">
+                {showAllFilters ? (isArabic ? 'إخفاء' : 'Hide') : (isArabic ? 'إظهار' : 'Show')} <ChevronDown size={14} className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
               </button>
               <button onClick={clearFilters} className="btn btn-glass btn-compact text-[var(--muted-text)] hover:text-red-500">
                 {labels.clearFilters}
@@ -143,7 +146,7 @@ export default function Developers() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaSearch className="text-blue-500" size={10} /> {labels.search}</label>
+              <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><Search className="text-blue-500" size={10} /> {labels.search}</label>
               <input className="input w-full" value={filters.search} onChange={e=>setFilters(prev=>({...prev, search: e.target.value}))} placeholder={isArabic ? 'بحث...' : 'Search...'} />
             </div>
             <div className="space-y-1">
@@ -174,76 +177,100 @@ export default function Developers() {
           </div>
         </div>
 
-        <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
-          <h2 className="text-xl font-medium mb-4">{labels.listTitle}</h2>
-          {filtered.length === 0 ? (
-            <p className="text-sm text-[var(--muted-text)]">{labels.empty}</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="nova-table w-full">
-                <thead className="thead-soft">
-                  <tr className="text-gray-600 dark:text-gray-300">
-                    <th className="text-start px-3 min-w-[200px]">{labels.companyName}</th>
-                    <th className="text-start px-3 min-w-[160px]">{labels.contactPerson}</th>
-                    <th className="text-start px-3 min-w-[140px]">{labels.phone}</th>
-                    <th className="text-start px-3 min-w-[200px]">{labels.email}</th>
-                    <th className="text-start px-3 min-w-[140px]">{labels.city}</th>
-                    <th className="text-center px-3 min-w-[120px]">{labels.status}</th>
-                    <th className="text-center px-3 min-w-[110px]">{labels.actions}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(r => (
-                    <tr key={r.id}>
-                      <td className="px-3"><span className="font-medium">{r.companyName}</span></td>
-                      <td className="px-3">{r.contactPerson}</td>
-                      <td className="px-3">{r.phone}</td>
-                      <td className="px-3">{r.email}</td>
-                      <td className="px-3">{r.city}</td>
-                      <td className="px-3 text-center">{r.status}</td>
-                      <td className="px-3 text-center">
-                        <div className="flex items-center gap-2 justify-center">
-                          <button type="button" className="btn btn-sm btn-circle btn-ghost text-blue-600 hover:bg-blue-100" title={labels.edit} aria-label={labels.edit} onClick={() => onEdit(r)}>
-                            <FaEdit size={16} />
-                          </button>
-                          <button type="button" className="btn btn-sm btn-circle btn-ghost text-red-600 hover:bg-red-100" title={labels.delete} aria-label={labels.delete} onClick={() => onDelete(r.id)}>
-                            <FaTrash size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        {/* Grid */}
+        {filtered.length === 0 ? (
+          <div className="text-center py-10 text-[var(--muted-text)]">
+            <p>{labels.empty}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map(r => (
+              <div key={r.id} className="glass-panel rounded-xl p-6 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <Building2 className="text-blue-600 dark:text-blue-400" size={24} />
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" className="btn btn-sm btn-circle btn-ghost text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20" title={labels.edit} aria-label={labels.edit} onClick={() => onEdit(r)}>
+                      <Edit2 size={16} />
+                    </button>
+                    <button type="button" className="btn btn-sm btn-circle btn-ghost text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" title={labels.delete} aria-label={labels.delete} onClick={() => onDelete(r.id)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <h3 className="text-lg font-bold mb-2">{r.companyName}</h3>
+                
+                <div className="space-y-2 text-sm text-[var(--muted-text)]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 flex justify-center"><Users size={14} className="opacity-70" /></div>
+                    <span className="capitalize">{r.contactPerson}</span>
+                  </div>
+                  {r.phone && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 flex justify-center"><Phone size={14} className="opacity-70" /></div>
+                      <span dir="ltr">{r.phone}</span>
+                    </div>
+                  )}
+                  {r.email && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 flex justify-center"><Mail size={14} className="opacity-70" /></div>
+                      <span>{r.email}</span>
+                    </div>
+                  )}
+                  {r.city && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 flex justify-center"><MapPin size={14} className="opacity-70" /></div>
+                      <span>{r.city}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-[var(--panel-border)] flex justify-between items-center">
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    r.status === 'Active' || r.status === 'نشط'
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                      : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                  }`}>
+                    {r.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {showForm && (
           <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowForm(false)} />
-            <div className="absolute inset-0 flex items-start justify-center p-6 md:p-6">
-              <div className="card p-4 sm:p-6 mt-4 w-[92vw] sm:w-[80vw] lg:w-[60vw] xl:max-w-3xl">
-                <div className={`flex items-center justify-between ${isArabic ? 'flex-row-reverse' : ''} mb-4`}>
+            <div className="absolute inset-0 flex items-center justify-center p-4 md:p-6">
+              <div className="card p-4 sm:p-6 w-[92vw] sm:w-[80vw] lg:w-[60vw] xl:max-w-3xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-medium">{labels.formTitle}</h2>
-                  <button type="button" className="btn btn-sm btn-circle bg-white text-red-600 hover:bg-red-50 shadow-md" onClick={() => setShowForm(false)} aria-label={labels.close}>
-                    <FaTimes size={20} />
+                  <button 
+                    type="button" 
+                    className="w-8 h-8 rounded-full flex items-center justify-center bg-white text-red-600 hover:bg-red-50 shadow-md transition-colors"
+                    onClick={() => setShowForm(false)} 
+                    aria-label={labels.close}
+                  >
+                    <X size={20} />
                   </button>
                 </div>
                 <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label className="block text-sm mb-1">{labels.companyName}</label><input name="companyName" value={form.companyName} onChange={onChange} placeholder={labels.companyName} className="input" required /></div>
-                  <div><label className="block text-sm mb-1">{labels.contactPerson}</label><input name="contactPerson" value={form.contactPerson} onChange={onChange} placeholder={labels.contactPerson} className="input" /></div>
-                  <div><label className="block text-sm mb-1">{labels.phone}</label><input name="phone" value={form.phone} onChange={onChange} placeholder={labels.phone} className="input" /></div>
-                  <div><label className="block text-sm mb-1">{labels.email}</label><input type="email" name="email" value={form.email} onChange={onChange} placeholder={labels.email} className="input" /></div>
-                  <div><label className="block text-sm mb-1">{labels.city}</label><input name="city" value={form.city} onChange={onChange} placeholder={labels.city} className="input" /></div>
+                  <div><label className="block text-sm mb-1">{labels.companyName}</label><input name="companyName" value={form.companyName} onChange={onChange} placeholder={labels.companyName} className="input w-full" required /></div>
+                  <div><label className="block text-sm mb-1">{labels.contactPerson}</label><input name="contactPerson" value={form.contactPerson} onChange={onChange} placeholder={labels.contactPerson} className="input w-full" /></div>
+                  <div><label className="block text-sm mb-1">{labels.phone}</label><input name="phone" value={form.phone} onChange={onChange} placeholder={labels.phone} className="input w-full" /></div>
+                  <div><label className="block text-sm mb-1">{labels.email}</label><input type="email" name="email" value={form.email} onChange={onChange} placeholder={labels.email} className="input w-full" /></div>
+                  <div><label className="block text-sm mb-1">{labels.city}</label><input name="city" value={form.city} onChange={onChange} placeholder={labels.city} className="input w-full" /></div>
                   <div>
                     <label className="block text-sm mb-1">{labels.status}</label>
-                    <select name="status" value={form.status} onChange={onChange} className="input">
+                    <select name="status" value={form.status} onChange={onChange} className="input w-full">
                       {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
-                  <div className={`md:col-span-2 flex gap-2 ${isArabic ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
-                    <button type="submit" className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none">
+                  <div className={`md:col-span-2 flex gap-2 ${isArabic ? 'justify-start' : 'justify-end'}`}>
+                    <button type="submit" className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors font-medium">
                       {labels.save}
                     </button>
                   </div>

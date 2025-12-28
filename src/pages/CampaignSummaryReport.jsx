@@ -124,7 +124,7 @@ export default function CampaignSummaryReport() {
       <div id="report-root" className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">{t('Campaign Summary')}</h1>
-          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-2`}>
             <button onClick={exportExcel} className="btn btn-primary px-3 py-2 rounded-md border">
               <span className="mr-2">📊</span> {t('Export Excel')}
             </button>

@@ -145,8 +145,8 @@ export default function CancelReasons() {
   return (
     <div className={`px-2 max-[480px]:px-1 py-4 md:px-6 md:py-6 min-h-screen ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`} dir={isRtl ? 'rtl' : 'ltr'}>
       <div className={`p-4 flex justify-between items-center gap-4 mb-6`} dir={isRtl ? 'rtl' : 'ltr'}>
-        <div className={`relative inline-flex items-center ${isRtl ? 'flex-row-reverse' : ''} gap-2`}>
-          <h1 className={`page-title text-2xl md:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} flex items-center gap-2 ${isRtl ? 'flex-row-reverse text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left' }}>
+        <div className={`relative inline-flex items-center gap-2`}>
+          <h1 className={`page-title text-2xl md:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} flex items-center gap-2 ${isRtl ? 'text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left' }}>
             {t('Cancel Reasons')}
           </h1>
           <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isRtl ? 'auto' : '-4px', right: isRtl ? '-4px' : 'auto', bottom: '-4px' }}></span>

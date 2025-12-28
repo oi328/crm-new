@@ -331,7 +331,7 @@ export const AddNewLead = () => {
 
   return (
     <div className={`p-6 pb-24 bg-[var(--content-bg)] text-[var(--content-text)]`}>
-      <div className={`relative flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''} mb-2`}>
+      <div className={`relative flex items-center justify-between mb-2`}>
         <h1 className={`page-title text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>{t('Add New Lead')}</h1>
         <button
           type="button"

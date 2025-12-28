@@ -52,7 +52,7 @@ export default function MeetingsReport() {
 
   const SectionHeader = ({ title, desc, icon }) => (
     <div className="flex items-center justify-between mb-2">
-      <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex items-center gap-2`}>
         <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
         {icon && <span className="text-primary">{icon}</span>}
         <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold`}>{title}</h3>

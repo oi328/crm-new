@@ -419,7 +419,7 @@ export default function Marketing() {
 
             {/* Cross-Channel Actions (separated) */}
             <section className="card glass-card p-4">
-              <div className={`flex items-center justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center justify-between gap-3`}>
                 <div className="flex items-center gap-2">
                   <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>+ {t('Create New Campaign')}</button>
                   <button className="btn btn-secondary">{t('Edit')}</button>

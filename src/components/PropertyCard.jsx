@@ -6,7 +6,7 @@ export default function PropertyCard({ p, isRTL, onView, onEdit, onShare, onDele
     <div className="glass-panel rounded-xl overflow-hidden">
       {/* Header: name + status + actions */}
       <div className="p-2 sm:p-3 flex items-center justify-between">
-        <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''} min-w-0`}>
+        <div className={`flex items-center gap-3 min-w-0`}>
           {p.logo && <img src={p.logo} alt={`${p.name} logo`} className="h-6 sm:h-7 w-auto rounded-md border border-gray-200 dark:border-gray-700" />}
           <div className={`flex flex-col ${isRTL ? 'items-end' : 'items-start'} min-w-0`}>
              <h3 className="font-semibold text-sm sm:text-base truncate max-w-[150px] sm:max-w-[200px]">{p.adTitle || p.name}</h3>
@@ -23,7 +23,7 @@ export default function PropertyCard({ p, isRTL, onView, onEdit, onShare, onDele
              )}
           </div>
         </div>
-        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-2`}>
           <button className="btn btn-sm btn-circle btn-ghost text-blue-600 hover:bg-blue-100" title={isRTL ? 'عرض' : 'View'} aria-label={isRTL ? 'عرض' : 'View'} onClick={()=>onView && onView(p)}>
             <FaEye className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
@@ -46,8 +46,8 @@ export default function PropertyCard({ p, isRTL, onView, onEdit, onShare, onDele
       {/* Compact details aligned with Add Property */}
       <div className="p-2 sm:p-3">
         <div className={`grid grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2 text-xs sm:text-sm ${isRTL ? 'text-end' : 'text-start'}`}>
-          <div className={`glass-panel tinted-blue px-1.5 py-1 rounded-md flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}><FaMapMarkerAlt className="opacity-70 w-3 h-3 sm:w-4 sm:h-4" /> {p.city || '-'}</div>
-          <div className={`glass-panel tinted-indigo px-1.5 py-1 rounded-md flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}><FaHome className="opacity-70 w-3 h-3 sm:w-4 sm:h-4" /> {p.propertyType || p.type || '-'}</div>
+          <div className={`glass-panel tinted-blue px-1.5 py-1 rounded-md flex items-center gap-1.5`}><FaMapMarkerAlt className="opacity-70 w-3 h-3 sm:w-4 sm:h-4" /> {p.city || '-'}</div>
+          <div className={`glass-panel tinted-indigo px-1.5 py-1 rounded-md flex items-center gap-1.5`}><FaHome className="opacity-70 w-3 h-3 sm:w-4 sm:h-4" /> {p.propertyType || p.type || '-'}</div>
           {p.building && <div className="glass-panel tinted-cyan px-1.5 py-1 rounded-md">{isRTL ? 'المبنى' : 'Building'}: <span className="font-semibold">{p.building}</span></div>}
           {p.owner && <div className="glass-panel tinted-purple px-1.5 py-1 rounded-md">{isRTL ? 'المالك' : 'Owner'}: <span className="font-semibold">{p.owner}</span></div>}
           <div className="glass-panel tinted-emerald px-1.5 py-1 rounded-md">{isRTL ? 'غرف النوم' : 'Bedrooms'}: <span className="font-semibold">{p.bedrooms ?? p.rooms ?? '-'}</span></div>
@@ -74,7 +74,7 @@ export default function PropertyCard({ p, isRTL, onView, onEdit, onShare, onDele
 
         {/* Share */}
         <div className="mt-2 flex items-center justify-end">
-          <button className={`inline-flex items-center gap-1.5 sm:gap-2 text-primary hover:underline text-xs sm:text-sm ${isRTL ? 'flex-row-reverse' : ''}`} title={isRTL ? 'مشاركة' : 'Share'} onClick={()=>onShare && onShare(p)}>
+          <button className={`inline-flex items-center gap-1.5 sm:gap-2 text-primary hover:underline text-xs sm:text-sm`} title={isRTL ? 'مشاركة' : 'Share'} onClick={()=>onShare && onShare(p)}>
             <FaShareAlt className={`${isRTL ? 'scale-x-[-1]' : ''} w-3 h-3 sm:w-4 sm:h-4`} /> {isRTL ? 'مشاركة' : 'Share'}
           </button>
         </div>

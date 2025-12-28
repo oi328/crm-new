@@ -251,7 +251,7 @@ export default function Warehouse() {
 
   return (
       <div className="space-y-6 pt-4">
-        <div className={`flex items-center justify-between ${isArabic ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center justify-between`}>
           <div className="relative inline-block">
             <h1 className={`page-title text-2xl font-semibold ${isArabic ? 'text-right' : 'text-left'}`}>{labels.title}</h1>
             <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
@@ -393,7 +393,7 @@ export default function Warehouse() {
             <div className="absolute inset-0 flex items-start justify-center p-6 md:p-6 overflow-auto">
               <form onSubmit={onSubmit} className="space-y-6 mt-4 w-[95vw] sm:w-[85vw] lg:w-[70vw] xl:max-w-4xl">
                 <div className="card p-4 sm:p-6">
-                  <div className={`flex items-center justify-between ${isArabic ? 'flex-row-reverse' : ''} mb-4`}>
+                  <div className={`flex items-center justify-between mb-4`}>
                     <h2 className="text-xl font-medium">{labels.formTitleBasic}</h2>
                     <button type="button" className="btn btn-glass btn-sm text-red-500 hover:text-red-600" onClick={() => setShowForm(false)} aria-label={labels.close}>
                       <FaTimes />
@@ -526,7 +526,7 @@ export default function Warehouse() {
             </div>
 
                 <div className="h-6"></div>
-                <div className={`flex gap-2 ${isArabic ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
+                <div className={`flex gap-2 ${isArabic ? 'justify-start' : 'justify-end'}`}>
                   <button type="submit" className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none">{labels.save}</button>
                 </div>
                 <div className="h-6"></div>

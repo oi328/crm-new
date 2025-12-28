@@ -91,7 +91,7 @@ const AddLeadModal = ({ isOpen, onClose, onSave }) => {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className={`${isLight ? 'bg-white border-gray-200' : 'bg-slate-900/90 backdrop-blur-md border-slate-700'} sm:rounded-2xl shadow-2xl border w-full h-screen sm:max-w-[1100px] sm:max-h-[90vh] sm:h-auto sm:overflow-hidden overflow-y-auto transition-colors duration-300`}>
         {/* Header */}
-        <div className={`relative flex items-center justify-between p-6 border-b ${isLight ? 'border-gray-200' : 'border-slate-700'} ${isArabic ? 'flex-row-reverse' : ''}`}>
+        <div className={`relative flex items-center justify-between p-6 border-b ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>
           <h2 className={`text-2xl font-bold ${isLight ? 'text-gray-800' : 'text-white'} ${isArabic ? 'text-right' : 'text-left'}`}>
             {isArabic ? 'إضافة عملاء' : 'Add Leads'}
           </h2>

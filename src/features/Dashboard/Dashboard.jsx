@@ -1163,24 +1163,6 @@ export const Dashboard = () => {
                     )}
                   </button>
 
-                  {/* Stacked Bar Chart Button */}
-                  <button 
-                    onClick={() => setLeadsChartType('stackedBar')} 
-                    className={`
-                      group relative flex items-center justify-center px-2 py-1 sm:px-3 sm:py-2 rounded-md transition-all duration-300 ease-in-out
-                      ${leadsChartType === 'stackedBar' 
-                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25 scale-105' 
-                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-gray-600 hover:text-green-600 dark:hover:text-green-400 hover:scale-105'
-                      }
-                      border border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500
-                    `}
-                    title={i18n.language === 'ar' ? 'رسم بياني عمودي مكدس' : 'Stacked Bar Chart'}
-                  >
-                    <RiStackLine className="w-3 h-3 sm:w-4 sm:h-4" />
-                    {leadsChartType === 'stackedBar' && (
-                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-green-500 rounded-full"></div>
-                    )}
-                  </button>
 
                   {/* Line Chart Button */}
                   <button 

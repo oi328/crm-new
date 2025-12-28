@@ -920,7 +920,7 @@ export const Leads = () => {
     <div className={`px-2 max-[480px]:px-1 py-4 md:px-6 md:py-6 min-h-screen  ${textColor}` } dir={isRtl ? 'rtl' : 'ltr'}>
       <div className={`p-4 flex justify-between items-center gap-4 mb-6`} dir={isRtl ? 'rtl' : 'ltr'}>
         <div className={`relative inline-flex items-center ${isRtl ? 'flex-row-reverse' : ''} gap-2`}>
-          <h1 className={`page-title text-2xl md:text-3xl font-bold text-black dark:text-white flex items-center gap-2 ${isRtl ? 'flex-row-reverse text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left', color: theme === 'dark' ? '#ffffff' : '#000000' }}>
+          <h1 className={`page-title text-2xl md:text-3xl font-bold text-black dark:text-white flex items-center gap-2 ${isRtl ? 'text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left', color: theme === 'dark' ? '#ffffff' : '#000000' }}>
             {t('Leads')}
           </h1>
           <span

@@ -274,7 +274,7 @@ export const LeadsAnalysisChart = ({ data, chartType = 'bar', filters = {}, lege
       maintainAspectRatio: false,
       devicePixelRatio: 2,
       plugins: {
-        legend: { position: 'top', display: true, labels: { usePointStyle: true, boxWidth: 8, color: isLight ? '#0f172a' : '#ffffff', font: { size: isMobile ? 10 : 12 } } },
+        legend: { display: false },
         tooltip: { enabled: true }
       },
       scales: {
@@ -351,7 +351,7 @@ export const LeadsAnalysisChart = ({ data, chartType = 'bar', filters = {}, lege
       maintainAspectRatio: false,
       devicePixelRatio: 2,
       plugins: {
-        legend: { position: 'top', display: true, labels: { usePointStyle: true, boxWidth: 8, color: isLight ? '#0f172a' : '#ffffff', font: { size: isMobile ? 10 : 12 } } },
+        legend: { display: false, position: 'top', labels: { usePointStyle: true, boxWidth: 8, color: isLight ? '#0f172a' : '#ffffff', font: { size: isMobile ? 10 : 12 } } },
         tooltip: { enabled: true }
       },
       scales: {

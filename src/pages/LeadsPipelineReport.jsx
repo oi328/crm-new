@@ -177,7 +177,7 @@ export default function LeadsPipelineReport() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Funnel (stage counts) */}
           <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <div className={`flex items-center gap-2 mb-3 ${i18n?.dir?.() === 'rtl' ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 mb-3`}>
               <div className={`${i18n?.dir?.() === 'rtl' ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
               <h3 className={`${i18n?.dir?.() === 'rtl' ? 'text-right' : ''} text-lg font-semibold text-gray-900 dark:text-gray-100`}>{t('Funnel by Stage')}</h3>
             </div>

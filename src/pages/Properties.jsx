@@ -558,7 +558,7 @@ export default function Properties() {
                 className="inline-block h-[2px] w-full rounded bg-gradient-to-r from-blue-500 to-purple-600"
               />
             </div>
-            <div className={`flex items-center gap-2 flex-wrap ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 flex-wrap`}>
               <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none" onClick={()=>setShowImportModal(true)}>
                 {Label.importProperties}
               </button>
@@ -826,7 +826,7 @@ export default function Properties() {
         <div className="h-4" />
 
         {/* Pagination */}
-        <div className={`mt-4 flex items-center justify-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`mt-4 flex items-center justify-center gap-2 ${isRTL ? '' : ''}`}>
           <button className="btn btn-glass" onClick={()=>setPage(p => Math.max(1, p-1))}>{isRTL ? 'السابق' : 'Prev'}</button>
           <span className="text-sm text-[var(--muted-text)]">{isRTL ? 'صفحة' : 'Page'} {page} / {totalPages}</span>
           <button className="btn btn-glass" onClick={()=>setPage(p => Math.min(totalPages, p+1))}>{isRTL ? 'التالي' : 'Next'}</button>
@@ -932,11 +932,11 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" title={isRTL ? 'إغلاق' : 'Close'}><FaTimes /></button>
         </div>
         <div className="px-4 pt-4">
-          <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'} overflow-x-auto`} dir={isRTL ? 'rtl' : 'ltr'}>
-            {(isRTL ? [...tabs].slice().reverse() : tabs).map(t => (
-              <button key={t.id} onClick={()=>setActiveTab(t.id)} className={`px-3 py-2 text-sm rounded-lg border whitespace-nowrap ${activeTab===t.id ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 dark:border-gray-700 text-[var(--content-text)]'}`}>{t.label}</button>
-            ))}
-          </div>
+          <div className={`flex items-center gap-4 ${isRTL ? 'justify-end' : 'justify-start'} overflow-x-auto`} dir={isRTL ? 'rtl' : 'ltr'}>
+                {(isRTL ? [...tabs].slice().reverse() : tabs).map(t => (
+                    <button key={t.id} onClick={()=>setActiveTab(t.id)} className={`px-3 py-2 text-sm rounded-lg border whitespace-nowrap ${activeTab===t.id ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 dark:border-gray-700 text-[var(--content-text)]'}`}>{t.label}</button>
+                ))}
+            </div>
         </div>
         <div className="p-4 min-h-[400px]">
           {activeTab === 'core' && (

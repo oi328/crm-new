@@ -1046,7 +1046,7 @@ export default function Projects() {
              bg-gradient-to-r from-blue-500 to-purple-600"
               />
             </div>
-            <div className={`flex items-center gap-2 flex-wrap ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 flex-wrap`}>
               <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none" onClick={()=>setShowImportModal(true)}>
                 {Label.importProjects}
               </button>
@@ -1860,7 +1860,7 @@ function PaymentPlanTab({ isRTL, onClose, onSave }) {
           <input type="number" className="input w-full" value={payment.graceMonths} onChange={setPayVal('graceMonths')} placeholder={isRTL ? '0' : '0'} />
         </div>
       </div>
-      <div className={`flex items-center justify-end gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex items-center justify-end gap-3`}>
         <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none" onClick={gen}>{isRTL ? 'توليد' : 'Generate'}</button>
       </div>
       {schedule.length > 0 && (
@@ -1912,7 +1912,7 @@ function PaymentPlanTab({ isRTL, onClose, onSave }) {
           </div>
         </div>
       )}
-      <div className={`flex items-center justify-end gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex items-center justify-end gap-3`}>
         <button className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none" onClick={onClose}>{isRTL ? 'إلغاء' : 'Cancel'}</button>
       </div>
     </div>
@@ -1985,7 +1985,7 @@ function CilTab({ isRTL, onClose, onSave }) {
           <input className="input w-full" value={cil.signature} onChange={setVal('signature')} placeholder={isRTL ? 'التوقيع' : 'Signature'} />
         </div>
       </div>
-      <div className={`flex items-center justify-end gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex items-center justify-end gap-3`}>
         <button className="btn btn-glass" onClick={exportPdf}>PDF</button>
         <button className="btn btn-primary" onClick={save}>{isRTL ? 'حفظ' : 'Save'}</button>
         <button className="btn btn-glass" onClick={onClose}>{isRTL ? 'إلغاء' : 'Cancel'}</button>
@@ -2004,7 +2004,7 @@ function ProjectCard({ p, isRTL, Label, onView, onEdit, onDelete }) {
           {p.logo && <img src={p.logo} alt={`${p.name} logo`} className="h-7 w-auto" />}
           <h3 className="text-base font-semibold truncate flex-1">{p.name}</h3>
         </div>
-        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-2`}>
           <button className="btn btn-sm btn-circle btn-ghost text-blue-600 hover:bg-blue-100" title={isRTL ? 'عرض' : 'View'} aria-label={isRTL ? 'عرض' : 'View'} onClick={()=>onView && onView(p)}>
             <FaEye className="w-4 h-4" />
           </button>
@@ -2025,8 +2025,8 @@ function ProjectCard({ p, isRTL, Label, onView, onEdit, onDelete }) {
 
       {/* Compact line details */}
       <div className={`mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 text-sm ${isRTL ? 'text-end' : 'text-start'}`}>
-        <div className={`glass-panel tinted-blue px-2 py-1 rounded-md flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}><FaMapMarkerAlt className="opacity-70" /> {p.city}</div>
-        <div className={`glass-panel tinted-indigo px-2 py-1 rounded-md flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}><FaBuilding className="opacity-70" /> {p.developer}</div>
+        <div className={`glass-panel tinted-blue px-2 py-1 rounded-md flex items-center gap-2`}><FaMapMarkerAlt className="opacity-70" /> {p.city}</div>
+        <div className={`glass-panel tinted-indigo px-2 py-1 rounded-md flex items-center gap-2`}><FaBuilding className="opacity-70" /> {p.developer}</div>
         <div className="glass-panel tinted-emerald px-2 py-1 rounded-md">{Label.units}: <span className="font-semibold">{p.units}</span></div>
         <div className="glass-panel tinted-violet px-2 py-1 rounded-md">{isRTL ? 'المراحل' : 'Phases'}: <span className="font-semibold">{p.phases}</span></div>
         <div className="glass-panel tinted-amber px-2 py-1 rounded-md">{isRTL ? 'الملفات' : 'Docs'}: <span className="font-semibold">{p.docs}</span></div>
@@ -2058,7 +2058,7 @@ function ProjectCard({ p, isRTL, Label, onView, onEdit, onDelete }) {
 
       {/* Share */}
       <div className="mt-2 flex items-center justify-end">
-        <button className={`inline-flex items-center gap-2 text-primary hover:underline ${isRTL ? 'flex-row-reverse' : ''}`} title={Label.share}>
+        <button className={`inline-flex items-center gap-2 text-primary hover:underline`} title={Label.share}>
           <FaShareAlt className={isRTL ? 'scale-x-[-1]' : ''} /> {Label.share}
         </button>
       </div>
@@ -2228,7 +2228,7 @@ function ProjectDetailsModal({ p, isRTL, onClose }) {
 
         {/* Tabs */}
         <div className="px-4 pt-4">
-          <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse justify-end' : 'justify-start'} overflow-x-auto`} dir={isRTL ? 'rtl' : 'ltr'}>
+          <div className={`flex items-center gap-4 ${isRTL ? 'justify-end' : 'justify-start'} overflow-x-auto`} dir={isRTL ? 'rtl' : 'ltr'}>
             {(isRTL ? [...tabs].slice().reverse() : tabs).map(t => (
               <button key={t.id} onClick={()=>setActiveTab(t.id)} className={`px-3 py-2 text-sm rounded-lg border whitespace-nowrap ${activeTab===t.id ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 dark:border-gray-700 text-[var(--content-text)]'}`}>
                 {t.label}

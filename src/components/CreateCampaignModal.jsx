@@ -131,7 +131,7 @@ export default function CreateCampaignModal({ isOpen, onClose, onCreate }) {
             />
           </div>
 
-          <div className={`flex items-center justify-end gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center justify-end gap-2`}>
             <button type="button" className="btn" onClick={onClose}>{t('Cancel')}</button>
             <button type="submit" className="btn btn-primary">{t('Create')}</button>
           </div>

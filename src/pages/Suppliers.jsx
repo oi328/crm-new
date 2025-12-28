@@ -195,7 +195,7 @@ export default function Suppliers() {
     <div className={`space-y-6 pt-4 pb-10 ${isRTL ? 'rtl' : 'ltr'}`}>
       
       {/* Header Section */}
-      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div className="flex items-center justify-between">
         <div className="relative inline-block">
           <h1 className={`page-title text-2xl font-semibold dark:text-white ${isRTL ? 'text-right' : 'text-left'}`}>
             {labels.title}
@@ -369,7 +369,7 @@ export default function Suppliers() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
           <div className="absolute inset-0 flex items-start justify-center p-6 md:p-6 overflow-y-auto">
             <div className="card p-4 sm:p-6 mt-4 w-[95vw] sm:w-[85vw] lg:w-[60vw] xl:max-w-3xl my-auto">
-              <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''} mb-4`}>
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-medium">
                   {editingId ? (isArabic ? 'تعديل مورد' : 'Edit Supplier') : labels.add}
                 </h2>
@@ -458,7 +458,7 @@ export default function Suppliers() {
                 )}
 
                 {/* Footer Buttons */}
-                <div className={`md:col-span-2 flex gap-3 mt-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className="md:col-span-2 flex gap-3 mt-4">
                   <button 
                     type="submit" 
                     className="btn bg-blue-600 hover:bg-blue-500 text-white flex-1"

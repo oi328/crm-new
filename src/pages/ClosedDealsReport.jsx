@@ -252,7 +252,7 @@ export default function ClosedDealsReport() {
         {/* Bar: value per salesperson */}
         <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div className="flex items-center justify-between mb-3">
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2`}>
               <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
               <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold text-gray-800 dark:text-gray-100`}>{t('Deal Value per Salesperson')}</h3>
             </div>
@@ -300,7 +300,7 @@ export default function ClosedDealsReport() {
         {/* Line: closed deals trend */}
         <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div className="flex items-center justify-between mb-3">
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 mb-3`}>
               <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
               <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold text-gray-800 dark:text-gray-100`}>{t('Closed Deals Trend')}</h3>
             </div>

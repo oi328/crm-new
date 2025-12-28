@@ -232,7 +232,7 @@ export default function CreateRequestModal({ open, onClose, onSave, initial = {}
           </div>
         )}
 
-        <div className={`flex items-center gap-2 ${isRTL ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
+        <div className={`flex items-center gap-2 justify-end`}>
           <button
             onClick={handleSave}
             disabled={!canSave}

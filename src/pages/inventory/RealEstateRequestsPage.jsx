@@ -184,9 +184,9 @@ export default function RealEstateRequestsPage() {
     return (
         <div className="space-y-6 pt-4">
             {/* Header */}
-            <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="flex items-center justify-between">
                 <div className="relative inline-block">
-                    <h1 className={`text-2xl font-bold  dark:text-white flex items-center gap-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <h1 className="text-2xl font-bold  dark:text-white flex items-center gap-2">
                         {isRTL ? 'طلبات العقارات' : 'Real Estate Requests'}
                     </h1>
                     <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isRTL ? 'auto' : '-4px', right: isRTL ? '-4px' : 'auto', bottom: '-4px' }}></span>
@@ -403,7 +403,7 @@ export default function RealEstateRequestsPage() {
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
                     <div className="absolute inset-0 flex items-start justify-center p-6 md:p-6">
                         <div className="card p-4 sm:p-6 mt-4 w-[92vw] sm:w-[80vw] lg:w-[60vw] xl:max-w-3xl">
-                            <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''} mb-4`}>
+                            <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-xl font-medium">
                                     {editingId 
                                         ? (isRTL ? 'تعديل الطلب' : 'Edit Request') 
@@ -470,7 +470,7 @@ export default function RealEstateRequestsPage() {
                                         placeholder={isRTL ? 'تفاصيل الطلب...' : 'Request details...'}
                                     ></textarea>
                                 </div>
-                                <div className={`md:col-span-2 flex gap-2 ${isRTL ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
+                                <div className={`md:col-span-2 flex gap-2 ${isRTL ? 'justify-start' : 'justify-end'}`}>
                                     <button type="submit" className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors font-medium">
                                         {isRTL ? 'حفظ' : 'Save'}
                                     </button>

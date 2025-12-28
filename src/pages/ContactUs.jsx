@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import Layout from '@shared/layouts/Layout'
 import { useTranslation } from 'react-i18next'
+import { useTheme } from '@shared/context/ThemeProvider';
 
 export default function ContactUs() {
   const { t, i18n } = useTranslation()
@@ -82,7 +82,7 @@ export default function ContactUs() {
   }
 
   return (
-    <Layout>
+    
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">{t('Contact us')}</h1>
         {/* Hero intro */}
@@ -116,7 +116,7 @@ export default function ContactUs() {
               {/* Row 1: Name, Email */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className={`text-xs text-[var(--muted-text)] inline-flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <label className={`text-xs text-[var(--muted-text)] inline-flex items-center gap-2`}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                       <circle cx="12" cy="8" r="3" />
                       <path d="M6 21v-2a6 6 0 0112 0v2" />
@@ -126,7 +126,7 @@ export default function ContactUs() {
                   <input name="name" value={form.name} onChange={handleChange} className="input" placeholder={t('Enter your name')} required />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className={`text-xs text-[var(--muted-text)] inline-flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <label className={`text-xs text-[var(--muted-text)] inline-flex items-center gap-2`}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                       <rect x="4" y="6" width="16" height="12" rx="2" />
                       <path d="M4 8l8 6 8-6" />
@@ -175,8 +175,8 @@ export default function ContactUs() {
               <div className="spacer-row w-full">
                 <div className="h-2"></div>
               </div>
-              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <button type="submit" className={`btn btn-primary inline-flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`} disabled={sending}>
+              <div className={`flex items-center gap-2`}>
+                <button type="submit" className={`btn btn-primary inline-flex items-center gap-2`} disabled={sending}>
                   {sending ? (
                     <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
                   ) : (
@@ -283,7 +283,7 @@ export default function ContactUs() {
         </div>
         {/* Location Map */}
         <section className="card glass-card p-4">
-          <div className={`flex items-center justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center justify-between gap-3`}>
             <h2 className="text-lg font-semibold">{t('Our Location')}</h2>
             <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button type="button" className={`btn ${isRTL ? 'flex-row-reverse' : ''}`} onClick={openInMaps}>
@@ -294,7 +294,7 @@ export default function ContactUs() {
               </button>
             </div>
           </div>
-          <div className={`mt-3 flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`mt-3 flex items-center gap-3`}>
             <label className="text-xs text-[var(--muted-text)]">{t('Zoom')}</label>
             <input type="range" min="3" max="20" value={mapZoom} onChange={(e) => setMapZoom(Number(e.target.value))} />
           </div>
@@ -316,6 +316,6 @@ export default function ContactUs() {
           <div className="h-2"></div>
         </div>
       </div>
-    </Layout>
+    
   )
 }

@@ -94,7 +94,7 @@ export default function CostVsRevenueReport() {
       <div id="report-root" className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">{t('Cost vs Revenue by Platform')}</h1>
-          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-2`}>
             <button
               onClick={exportPdf}
               aria-label={t('Export PDF')}
@@ -136,7 +136,7 @@ export default function CostVsRevenueReport() {
 
         {/* عرض العناصر داخل فلتر التاريخ: التاريخ المختار والمنصات الحالية */}
         <div className="px-3 py-2 rounded-lg border bg-[var(--dropdown-bg)]">
-          <div className={`flex flex-wrap items-center gap-2 text-sm ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex flex-wrap items-center gap-2 text-sm`}>
             <span className="opacity-70">{t('Date Range')}:</span>
             <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600">{startDate}</span>
             <span className="opacity-60">—</span>
@@ -155,7 +155,7 @@ export default function CostVsRevenueReport() {
 
         {/* Comparative table */}
         <section className="glass-panel p-4">
-          <div className={`flex items-center gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-2 mb-3`}>
             <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
             <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold`}>{t('Platform Performance')}</h3>
           </div>

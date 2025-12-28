@@ -87,7 +87,7 @@ export default function SettingsRotation() {
 
           <div className={`py-2 ${isRTL ? 'text-right' : ''}`}>
             <div className="text-sm text-[var(--content-text)] opacity-80 mb-2">{t('Working Hours From')}</div>
-            <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-4`}>
               <TimeInput label={t('From')} value={prefs.workFrom} onChange={(v)=>update({ workFrom: v })} />
               <span className="opacity-70">{t('To')}</span>
               <TimeInput label={''} value={prefs.workTo} onChange={(v)=>update({ workTo: v })} />

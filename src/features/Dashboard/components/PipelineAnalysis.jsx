@@ -276,7 +276,7 @@ export const PipelineAnalysis = ({ selectedEmployee, dateFrom, dateTo }) => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'top', labels: { color: tickColor, font: { size: isMobile ? 10 : 13 } } },
+      legend: { display: false, position: 'top', labels: { color: tickColor, font: { size: isMobile ? 10 : 13 } } },
       title: { display: true, text: (lang === 'ar' ? `${t('Pipeline Analysis')} - ${measureDisplay} (حسب المرحلة)` : `${t('Pipeline Analysis')} - ${t(selectedMeasure)} (${t('by Stage')})`), color: tickColor, font: { size: isMobile ? 12 : 14, weight: 'bold' } }
     },
     scales: {
@@ -289,7 +289,7 @@ export const PipelineAnalysis = ({ selectedEmployee, dateFrom, dateTo }) => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'top', labels: { color: tickColor, font: { size: isMobile ? 10 : 13 } } },
+      legend: { display: false, position: 'top', labels: { color: tickColor, font: { size: isMobile ? 10 : 13 } } },
       title: { display: true, text: `${t('Pipeline Analysis')} - ${t(selectedMeasure)} (${t('Over Time')})`, color: tickColor, font: { size: isMobile ? 12 : 14, weight: 'bold' } }
     },
     scales: {
@@ -345,13 +345,6 @@ export const PipelineAnalysis = ({ selectedEmployee, dateFrom, dateTo }) => {
                   : (lang === 'ar' ? 'قائمة' : 'List')}
         </span>
         <div className="flex items-center gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setChartType('bar')}
-                title={t('Bar')}
-                aria-label={t('Bar')}
-                className={`group relative flex items-center justify-center px-2 py-1 sm:px-3 sm:py-2 rounded-md transition-all duration-300 ease-in-out ${chartType === 'bar' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25 scale-105' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 hover:text-blue-600 dark:hover:text-blue-400 hover:scale-105'} border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500`}>
-                <RiBarChart2Line className="w-3 h-3 sm:w-4 sm:h-4" />
-              </button>
               <button
                 onClick={() => setChartType('line')}
                 title={t('Line')}

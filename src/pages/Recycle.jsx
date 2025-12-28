@@ -904,7 +904,7 @@ export const Leads = () => {
       <div className={`flex justify-between items-center gap-4 mb-6
  ${isRtl ? 'text-right' : 'text-left'}`}>
         <div className={`relative inline-flex items-center ${isRtl ? 'flex-row-reverse text-right' : ''} gap-2`}>
-          <h1 className={`page-title text-2xl md:text-3xl font-bold text-black dark:text-white flex items-center gap-2 ${isRtl ? 'flex-row-reverse w-full text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left', color: theme === 'dark' ? '#ffffff' : '#000000' }}>
+          <h1 className={`page-title text-2xl md:text-3xl font-bold text-black dark:text-white flex items-center gap-2 ${isRtl ? 'w-full text-right' : 'text-left'}`} style={{ textAlign: isRtl ? 'right' : 'left', color: theme === 'dark' ? '#ffffff' : '#000000' }}>
             {t('Recycle Bin')}
           </h1>
           <span
