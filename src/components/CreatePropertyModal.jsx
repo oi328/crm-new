@@ -1136,7 +1136,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
                     {isRTL ? 'باقة التسويق' : 'Marketing package'}
                   </div>
                   <select
-                    className="input dark:bg-gray-800 w-full md:w-80 border border-gray-300 dark:border-gray-700"
+                    className="input dark:bg-gray-800 w-full md:w-80 border border-black dark:border-gray-700"
                     value={channel.selectedPackage}
                     onChange={(e) => handlePackageChange(channel.id, e.target.value)}
                   >
@@ -1270,7 +1270,8 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
       
       <div
-        className="relative z-[210] bg-white dark:bg-slate-950 rounded-2xl w-[900px] max-w-full h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-slideUp"
+        className="relative z-[210] bg-white dark:!bg-slate-950 rounded-2xl w-[900px] max-w-full h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden animate-slideUp"
+        style={{ background: 'var(--panel-bg)' }}
       >
         
         {/* Header & Progress Bar */}
