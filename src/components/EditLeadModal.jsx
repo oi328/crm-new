@@ -74,7 +74,7 @@ const EditLeadModal = ({ isOpen, onClose, onSave, lead }) => {
           </h2>
           <button
             onClick={onClose}
-            className={`${isLight ? 'text-gray-400 hover:text-gray-600' : 'text-gray-300 hover:text-gray-200'} transition-colors`}
+            className="btn btn-sm btn-circle btn-ghost text-red-500"
             title={isArabic ? 'إغلاق' : 'Close'}
           >
             <FaTimes size={20} />
@@ -250,8 +250,7 @@ const EditLeadModal = ({ isOpen, onClose, onSave, lead }) => {
               </div>
               <div>
                 <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-gray-700' : 'text-gray-300'}`}>
-                  <FaDollarSign className="inline mr-1" />
-                  {isArabic ? 'القيمة المقدرة' : 'Estimated Value'}
+                  {isArabic ? 'الدخل المتوقع' : 'Expected Revenue'}
                 </label>
                 <input
                   type="number"
@@ -259,7 +258,7 @@ const EditLeadModal = ({ isOpen, onClose, onSave, lead }) => {
                   value={formData.estimatedValue}
                   onChange={handleInputChange}
                   className={`${isLight ? 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
-                  placeholder={isArabic ? 'أدخل القيمة المقدرة' : 'Enter estimated value'}
+                  placeholder={isArabic ? 'أدخل الدخل المتوقع' : 'Enter expected revenue'}
                 />
               </div>
               <div>
@@ -296,15 +295,15 @@ const EditLeadModal = ({ isOpen, onClose, onSave, lead }) => {
             <button
               type="button"
               onClick={onClose}
-              className={`${isLight ? 'px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200' : 'px-4 py-2 text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600'} transition-colors`}
+              className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none"
             >
               {isArabic ? 'إلغاء' : 'Cancel'}
             </button>
             <button
               type="submit"
-              className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center`}
+              className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center gap-2"
             >
-              <FaSave className="mr-2" />
+              <FaSave className="mr-0" />
               {isArabic ? 'حفظ التغييرات' : 'Save Changes'}
             </button>
           </div>

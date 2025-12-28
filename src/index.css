@@ -286,6 +286,12 @@ input[type="number"]::-webkit-outer-spin-button {
 .glass-panel.tinted-violet { background-color: rgba(139, 92, 246, 0.16); border-color: rgba(139, 92, 246, 0.28); }
 .dark .glass-panel.tinted-violet { background-color: rgba(139, 92, 246, 0.22); border-color: rgba(139, 92, 246, 0.35); }
 
+.glass-panel.tinted-orange { background-color: rgba(249, 115, 22, 0.16); border-color: rgba(249, 115, 22, 0.28); }
+.dark .glass-panel.tinted-orange { background-color: rgba(249, 115, 22, 0.22); border-color: rgba(249, 115, 22, 0.35); }
+
+.glass-panel.tinted-cyan { background-color: rgba(6, 182, 212, 0.16); border-color: rgba(6, 182, 212, 0.28); }
+.dark .glass-panel.tinted-cyan { background-color: rgba(6, 182, 212, 0.22); border-color: rgba(6, 182, 212, 0.35); }
+
 /* Tinted solid card variant */
 .card.tinted-blue { background-color: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.28); }
 .dark .card.tinted-blue { background-color: rgba(59, 130, 246, 0.20); border-color: rgba(59, 130, 246, 0.35); }
@@ -2441,6 +2447,27 @@ body {
 }
 
 /* Section headers alignment per language */
+/* Select Elements with Arrow Icon */
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23000' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+  padding-right: 35px !important;
+  cursor: pointer;
+}
+
+.dark select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e5e7eb' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+/* RTL Direction */
+[dir='rtl'] select {
+  background-position: left 12px center;
+  padding-left: 35px !important;
+  padding-right: 12px !important;
+}
+
 .section-header { display: flex; align-items: center; justify-content: space-between; }
 html[dir="rtl"] .section-header { flex-direction: row; }
 html[dir="ltr"] .section-header { flex-direction: row; }

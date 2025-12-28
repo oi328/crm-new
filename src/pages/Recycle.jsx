@@ -274,7 +274,7 @@ export const Leads = () => {
     contact: t('Contact'),
     source: t('Source'),
     project: t('Project'),
-    sales: t('Sales'),
+    salesPerson: t('Sales Person'),
     lastComment: t('Last Comment'),
     stage: t('Stage'),
     expectedRevenue: t('Expected Revenue'),
@@ -765,7 +765,7 @@ export const Leads = () => {
         }] : [],
         tags: tagsArr,
         notes: String(lead?.notes || '').trim(),
-        assignedSalesRep: String(lead?.sales || lead?.assignedTo || '').trim(),
+        assignedSalesRep: String(lead?.salesPerson || lead?.assignedTo || '').trim(),
       }
       validLeads.push(payload)
     }
@@ -1686,7 +1686,7 @@ export const Leads = () => {
                   )}
 
                   {/* Sales Person */}
-                  {visibleColumns.sales && (
+                  {visibleColumns.salesPerson && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
                       {lead.assignedTo || '-'}
                     </td>
@@ -1750,43 +1750,67 @@ export const Leads = () => {
       </div>
 
       {/* Pagination Controls */}
-      <nav className="flex flex-col lg:flex-row lg:flex-nowrap justify-between items-stretch lg:items-center gap-3 lg:gap-2 p-3 lg:p-4 border-t border-gray-200 dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
-        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium  dark:text-white">
-          <span style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Show')}</span>
-          <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm text-gray-900 dark:text-white text-xs">
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-          <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('entries')}</span>
-          <label htmlFor="page-search" className="sr-only">{t('Search Page')}</label>
-          <input
-            id="page-search"
-            type="text"
-            placeholder={t('Go to page...')}
-            value={pageSearch}
-            onChange={(e) => setPageSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                const page = Number(pageSearch)
-                if (page > 0 && page <= Math.ceil(filteredLeads.length / itemsPerPage)) {
-                  setCurrentPage(page)
-                  setPageSearch('')
+      <nav className="flex flex-col gap-4 p-3 lg:p-4 border-t border-gray-200 dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
+        {/* Row 1: Show Entries & Page Navigation */}
+        <div className="flex  lg:flex-row justify-between items-center gap-3">
+          {/* Show Entries */}
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium  dark:text-white">
+            <span style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Show')}</span>
+            <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm text-gray-900 dark:text-white text-xs">
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('entries')}</span>
+            <label htmlFor="page-search" className="sr-only">{t('Search Page')}</label>
+            <input
+              id="page-search"
+              type="text"
+              placeholder={t('Go to page...')}
+              value={pageSearch}
+              onChange={(e) => setPageSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const page = Number(pageSearch)
+                  if (page > 0 && page <= Math.ceil(filteredLeads.length / itemsPerPage)) {
+                    setCurrentPage(page)
+                    setPageSearch('')
+                  }
                 }
-              }
-            }}
-            className="ml-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
-            style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
-          />
-          <div className="spacer-row w-full lg:hidden">
-            <div className="h-2"></div>
+              }}
+              className="ml-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
+              style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
+            />
+          </div>
+
+          {/* Page Navigation */}
+          <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="block px-3 py-2 text-white focus:text-white leading-tight text-gray-500  border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+            >
+              <span className="sr-only text-white focus:text-white">{t('Previous')}</span>
+              <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
+            </button>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">
+              {t('Page')} <span className="font-semibold text-gray-900 dark:text-white">{currentPage}</span> {t('of')} <span className="font-semibold text-gray-900 dark:text-white">{Math.ceil(filteredLeads.length / itemsPerPage)}</span>
+            </span>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}
+              disabled={currentPage === Math.ceil(filteredLeads.length / itemsPerPage)}
+              className="block px-3 py-2 leading-tight  border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+            >
+              <span className="sr-only text-white focus:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Next')}</span>
+              <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path></svg>
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row lg:flex-nowrap items-start lg:items-center gap-3 lg:gap-2 w-full lg:w-auto">
-          {/* Export Controls */}
-          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700">
+        {/* Row 2: Export Controls */}
+        <div className="flex justify-end items-center">
+          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700 justify-center lg:justify-start">
             <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Export Pages')}</span>
             <input
               type="number"
@@ -1815,29 +1839,6 @@ export const Leads = () => {
             >
               <FaDownload size={12} />
               {t('Export')}
-            </button>
-          </div>
-
-          {/* Page Navigation */}
-          <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-start">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="block px-3 py-2 text-white focus:text-white leading-tight text-gray-500  border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
-            >
-              <span className="sr-only text-white focus:text-white">{t('Previous')}</span>
-              <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
-            </button>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
-              {t('Page')} <span className="font-semibold text-gray-900 dark:text-white">{currentPage}</span> {t('of')} <span className="font-semibold text-gray-900 dark:text-white">{Math.ceil(filteredLeads.length / itemsPerPage)}</span>
-            </span>
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}
-              disabled={currentPage === Math.ceil(filteredLeads.length / itemsPerPage)}
-              className="block px-3 py-2 leading-tight  border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
-            >
-              <span className="sr-only text-white focus:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Next')}</span>
-              <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path></svg>
             </button>
           </div>
         </div>

@@ -1,5 +1,30 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { FaTimes, FaTrash, FaFilter, FaSearch, FaChevronDown } from 'react-icons/fa'
+import SearchableSelect from '../components/SearchableSelect'
+
+const MOCK_RECORDS = [
+  { id: 1, itemName: 'iPhone 13 Pro', sku: 'MOB-IPH-13P', qtyAvailable: 50, qtyReserved: 5, minAlert: 10, warehouse: 'Main Warehouse' },
+  { id: 2, itemName: 'Samsung Galaxy S22', sku: 'MOB-SAM-S22', qtyAvailable: 45, qtyReserved: 3, minAlert: 10, warehouse: 'City Branch' },
+  { id: 3, itemName: 'Dell XPS 15', sku: 'LAP-DEL-XPS', qtyAvailable: 20, qtyReserved: 2, minAlert: 5, warehouse: 'Main Warehouse' },
+  { id: 4, itemName: 'MacBook Air M2', sku: 'LAP-APP-AIR', qtyAvailable: 30, qtyReserved: 4, minAlert: 5, warehouse: 'West Branch' },
+  { id: 5, itemName: 'iPad Air 5', sku: 'TAB-APP-AIR', qtyAvailable: 40, qtyReserved: 1, minAlert: 8, warehouse: 'City Branch' },
+  { id: 6, itemName: 'Sony WH-1000XM5', sku: 'AUD-SON-XM5', qtyAvailable: 60, qtyReserved: 10, minAlert: 10, warehouse: 'Main Warehouse' },
+  { id: 7, itemName: 'Logitech MX Master 3S', sku: 'ACC-LOG-MX3', qtyAvailable: 100, qtyReserved: 15, minAlert: 20, warehouse: 'East Branch' },
+  { id: 8, itemName: 'Keychron K2', sku: 'ACC-KEY-K2', qtyAvailable: 80, qtyReserved: 5, minAlert: 15, warehouse: 'Main Warehouse' },
+  { id: 9, itemName: 'Office Chair Ergonomic', sku: 'FUR-CHR-ERG', qtyAvailable: 25, qtyReserved: 0, minAlert: 5, warehouse: 'Furniture Depot' },
+  { id: 10, itemName: 'Standing Desk', sku: 'FUR-DSK-STD', qtyAvailable: 15, qtyReserved: 2, minAlert: 3, warehouse: 'Furniture Depot' },
+  { id: 11, itemName: 'Filing Cabinet', sku: 'FUR-CAB-FIL', qtyAvailable: 30, qtyReserved: 0, minAlert: 5, warehouse: 'City Branch' },
+  { id: 12, itemName: 'A4 Paper Ream', sku: 'STA-PAP-A4', qtyAvailable: 500, qtyReserved: 50, minAlert: 50, warehouse: 'Main Warehouse' },
+  { id: 13, itemName: 'Ballpoint Pens (Blue)', sku: 'STA-PEN-BLU', qtyAvailable: 200, qtyReserved: 20, minAlert: 20, warehouse: 'West Branch' },
+  { id: 14, itemName: 'HP LaserJet Pro', sku: 'PRT-HP-LJP', qtyAvailable: 10, qtyReserved: 1, minAlert: 2, warehouse: 'Main Warehouse' },
+  { id: 15, itemName: 'Monitor 27"', sku: 'MON-GEN-27', qtyAvailable: 35, qtyReserved: 5, minAlert: 5, warehouse: 'City Branch' },
+  { id: 16, itemName: 'USB-C Hub', sku: 'ACC-USB-HUB', qtyAvailable: 75, qtyReserved: 12, minAlert: 10, warehouse: 'East Branch' },
+  { id: 17, itemName: 'Webcam 1080p', sku: 'ACC-CAM-1080', qtyAvailable: 50, qtyReserved: 5, minAlert: 10, warehouse: 'Main Warehouse' },
+  { id: 18, itemName: 'Projector', sku: 'PRJ-EPS-GEN', qtyAvailable: 8, qtyReserved: 2, minAlert: 2, warehouse: 'HQ Storage' },
+  { id: 19, itemName: 'Whiteboard', sku: 'FUR-BRD-WHT', qtyAvailable: 20, qtyReserved: 0, minAlert: 5, warehouse: 'Furniture Depot' },
+  { id: 20, itemName: 'Stapler Heavy Duty', sku: 'STA-STP-HD', qtyAvailable: 40, qtyReserved: 3, minAlert: 10, warehouse: 'West Branch' }
+];
 
 export default function StockManagement() {
   const { i18n } = useTranslation()
@@ -7,8 +32,10 @@ export default function StockManagement() {
 
   // UI labels
   const labels = useMemo(() => ({
-    title: isArabic ? 'المخزون > إدارة المخزون' : 'Inventory > Stock Management',
+    title: isArabic ? ' إدارة المخزون' : ' Stock Management',
     formTitle: isArabic ? 'بيانات إدارة المخزون' : 'Stock Entry',
+    add: isArabic ? 'إضافة سجل مخزون' : 'Add Stock Entry',
+    close: isArabic ? 'إغلاق' : 'Close',
     itemOrSku: isArabic ? 'العنصر / SKU' : 'Item / SKU',
     selectItem: isArabic ? 'اختر عنصرًا' : 'Select Item',
     manualSku: isArabic ? 'أدخل SKU يدويًا' : 'Enter SKU manually',
@@ -23,15 +50,42 @@ export default function StockManagement() {
     delete: isArabic ? 'حذف' : 'Delete',
     effective: isArabic ? 'الصافي المتاح' : 'Effective Available',
     status: isArabic ? 'الحالة' : 'Status',
+    country: isArabic ? 'الدولة' : 'Country',
+    city: isArabic ? 'المدينة' : 'City',
     lowStock: isArabic ? 'منخفض' : 'Low',
     okStock: isArabic ? 'جيد' : 'OK',
+    filter: isArabic ? 'تصفية' : 'Filter',
+    search: isArabic ? 'بحث' : 'Search',
+    clearFilters: isArabic ? 'مسح المرشحات' : 'Clear Filters',
+    itemName: isArabic ? 'اسم الصنف' : 'Item Name',
+    brandName: isArabic ? 'اسم العلامة التجارية' : 'Brand Name',
+    productName: isArabic ? 'اسم المنتج' : 'Product Name',
+    sku: isArabic ? 'SKU' : 'SKU',
+    barcode: isArabic ? 'باركود' : 'Barcode',
+    warehouseName: isArabic ? 'اسم المستودع' : 'Warehouse Name',
+    warehouseCode: isArabic ? 'رمز المستودع' : 'Warehouse Code',
+    warehouseType: isArabic ? 'نوع المستودع' : 'Warehouse Type',
+    supplierName: isArabic ? 'اسم المورد' : 'Supplier Name',
+    supplierCode: isArabic ? 'كود المورد' : 'Supplier Code',
+    companyName: isArabic ? 'اسم الشركة' : 'Company Name',
+    categoryName: isArabic ? 'اسم التصنيف' : 'Category Name',
+    categoryType: isArabic ? 'نوع التصنيف' : 'Category Type',
+    contactPerson: isArabic ? 'الشخص المسؤول' : 'Contact Person',
+    contactNumber: isArabic ? 'رقم التواصل' : 'Contact Number',
   }), [isArabic])
 
   const STORAGE_KEY = 'inventoryStock'
   const ITEMS_KEY = 'inventoryItems'
 
   const [items, setItems] = useState([])
+  const [products, setProducts] = useState([])
+  const [warehouses, setWarehouses] = useState([])
+  const [suppliers, setSuppliers] = useState([])
+  const [categories, setCategories] = useState([])
   const [records, setRecords] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [showAllFilters, setShowAllFilters] = useState(false)
+  
   const [form, setForm] = useState({
     itemId: '',
     manualSku: '',
@@ -40,21 +94,58 @@ export default function StockManagement() {
     minAlert: '',
     warehouse: ''
   })
+  
+  const [filters, setFilters] = useState({
+    search: '',
+    itemName: '',
+    brandName: '',
+    productName: '',
+    sku: '',
+    barcode: '',
+    warehouseName: '',
+    warehouseCode: '',
+    warehouseType: '',
+    status: '',
+    country: '',
+    city: '',
+    contactPerson: '',
+    contactNumber: '',
+    supplierName: '',
+    supplierCode: '',
+    companyName: '',
+    categoryName: '',
+    categoryType: ''
+  })
 
   // Load
   useEffect(() => {
     try {
       const rawItems = localStorage.getItem(ITEMS_KEY)
-      if (rawItems) {
-        const parsedItems = JSON.parse(rawItems)
-        if (Array.isArray(parsedItems)) setItems(parsedItems)
-      }
+      if (rawItems) setItems(JSON.parse(rawItems))
+
+      const rawProducts = localStorage.getItem('inventoryProducts')
+      if (rawProducts) setProducts(JSON.parse(rawProducts))
+
+      const rawWarehouses = localStorage.getItem('inventoryWarehouses')
+      if (rawWarehouses) setWarehouses(JSON.parse(rawWarehouses))
+
+      const rawSuppliers = localStorage.getItem('inventorySuppliers')
+      if (rawSuppliers) setSuppliers(JSON.parse(rawSuppliers))
+      
+      const rawCategories = localStorage.getItem('inventoryCategories')
+      if (rawCategories) setCategories(JSON.parse(rawCategories))
     } catch (e) { console.warn('Failed to load items', e) }
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) {
         const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) setRecords(parsed)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setRecords(parsed)
+        } else {
+          setRecords(MOCK_RECORDS)
+        }
+      } else {
+        setRecords(MOCK_RECORDS)
       }
     } catch (e) { console.warn('Failed to load stock records', e) }
   }, [])
@@ -64,9 +155,136 @@ export default function StockManagement() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)) } catch (e) { void e }
   }, [records])
 
-  const warehouseOptions = useMemo(() => (
-    isArabic ? ['المستودع الرئيسي', 'المستودع الفرعي', 'المخزن الخارجي'] : ['Main Warehouse', 'Secondary Warehouse', 'Outdoor Storage']
-  ), [isArabic])
+  // Filter Options
+  const itemNameOptions = useMemo(() => Array.from(new Set(items.map(i => i.itemName).filter(Boolean))), [items])
+  const brandNameOptions = useMemo(() => Array.from(new Set(products.map(p => p.brand).filter(Boolean))), [products])
+  const productNameOptions = useMemo(() => Array.from(new Set(products.map(p => p.name).filter(Boolean))), [products])
+  const skuOptions = useMemo(() => Array.from(new Set(items.map(i => i.sku).filter(Boolean))), [items])
+  const warehouseNameOptions = useMemo(() => Array.from(new Set(warehouses.map(w => w.warehouseName).filter(Boolean))), [warehouses])
+  const warehouseCodeOptions = useMemo(() => Array.from(new Set(warehouses.map(w => w.warehouseCode).filter(Boolean))), [warehouses])
+  const warehouseTypeOptions = useMemo(() => Array.from(new Set(warehouses.map(w => w.warehouseType).filter(Boolean))), [warehouses])
+  const supplierNameOptions = useMemo(() => Array.from(new Set(suppliers.map(s => s.supplierName).filter(Boolean))), [suppliers])
+  const supplierCodeOptions = useMemo(() => Array.from(new Set(suppliers.map(s => s.supplierCode).filter(Boolean))), [suppliers])
+  const companyNameOptions = useMemo(() => Array.from(new Set(suppliers.map(s => s.companyName).filter(Boolean))), [suppliers])
+  const categoryNameOptions = useMemo(() => Array.from(new Set(categories.map(c => c.name).filter(Boolean))), [categories])
+  const categoryTypeOptions = useMemo(() => Array.from(new Set(categories.map(c => c.type).filter(Boolean))), [categories])
+
+  const filtered = useMemo(() => {
+    return records.filter(rec => {
+      // Basic Filters
+      if (filters.search) {
+        const q = filters.search.toLowerCase()
+        if (!rec.itemName.toLowerCase().includes(q) && !rec.sku.toLowerCase().includes(q)) return false
+      }
+
+      // Resolve Entities
+      const item = items.find(i => i.id === rec.itemId) || items.find(i => i.itemName === rec.itemName) // Fallback
+      if (!item) {
+         // Strict filtering if item missing but filters active
+         const hasItemFilters = filters.itemName || filters.sku || filters.barcode || 
+                                filters.brandName || filters.productName || 
+                                filters.warehouseName || filters.warehouseCode || filters.warehouseType ||
+                                filters.supplierName || filters.supplierCode || filters.companyName ||
+                                filters.categoryName || filters.categoryType
+         if (hasItemFilters) return false
+         return true
+      }
+
+      // Item Filters
+      if (filters.itemName && item.itemName !== filters.itemName) return false
+      if (filters.sku && item.sku !== filters.sku) return false
+      if (filters.barcode && item.barcode !== filters.barcode) return false
+
+      // Product Filters
+      const product = products.find(p => p.name === item.productName)
+      if (filters.productName && item.productName !== filters.productName) return false
+      if (filters.brandName && item.brandName !== filters.brandName) return false
+
+      // Warehouse Filters
+      // Note: Stock Record has 'warehouse' field which is name. 
+      // But we also have Item -> Warehouse link. 
+      // Usually Stock Record location overrides Item default location?
+      // Let's filter by the Stock Record's warehouse if present, or Item's warehouse?
+      // The user wants to filter Stock Records. Stock Record has a specific location.
+      // So we should filter by `rec.warehouse` (name).
+      
+      const recordWarehouseName = rec.warehouse
+      const warehouse = warehouses.find(w => w.warehouseName === recordWarehouseName)
+      
+      if (filters.warehouseName && recordWarehouseName !== filters.warehouseName) return false
+      if (filters.warehouseCode && warehouse && warehouse.warehouseCode !== filters.warehouseCode) return false
+      if (filters.warehouseType && warehouse && warehouse.warehouseType !== filters.warehouseType) return false
+      // Location Filters (Warehouse or Supplier)
+      if (filters.country) {
+        const q = filters.country.toLowerCase()
+        const inWarehouse = warehouse && warehouse.country && warehouse.country.toLowerCase().includes(q)
+        const inSupplier = supplier && supplier.countryCity && supplier.countryCity.toLowerCase().includes(q)
+        if (!inWarehouse && !inSupplier) return false
+      }
+      if (filters.city) {
+        const q = filters.city.toLowerCase()
+        const inWarehouse = warehouse && warehouse.city && warehouse.city.toLowerCase().includes(q)
+        const inSupplier = supplier && supplier.countryCity && supplier.countryCity.toLowerCase().includes(q)
+        if (!inWarehouse && !inSupplier) return false
+      }
+
+      // Status (Warehouse Status)
+      if (filters.status && warehouse && warehouse.status && !warehouse.status.toLowerCase().includes(filters.status.toLowerCase())) return false
+
+      // Supplier Filters (via Item -> Supplier)
+      const supplier = suppliers.find(s => s.supplierName === item.supplier)
+      if (filters.supplierName && item.supplier !== filters.supplierName) return false
+      if (filters.supplierCode && supplier && supplier.supplierCode !== filters.supplierCode) return false
+      if (filters.companyName && supplier && supplier.companyName !== filters.companyName) return false
+      
+      // Shared Detail Filters (Contact Person, Contact Number)
+      // Match EITHER Warehouse OR Supplier
+      if (filters.contactPerson) {
+        const q = filters.contactPerson.toLowerCase()
+        const inWarehouse = warehouse && warehouse.manager && warehouse.manager.toLowerCase().includes(q)
+        const inSupplier = supplier && supplier.contactPerson && supplier.contactPerson.toLowerCase().includes(q)
+        if (!inWarehouse && !inSupplier) return false
+      }
+      
+      if (filters.contactNumber) {
+        const q = filters.contactNumber.toLowerCase()
+        const inWarehouse = warehouse && warehouse.contactNumber && warehouse.contactNumber.toLowerCase().includes(q)
+        const inSupplier = supplier && supplier.phone && supplier.phone.toLowerCase().includes(q)
+        if (!inWarehouse && !inSupplier) return false
+      }
+      
+      // Category Filters (via Item -> Category)
+      const category = categories.find(c => c.name === item.category)
+      if (filters.categoryName && item.category !== filters.categoryName) return false
+      if (filters.categoryType && category && category.type !== filters.categoryType) return false
+
+      return true
+    })
+  }, [records, filters, items, products, warehouses, suppliers, categories])
+
+  function clearFilters() {
+    setFilters({
+      search: '',
+      itemName: '',
+      brandName: '',
+      productName: '',
+      sku: '',
+      barcode: '',
+      warehouseName: '',
+      warehouseCode: '',
+      warehouseType: '',
+      status: '',
+      country: '',
+      city: '',
+      contactPerson: '',
+      contactNumber: '',
+      supplierName: '',
+      supplierCode: '',
+      companyName: '',
+      categoryName: '',
+      categoryType: ''
+    })
+  }
 
   const onChange = (e) => {
     const { name, value } = e.target
@@ -108,68 +326,110 @@ export default function StockManagement() {
   }
 
   return (
-      <div className="space-y-6">
-        {/* Title */}
-        <div className={`relative inline-flex items-center ${isArabic ? 'flex-row-reverse' : ''} gap-2`}>
-          <h1 className={`page-title text-2xl font-semibold ${isArabic ? 'text-right' : 'text-left'}`}>{labels.title}</h1>
-          <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
+      <div className="space-y-6 pt-4">
+        <div className={`flex items-center justify-between ${isArabic ? 'flex-row-reverse' : ''}`}>
+          <div className="relative inline-block">
+            <h1 className={`page-title text-2xl font-semibold ${isArabic ? 'text-right' : 'text-left'}`}>{labels.title}</h1>
+            <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
+          </div>
+          <button className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none" onClick={() => setShowForm(true)}>{labels.add}</button>
         </div>
 
-        {/* Form */}
+        {/* Filter Section */}
         <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
-          <h2 className="text-xl font-medium mb-4">{labels.formTitle}</h2>
-          <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Item selection */}
-            <div>
-              <label className="block text-sm mb-1">{labels.itemOrSku}</label>
-              <select name="itemId" value={form.itemId} onChange={onChange} className="input">
-                <option value="">{labels.selectItem}</option>
-                {items.map((it) => (
-                  <option key={it.id} value={it.id}>{it.name} {it.sku ? `(${it.sku})` : ''}</option>
-                ))}
-              </select>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <FaFilter className="text-blue-500" /> {labels.filter}
+            </h2>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowAllFilters(prev => !prev)} className="btn btn-glass btn-compact text-blue-600">
+                {showAllFilters ? (isArabic ? 'إخفاء' : 'Hide') : (isArabic ? 'إظهار' : 'Show')} <FaChevronDown className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
+              </button>
+              <button onClick={clearFilters} className="btn btn-glass btn-compact text-[var(--muted-text)] hover:text-red-500">
+                {labels.clearFilters}
+              </button>
             </div>
-
-            {/* Manual SKU */}
-            <div>
-              <label className="block text-sm mb-1">{labels.manualSku}</label>
-              <input name="manualSku" value={form.manualSku} onChange={onChange} placeholder={labels.manualSku} className="input" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaSearch className="text-blue-500" size={10} /> {labels.search}</label>
+              <input className="input w-full" value={filters.search} onChange={e=>setFilters(prev=>({...prev, search: e.target.value}))} placeholder={isArabic ? 'بحث...' : 'Search...'} />
             </div>
-
-            {/* Qty Available */}
-            <div>
-              <label className="block text-sm mb-1">{labels.qtyAvailable}</label>
-              <input type="number" name="qtyAvailable" value={form.qtyAvailable} onChange={onChange} min="0" step="1" placeholder={labels.qtyAvailable} className="input" />
+             <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.itemName}</label>
+              <SearchableSelect options={itemNameOptions} value={filters.itemName} onChange={val=>setFilters(prev=>({...prev, itemName: val}))} isRTL={isArabic} />
             </div>
-
-            {/* Reserved Qty */}
-            <div>
-              <label className="block text-sm mb-1">{labels.qtyReserved}</label>
-              <input type="number" name="qtyReserved" value={form.qtyReserved} onChange={onChange} min="0" step="1" placeholder={labels.qtyReserved} className="input" />
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.sku}</label>
+              <SearchableSelect options={skuOptions} value={filters.sku} onChange={val=>setFilters(prev=>({...prev, sku: val}))} isRTL={isArabic} />
             </div>
-
-            {/* Min Alert */}
-            <div>
-              <label className="block text-sm mb-1">{labels.minAlert}</label>
-              <input type="number" name="minAlert" value={form.minAlert} onChange={onChange} min="0" step="1" placeholder={labels.minAlert} className="input" />
+             <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.warehouseName}</label>
+              <SearchableSelect options={warehouseNameOptions} value={filters.warehouseName} onChange={val=>setFilters(prev=>({...prev, warehouseName: val}))} isRTL={isArabic} />
             </div>
-
-            {/* Warehouse */}
-            <div>
-              <label className="block text-sm mb-1">{labels.warehouse}</label>
-              <select name="warehouse" value={form.warehouse} onChange={onChange} className="input">
-                <option value="">{labels.warehouse}</option>
-                {warehouseOptions.map((w) => (
-                  <option key={w} value={w}>{w}</option>
-                ))}
-              </select>
+          </div>
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 transition-all duration-300 overflow-hidden ${showAllFilters ? 'max-h-[800px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
+             <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.barcode}</label>
+              <input className="input w-full" value={filters.barcode} onChange={e=>setFilters(prev=>({...prev, barcode: e.target.value}))} placeholder={labels.barcode} />
             </div>
-
-            {/* Save */}
-            <div className="md:col-span-2">
-              <button type="submit" className="btn btn-primary">{labels.save}</button>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.brandName}</label>
+              <SearchableSelect options={brandNameOptions} value={filters.brandName} onChange={val=>setFilters(prev=>({...prev, brandName: val}))} isRTL={isArabic} />
             </div>
-          </form>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.productName}</label>
+              <SearchableSelect options={productNameOptions} value={filters.productName} onChange={val=>setFilters(prev=>({...prev, productName: val}))} isRTL={isArabic} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.warehouseCode}</label>
+              <SearchableSelect options={warehouseCodeOptions} value={filters.warehouseCode} onChange={val=>setFilters(prev=>({...prev, warehouseCode: val}))} isRTL={isArabic} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.warehouseType}</label>
+              <SearchableSelect options={warehouseTypeOptions} value={filters.warehouseType} onChange={val=>setFilters(prev=>({...prev, warehouseType: val}))} isRTL={isArabic} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.status}</label>
+              <input className="input w-full" value={filters.status} onChange={e=>setFilters(prev=>({...prev, status: e.target.value}))} placeholder={labels.status} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.country}</label>
+              <input className="input w-full" value={filters.country} onChange={e=>setFilters(prev=>({...prev, country: e.target.value}))} placeholder={labels.country} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.city}</label>
+              <input className="input w-full" value={filters.city} onChange={e=>setFilters(prev=>({...prev, city: e.target.value}))} placeholder={labels.city} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.supplierName}</label>
+              <SearchableSelect options={supplierNameOptions} value={filters.supplierName} onChange={val=>setFilters(prev=>({...prev, supplierName: val}))} isRTL={isArabic} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.supplierCode}</label>
+              <SearchableSelect options={supplierCodeOptions} value={filters.supplierCode} onChange={val=>setFilters(prev=>({...prev, supplierCode: val}))} isRTL={isArabic} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.companyName}</label>
+              <SearchableSelect options={companyNameOptions} value={filters.companyName} onChange={val=>setFilters(prev=>({...prev, companyName: val}))} isRTL={isArabic} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.categoryName}</label>
+              <SearchableSelect options={categoryNameOptions} value={filters.categoryName} onChange={val=>setFilters(prev=>({...prev, categoryName: val}))} isRTL={isArabic} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.categoryType}</label>
+              <SearchableSelect options={categoryTypeOptions} value={filters.categoryType} onChange={val=>setFilters(prev=>({...prev, categoryType: val}))} isRTL={isArabic} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.contactPerson}</label>
+              <input className="input w-full" value={filters.contactPerson} onChange={e=>setFilters(prev=>({...prev, contactPerson: e.target.value}))} placeholder={labels.contactPerson} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.contactNumber}</label>
+              <input className="input w-full" value={filters.contactNumber} onChange={e=>setFilters(prev=>({...prev, contactNumber: e.target.value}))} placeholder={labels.contactNumber} />
+            </div>
+          </div>
         </div>
 
         {/* Records List */}
@@ -193,7 +453,7 @@ export default function StockManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map((rec) => {
+                  {filtered.map((rec) => {
                     const effective = (rec.qtyAvailable || 0) - (rec.qtyReserved || 0)
                     const low = effective <= (rec.minAlert || 0)
                     return (
@@ -211,7 +471,14 @@ export default function StockManagement() {
                         <td className="px-3">{rec.warehouse || '-'}</td>
                         <td className="px-3 text-center">{renderStatus(rec)}</td>
                         <td className="px-3 text-center">
-                          <button className="btn btn-danger btn-xs" onClick={() => removeRecord(rec.id)}>{labels.delete}</button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-circle bg-red-600 hover:bg-red-700 text-white border-none"
+                            onClick={() => removeRecord(rec.id)}
+                            title={labels.delete}
+                          >
+                            <FaTrash />
+                          </button>
                         </td>
                       </tr>
                     )
@@ -221,6 +488,77 @@ export default function StockManagement() {
             </div>
           )}
         </div>
+
+
+        {showForm && (
+          <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowForm(false)} />
+            <div className="absolute inset-0 flex items-start justify-center p-6 md:p-6">
+              <div className="card p-4 sm:p-6 mt-4 w-[92vw] sm:w-[80vw] lg:w-[60vw] xl:max-w-3xl">
+                <div className={`flex items-center justify-between ${isArabic ? 'flex-row-reverse' : ''} mb-4`}>
+                  <h2 className="text-xl font-medium">{labels.formTitle}</h2>
+                  <button type="button" className="btn btn-sm btn-circle bg-white text-red-600 hover:bg-red-50 shadow-md" onClick={() => setShowForm(false)} aria-label={labels.close}>
+                    <FaTimes size={20} />
+                  </button>
+                </div>
+                <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Item selection */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-[var(--muted-text)]">{labels.itemOrSku}</label>
+                <SearchableSelect 
+                  options={items.map(it => it.itemName)} 
+                  value={items.find(i => i.id === form.itemId)?.itemName || ''} 
+                  onChange={(val) => {
+                     const item = items.find(i => i.itemName === val)
+                     setForm(prev => ({ ...prev, itemId: item ? item.id : '' }))
+                  }} 
+                  isRTL={isArabic} 
+                />
+              </div>
+
+              {/* Manual SKU */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-[var(--muted-text)]">{labels.manualSku}</label>
+                <input name="manualSku" value={form.manualSku} onChange={onChange} placeholder={labels.manualSku} className="input w-full" />
+              </div>
+
+              {/* Qty Available */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-[var(--muted-text)]">{labels.qtyAvailable}</label>
+                <input type="number" name="qtyAvailable" value={form.qtyAvailable} onChange={onChange} min="0" step="1" placeholder={labels.qtyAvailable} className="input w-full" />
+              </div>
+
+              {/* Reserved Qty */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-[var(--muted-text)]">{labels.qtyReserved}</label>
+                <input type="number" name="qtyReserved" value={form.qtyReserved} onChange={onChange} min="0" step="1" placeholder={labels.qtyReserved} className="input w-full" />
+              </div>
+
+              {/* Min Alert */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-[var(--muted-text)]">{labels.minAlert}</label>
+                <input type="number" name="minAlert" value={form.minAlert} onChange={onChange} min="0" step="1" placeholder={labels.minAlert} className="input w-full" />
+              </div>
+
+              {/* Warehouse */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-[var(--muted-text)]">{labels.warehouse}</label>
+                <SearchableSelect 
+                  options={warehouses.map(w => w.warehouseName)} 
+                  value={form.warehouse} 
+                  onChange={(val) => setForm(prev => ({ ...prev, warehouse: val }))} 
+                  isRTL={isArabic} 
+                />
+              </div>
+
+                  <div className={`md:col-span-2 flex gap-2 ${isArabic ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
+                    <button type="submit" className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none">{labels.save}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
   )
 }

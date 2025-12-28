@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Edit, KeyRound, Lock, Unlock, Trash, X } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Layout from '@shared/layouts/Layout';

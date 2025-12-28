@@ -17,7 +17,13 @@ import {
   FileText, 
   PhoneOff, 
   Calendar, 
-  Bookmark 
+  Bookmark,
+  Upload,
+  Link as LinkIcon,
+  List,
+  RefreshCw,
+  Pin,
+  Handshake
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@shared/context/ThemeProvider'
@@ -39,7 +45,10 @@ const ICON_OPTIONS = {
   FileText: <FileText className="w-5 h-5" />,
   PhoneOff: <PhoneOff className="w-5 h-5" />,
   Calendar: <Calendar className="w-5 h-5" />,
-  Bookmark: <Bookmark className="w-5 h-5" />
+  Bookmark: <Bookmark className="w-5 h-5" />,
+  RefreshCw: <RefreshCw className="w-5 h-5" />,
+  Pin: <Pin className="w-5 h-5" />,
+  Handshake: <Handshake className="w-5 h-5" />
 };
 
 const STORAGE_KEY = 'crmStages'
@@ -65,7 +74,7 @@ function sortByOrder(list) {
   return [...list].sort((a, b) => Number(a.order) - Number(b.order))
 }
 
-const DEFAULT_TYPE_OPTIONS = ['no_answer','follow_up','meeting','proposal','reservation','deal','cancel']
+const DEFAULT_TYPE_OPTIONS = ['cold_calls', 'follow_up', 'meeting', 'proposal', 'reservation', 'closing_deals', 'cancel']
 
 
 function normalizeStages(list) {
@@ -84,13 +93,13 @@ function normalizeStages(list) {
 
 function defaultPipelineStages() {
   return [
-    { name: 'Follow up',    nameAr: '', type: 'follow_up',   order: 2, color: '#3B82F6', icon: 'CalendarClock' },
+    { name: 'Follow up',    nameAr: '', type: 'follow_up',   order: 2, color: '#3B82F6', icon: 'RefreshCw' },
     { name: 'No Answer',    nameAr: '', type: 'follow_up',   order: 3, color: '#EF4444', icon: 'PhoneOff' },
-    { name: 'Meeting',      nameAr: '', type: 'meeting',     order: 4, color: '#8B5CF6', icon: 'Calendar' },
+    { name: 'Meeting',      nameAr: '', type: 'meeting',     order: 4, color: '#3B82F6', icon: 'Calendar' },
     { name: 'Proposal',     nameAr: '', type: 'proposal',    order: 6, color: '#F59E0B', icon: 'FileText' },
-    { name: 'Reservation',  nameAr: '', type: 'reservation', order: 7, color: '#10B981', icon: 'Bookmark' },
-    { name: 'Closing Deal', nameAr: '', type: 'deal',        order: 8, color: '#22C55E', icon: 'CheckCircle' },
-    { name: 'Cancelation',  nameAr: '', type: 'cancel',      order: 9, color: '#F97316', icon: 'XCircle' },
+    { name: 'Reservation',  nameAr: '', type: 'reservation', order: 7, color: '#EF4444', icon: 'Pin' },
+    { name: 'Closing Deal', nameAr: '', type: 'closing_deals',        order: 8, color: '#EAB308', icon: 'Handshake' },
+    { name: 'Cancelation',  nameAr: '', type: 'cancel',      order: 9, color: '#EF4444', icon: 'XCircle' },
   ]
 }
 
@@ -255,6 +264,7 @@ function StagesSetup() {
 
   const [pipelineStages, setPipelineStages] = useState(() => normalizeStages(sortByOrder(loadStages())))
   const [newStage, setNewStage] = useState({ name: '', nameAr: '', type: 'follow_up', order: '', color: '#3B82F6', icon: 'BarChart2', iconUrl: '' })
+  const [iconInputMode, setIconInputMode] = useState('select') // 'select' | 'url'
   const [editingIndex, setEditingIndex] = useState(null)
   const [showNewStage, setShowNewStage] = useState(false)
 
@@ -281,6 +291,7 @@ function StagesSetup() {
     setPipelineStages(sorted)
     persistStages(sorted)
     setNewStage({ name: '', nameAr: '', type: 'follow_up', order: '', color: '#3B82F6', icon: 'BarChart2', iconUrl: '' })
+    setIconInputMode('select')
     setShowNewStage(false)
   }
 
@@ -377,30 +388,83 @@ function StagesSetup() {
             </div>
             <div className="col-span-12 md:col-span-6 flex flex-col gap-1">
               <span className="text-xs font-medium opacity-70">{t('Stage Icon')}</span>
-              <div className="flex items-center gap-2">
-                <select
-                  className="w-full border rounded p-2 dark:bg-gray-800 dark:text-white"
-                  value={newStage.icon || 'BarChart2'}
-                  onChange={e => setNewStage(s => ({ ...s, icon: e.target.value, iconUrl: '' }))}
-                >
-                  {Object.keys(ICON_OPTIONS).map(k => (
-                    <option key={k} value={k}>{k}</option>
-                  ))}
-                </select>
-                {(newStage.iconUrl || newStage.icon) && (
-                  newStage.iconUrl ? (
-                    <img src={newStage.iconUrl} alt="icon" className="w-7 h-7 rounded" />
-                  ) : (
-                    <span className="text-xl">
-                      {ICON_OPTIONS[newStage.icon] || <BarChart2 className="w-5 h-5" />}
-                    </span>
-                  )
+              <div className="flex items-center border rounded p-1 dark:bg-gray-800 dark:border-gray-700 bg-white">
+                {iconInputMode === 'url' ? (
+                  <input 
+                    type="text" 
+                    placeholder={t('Paste')} 
+                    className="flex-1 min-w-0 bg-transparent border-none focus:ring-0 p-2 text-sm text-gray-900 dark:text-white"
+                    value={newStage.iconUrl || ''}
+                    onChange={(e) => setNewStage(s => ({ ...s, iconUrl: e.target.value }))}
+                  />
+                ) : (
+                  <div className="flex-1 flex items-center gap-2 min-w-0">
+                    <select
+                      className="flex-1 bg-transparent border-none focus:ring-0 p-2 text-sm text-gray-900 dark:text-white cursor-pointer"
+                      value={newStage.icon || 'BarChart2'}
+                      onChange={e => setNewStage(s => ({ ...s, icon: e.target.value, iconUrl: '' }))}
+                    >
+                      {Object.keys(ICON_OPTIONS).map(k => (
+                        <option key={k} value={k}>{k}</option>
+                      ))}
+                    </select>
+                  </div>
                 )}
+
+                <div className="flex items-center gap-1 border-l pl-1 dark:border-gray-700">
+                  {/* Preview */}
+                  <div className="w-8 h-8 flex items-center justify-center rounded bg-gray-50 dark:bg-gray-700 overflow-hidden">
+                    {newStage.iconUrl ? (
+                      <img src={newStage.iconUrl} alt="icon" className="w-full h-full object-contain" />
+                    ) : (
+                      <span className="text-gray-600 dark:text-gray-300">
+                        {ICON_OPTIONS[newStage.icon] || <BarChart2 className="w-5 h-5" />}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Toggle Mode */}
+                  <button 
+                    type="button"
+                    title={iconInputMode === 'url' ? t('Select from list') : t('Paste')}
+                    className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                    onClick={() => {
+                      const nextMode = iconInputMode === 'url' ? 'select' : 'url'
+                      setIconInputMode(nextMode)
+                      if (nextMode === 'select') {
+                        setNewStage(s => ({ ...s, iconUrl: '' }))
+                      }
+                    }}
+                  >
+                    {iconInputMode === 'url' ? <List size={16} /> : <LinkIcon size={16} />}
+                  </button>
+
+                  {/* Upload */}
+                  <label className="cursor-pointer p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title={t('Upload Image')}>
+                    <Upload size={16} />
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setNewStage(s => ({ ...s, iconUrl: reader.result }));
+                            setIconInputMode('url'); // Switch to URL/Custom mode to show the image
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }} 
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           </div>
           <div className="col-span-12 flex items-center justify-end gap-2">
-            <button className="px-3 py-2 rounded bg-green-600 hover:bg-green-700 text-white" onClick={addStage}>{t('Add')}</button>
+            <button className="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white" onClick={addStage}>{t('Save')}</button>
           </div>
         </div>
         )}

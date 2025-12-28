@@ -126,27 +126,23 @@ export default function SalesQuotations() {
     if (submitting) return
     setSubmitting(true)
     const doCreate = async () => {
-      try {
-        let attachmentUrl
-        if (attachmentDataUrl) {
-          const up = await api.post('/api/uploads/base64', { fileName: attachmentName || 'attachment', dataUrl: attachmentDataUrl })
-          attachmentUrl = up?.data?.data?.url || up?.data?.url || up?.data?.data?.data?.url
-        }
-        const payload = {
-          opportunityId,
-          items: items.map((it) => ({
-            name: it.name,
-            quantity: Number(it.quantity)||0,
-            unitPrice: Number(it.unitPrice)||0,
-            discount: Number(it.discount)||0,
-          })),
-          attachment: attachmentUrl || undefined,
-        }
-        const res = await api.post('/api/customers/quotations', payload)
-        return res
-      } catch (e) {
-        throw e
+      let attachmentUrl
+      if (attachmentDataUrl) {
+        const up = await api.post('/api/uploads/base64', { fileName: attachmentName || 'attachment', dataUrl: attachmentDataUrl })
+        attachmentUrl = up?.data?.data?.url || up?.data?.url || up?.data?.data?.data?.url
       }
+      const payload = {
+        opportunityId,
+        items: items.map((it) => ({
+          name: it.name,
+          quantity: Number(it.quantity)||0,
+          unitPrice: Number(it.unitPrice)||0,
+          discount: Number(it.discount)||0,
+        })),
+        attachment: attachmentUrl || undefined,
+      }
+      const res = await api.post('/api/customers/quotations', payload)
+      return res
     }
     doCreate()
       .then((res) => {

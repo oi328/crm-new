@@ -50,12 +50,6 @@ export default function SettingsCil() {
   const saveAll = () => { const next = { ...config, governance: { ...config.governance, version: Number(config.governance.version || 1) + 1, history: [...(config.governance.history||[]), { ts: Date.now(), version: Number(config.governance.version || 1), summary: 'save' }] } }; setConfig(next); persistConfig(next) }
   const rollbackLast = () => { const v = Number(config.governance.version || 1); if (v <= 1) return; const next = { ...config, governance: { ...config.governance, version: v - 1 } }; setConfig(next); persistConfig(next) }
 
-  const addTemplate = async () => { const tpl = defaultTemplate(); const saved = await saveTemplateAPI(tpl); setTemplates(prev => [saved, ...prev]); setEditingId(saved.id) }
-  const removeTemplate = async (id) => { const current = templates.find(t => t.id === id); if (current?.usedCount > 0) return; await deleteTemplateAPI(id); setTemplates(prev => prev.filter(t => t.id !== id)); if (editingId === id) setEditingId('') }
-  const updateTemplate = async (id, patch) => { const next = await updateTemplateAPI(id, patch); setTemplates(prev => prev.map(t => t.id === id ? next : t)) }
-  const addMilestone = async (id) => { const tpl = templates.find(t => t.id === id); const next = [...(tpl?.milestones || []), { label: t('Milestone'), percentage: 0, dueAfterDays: 30 }]; await updateTemplate(id, { milestones: next }) }
-  const onGeneratePreview = async () => { const items = await generatePreviewAPI(previewParams); setPreview(items) }
-
   if (loading) return (<div className="p-4 text-[var(--muted-text)]">{t('جارِ التحميل')}...</div>)
 
   return (

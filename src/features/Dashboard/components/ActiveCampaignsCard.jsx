@@ -113,7 +113,7 @@ export default function ActiveCampaignsCard({ segments, employee, dateFrom, date
           <h3 className={`flex-1 ${isLight ? 'text-black' : 'dark:text-gray-100'} text-lg md:text-xl font-bold ${i18n.dir() === 'rtl' ? 'text-right' : 'text-left'}`}>{t('Active Campaigns')}</h3>
         </div>
         <span className={`${isLight ? 'text-blue-700 font-bold' : 'dark:text-blue-200'} text-sm`}>{periodLabel}</span>
-      </div>npm run build
+      </div>
 
       {/* Performance metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">

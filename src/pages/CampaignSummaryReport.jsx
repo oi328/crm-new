@@ -49,11 +49,11 @@ export default function CampaignSummaryReport() {
     // Charts data sheet
     const chartsData = filtered.map(({ name, spend, roi, clicks, ctr, leads, qualifiedPct }) => ({
       Campaign: name,
-      Spend,
-      ROI,
-      Clicks,
+      Spend: spend,
+      ROI: roi,
+      Clicks: clicks,
       CTR: ctr,
-      Leads,
+      Leads: leads,
       QualifiedPct: qualifiedPct
     }))
     const wsCharts = XLSX.utils.json_to_sheet(chartsData)

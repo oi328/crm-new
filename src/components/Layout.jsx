@@ -9,6 +9,14 @@ export default function Layout({ children }) {
   const isRtl = String(i18n.language || '').startsWith('ar')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [isMobileView, setIsMobileView] = useState(() => window.matchMedia('(max-width: 768px)').matches)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem('sidebarCollapsed')
+      return saved === 'true'
+    } catch {
+      return false
+    }
+  })
 
   // Lock scroll only when mobile sidebar is open
   useEffect(() => {
@@ -56,9 +64,19 @@ export default function Layout({ children }) {
         <AppSidebar 
           open={isMobileSidebarOpen}
           onClose={() => setIsMobileSidebarOpen(false)}
+          collapsed={sidebarCollapsed}
+          setCollapsed={(val) => {
+            setSidebarCollapsed(val)
+            try { window.localStorage.setItem('sidebarCollapsed', String(val)) } catch {}
+          }}
         />
 
-        <div className={`content-container flex flex-col min-h-0 flex-1 min-w-0`}>
+        <div 
+          className={`content-container flex flex-col min-h-0 flex-1 min-w-0 transition-all duration-300 ease-in-out`}
+          style={{
+            [isRtl ? 'marginRight' : 'marginLeft']: !isMobileView ? (sidebarCollapsed ? '0px' : '280px') : '0'
+          }}
+        >
           <main className="main-pane flex-1 px-0 m-0 overflow-x-hidden min-w-0">
             <div className="w-full">
               {children ?? <Outlet />}

@@ -270,6 +270,7 @@ export default function ActiveUsersChart({ users = [] }) {
                       </div>
                     </div>
                   </div>
+                  <br />
                   <div className="text-right">
                     <div className="flex items-center gap-2">
                       {u.active ? (

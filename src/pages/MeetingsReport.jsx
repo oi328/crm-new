@@ -207,7 +207,7 @@ export default function MeetingsReport() {
               <div className="text-sm font-semibold mb-2">{t('Filter Data')}</div>
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div className="col-span-2">
-                  <label className="text-xs mb-1 block">{t('Salesman')}</label>
+                  <label className="text-xs mb-1 block">{t('Sales Person')}</label>
                   <input value={filters.salesman} onChange={(e)=>setFilters(f=>({...f, salesman: e.target.value}))} className="input w-full text-sm" placeholder={t('Type name')} />
                 </div>
                 <div className="col-span-2">
@@ -333,7 +333,7 @@ export default function MeetingsReport() {
                       <th className="px-3 py-2 text-left cursor-pointer" onClick={() => toggleSort('mobile')}>{isRTL ? 'الجوال' : 'Mobile'} {sortBy.key==='mobile' ? (sortBy.dir==='asc' ? '↑' : '↓') : ''}</th>
                       <th className="px-3 py-2 text-left cursor-pointer" onClick={() => toggleSort('meetings')}>{isRTL ? 'عدد الاجتماعات' : 'Number Of Meetings'} {sortBy.key==='meetings' ? (sortBy.dir==='asc' ? '↑' : '↓') : ''}</th>
                       <th className="px-3 py-2 text-left cursor-pointer" onClick={() => toggleSort('project')}>{isRTL ? 'المشروع' : 'Project'} {sortBy.key==='project' ? (sortBy.dir==='asc' ? '↑' : '↓') : ''}</th>
-                      <th className="px-3 py-2 text-left cursor-pointer" onClick={() => toggleSort('salesman')}>{isRTL ? 'المبيعات' : 'Salesman'} {sortBy.key==='salesman' ? (sortBy.dir==='asc' ? '↑' : '↓') : ''}</th>
+                      <th className="px-3 py-2 text-left cursor-pointer" onClick={() => toggleSort('salesman')}>{isRTL ? 'المبيعات' : 'Sales Person'} {sortBy.key==='salesman' ? (sortBy.dir==='asc' ? '↑' : '↓') : ''}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -424,7 +424,7 @@ export default function MeetingsReport() {
                       <thead>
                         <tr>
                           <th className="px-3 py-2 text-left"><input type="checkbox" aria-label="select all" /></th>
-                          <th className="px-3 py-2 text-left">{isRTL ? 'مندوب المبيعات' : 'Salesman'}</th>
+                          <th className="px-3 py-2 text-left">{isRTL ? 'مندوب المبيعات' : 'Sales Person'}</th>
                           <th className="px-3 py-2 text-left">{isRTL ? 'تاريخ تسجيل الوصول' : 'Check In Date'}</th>
                           <th className="px-3 py-2 text-left">{isRTL ? 'الموقع' : 'Location'}</th>
                         </tr>

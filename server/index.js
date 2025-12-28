@@ -18,11 +18,14 @@ app.use(express.json())
 app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', [
     "default-src 'self';",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval';",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
-    "font-src 'self' https://fonts.gstatic.com;",
-    "img-src 'self' data: blob: https://i.pravatar.cc https://img.icons8.com https://images.unsplash.com https://source.unsplash.com https://dummyimage.com;",
-    "connect-src 'self';",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com;",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com;",
+    "font-src 'self' data: https://fonts.gstatic.com;",
+    "img-src 'self' data: blob: https: https://*.tile.openstreetmap.org https://mt0.google.com https://mt1.google.com https://mt2.google.com https://mt3.google.com https://images.unsplash.com https://source.unsplash.com https://dummyimage.com;",
+    "connect-src 'self' ws: wss: http: https: https://restcountries.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org;",
+    "worker-src 'self' blob:;",
+    "child-src 'self' blob: https://maps.google.com https://www.google.com;",
+    "frame-src 'self' blob: https://maps.google.com https://www.google.com;",
     "frame-ancestors 'self';",
     "base-uri 'self';",
     "form-action 'self';"

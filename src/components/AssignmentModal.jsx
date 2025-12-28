@@ -240,8 +240,8 @@ export default function AssignmentModal({
             }
           </div>
           <div className="flex items-center gap-2">
-            <button className="btn btn-ghost" onClick={onClose}>{labels.cancel}</button>
-            <button className="btn btn-primary" onClick={submit} disabled={!canSubmit}>{labels.assign}</button>
+            <button className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none" onClick={onClose}>{labels.cancel}</button>
+            <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none" onClick={submit} disabled={!canSubmit}>{labels.assign}</button>
           </div>
         </div>
       </div>

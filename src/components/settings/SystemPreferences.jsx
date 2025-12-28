@@ -18,8 +18,8 @@ const DEFAULTS = {
   chartsStyle: 'line', // line | bar
   chartsRounded: true,
   chartsStacked: false,
+  inventoryMode: 'advanced',
 }
-
 const SystemPreferences = () => {
   const { t, i18n } = useTranslation()
   const [prefs, setPrefs] = useState(() => {
@@ -30,7 +30,29 @@ const SystemPreferences = () => {
     return DEFAULTS
   })
 
-  const setPref = (k, v) => setPrefs(prev => ({ ...prev, [k]: v }))
+  const setPref = (k, v) => {
+    setPrefs(prev => {
+      const next = { ...prev, [k]: v }
+      if (k === 'inventoryMode') {
+        window.dispatchEvent(new Event('inventoryModeUpdated'))
+        // Also update the legacy key for backward compatibility if needed, 
+        // but better to migrate consumers to systemPrefs.
+        // For now, let's just dispatch the event.
+      }
+      return next
+    })
+  }
+
+  // Auto-save on change
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('systemPrefs', JSON.stringify(prefs))
+      if (prefs.inventoryMode) {
+         // Sync legacy key for other components that might rely on it momentarily
+         window.localStorage.setItem('inventoryMode', prefs.inventoryMode)
+      }
+    } catch {}
+  }, [prefs])
 
   const applyTheme = (theme) => {
     const root = document.documentElement
@@ -240,6 +262,19 @@ const SystemPreferences = () => {
               </span>
               <span className="text-sm">{prefs.chartsStacked ? t('Enabled') : t('Disabled')}</span>
             </label>
+          </div>
+        </div>
+
+        {/* Inventory System */}
+        <div className="h-4" />
+        {sectionTitle(t('Inventory System'))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <label className="block text-xs text-[var(--muted-text)]">{t('Inventory Mode')}</label>
+            <select value={prefs.inventoryMode} onChange={e=>setPref('inventoryMode', e.target.value)} className="input-soft w-full">
+              <option value="advanced">{t('Advanced (Hierarchy)')}</option>
+              <option value="simple">{t('Simple (Flat)')}</option>
+            </select>
           </div>
         </div>
 

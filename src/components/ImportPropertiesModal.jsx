@@ -76,11 +76,11 @@ export default function ImportPropertiesModal({ onClose, isRTL, onImported }) {
         </div>
 
         <div className="mt-4 flex items-center gap-2">
-          <button className="btn btn-glass" onClick={()=>downloadTemplate('csv')}><FaDownload /> CSV {isRTL ? 'قالب' : 'Template'}</button>
-          <button className="btn btn-glass" onClick={()=>downloadTemplate('xlsx')}><FaDownload /> XLSX {isRTL ? 'قالب' : 'Template'}</button>
+          <button className="btn btn-sm btn-ghost" onClick={()=>downloadTemplate('csv')}><FaDownload /> CSV {isRTL ? 'قالب' : 'Template'}</button>
+          <button className="btn btn-sm btn-ghost" onClick={()=>downloadTemplate('xlsx')}><FaDownload /> XLSX {isRTL ? 'قالب' : 'Template'}</button>
           <div className="flex-1" />
-          <button className="btn btn-primary" onClick={handlePreview}>{isRTL ? 'معاينة' : 'Preview'}</button>
-          <button className="btn btn-success" onClick={handleImport} disabled={!files.length}>{isRTL ? 'استيراد' : 'Import'}</button>
+          <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none" onClick={handlePreview}>{isRTL ? 'معاينة' : 'Preview'}</button>
+          <button className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none" onClick={handleImport} disabled={!files.length}>{isRTL ? 'استيراد' : 'Import'}</button>
         </div>
 
         {preview && (

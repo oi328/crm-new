@@ -16,9 +16,9 @@ export default function RequestsSummaryPanel({
   const completedCount = (byStatus['Approved'] || 0) + (byStatus['Rejected'] || 0);
 
   const Item = ({ label, value, onClick }) => (
-    <button onClick={onClick} className="flex flex-col items-start bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-4 hover:shadow transition">
-      <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
-      <span className="text-xl font-semibold text-gray-800 dark:text-gray-100">{value}</span>
+    <button onClick={onClick} className="flex flex-col items-start bg-white dark:bg-slate-800/50 dark:backdrop-blur-md border border-gray-200 dark:border-slate-700/50 rounded p-4 hover:shadow transition">
+      <span className="text-xs text-gray-500 dark:text-gray-300">{label}</span>
+      <span className="text-xl font-semibold text-gray-800 dark:text-white">{value}</span>
     </button>
   );
 

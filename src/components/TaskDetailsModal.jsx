@@ -14,7 +14,7 @@ export default function TaskDetailsModal({ isOpen, onClose, task }) {
     status: isArabic ? 'الحالة' : 'Status',
     due: isArabic ? 'تاريخ الاستحقاق' : 'Due',
     start: isArabic ? 'تاريخ البداية' : 'Start',
-    salesman: isArabic ? 'المندوب' : 'Salesman',
+    salesman: isArabic ? 'المندوب' : 'Sales Person',
     priority: isArabic ? 'الأولوية' : 'Priority',
     attachment: isArabic ? 'ملف مرفق' : 'Attached File',
     createdBy: isArabic ? 'أنشئت بواسطة' : 'Created By',
@@ -39,8 +39,8 @@ export default function TaskDetailsModal({ isOpen, onClose, task }) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b sticky top-0 bg-[var(--content-bg)] z-10">
           <h2 className="text-xl font-semibold">{labels.details}</h2>
-          <button onClick={onClose} className="p-2 rounded-md hover:bg-[var(--table-row-hover)]" aria-label={labels.close}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+          <button onClick={onClose} className="p-2 rounded-full bg-white text-red-600 hover:bg-red-50 shadow-sm" aria-label={labels.close}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -131,13 +131,6 @@ export default function TaskDetailsModal({ isOpen, onClose, task }) {
               )}
             </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t bg-[var(--content-bg)]">
-          <button onClick={onClose} className="px-4 py-2 rounded-md border bg-[var(--dropdown-bg)] text-sm">
-            {labels.close}
-          </button>
         </div>
       </div>
     </div>

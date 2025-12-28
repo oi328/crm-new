@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { FaDownload, FaFileExcel } from 'react-icons/fa'
+import { FaDownload, FaFileExcel, FaTimes } from 'react-icons/fa'
 import * as XLSX from 'xlsx'
 
 const ImportLeadsModal = ({
@@ -118,13 +118,9 @@ const ImportLeadsModal = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-            aria-label={t('Close')}
+            className="btn btn-sm btn-circle btn-ghost text-red-500"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-              <path d="M18 6L6 18" />
-              <path d="M6 6l12 12" />
-            </svg>
+            <FaTimes size={20} />
           </button>
         </div>
 
@@ -146,7 +142,7 @@ const ImportLeadsModal = ({
               </div>
               <button
                 onClick={generateTemplate}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors duration-200"
+                className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none flex items-center gap-2"
               >
                 <FaDownload className="w-3 h-3" />
                 {t('template.downloadButton')}
@@ -193,7 +189,7 @@ const ImportLeadsModal = ({
             <button
               type="button"
               onClick={() => document.getElementById('modal-excel-file-input')?.click()}
-              className="px-4 py-2 rounded-md text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-gray-700 dark:text-gray-200"
+              className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
             >
               {t('import.browseButton')}
             </button>
@@ -210,7 +206,7 @@ const ImportLeadsModal = ({
             <button
               onClick={onImport}
               disabled={!excelFile || importing}
-              className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold ${importing ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white shadow-md transition-colors duration-300`}
+              className={`btn btn-sm ${importing ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white border-none flex items-center gap-2`}
             >
               <FaDownload className="w-4 h-4" />
               {importing ? t('import.importing') : t('import.importButton')}
@@ -235,12 +231,7 @@ const ImportLeadsModal = ({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-          <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm">
-            {t('Close')}
-          </button>
-        </div>
+
       </div>
     </div>
   )

@@ -1,17 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaTimes, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCalendarAlt, FaUser, FaBuilding, FaComments, FaEye, FaEdit, FaUsers, FaEllipsisH } from 'react-icons/fa';
+import { FaTimes, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCalendarAlt, FaUser, FaBuilding, FaComments, FaEye, FaEdit, FaUsers, FaEllipsisH, FaCheckCircle } from 'react-icons/fa';
 import AddLeadModal from './AddLeadModal';
 import EditLeadModal from './EditLeadModal';
 import LeadDetailsModal from './LeadDetailsModal';
 import AddActionModal from '@components/AddActionModal';
 
-const LeadModal = ({ isOpen, onClose, lead, theme = 'light' }) => {
+const LeadModal = ({ isOpen, onClose, lead, theme = 'light', assignees = [], onAssign }) => {
   const { t } = useTranslation();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showAddActionModal, setShowAddActionModal] = useState(false);
+  const [showAssignMenu, setShowAssignMenu] = useState(false);
+  const [assignStep, setAssignStep] = useState('teams'); // 'teams' or 'members'
+  const [selectedTeam, setSelectedTeam] = useState(null);
+
+  // Mock Teams Data
+  const TEAMS_DATA = {
+    'Sales Team A': ['Ahmed Ali', 'Sara Noor'],
+    'Sales Team B': ['Ibrahim'],
+    'Marketing': ['Dina', 'Elias']
+  };
+
+  const assignMenuRef = useRef(null);
+  const assignMenuBtnRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showAssignMenu) {
+        const menuEl = assignMenuRef.current;
+        const btnEl = assignMenuBtnRef.current;
+        if (menuEl && !menuEl.contains(e.target) && btnEl && !btnEl.contains(e.target)) {
+          setShowAssignMenu(false);
+          setAssignStep('teams');
+          setSelectedTeam(null);
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showAssignMenu]);
   
   if (!isOpen || !lead) return null;
 
@@ -64,14 +93,14 @@ const LeadModal = ({ isOpen, onClose, lead, theme = 'light' }) => {
             {/* Action Buttons */}
             <button
               onClick={handleViewDetails}
-              className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${secondaryTextColor} hover:text-blue-600`}
+              className="btn btn-sm btn-circle bg-blue-600 hover:bg-blue-700 text-white border-none"
               title="View"
             >
               <FaEye size={16} />
             </button>
             <button
               onClick={() => setShowAddActionModal(true)}
-              className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none"
               title="Add Action"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,31 +109,102 @@ const LeadModal = ({ isOpen, onClose, lead, theme = 'light' }) => {
             </button>
             <button
               onClick={() => setShowEditModal(true)}
-              className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${secondaryTextColor} hover:text-green-600`}
+              className={`btn btn-sm btn-circle btn-ghost transition-colors ${secondaryTextColor} hover:text-blue-600`}
               title="Edit"
             >
               <FaEdit size={16} />
             </button>
-            <button
-              onClick={() => console.log('Assign lead:', lead)}
-              className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${secondaryTextColor} hover:text-purple-600`}
-              title="Assign"
-            >
-              <FaUsers size={16} />
-            </button>
+            <div className="relative">
+              <button
+                ref={assignMenuBtnRef}
+                onClick={() => setShowAssignMenu(!showAssignMenu)}
+                className="btn btn-sm btn-circle bg-blue-600 hover:bg-blue-700 text-white border-none"
+                title="Assign"
+              >
+                <FaUsers size={16} />
+              </button>
+              {showAssignMenu && (
+                <div 
+                  ref={assignMenuRef}
+                  className={`${isLight ? 'bg-white/90 backdrop-blur-md border border-gray-200 text-slate-800' : 'bg-slate-900/90 backdrop-blur-md border border-slate-700 text-white'} absolute right-0 top-10 z-50 rounded-xl shadow-xl min-w-[200px] p-2`}
+                >
+                  <div className="text-xs font-semibold px-3 py-2 text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                    {assignStep === 'members' && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAssignStep('teams');
+                          setSelectedTeam(null);
+                        }}
+                        className="hover:text-blue-600"
+                      >
+                        {t('Back') || '←'}
+                      </button>
+                    )}
+                    {assignStep === 'teams' 
+                      ? t('Select Team')
+                      : t('Select Person')
+                    }
+                  </div>
+                  <div className="max-h-60 overflow-y-auto">
+                    {assignStep === 'teams' ? (
+                      Object.keys(TEAMS_DATA).map((team) => (
+                        <button
+                          key={team}
+                          onClick={() => {
+                            setSelectedTeam(team);
+                            setAssignStep('members');
+                          }}
+                          className="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-black/5 text-sm"
+                        >
+                          <span className="truncate">{team}</span>
+                          <span className="text-xs text-gray-400">
+                            ({TEAMS_DATA[team].length})
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      TEAMS_DATA[selectedTeam] && TEAMS_DATA[selectedTeam].length > 0 ? (
+                        TEAMS_DATA[selectedTeam].map((assignee) => (
+                          <button
+                            key={assignee}
+                            onClick={() => {
+                              if (onAssign) onAssign(assignee);
+                              setShowAssignMenu(false);
+                              setAssignStep('teams');
+                              setSelectedTeam(null);
+                            }}
+                            className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-black/5 text-sm ${lead.assignedTo === assignee ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : ''}`}
+                          >
+                            <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">
+                              {assignee.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="truncate">{assignee}</span>
+                            {lead.assignedTo === assignee && <FaCheckCircle className="ml-auto text-xs" />}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-sm text-gray-500 italic">
+                          {t('No sales persons found')}
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <button
               onClick={() => console.log('More options for lead:', lead)}
-              className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${secondaryTextColor} hover:text-gray-600`}
+              className={`btn btn-sm btn-circle btn-ghost transition-colors ${secondaryTextColor} hover:text-blue-600`}
               title="More Options"
             >
               <FaEllipsisH size={16} />
             </button>
-            {/* Close Button */}
             <button
               onClick={onClose}
-              className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${secondaryTextColor} hover:text-red-600 ml-2`}
+              className="btn btn-sm btn-circle btn-ghost text-red-500"
             >
-              <FaTimes size={18} />
+              <FaTimes size={20} />
             </button>
           </div>
         </div>
@@ -228,7 +328,7 @@ const LeadModal = ({ isOpen, onClose, lead, theme = 'light' }) => {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowAddActionModal(true)}
-                  className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm flex items-center gap-1"
+                  className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none flex items-center gap-1"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -237,7 +337,7 @@ const LeadModal = ({ isOpen, onClose, lead, theme = 'light' }) => {
                 </button>
                 <button
                   onClick={handleViewDetails}
-                  className="px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm flex items-center gap-1"
+                  className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center gap-1"
                 >
                   <FaEye size={12} />
                   {t('View All')}
@@ -293,12 +393,12 @@ const LeadModal = ({ isOpen, onClose, lead, theme = 'light' }) => {
         <div className={`flex justify-end gap-3 px-6 py-4 border-t ${borderColor}`}>
           <button
             onClick={onClose}
-            className={`px-4 py-2 rounded-lg border transition-colors ${borderColor} ${secondaryTextColor} hover:bg-gray-100 dark:hover:bg-gray-800`}
+            className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none"
           >
             {t('Close')}
           </button>
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
             onClick={() => {
               // يمكن إضافة منطق تحرير العميل المحتمل هنا
               console.log('Edit lead:', lead);

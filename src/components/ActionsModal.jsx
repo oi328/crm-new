@@ -64,8 +64,8 @@ const ActionsModal = ({ isOpen, onClose, lead, theme = 'light', isArabic = false
       title: isArabic ? 'تعديل' : 'Edit',
       description: isArabic ? 'تعديل بيانات العميل' : 'Edit lead information',
       icon: FaEdit,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
       onClick: () => console.log('Edit action')
     },
     {
@@ -161,7 +161,7 @@ const ActionsModal = ({ isOpen, onClose, lead, theme = 'light', isArabic = false
             </div>
             <button
               onClick={onClose}
-              className={`p-4 ${colors.secondaryBtn} rounded-2xl ${colors.primaryText} transition-all duration-300 hover:scale-105`}
+              className="btn btn-sm btn-circle bg-white text-red-600 hover:bg-red-50 shadow-md"
             >
               <FaTimes size={20} />
             </button>
@@ -196,18 +196,6 @@ const ActionsModal = ({ isOpen, onClose, lead, theme = 'light', isArabic = false
                 </div>
               </button>
             ))}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className={`${colors.headerBg} p-6 border-t ${colors.border}`}>
-          <div className="flex justify-end space-x-4 rtl:space-x-reverse">
-            <button
-              onClick={onClose}
-              className={`px-8 py-3 ${colors.secondaryBtn} rounded-xl ${colors.primaryText} font-medium transition-all duration-300 hover:scale-105`}
-            >
-              {isArabic ? 'إغلاق' : 'Close'}
-            </button>
           </div>
         </div>
       </div>

@@ -49,6 +49,7 @@ export const Leads = () => {
   const [sortBy, setSortBy] = useState('createdAt')
   const [sortOrder, setSortOrder] = useState('desc')
   const [selectedLeads, setSelectedLeads] = useState([])
+  const [activeRowId, setActiveRowId] = useState(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingLead, setEditingLead] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -72,7 +73,7 @@ export const Leads = () => {
   
   const tableHeaderBgClass = 'bg-gray-100 dark:bg-gray-900/95'
   const buttonBase = 'text-sm font-semibold rounded-lg transition-all duration-200 ease-out'
-  const primaryButton = `inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md ${buttonBase}`
+  const primaryButton = `btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none`
   
   const sidebarStages = [
     { key: 'new lead', icon: '🆕' },
@@ -275,7 +276,7 @@ export const Leads = () => {
     contact: t('Contact'),
     source: t('Source'),
     project: t('Project'),
-    sales: t('Sales'),
+    salesPerson: t('Sales Person'),
     lastComment: t('Last Comment'),
     stage: t('Stage'),
     expectedRevenue: t('Expected Revenue'),
@@ -378,7 +379,7 @@ export const Leads = () => {
     contact: true,
     source: true,
     project: true,
-    sales: true,
+    salesPerson: true,
     lastComment: true,
     stage: true,
     expectedRevenue: true,
@@ -409,7 +410,7 @@ export const Leads = () => {
       ...prev,
       source: false,
       project: false,
-      sales: false,
+      salesPerson: false,
       lastComment: false,
       stage: false,
       expectedRevenue: false,
@@ -660,6 +661,18 @@ export const Leads = () => {
   const [bulkStatus, setBulkStatus] = useState('')
   const [bulkFeedback, setBulkFeedback] = useState(null)
 
+  const uniqueAssignees = useMemo(() => {
+    return Array.from(new Set(leads.map(l => l.assignedTo).filter(Boolean))).sort()
+  }, [leads])
+
+  const handleAssignLead = (leadId, newAssignee) => {
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, assignedTo: newAssignee } : l))
+    // Also update selectedLead if it matches, so the modal reflects the change immediately
+    if (selectedLead && selectedLead.id === leadId) {
+      setSelectedLead(prev => ({ ...prev, assignedTo: newAssignee }))
+    }
+  }
+
   // Rotation rules: guard bulk assignment using settings (working hours, allow/delay)
   const { canAssignNow } = (() => {
     try {
@@ -758,7 +771,7 @@ export const Leads = () => {
         }] : [],
         tags: tagsArr,
         notes: String(lead?.notes || '').trim(),
-        assignedSalesRep: String(lead?.sales || lead?.assignedTo || '').trim(),
+        assignedSalesRep: String(lead?.salesPerson || lead?.assignedTo || '').trim(),
       }
       validLeads.push(payload)
     }
@@ -895,7 +908,7 @@ export const Leads = () => {
   const columnMinWidths = {
     source: 140,
     project: 140,
-    sales: 140,
+    salesPerson: 140,
     lastComment: 220,
     stage: 140,
     expectedRevenue: 160,
@@ -919,15 +932,12 @@ export const Leads = () => {
         <div className={`flex items-center gap-2 flex-nowrap ${isRtl ? 'mr-auto' : 'ml-auto'}`}>
           <button
             onClick={() => navigate('/leads/new')}
-            className={`inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white shadow-md ${buttonBase} btn-compact`}
+            className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none gap-2"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12M6 12h12" />
-            </svg>
+            <FaPlus className="w-4 h-4" />
             <span>{t('Add New Lead')}</span>
           </button>
-          <button onClick={() => setShowImportModal(true)} className="group relative inline-flex items-center gap-1 rounded-md bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white border border-blue-300/30 shadow-sm transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300/50 overflow-hidden btn-compact" >
-            <span className="sr-only">decor</span>
+          <button onClick={() => setShowImportModal(true)} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none gap-2" >
             <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 3v12" />
               <path d="M8 11l4 4 4-4" />
@@ -1519,7 +1529,7 @@ export const Leads = () => {
                     <option key={s} value={s}>{t(s)}</option>
                   ))}
                 </select>
-                <button onClick={applyBulkStatus} className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg text-sm transition-colors">
+                <button onClick={applyBulkStatus} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">
                   {t('Apply Status')}
                 </button>
               </div>
@@ -1535,16 +1545,16 @@ export const Leads = () => {
                     <option key={owner} value={owner}>{owner}</option>
                   ))}
                 </select>
-                <button onClick={applyBulkAssign} className="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-lg text-sm transition-colors">
+                <button onClick={applyBulkAssign} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">
                   {t('Assign')}
                 </button>
               </div>
 
-              <button onClick={applyBulkConvert} className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg text-sm transition-colors">
+              <button onClick={applyBulkConvert} className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none">
                 {t('Convert to Customer')}
               </button>
 
-              <button onClick={applyBulkDelete} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg text-sm transition-colors">
+              <button onClick={applyBulkDelete} className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none">
                 {t('Delete Selected')} ({selectedLeads.length})
               </button>
             </div>
@@ -1613,7 +1623,7 @@ export const Leads = () => {
                   </th>
                 )}
 
-                {['source','project','sales','lastComment','stage','expectedRevenue','priority','status'].map((key) => (
+                {['source','project','salesPerson','lastComment','stage','expectedRevenue','priority','status'].map((key) => (
                   visibleColumns[key] ? (
                     <th
                       key={key}
@@ -1649,7 +1659,8 @@ export const Leads = () => {
                   
                   onMouseEnter={() => setHoveredLead(lead)}
                   onMouseLeave={() => setHoveredLead(null)}
-                  style={{ cursor: 'default' }}
+                  onClick={() => setActiveRowId(activeRowId === lead.id ? null : lead.id)}
+                  style={{ cursor: 'pointer' }}
                 >
                   {/* Checkbox Cell */}
                   <td className="w-10 px-6 py-4 whitespace-nowrap">
@@ -1680,47 +1691,47 @@ export const Leads = () => {
 
                   {/* Actions (after Contact) */}
                   {visibleColumns.actions && (
-                    <td className={`px-6 py-4 whitespace-nowrap text-xs font-medium sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-transparent`}>
+                    <td className={`px-6 py-4 whitespace-nowrap text-xs font-medium ${activeRowId === lead.id ? `sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-gray-50 dark:bg-slate-900/25 border border-gray-200 dark:border-slate-700/40 shadow-sm` : ''} `}>
                       <div className="flex items-center gap-2 flex-nowrap">
                         <button
                           title={t('Preview')}
                           onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowLeadModal(true); }}
-                          className="inline-flex items-center justify-center  dark:text-indigo-300 hover:text-blue-500"
+                          className="btn btn-sm btn-circle btn-ghost text-indigo-600 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
                         >
-                          <FaEye size={16} className=" dark:text-indigo-300" />
+                          <FaEye size={16} />
                         </button>
                         <button
                           title={t('Add Action')}
                           onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowAddActionModal(true) }}
-                          className="inline-flex items-center justify-center  dark:text-emerald-300 hover:text-emerald-400"
+                          className="btn btn-sm btn-circle btn-ghost text-emerald-600 hover:text-emerald-700 dark:text-emerald-300 dark:hover:text-emerald-200"
                         >
-                          <FaPlus size={16} className=" dark:text-emerald-300" />
+                          <FaPlus size={16} />
                         </button>
                         <button
                           title={t('Call')}
                           onClick={(e) => { e.stopPropagation(); const raw = lead.phone || lead.mobile || ''; const digits = String(raw).replace(/[^0-9]/g, ''); if (digits) window.open(`tel:${digits}`); }}
-                          className="inline-flex items-center justify-center text-blue-600 dark:text-blue-400 hover:text-blue-500"
+                          className="btn btn-sm btn-circle btn-ghost text-blue-600 dark:text-blue-400 hover:text-blue-500"
                         >
                           <FaPhone size={16} />
                         </button>
                         <button
                           title="WhatsApp"
                           onClick={(e) => { e.stopPropagation(); const raw = lead.phone || lead.mobile || ''; const digits = String(raw).replace(/[^0-9]/g, ''); if (digits) window.open(`https://wa.me/${digits}`); }}
-                          className="inline-flex items-center justify-center  dark:text-green-400 hover:text-green-500"
+                          className="btn btn-sm btn-circle btn-ghost dark:text-green-400 hover:text-green-500"
                         >
                           <FaWhatsapp size={16} style={{ color: '#25D366' }} />
                         </button>
                         <button
                           title={t('Email')}
                           onClick={(e) => { e.stopPropagation(); if (lead.email) window.open(`mailto:${lead.email}`); }}
-                          className="inline-flex items-center justify-center  dark:text-gray-200 hover:text-blue-500"
+                          className="btn btn-sm btn-circle btn-ghost dark:text-gray-200 hover:text-blue-500"
                         >
                           <FaEnvelope size={16} style={{ color: '#FFA726' }} />
                         </button>
                         <button
                           title="Google Meet"
                           onClick={(e) => { e.stopPropagation(); window.open('https://meet.google.com/', '_blank'); }}
-                          className="inline-flex items-center justify-center  dark:text-gray-200 hover:text-blue-500"
+                          className="btn btn-sm btn-circle btn-ghost dark:text-gray-200 hover:text-blue-500"
                         >
                           <img src={MEET_ICON_URL} alt="Google Meet" className="w-4 h-4" />
                         </button>
@@ -1743,8 +1754,8 @@ export const Leads = () => {
                   )}
 
                   {/* Sales Person */}
-                  {visibleColumns.sales && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.sales}px` }}>
+                  {visibleColumns.salesPerson && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.salesPerson}px` }}>
                       {lead.assignedTo || '-'}
                     </td>
                   )}
@@ -1807,44 +1818,68 @@ export const Leads = () => {
       </div>
 
       {/* Pagination Controls */}
-      <nav className="flex flex-col lg:flex-row lg:flex-nowrap justify-between items-stretch lg:items-center gap-3 lg:gap-2 p-3 lg:p-4 border-t border-gray-200 dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
-        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium  dark:text-white">
-          <span style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Show')}</span>
-          <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm text-gray-900 dark:text-white text-xs">
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-          <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('entries')}</span>
-          <label htmlFor="page-search" className="sr-only">{t('Search Page')}</label>
-          <input
-            id="page-search"
-            type="text"
-            placeholder={t('Go to page...')}
-            value={pageSearch}
-            onChange={(e) => setPageSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                const page = Number(pageSearch)
-                if (page > 0 && page <= Math.ceil(filteredLeads.length / itemsPerPage)) {
-                  setCurrentPage(page)
-                  setPageSearch('')
+      <nav className="flex flex-col gap-4 p-3 lg:p-4 border-t border-gray-200 dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
+        {/* Row 1: Show Entries & Page Navigation */}
+        <div className="flex  lg:flex-row justify-between items-center gap-3">
+          {/* Show Entries */}
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium  dark:text-white">
+            <span style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Show')}</span>
+            <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm text-gray-900 dark:text-white text-xs">
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('entries')}</span>
+            <label htmlFor="page-search" className="sr-only">{t('Search Page')}</label>
+            <input
+              id="page-search"
+              type="text"
+              placeholder={t('Go to page...')}
+              value={pageSearch}
+              onChange={(e) => setPageSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const page = Number(pageSearch)
+                  if (page > 0 && page <= Math.ceil(filteredLeads.length / itemsPerPage)) {
+                    setCurrentPage(page)
+                    setPageSearch('')
+                  }
                 }
-              }
-            }}
-            className="ml-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
-            style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
-          />
-          <div className="spacer-row w-full lg:hidden">
-            <div className="h-2"></div>
+              }}
+              className="ml-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
+              style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
+            />
+          </div>
+
+          {/* Page Navigation */}
+          <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="block px-3 py-2 text-white focus:text-white leading-tight text-gray-500  border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+            >
+              <span className="sr-only text-white focus:text-white">{t('Previous')}</span>
+              <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
+            </button>
+            <span className="text-sm font-medium text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>
+              {t('Page')} <span className="font-semibold text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>{currentPage}</span> {t('of')} <span className="font-semibold text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>{Math.ceil(filteredLeads.length / itemsPerPage)}</span>
+            </span>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}
+              disabled={currentPage === Math.ceil(filteredLeads.length / itemsPerPage)}
+              className="block px-3 py-2 leading-tight  border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+            >
+              <span className="sr-only text-white focus:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Next')}</span>
+              <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path></svg>
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row lg:flex-nowrap items-start lg:items-center gap-3 lg:gap-2 w-full lg:w-auto">
-          {/* Export Controls */}
-          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700">
-            <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Export Pages')}</span>
+        {/* Row 2: Export Controls */}
+        <div className="flex justify-end items-center">
+          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700 justify-center lg:justify-start">
+            <span className="text-xs font-semibold text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>{t('Export Pages')}</span>
             <input
               type="number"
               min="1"
@@ -1855,7 +1890,7 @@ export const Leads = () => {
               className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
               style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
-            <span className="text-xs font-semibold  dark:text-white   style={{ color: theme === 'dark' ? '#ffffff' : undefined }}">{t('to')}</span>
+            <span className="text-xs font-semibold text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>{t('to')}</span>
             <input
               type="number"
               min="1"
@@ -1868,33 +1903,10 @@ export const Leads = () => {
             />
             <button
               onClick={handleExportRange}
-              className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm transition-colors text-white focus:text-white"
+              className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center gap-1"
             >
               <FaDownload size={12} />
               {t('Export')}
-            </button>
-          </div>
-
-          {/* Page Navigation */}
-          <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-start">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="block px-3 py-2 text-white focus:text-white leading-tight text-gray-500  border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
-            >
-              <span className="sr-only text-white focus:text-white">{t('Previous')}</span>
-              <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
-            </button>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
-              {t('Page')} <span className="font-semibold text-gray-900 dark:text-white">{currentPage}</span> {t('of')} <span className="font-semibold text-gray-900 dark:text-white">{Math.ceil(filteredLeads.length / itemsPerPage)}</span>
-            </span>
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}
-              disabled={currentPage === Math.ceil(filteredLeads.length / itemsPerPage)}
-              className="block px-3 py-2 leading-tight  border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
-            >
-              <span className="sr-only يشقنtext-white focus:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Next')}</span>
-              <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path></svg>
             </button>
           </div>
         </div>
@@ -1966,6 +1978,8 @@ export const Leads = () => {
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
           lead={editingLead}
+          assignees={uniqueAssignees}
+          onAssign={(newAssignee) => handleAssignLead(editingLead.id, newAssignee)}
           onSave={(updatedLead) => {
             setLeads(prev => prev.map(l => l.id === updatedLead.id ? updatedLead : l))
             setShowEditModal(false)
@@ -2017,6 +2031,8 @@ export const Leads = () => {
           lead={selectedLead}
           isArabic={i18n.language === 'ar'}
           theme={theme}
+          assignees={uniqueAssignees}
+          onAssign={(newAssignee) => handleAssignLead(selectedLead.id, newAssignee)}
         />
       )}
     </div>

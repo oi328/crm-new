@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react'
+import { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react'
 import { login as svcLogin, getProfile } from '@services/auth'
 import { captureDeviceInfo, saveDeviceForUser } from '@utils/device'
 

@@ -3,7 +3,7 @@ import { useTheme } from '@shared/context/ThemeProvider';
 import { useNavigate } from 'react-router-dom';
 import { useStages } from '../hooks/useStages';
 import { useState } from 'react';
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaTimes } from 'react-icons/fa';
 
 const COUNTRY_CODES = [
   // الدول العربية في المقدمة
@@ -84,6 +84,7 @@ export const AddNewLead = () => {
   const { theme } = useTheme();
   const isLight = theme === 'light';
   const navigate = useNavigate();
+  const isRTL = String(i18n.language || '').startsWith('ar');
 
   const [name, setName] = useState('');
   const [source, setSource] = useState('');
@@ -330,15 +331,24 @@ export const AddNewLead = () => {
 
   return (
     <div className={`p-6 pb-24 bg-[var(--content-bg)] text-[var(--content-text)]`}>
-      <div className={`relative inline-flex items-center ${i18n.language === 'ar' ? 'flex-row-reverse' : ''} gap-2 mb-2`}>
+      <div className={`relative flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''} mb-2`}>
         <h1 className={`page-title text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>{t('Add New Lead')}</h1>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className={`inline-flex items-center justify-center px-3 py-1.5 rounded-md border ${isLight ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' : 'bg-gray-800 border-gray-700 text-red-300 hover:bg-gray-700'}`}
+          aria-label={isRTL ? 'إغلاق' : t('Close')}
+          title={isRTL ? 'إغلاق' : t('Close')}
+        >
+          <FaTimes className="w-4 h-4" />
+        </button>
         <span
           aria-hidden
           className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent"
           style={{
             width: 'calc(100% + 8px)',
-            left: i18n.language === 'ar' ? 'auto' : '-4px',
-            right: i18n.language === 'ar' ? '-4px' : 'auto',
+            left: isRTL ? 'auto' : '-4px',
+            right: isRTL ? '-4px' : 'auto',
             bottom: '-4px'
           }}
         ></span>

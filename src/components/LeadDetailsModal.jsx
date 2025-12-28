@@ -254,6 +254,12 @@ const LeadDetailsModal = ({ isOpen, onClose, lead }) => {
       <div className="bg-white sm:rounded-2xl shadow-2xl w-full sm:max-w-4xl max-h-[85vh] h-auto overflow-y-auto transform transition-all duration-300 ease-out">
         {/* Modern Header with Gradient */}
         <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 p-8">
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 z-20 btn btn-sm btn-circle bg-white text-red-600 hover:bg-red-50 shadow-lg rtl:right-auto rtl:left-4"
+          >
+            <FaTimes size={18} />
+          </button>
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="relative z-10">
             <div className="flex items-center space-x-4 rtl:space-x-reverse">
@@ -495,8 +501,8 @@ const LeadDetailsModal = ({ isOpen, onClose, lead }) => {
                     <p className="text-gray-600 text-sm mt-1">{isArabic ? 'تتبع جميع التفاعلات مع العميل' : 'Track all client interactions'}</p>
                   </div>
                 </div>
-                <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center shadow-lg hover:shadow-xl transform hover:scale-105">
-                  <FaPlus className="mr-2" size={14} />
+                <button className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none gap-2">
+                  <FaPlus size={14} />
                   {isArabic ? 'إضافة نشاط جديد' : 'Add New Activity'}
                 </button>
               </div>
@@ -553,10 +559,10 @@ const LeadDetailsModal = ({ isOpen, onClose, lead }) => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 rtl:space-x-reverse opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200" title={isArabic ? 'تحرير' : 'Edit'}>
+                        <button className="btn btn-sm btn-circle bg-blue-600 hover:bg-blue-700 text-white border-none" title={isArabic ? 'تحرير' : 'Edit'}>
                           <FaEdit size={14} />
                         </button>
-                        <button className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200" title={isArabic ? 'حذف' : 'Delete'}>
+                        <button className="btn btn-sm btn-circle bg-red-600 hover:bg-red-700 text-white border-none" title={isArabic ? 'حذف' : 'Delete'}>
                           <FaTrash size={14} />
                         </button>
                       </div>
@@ -616,9 +622,9 @@ const LeadDetailsModal = ({ isOpen, onClose, lead }) => {
                       <button
                         onClick={handleAddComment}
                         disabled={!newComment.trim()}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 flex items-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none gap-2"
                       >
-                        <FaPlus className="ml-2" size={14} />
+                        <FaPlus size={14} />
                         {isArabic ? 'إضافة تعليق' : 'Add Comment'}
                       </button>
                     </div>
@@ -731,10 +737,10 @@ const LeadDetailsModal = ({ isOpen, onClose, lead }) => {
                   <h4 className="text-lg font-medium text-gray-700">{isArabic ? 'سجل التواصل' : 'Communication Feed'}</h4>
                   <button 
                     onClick={() => alert(isArabic ? 'سيتم إضافة رسالة جديدة' : 'New message will be added')}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
+                    className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none gap-2"
                   >
-                    <FaPlus className="text-sm" />
-                    <span className="text-sm">{isArabic ? 'إضافة رسالة' : 'Add Message'}</span>
+                    <FaPlus size={14} />
+                    <span>{isArabic ? 'إضافة رسالة' : 'Add Message'}</span>
                   </button>
                 </div>
                 
@@ -836,7 +842,7 @@ const LeadDetailsModal = ({ isOpen, onClose, lead }) => {
                     />
                     <button 
                       onClick={() => alert(isArabic ? 'تم إرسال الرسالة' : 'Message sent')}
-                      className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
                     >
                       {isArabic ? 'إرسال' : 'Send'}
                     </button>
@@ -851,9 +857,9 @@ const LeadDetailsModal = ({ isOpen, onClose, lead }) => {
         <div className="flex justify-end space-x-3 space-x-reverse p-6 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
           <button
             onClick={onClose}
-            className="px-6 py-3 text-gray-600 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center"
+            className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none gap-2"
           >
-            <FaTimes className="ml-2" size={14} />
+            <FaTimes size={14} />
             {isArabic ? 'إغلاق' : 'Close'}
           </button>
         </div>

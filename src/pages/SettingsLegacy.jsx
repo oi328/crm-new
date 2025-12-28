@@ -204,7 +204,7 @@ export default function Settings() {
         // Automatically select the newly uploaded icon
         if (event.target.id === 'stage-icon-upload') {
           setNewStageIcon(reader.result);
-          setStageIconWasManuallyPicked(true);
+          setIconWasManuallyPicked(true);
         } else if (event.target.id === 'status-icon-upload') {
           setNewStatusIcon(reader.result);
           setStatusIconWasManuallyPicked(true);
@@ -654,7 +654,7 @@ export default function Settings() {
                     <button
                       key={ic.id}
                       type="button"
-                      onMouseDown={() => { setNewStageIcon(ic.src); setStageIconWasManuallyPicked(true); setShowStageIconDropdown(false); }}
+                      onMouseDown={() => { setNewStageIcon(ic.src); setIconWasManuallyPicked(true); setShowIconDropdown(false); }}
                       className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                     >
                       <img src={ic.src} alt="uploaded icon" className="w-4 h-4" />

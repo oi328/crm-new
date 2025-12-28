@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../shared/context/ThemeProvider.jsx';
 import { FaTimes, FaTrash, FaPhone, FaWhatsapp, FaEnvelope } from 'react-icons/fa';
 
 const AddLeadModal = ({ isOpen, onClose, onSave }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+  const isArabic = i18n.language === 'ar';
 
   const makeEmptyRow = () => ({
     name: '',
@@ -71,15 +75,29 @@ const AddLeadModal = ({ isOpen, onClose, onSave }) => {
 
   if (!isOpen) return null;
 
+  const inputClass = `w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+    isLight 
+      ? 'bg-white border-gray-300 text-gray-900 placeholder-gray-400' 
+      : 'bg-transparent border-slate-600 text-white placeholder-slate-500 hover:border-slate-500'
+  }`;
+
+  const selectClass = `w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+    isLight 
+      ? 'bg-white border-gray-300 text-gray-900' 
+      : 'bg-slate-900 border-slate-600 text-white'
+  }`;
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white sm:rounded-2xl shadow-2xl border border-gray-200 w-full h-screen sm:max-w-[1100px] sm:max-h-[90vh] sm:h-auto sm:overflow-hidden overflow-y-auto">
+      <div className={`${isLight ? 'bg-white border-gray-200' : 'bg-slate-900/90 backdrop-blur-md border-slate-700'} sm:rounded-2xl shadow-2xl border w-full h-screen sm:max-w-[1100px] sm:max-h-[90vh] sm:h-auto sm:overflow-hidden overflow-y-auto transition-colors duration-300`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-800">Add Leads</h2>
+        <div className={`relative flex items-center justify-between p-6 border-b ${isLight ? 'border-gray-200' : 'border-slate-700'} ${isArabic ? 'flex-row-reverse' : ''}`}>
+          <h2 className={`text-2xl font-bold ${isLight ? 'text-gray-800' : 'text-white'} ${isArabic ? 'text-right' : 'text-left'}`}>
+            {isArabic ? 'إضافة عملاء' : 'Add Leads'}
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="btn btn-sm btn-circle btn-ghost text-red-500"
             title={t('Close')}
           >
             <FaTimes size={20} />
@@ -89,111 +107,111 @@ const AddLeadModal = ({ isOpen, onClose, onSave }) => {
         {/* Grid-like Form */}
         <div className="p-6">
           <div className="overflow-x-auto dribbble-card">
-            <table className="add-lead-table min-w-[1300px] w-full table-auto text-sm md:text-base text-gray-900">
-              <thead className="thead-soft sticky top-0">
+            <table className={`add-lead-table min-w-[1300px] w-full table-auto text-sm md:text-base ${isLight ? 'text-gray-900' : 'text-white'}`}>
+              <thead className={`sticky top-0 ${isLight ? 'bg-gray-50 text-gray-700' : 'bg-slate-800 text-gray-200'}`}>
                 <tr>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">{t('Lead')}</th>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">{t('Contact')}</th>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">{t('Source')}</th>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">{t('Project')}</th>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">{t('Sales')}</th>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">{t('Last Comment')}</th>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">{t('Stage')}</th>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">{t('Expected Revenue')}</th>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">{t('Priority')}</th>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">{t('Status')}</th>
-                  <th className="px-3 py-2 border-b text-right whitespace-nowrap">#</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>{t('Lead')}</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>{t('Contact')}</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>{t('Source')}</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>{t('Project')}</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>{t('Sales')}</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>{t('Last Comment')}</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>{t('Stage')}</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>{t('Expected Revenue')}</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>{t('Priority')}</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>{t('Status')}</th>
+                  <th className={`px-3 py-2 border-b text-right whitespace-nowrap ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>#</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, idx) => (
-                  <tr key={idx} className="odd:bg-white even:bg-gray-50">
-                    <td className="px-2 py-2 border-t align-top whitespace-nowrap">
+                  <tr key={idx} className={`${isLight ? 'odd:bg-white even:bg-gray-50' : 'odd:bg-transparent even:bg-slate-800/30'} border-b ${isLight ? 'border-gray-100' : 'border-slate-700'}`}>
+                    <td className="px-2 py-2 border-t-0 align-top whitespace-nowrap">
                       <input
                         type="text"
                         value={row.name}
                         onChange={(e) => handleCellChange(idx, 'name', e.target.value)}
                         placeholder={t('Lead Name')}
-                        className="input-soft w-full placeholder:text-gray-400"
+                        className={inputClass}
                       />
                     </td>
-                    <td className="px-2 py-2 border-t align-top whitespace-nowrap">
+                    <td className="px-2 py-2 border-t-0 align-top whitespace-nowrap">
                       <div className="grid grid-cols-1 gap-2">
                         <div className="flex items-center gap-2">
-                          <FaPhone className="text-gray-500" />
+                          <FaPhone className={isLight ? 'text-gray-500' : 'text-gray-400'} />
                           <input
                             type="text"
                             value={row.phone}
                             onChange={(e) => handleCellChange(idx, 'phone', e.target.value)}
                             placeholder={t('Phone')}
-                            className="input-soft w-full placeholder:text-gray-400"
+                            className={inputClass}
                           />
                           <FaWhatsapp className="text-green-500" />
                         </div>
                         <div className="flex items-center gap-2">
-                          <FaEnvelope className="text-gray-500" />
+                          <FaEnvelope className={isLight ? 'text-gray-500' : 'text-gray-400'} />
                           <input
                             type="email"
                             value={row.email}
                             onChange={(e) => handleCellChange(idx, 'email', e.target.value)}
                             placeholder={t('Email')}
-                            className="input-soft w-full placeholder:text-gray-400"
+                            className={inputClass}
                           />
                         </div>
                       </div>
                     </td>
-                    <td className="px-2 py-2 border-t align-top whitespace-nowrap">
+                    <td className="px-2 py-2 border-t-0 align-top whitespace-nowrap">
                       <select
                         value={row.source}
                         onChange={(e) => handleCellChange(idx, 'source', e.target.value)}
-                        className="select-soft w-full"
+                        className={selectClass}
                       >
-                        <option value="website">{t('Website')}</option>
-                        <option value="social-media">{t('Social Media')}</option>
-                        <option value="referral">{t('Referral')}</option>
-                        <option value="email-campaign">{t('Email Campaign')}</option>
-                        <option value="direct">{t('Direct')}</option>
+                        <option value="website" className="text-gray-900">{t('Website')}</option>
+                        <option value="social-media" className="text-gray-900">{t('Social Media')}</option>
+                        <option value="referral" className="text-gray-900">{t('Referral')}</option>
+                        <option value="email-campaign" className="text-gray-900">{t('Email Campaign')}</option>
+                        <option value="direct" className="text-gray-900">{t('Direct')}</option>
                       </select>
                     </td>
-                    <td className="px-2 py-2 border-t align-top whitespace-nowrap">
+                    <td className="px-2 py-2 border-t-0 align-top whitespace-nowrap">
                       <input
                         type="text"
                         value={row.company}
                         onChange={(e) => handleCellChange(idx, 'company', e.target.value)}
                         placeholder={t('Project')}
-                        className="input-soft w-full placeholder:text-gray-400"
+                        className={inputClass}
                       />
                     </td>
-                    <td className="px-2 py-2 border-t align-top whitespace-nowrap">
+                    <td className="px-2 py-2 border-t-0 align-top whitespace-nowrap">
                       <input
                         type="text"
                         value={row.assignedTo}
                         onChange={(e) => handleCellChange(idx, 'assignedTo', e.target.value)}
                         placeholder={t('Sales')}
-                        className="input-soft w-full placeholder:text-gray-400"
+                        className={inputClass}
                       />
                     </td>
-                    <td className="px-2 py-2 border-t align-top">
+                    <td className="px-2 py-2 border-t-0 align-top">
                       <input
                         type="text"
                         value={row.notes}
                         onChange={(e) => handleCellChange(idx, 'notes', e.target.value)}
                         placeholder={t('Last Comment')}
-                        className="input-soft w-full placeholder:text-gray-400"
+                        className={inputClass}
                       />
                     </td>
-                    <td className="px-2 py-2 border-t align-top whitespace-nowrap">
+                    <td className="px-2 py-2 border-t-0 align-top whitespace-nowrap">
                       <select
                         value={row.status}
                         onChange={(e) => handleCellChange(idx, 'status', e.target.value)}
-                        className="select-soft w-full"
+                        className={selectClass}
                       >
                         {stageOptions.map((opt) => (
-                          <option key={opt} value={opt}>{t(opt)}</option>
+                          <option key={opt} value={opt} className="text-gray-900">{t(opt)}</option>
                         ))}
                       </select>
                     </td>
-                    <td className="px-2 py-2 border-t align-top whitespace-nowrap">
+                    <td className="px-2 py-2 border-t-0 align-top whitespace-nowrap">
                       <input
                         type="number"
                         min="0"
@@ -201,37 +219,37 @@ const AddLeadModal = ({ isOpen, onClose, onSave }) => {
                         value={row.estimatedValue}
                         onChange={(e) => handleCellChange(idx, 'estimatedValue', e.target.value)}
                         placeholder={t('Expected Revenue')}
-                        className="input-soft w-full placeholder:text-gray-400"
+                        className={inputClass}
                       />
                     </td>
-                    <td className="px-2 py-2 border-t align-top whitespace-nowrap">
+                    <td className="px-2 py-2 border-t-0 align-top whitespace-nowrap">
                       <select
                         value={row.priority}
                         onChange={(e) => handleCellChange(idx, 'priority', e.target.value)}
-                        className="select-soft w-full"
+                        className={selectClass}
                       >
-                        <option value="low">{t('Low')}</option>
-                        <option value="medium">{t('Medium')}</option>
-                        <option value="high">{t('High')}</option>
-                        <option value="urgent">{t('Urgent')}</option>
+                        <option value="low" className="text-gray-900">{t('Low')}</option>
+                        <option value="medium" className="text-gray-900">{t('Medium')}</option>
+                        <option value="high" className="text-gray-900">{t('High')}</option>
+                        <option value="urgent" className="text-gray-900">{t('Urgent')}</option>
                       </select>
                     </td>
-                    <td className="px-2 py-2 border-t align-top whitespace-nowrap">
+                    <td className="px-2 py-2 border-t-0 align-top whitespace-nowrap">
                       <select
                         value={row.status}
                         disabled
-                        className="select-soft w-full bg-gray-100 text-gray-700"
+                        className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${isLight ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-slate-800/50 text-gray-400 border-slate-600'}`}
                       >
                         {stageOptions.map((opt) => (
-                          <option key={opt} value={opt}>{t(opt)}</option>
+                          <option key={opt} value={opt} className="text-gray-900">{t(opt)}</option>
                         ))}
                       </select>
                     </td>
-                    <td className="px-3 py-3 border-t text-center">
+                    <td className="px-3 py-3 border-t-0 text-center">
                       <button
                         type="button"
                         onClick={() => removeRow(idx)}
-                        className="px-2 py-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full"
+                        className="btn btn-sm btn-circle btn-ghost text-red-600 hover:bg-red-50"
                         title={t('Delete Row')}
                       >
                         <FaTrash />
@@ -248,7 +266,7 @@ const AddLeadModal = ({ isOpen, onClose, onSave }) => {
             <button
               type="button"
               onClick={addRow}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 !bg-green-600 !hover:bg-green-700"
+              className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -259,14 +277,14 @@ const AddLeadModal = ({ isOpen, onClose, onSave }) => {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none"
               >
                 {t('Cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
               >
                 {t('Save Leads')}
               </button>

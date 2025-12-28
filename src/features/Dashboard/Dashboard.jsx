@@ -518,7 +518,7 @@ export const Dashboard = () => {
       
           <div className="mt-1 mb-3">
             <div className={`relative inline-flex items-center ${i18n.language === 'ar' ? 'flex-row-reverse' : ''} gap-2`}>
-              <h1 className="page-title text-[18px] font-bold text-primary">{t('Dashboard')}</h1>
+              <h1 className="page-title text-2xl font-bold text-primary">{t('Dashboard')}</h1>
               <span
                 aria-hidden
                 className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent"
@@ -531,6 +531,7 @@ export const Dashboard = () => {
               ></span>
             </div>
           </div>
+          
           <section 
             className="p-1.5 rounded-lg shadow-md glass-panel filter-card w-full mb-3"
           >
@@ -1065,44 +1066,51 @@ export const Dashboard = () => {
                 <h3 className={`flex-1 text-lg font-bold text-primary ${i18n.dir() === 'rtl' ? 'text-right' : 'text-left'}`}>{t('Leads Status')}</h3>
               </div>
 
-              {/* Enhanced Leads Statistics */}
-              <div className={`flex-1 min-h-0 grid grid-rows-4 gap-2 ${isLight ? 'text-black' : 'text-white'}`}>
-                <LeadsStatsCard
-                  title={t('Total Leads')}
-                  value="16,766"
-                  change="+12.5%"
-                  changeType="positive"
-                  icon={<Users className="w-5 h-5" />}
-                  color="bg-blue-500"
-                  compact
-                />
-                <LeadsStatsCard
-                  title={t('Conversion Rate')}
-                  value="24.3%"
-                  change="+3.2%"
-                  changeType="positive"
-                  icon={<TrendingUp className="w-5 h-5" />}
-                  color="bg-green-500"
-                  compact
-                />
-                <LeadsStatsCard
-                  title={t('Avg Response Time')}
-                  value="2.4h"
-                  change="-15min"
-                  changeType="positive"
-                  icon={<Timer className="w-5 h-5" />}
-                  color="bg-purple-500"
-                  compact
-                />
-                <LeadsStatsCard
-                  title={t('Hot Leads')}
-                  value="253"
-                  change="+18"
-                  changeType="positive"
-                  icon={<Flame className="w-5 h-5" />}
-                  color="bg-red-500"
-                  compact
-                />
+              <div className={`flex-1 min-h-0 grid grid-cols-1 gap-2 ${isLight ? 'text-black' : 'text-white'}`}>
+                <div className={`p-3 rounded-lg ${isLight ? 'bg-white border border-gray-200 shadow-sm' : 'bg-gray-800/40 border border-gray-700 shadow-sm'}`}>
+                  <LeadsStatsCard
+                    title={t('Total Leads')}
+                    value="16,766"
+                    change="+12.5%"
+                    changeType="positive"
+                    icon={<Users className="w-5 h-5" />}
+                    color="bg-blue-500"
+                    compact
+                  />
+                </div>
+                <div className={`p-3 rounded-lg ${isLight ? 'bg-white border border-gray-200 shadow-sm' : 'bg-gray-800/40 border border-gray-700 shadow-sm'}`}>
+                  <LeadsStatsCard
+                    title={t('Conversion Rate')}
+                    value="24.3%"
+                    change="+3.2%"
+                    changeType="positive"
+                    icon={<TrendingUp className="w-5 h-5" />}
+                    color="bg-green-500"
+                    compact
+                  />
+                </div>
+                <div className={`p-3 rounded-lg ${isLight ? 'bg-white border border-gray-200 shadow-sm' : 'bg-gray-800/40 border border-gray-700 shadow-sm'}`}>
+                  <LeadsStatsCard
+                    title={t('Avg Response Time')}
+                    value="2.4h"
+                    change="-15min"
+                    changeType="positive"
+                    icon={<Timer className="w-5 h-5" />}
+                    color="bg-purple-500"
+                    compact
+                  />
+                </div>
+                <div className={`p-3 rounded-lg ${isLight ? 'bg-white border border-gray-200 shadow-sm' : 'bg-gray-800/40 border border-gray-700 shadow-sm'}`}>
+                  <LeadsStatsCard
+                    title={t('Hot Leads')}
+                    value="253"
+                    change="+18"
+                    changeType="positive"
+                    icon={<Flame className="w-5 h-5" />}
+                    color="bg-red-500"
+                    compact
+                  />
+                </div>
               </div>
             </div>
 

@@ -95,7 +95,9 @@ export default function ImportRequestsModal({ open, onClose, onImport, isRTL = f
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-[95vw] max-w-4xl p-4 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Import Requests</h2>
-          <button onClick={onClose} className="px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">Close</button>
+          <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost text-red-600">
+            <FaTimes size={20} />
+          </button>
         </div>
 
         <div
@@ -108,8 +110,8 @@ export default function ImportRequestsModal({ open, onClose, onImport, isRTL = f
         </div>
 
         <div className="flex items-center gap-2">
-          <button onClick={() => downloadTemplate('csv')} className="px-3 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200">Download CSV Template</button>
-          <button onClick={() => downloadTemplate('xlsx')} className="px-3 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">Download XLSX Template</button>
+          <button onClick={() => downloadTemplate('csv')} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">Download CSV Template</button>
+          <button onClick={() => downloadTemplate('xlsx')} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">Download XLSX Template</button>
         </div>
 
         <div className="overflow-auto max-h-60 border border-gray-200 dark:border-gray-700 rounded">
@@ -150,8 +152,8 @@ export default function ImportRequestsModal({ open, onClose, onImport, isRTL = f
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={handleImport} className="px-3 py-1 rounded bg-green-50 text-green-700 border border-green-200">Import</button>
-            <button onClick={onClose} className="px-3 py-1 rounded bg-gray-100 text-gray-700 border border-gray-200">Cancel</button>
+            <button onClick={handleImport} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">Import</button>
+            <button onClick={onClose} className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none">Cancel</button>
           </div>
         </div>
       </div>

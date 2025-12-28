@@ -4,14 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { FaTimes, FaPhone, FaEnvelope, FaCalendarAlt, FaComments, FaHandshake, FaFileAlt, FaCheck, FaMapMarkerAlt, FaToggleOn, FaToggleOff, FaChevronDown } from 'react-icons/fa';
 import { useTheme } from '../shared/context/ThemeProvider.jsx';
 
-const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
+const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initialType = 'call' }) => {
   const { i18n } = useTranslation();
   const { theme } = useTheme();
   const isLight = theme === 'light';
   
   const [actionData, setActionData] = useState({
-    type: 'call',
-    actionType: 'call',
+    type: initialType,
+    actionType: initialType,
     nextAction: 'follow_up',
     title: '',
     description: '',
@@ -214,9 +214,9 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
             <div className="flex items-center gap-3">
               <button
                 onClick={onClose}
-                className={`${isLight ? 'text-slate-500 hover:text-slate-700' : 'text-gray-400 hover:text-gray-300'} transition-colors`}
+                className="btn btn-sm btn-circle btn-ghost text-red-500"
               >
-                <FaTimes className="text-lg" />
+                <FaTimes size={20} />
               </button>
             </div>
           )}
@@ -544,13 +544,13 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false }) => {
             <button
               type="button"
               onClick={onClose}
-              className={`${isLight ? 'px-6 py-2 text-slate-700 bg-gray-100 hover:bg-gray-200' : 'px-6 py-2 text-gray-300 bg-gray-700 hover:bg-gray-600'} rounded-md transition-colors`}
+              className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none"
             >
               {isArabic ? 'إلغاء' : 'Cancel'}
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-md transition-colors"
+              className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
             >
               {isArabic ? 'حفظ الأكشن' : 'Save Action'}
             </button>

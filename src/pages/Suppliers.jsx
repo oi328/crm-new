@@ -1,381 +1,485 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { 
+  FaFilter, FaSearch, FaPlus, FaTimes, FaEdit, FaTrash, 
+  FaWhatsapp, FaEnvelope, FaBoxOpen, FaTools, FaLink, FaLayerGroup 
+} from 'react-icons/fa'
+
+// Helper for localStorage
+const STORAGE_KEY = 'inventorySuppliers'
 
 export default function Suppliers() {
   const { i18n } = useTranslation()
   const isArabic = i18n.language === 'ar'
+  const isRTL = isArabic
 
+  // Labels & Translations
   const labels = useMemo(() => ({
-    title: isArabic ? 'المخزون > الموردون/البائعون' : 'Inventory > Suppliers/Vendors',
-    formTitleBasic: isArabic ? 'المعلومات الأساسية' : 'Basic Information',
-    formTitleBusiness: isArabic ? 'المعلومات التجارية' : 'Business Information',
-    formTitleAttachments: isArabic ? 'المرفقات' : 'Attachments',
-    supplierName: isArabic ? 'اسم المورد' : 'Supplier Name',
-    supplierCode: isArabic ? 'رمز المورد' : 'Supplier Code',
+    title: isArabic ? 'الموردين' : 'Suppliers',
+    subtitle: isArabic ? 'إدارة الموردين والخدمات' : 'Manage Suppliers & Services',
+    add: isArabic ? 'إضافة مورد' : 'Add Supplier',
+    filterAll: isArabic ? 'الكل' : 'All',
+    filterProducts: isArabic ? 'منتجات' : 'Products',
+    filterServices: isArabic ? 'خدمات' : 'Services',
     companyName: isArabic ? 'اسم الشركة' : 'Company Name',
     contactPerson: isArabic ? 'الشخص المسؤول' : 'Contact Person',
-    phone: isArabic ? 'رقم الهاتف' : 'Phone Number',
+    whatsapp: isArabic ? 'واتساب' : 'WhatsApp',
     email: isArabic ? 'البريد الإلكتروني' : 'Email',
-    website: isArabic ? 'الموقع الإلكتروني' : 'Website',
-    address: isArabic ? 'العنوان' : 'Address',
-    taxId: isArabic ? 'الرقم الضريبي' : 'Tax ID',
-    countryCity: isArabic ? 'الدولة/المدينة' : 'Country/City',
-    supplierType: isArabic ? 'نوع المورد' : 'Supplier Type',
-    category: isArabic ? 'التصنيف' : 'Category',
-    productLine: isArabic ? 'خط المنتج' : 'Product Line',
-    paymentTerms: isArabic ? 'شروط الدفع' : 'Payment Terms',
-    currency: isArabic ? 'العملة' : 'Currency',
-    creditLimit: isArabic ? 'حد الائتمان' : 'Credit Limit',
-    discountRate: isArabic ? 'معدل الخصم (%)' : 'Discount Rate (%)',
-    deliveryTime: isArabic ? 'مدة التسليم (أيام)' : 'Delivery Time (days)',
-    contractDoc: isArabic ? 'عقد المورد' : 'Contract Document',
-    certificates: isArabic ? 'شهادات المورد' : 'Supplier Certificates',
-    quotations: isArabic ? 'عروض الأسعار' : 'Quotations',
-    previousBills: isArabic ? 'فواتير سابقة' : 'Previous Bills',
-    save: isArabic ? 'حفظ المورد' : 'Save Supplier',
-    listTitle: isArabic ? 'قائمة الموردين' : 'Suppliers List',
-    empty: isArabic ? 'لا يوجد موردون بعد' : 'No suppliers yet',
-    actions: isArabic ? 'الإجراءات' : 'Actions',
-    edit: isArabic ? 'تعديل' : 'Edit',
-    delete: isArabic ? 'حذف' : 'Delete',
+    supplyType: isArabic ? 'نوع التوريد' : 'Supply Type',
+    catalogName: isArabic ? 'اسم الكتالوج' : 'Catalog Name',
+    serviceDescription: isArabic ? 'وصف الخدمة' : 'Service Description',
+    save: isArabic ? 'حفظ' : 'Save',
+    cancel: isArabic ? 'إلغاء' : 'Cancel',
+    actions: isArabic ? 'إجراءات' : 'Actions',
+    viewLinked: isArabic ? 'المرتبطات' : 'Linked Items',
+    searchPlaceholder: isArabic ? 'بحث عن مورد...' : 'Search suppliers...',
+    typeProduct: isArabic ? 'منتج' : 'Product',
+    typeService: isArabic ? 'خدمة' : 'Service',
+    typeBoth: isArabic ? 'كلاهما' : 'Both',
+    filter: isArabic ? 'تصفية' : 'Filter',
+    clearFilters: isArabic ? 'مسح المرشحات' : 'Clear Filters',
+    search: isArabic ? 'بحث' : 'Search',
   }), [isArabic])
 
-  // Static options to match current design approach
-  const supplierTypeOptions = useMemo(() => (
-    isArabic ? ['شركة', 'فرد', 'وكيل'] : ['Company', 'Individual', 'Agent']
-  ), [isArabic])
-  const categoryOptions = useMemo(() => (
-    isArabic ? ['مواد خام', 'خدمات', 'أجهزة'] : ['Raw Materials', 'Services', 'Hardware']
-  ), [isArabic])
-  const paymentTermOptions = useMemo(() => (
-    isArabic ? ['نقدًا', '30 يوم', '60 يوم'] : ['Cash', 'Net 30', 'Net 60']
-  ), [isArabic])
-  const currencyOptions = useMemo(() => (
-    isArabic ? ['ريال', 'دولار', 'يورو'] : ['SAR', 'USD', 'EUR']
-  ), [isArabic])
-  const productLineOptions = useMemo(() => (
-    isArabic ? ['الالكترونيات', 'الإنشاءات', 'الخدمات'] : ['Electronics', 'Construction', 'Services']
-  ), [isArabic])
-
-  const STORAGE_KEY = 'inventorySuppliers'
-
-  const [form, setForm] = useState({
-    supplierName: '',
-    supplierCode: '',
+  // State
+  const [suppliers, setSuppliers] = useState([])
+  const [filterType, setFilterType] = useState('all') // 'all', 'product', 'service'
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterContact, setFilterContact] = useState('')
+  const [filterEmail, setFilterEmail] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  
+  // Form State
+  const initialForm = {
     companyName: '',
     contactPerson: '',
-    phone: '',
+    whatsapp: '',
     email: '',
-    website: '',
-    address: '',
-    taxId: '',
-    countryCity: '',
-    supplierType: supplierTypeOptions[0] || '',
-    category: categoryOptions[0] || '',
-    productLine: productLineOptions[0] || '',
-    paymentTerms: paymentTermOptions[0] || '',
-    currency: currencyOptions[0] || '',
-    creditLimit: '',
-    discountRate: '',
-    deliveryTime: '',
-    attachments: {
-      contractDoc: [],
-      certificates: [],
-      quotations: [],
-      previousBills: []
-    }
-  })
+    supplyType: 'product', // 'product', 'service', 'both'
+    catalogName: '',
+    serviceDescription: ''
+  }
+  const [formData, setFormData] = useState(initialForm)
 
-  const [suppliers, setSuppliers] = useState([])
-
+  // Load Data
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) setSuppliers(parsed)
+      let parsed = raw ? JSON.parse(raw) : []
+      
+      // Extended Seed Data
+      const seed = [
+        { id: 1, companyName: 'Tech Solutions Ltd', contactPerson: 'Ahmed Ali', whatsapp: '966500000001', email: 'ahmed@tech.com', supplyType: 'product', catalogName: 'Electronics 2024' },
+        { id: 2, companyName: 'Clean Pro Services', contactPerson: 'Sara Smith', whatsapp: '966500000002', email: 'sara@cleanpro.com', supplyType: 'service', serviceDescription: 'Office Cleaning & Maintenance' },
+        { id: 3, companyName: 'Build & Fix Co', contactPerson: 'John Doe', whatsapp: '966500000003', email: 'john@buildfix.com', supplyType: 'both', catalogName: 'Construction Materials', serviceDescription: 'Installation Services' },
+        { id: 4, companyName: 'Al-Marai Logistics', contactPerson: 'Mohammed Sami', whatsapp: '966512345678', email: 'logistics@almarai.com', supplyType: 'service', serviceDescription: 'Nationwide Distribution' },
+        { id: 5, companyName: 'Golden Foods', contactPerson: 'Layla Hassan', whatsapp: '966523456789', email: 'sales@goldenfoods.com', supplyType: 'product', catalogName: 'Organic Ingredients' },
+        { id: 6, companyName: 'Creative Minds Agency', contactPerson: 'Omar Farooq', whatsapp: '966534567890', email: 'contact@creativeminds.sa', supplyType: 'service', serviceDescription: 'Digital Marketing & SEO' },
+        { id: 7, companyName: 'Office Depot SA', contactPerson: 'Fatima Al-Zahrani', whatsapp: '966545678901', email: 'support@officedepot.sa', supplyType: 'product', catalogName: 'Stationery & Furniture' },
+        { id: 8, companyName: 'Smart Systems', contactPerson: 'Khalid Waleed', whatsapp: '966556789012', email: 'info@smartsys.com', supplyType: 'both', catalogName: 'Security Hardware', serviceDescription: 'System Integration' },
+        { id: 9, companyName: 'Green Energy Corp', contactPerson: 'Noura Ahmed', whatsapp: '966567890123', email: 'noura@greenenergy.com', supplyType: 'product', catalogName: 'Solar Panels' },
+        { id: 10, companyName: 'Express Delivery', contactPerson: 'Saeed Al-Ghamdi', whatsapp: '966578901234', email: 'dispatch@express.com', supplyType: 'service', serviceDescription: 'Same-day Delivery' },
+        { id: 11, companyName: 'Modern Furniture', contactPerson: 'Yousef Kamel', whatsapp: '966589012345', email: 'yousef@modernfur.com', supplyType: 'product', catalogName: 'Luxury Interiors' },
+        { id: 12, companyName: 'Alpha Tech', contactPerson: 'Rana Mahmoud', whatsapp: '966590123456', email: 'rana@alphatech.com', supplyType: 'both', catalogName: 'Server Hardware', serviceDescription: 'IT Support Contract' },
+        { id: 13, companyName: 'Pure Water Co', contactPerson: 'Hassan Ali', whatsapp: '966501234567', email: 'orders@purewater.com', supplyType: 'product', catalogName: 'Bottled Water' },
+        { id: 14, companyName: 'Elite Security', contactPerson: 'Ibrahim Khalil', whatsapp: '966512345098', email: 'security@elite.com', supplyType: 'service', serviceDescription: 'Manned Guarding' },
+        { id: 15, companyName: 'Raw Materials Inc', contactPerson: 'Zainab Omar', whatsapp: '966523456109', email: 'zainab@rawmat.com', supplyType: 'product', catalogName: 'Industrial Metals' },
+      ]
+
+      // If no data or just the old seed (<= 3 items), populate with new rich data
+      if (!parsed || parsed.length <= 3) {
+        setSuppliers(seed)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seed))
+      } else {
+        setSuppliers(parsed)
       }
-    } catch (e) { console.warn('Failed to load suppliers', e) }
+    } catch (e) {
+      console.error('Error loading suppliers:', e)
+    }
   }, [])
 
+  // Save Data
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(suppliers)) } catch (e) { void e }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(suppliers))
   }, [suppliers])
 
-  const onChange = (e) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-  }
-
-  const onFileChange = (key, fileList) => {
-    const names = Array.from(fileList || []).map(f => f.name)
-    setForm(prev => ({
-      ...prev,
-      attachments: { ...prev.attachments, [key]: names }
-    }))
-  }
-
-  const onSubmit = (e) => {
-    e.preventDefault()
-    const trimmedName = (form.supplierName || '').trim()
-    if (!trimmedName) return
-
-    const entry = {
-      id: Date.now(),
-      ...form,
-      creditLimit: form.creditLimit ? Number(form.creditLimit) : 0,
-      discountRate: form.discountRate ? Number(form.discountRate) : 0,
-      deliveryTime: form.deliveryTime ? Number(form.deliveryTime) : 0,
-    }
-    setSuppliers(prev => [entry, ...prev])
-    setForm({
-      supplierName: '',
-      supplierCode: '',
-      companyName: '',
-      contactPerson: '',
-      phone: '',
-      email: '',
-      website: '',
-      address: '',
-      taxId: '',
-      countryCity: '',
-      supplierType: supplierTypeOptions[0] || '',
-      category: categoryOptions[0] || '',
-      productLine: productLineOptions[0] || '',
-      paymentTerms: paymentTermOptions[0] || '',
-      currency: currencyOptions[0] || '',
-      creditLimit: '',
-      discountRate: '',
-      deliveryTime: '',
-      attachments: { contractDoc: [], certificates: [], quotations: [], previousBills: [] }
-    })
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch (e) { void e }
-  }
-
-  const onDelete = (id) => setSuppliers(prev => prev.filter(s => s.id !== id))
-
-  const onEdit = (s) => {
-    setForm({
-      supplierName: s.supplierName || '',
-      supplierCode: s.supplierCode || '',
-      companyName: s.companyName || '',
-      contactPerson: s.contactPerson || '',
-      phone: s.phone || '',
-      email: s.email || '',
-      website: s.website || '',
-      address: s.address || '',
-      taxId: s.taxId || '',
-      countryCity: s.countryCity || '',
-      supplierType: s.supplierType || (supplierTypeOptions[0] || ''),
-      category: s.category || (categoryOptions[0] || ''),
-      productLine: s.productLine || (productLineOptions[0] || ''),
-      paymentTerms: s.paymentTerms || (paymentTermOptions[0] || ''),
-      currency: s.currency || (currencyOptions[0] || ''),
-      creditLimit: s.creditLimit != null ? String(s.creditLimit) : '',
-      discountRate: s.discountRate != null ? String(s.discountRate) : '',
-      deliveryTime: s.deliveryTime != null ? String(s.deliveryTime) : '',
-      attachments: {
-        contractDoc: s.attachments?.contractDoc || [],
-        certificates: s.attachments?.certificates || [],
-        quotations: s.attachments?.quotations || [],
-        previousBills: s.attachments?.previousBills || []
+  // Filtered Data
+  const filteredSuppliers = useMemo(() => {
+    return suppliers.filter(s => {
+      // Type Filter
+      if (filterType !== 'all') {
+        if (filterType === 'product' && s.supplyType === 'service') return false
+        if (filterType === 'service' && s.supplyType === 'product') return false
       }
+      
+      // Search Filter
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        if (!s.companyName?.toLowerCase().includes(q) &&
+            !s.contactPerson?.toLowerCase().includes(q) &&
+            !s.email?.toLowerCase().includes(q)) {
+          return false
+        }
+      }
+
+      // Contact Filter
+      if (filterContact && !s.contactPerson?.toLowerCase().includes(filterContact.toLowerCase())) {
+        return false
+      }
+
+      // Email Filter
+      if (filterEmail && !s.email?.toLowerCase().includes(filterEmail.toLowerCase())) {
+        return false
+      }
+
+      return true
     })
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch (e) { void e }
+  }, [suppliers, filterType, searchQuery, filterContact, filterEmail])
+
+  // Handlers
+  const handleSave = (e) => {
+    e.preventDefault()
+    if (editingId) {
+      setSuppliers(prev => prev.map(s => s.id === editingId ? { ...s, ...formData } : s))
+    } else {
+      setSuppliers(prev => [{ ...formData, id: Date.now() }, ...prev])
+    }
+    closeModal()
+  }
+
+  const handleDelete = (id) => {
+    if (window.confirm(isArabic ? 'هل أنت متأكد من الحذف؟' : 'Are you sure you want to delete?')) {
+      setSuppliers(prev => prev.filter(s => s.id !== id))
+    }
+  }
+
+  const openEdit = (supplier) => {
+    setFormData(supplier)
+    setEditingId(supplier.id)
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setEditingId(null)
+    setFormData(initialForm)
+  }
+  
+  const clearFilters = () => {
+    setSearchQuery('')
+    setFilterType('all')
+    setFilterContact('')
+    setFilterEmail('')
+  }
+
+  const openWhatsApp = (number) => {
+    if (!number) return
+    window.open(`https://wa.me/${number.replace(/[^0-9]/g, '')}`, '_blank')
+  }
+
+  // Render Helpers
+  const renderBadge = (type) => {
+    if (type === 'product') return <span className="badge bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-none px-3 py-1">{labels.typeProduct}</span>
+    if (type === 'service') return <span className="badge bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-none px-3 py-1">{labels.typeService}</span>
+    if (type === 'both') return (
+      <span className="flex gap-1">
+        <span className="badge bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-none text-xs">{labels.typeProduct}</span>
+        <span className="badge bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-none text-xs">{labels.typeService}</span>
+      </span>
+    )
+    return null
   }
 
   return (
-      <div className="space-y-6">
-        {/* Title */}
-        <div className={`relative inline-flex items-center ${isArabic ? 'flex-row-reverse' : ''} gap-2`}>
-          <h1 className={`page-title text-2xl font-semibold ${isArabic ? 'text-right' : 'text-left'}`}>{labels.title}</h1>
-          <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
+    <div className={`space-y-6 pt-4 pb-10 ${isRTL ? 'rtl' : 'ltr'}`}>
+      
+      {/* Header Section */}
+      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className="relative inline-block">
+          <h1 className={`page-title text-2xl font-semibold dark:text-white ${isRTL ? 'text-right' : 'text-left'}`}>
+            {labels.title}
+          </h1>
+          <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isRTL ? 'auto' : '-4px', right: isRTL ? '-4px' : 'auto', bottom: '-4px' }}></span>
+          <p className="text-sm text-[var(--muted-text)] mt-2">{labels.subtitle}</p>
         </div>
 
-        {/* Basic Information */}
-        <form onSubmit={onSubmit} className="space-y-6">
-          {/* Basic Information Card */}
-          <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
-            <h2 className="text-xl font-medium mb-4">{labels.formTitleBasic}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm mb-1">{labels.supplierName}</label>
-                <input name="supplierName" value={form.supplierName} onChange={onChange} placeholder={labels.supplierName} className="input" required />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.supplierCode}</label>
-                <input name="supplierCode" value={form.supplierCode} onChange={onChange} placeholder={labels.supplierCode} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.companyName}</label>
-                <input name="companyName" value={form.companyName} onChange={onChange} placeholder={labels.companyName} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.contactPerson}</label>
-                <input name="contactPerson" value={form.contactPerson} onChange={onChange} placeholder={labels.contactPerson} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.phone}</label>
-                <input name="phone" value={form.phone} onChange={onChange} placeholder={labels.phone} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.email}</label>
-                <input type="email" name="email" value={form.email} onChange={onChange} placeholder={labels.email} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.website}</label>
-                <input name="website" value={form.website} onChange={onChange} placeholder={labels.website} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.address}</label>
-                <input name="address" value={form.address} onChange={onChange} placeholder={labels.address} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.taxId}</label>
-                <input name="taxId" value={form.taxId} onChange={onChange} placeholder={labels.taxId} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.countryCity}</label>
-                <input name="countryCity" value={form.countryCity} onChange={onChange} placeholder={labels.countryCity} className="input" />
-              </div>
-            </div>
+        <button 
+          onClick={() => setShowModal(true)}
+          className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none gap-2 px-4 py-2.5 rounded-lg font-medium flex items-center shadow-lg hover:shadow-xl transition-all"
+        >
+          <FaPlus /> {labels.add}
+        </button>
+      </div>
+
+      {/* Filters Section */}
+      <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-sm font-semibold flex items-center gap-2">
+            <FaFilter className="text-blue-500" /> {labels.filter}
+          </h2>
+          <button onClick={clearFilters} className="btn btn-glass btn-compact text-[var(--muted-text)] hover:text-red-500">
+              {labels.clearFilters}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* General Search */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
+              <FaSearch className="text-blue-500" size={10} /> {labels.search}
+            </label>
+            <input 
+              type="text" 
+              placeholder={labels.searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input w-full bg-white dark:bg-gray-800"
+            />
           </div>
 
-          {/* Business Information Card */}
-          <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
-            <h2 className="text-xl font-medium mb-4">{labels.formTitleBusiness}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm mb-1">{labels.supplierType}</label>
-                <select name="supplierType" value={form.supplierType} onChange={onChange} className="input">
-                  {supplierTypeOptions.map(opt => (<option key={opt} value={opt}>{opt}</option>))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.category}</label>
-                <select name="category" value={form.category} onChange={onChange} className="input">
-                  {categoryOptions.map(opt => (<option key={opt} value={opt}>{opt}</option>))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.productLine}</label>
-                <select name="productLine" value={form.productLine} onChange={onChange} className="input">
-                  {productLineOptions.map(opt => (<option key={opt} value={opt}>{opt}</option>))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.paymentTerms}</label>
-                <select name="paymentTerms" value={form.paymentTerms} onChange={onChange} className="input">
-                  {paymentTermOptions.map(opt => (<option key={opt} value={opt}>{opt}</option>))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.currency}</label>
-                <select name="currency" value={form.currency} onChange={onChange} className="input">
-                  {currencyOptions.map(opt => (<option key={opt} value={opt}>{opt}</option>))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.creditLimit}</label>
-                <input type="number" name="creditLimit" value={form.creditLimit} onChange={onChange} placeholder={labels.creditLimit} className="input" min="0" step="0.01" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.discountRate}</label>
-                <input type="number" name="discountRate" value={form.discountRate} onChange={onChange} placeholder={labels.discountRate} className="input" min="0" step="0.01" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.deliveryTime}</label>
-                <input type="number" name="deliveryTime" value={form.deliveryTime} onChange={onChange} placeholder={labels.deliveryTime} className="input" min="0" step="1" />
-              </div>
-            </div>
+          {/* Supply Type Filter */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[var(--muted-text)]">{labels.supplyType}</label>
+            <select 
+              className="input w-full bg-white dark:bg-gray-800"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              <option value="all">{labels.filterAll}</option>
+              <option value="product">{labels.filterProducts}</option>
+              <option value="service">{labels.filterServices}</option>
+            </select>
           </div>
 
-          {/* Attachments Card */}
-          <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
-            <h2 className="text-xl font-medium mb-4">{labels.formTitleAttachments}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm mb-1">{labels.contractDoc}</label>
-                <input type="file" multiple onChange={(e) => onFileChange('contractDoc', e.target.files)} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.certificates}</label>
-                <input type="file" multiple onChange={(e) => onFileChange('certificates', e.target.files)} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.quotations}</label>
-                <input type="file" multiple onChange={(e) => onFileChange('quotations', e.target.files)} className="input" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{labels.previousBills}</label>
-                <input type="file" multiple onChange={(e) => onFileChange('previousBills', e.target.files)} className="input" />
-              </div>
-            </div>
+          {/* Contact Person Filter */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[var(--muted-text)]">{labels.contactPerson}</label>
+            <input 
+              type="text" 
+              placeholder={labels.contactPerson}
+              value={filterContact}
+              onChange={(e) => setFilterContact(e.target.value)}
+              className="input w-full bg-white dark:bg-gray-800"
+            />
           </div>
 
-          {/* Save */}
-          <div>
-            <button type="submit" className="btn btn-primary">{labels.save}</button>
+          {/* Email Filter */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[var(--muted-text)]">{labels.email}</label>
+            <input 
+              type="text" 
+              placeholder={labels.email}
+              value={filterEmail}
+              onChange={(e) => setFilterEmail(e.target.value)}
+              className="input w-full bg-white dark:bg-gray-800"
+            />
           </div>
-        </form>
-
-        {/* Suppliers List */}
-        <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
-          <h2 className="text-xl font-medium mb-4">{labels.listTitle}</h2>
-          {suppliers.length === 0 ? (
-            <p className="text-sm text-[var(--muted-text)]">{labels.empty}</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="nova-table w-full">
-                <thead className="thead-soft">
-                  <tr className="text-gray-600 dark:text-gray-300">
-                    <th className="text-start px-3 min-w-[180px]">{labels.supplierName}</th>
-                    <th className="text-start px-3 min-w-[140px]">{labels.companyName}</th>
-                    <th className="text-start px-3 min-w-[120px]">{labels.supplierCode}</th>
-                    <th className="text-start px-3 min-w-[160px]">{labels.contactPerson}</th>
-                    <th className="text-start px-3 min-w-[140px]">{labels.phone}</th>
-                    <th className="text-start px-3 min-w-[160px]">{labels.email}</th>
-                    <th className="text-start px-3 min-w-[160px]">{labels.countryCity}</th>
-                    <th className="text-start px-3 min-w-[140px]">{labels.supplierType}</th>
-                    <th className="text-start px-3 min-w-[140px]">{labels.category}</th>
-                    <th className="text-start px-3 min-w-[140px]">{labels.productLine}</th>
-                    <th className="text-start px-3 min-w-[120px]">{labels.currency}</th>
-                    <th className="text-center px-3 min-w-[120px]">{labels.creditLimit}</th>
-                    <th className="text-center px-3 min-w-[120px]">{labels.discountRate}</th>
-                    <th className="text-center px-3 min-w-[140px]">{labels.deliveryTime}</th>
-                    <th className="text-center px-3 min-w-[110px]">{labels.actions}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {suppliers.map(s => (
-                    <tr key={s.id}>
-                      <td className="px-3"><span className="font-medium">{s.supplierName}</span></td>
-                      <td className="px-3">{s.companyName}</td>
-                      <td className="px-3">{s.supplierCode}</td>
-                      <td className="px-3">{s.contactPerson}</td>
-                      <td className="px-3">{s.phone}</td>
-                      <td className="px-3">{s.email}</td>
-                      <td className="px-3">{s.countryCity}</td>
-                      <td className="px-3">{s.supplierType}</td>
-                      <td className="px-3">{s.category}</td>
-                      <td className="px-3">{s.productLine}</td>
-                      <td className="px-3">{s.currency}</td>
-                      <td className="px-3 text-center">{(s.creditLimit ?? 0).toFixed(2)}</td>
-                      <td className="px-3 text-center">{(s.discountRate ?? 0).toFixed(2)}</td>
-                      <td className="px-3 text-center">{s.deliveryTime ?? 0}</td>
-                      <td className="px-3 text-center">
-                        <div className="flex items-center gap-2 justify-center">
-                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => onEdit(s)}>{labels.edit}</button>
-                          <button type="button" className="btn btn-danger btn-sm" onClick={() => onDelete(s.id)}>{labels.delete}</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Table Section */}
+      <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
+        <div className="overflow-x-auto">
+          <table className="nova-table w-full">
+            <thead className="thead-soft">
+              <tr>
+                <th className="p-4 text-start min-w-[200px]">{labels.companyName}</th>
+                <th className="p-4 text-start min-w-[150px]">{labels.contactPerson}</th>
+                <th className="p-4 text-center min-w-[120px]">{labels.supplyType}</th>
+                <th className="p-4 text-start min-w-[200px]">{labels.details}</th>
+                <th className="p-4 text-center min-w-[150px]">{labels.actions}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+              {filteredSuppliers.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-8 text-gray-500">
+                    {isArabic ? 'لا توجد بيانات' : 'No suppliers found'}
+                  </td>
+                </tr>
+              ) : (
+                filteredSuppliers.map((supplier) => (
+                  <tr key={supplier.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <td className="p-4">
+                      <div className="font-semibold text-gray-800 dark:text-gray-200">{supplier.companyName}</div>
+                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <FaEnvelope className="text-gray-400" size={10} /> {supplier.email}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-gray-700 dark:text-gray-300">{supplier.contactPerson}</div>
+                      <button 
+                        onClick={() => openWhatsApp(supplier.whatsapp)}
+                        className="flex items-center gap-1 text-green-600 hover:text-green-700 text-xs mt-1 font-medium cursor-pointer"
+                      >
+                        <FaWhatsapp /> {supplier.whatsapp}
+                      </button>
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center">
+                        {renderBadge(supplier.supplyType)}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      {(supplier.supplyType === 'product' || supplier.supplyType === 'both') && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                          <FaBoxOpen className="text-blue-500" /> {supplier.catalogName || '-'}
+                        </div>
+                      )}
+                      {(supplier.supplyType === 'service' || supplier.supplyType === 'both') && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
+                          <FaTools className="text-purple-500" /> {supplier.serviceDescription || '-'}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-center gap-2">
+                         <button 
+                          className="p-2 hover:text-blue-500 transition-colors tooltip tooltip-top" 
+                          data-tip={labels.viewLinked}
+                        >
+                          <FaLink size={14} />
+                        </button>
+                        <button 
+                          onClick={() => openEdit(supplier)} 
+                          className="p-2 hover:text-blue-500 transition-colors"
+                        >
+                          <FaEdit size={14} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(supplier.id)} 
+                          className="p-2 hover:text-red-500 transition-colors"
+                        >
+                          <FaTrash size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal Form */}
+      {showModal && (
+        <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
+          <div className="absolute inset-0 flex items-start justify-center p-6 md:p-6 overflow-y-auto">
+            <div className="card p-4 sm:p-6 mt-4 w-[95vw] sm:w-[85vw] lg:w-[60vw] xl:max-w-3xl my-auto">
+              <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''} mb-4`}>
+                <h2 className="text-xl font-medium">
+                  {editingId ? (isArabic ? 'تعديل مورد' : 'Edit Supplier') : labels.add}
+                </h2>
+                <button type="button" className="btn btn-glass btn-sm text-red-500 hover:text-red-600" onClick={closeModal}>
+                  <FaTimes />
+                </button>
+              </div>
+
+              <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Supply Type Select */}
+                <div className="md:col-span-2 form-control">
+                   <label className="label label-text text-xs font-semibold text-[var(--muted-text)]">{labels.supplyType}</label>
+                   <select 
+                      className="select select-bordered select-sm w-full bg-white dark:bg-gray-700"
+                      value={formData.supplyType}
+                      onChange={(e) => setFormData({...formData, supplyType: e.target.value})}
+                   >
+                      <option value="product">{labels.typeProduct}</option>
+                      <option value="service">{labels.typeService}</option>
+                      <option value="both">{labels.typeBoth}</option>
+                   </select>
+                </div>
+
+                <div className="form-control">
+                  <label className="label label-text text-xs font-semibold text-[var(--muted-text)]">{labels.companyName}</label>
+                  <input 
+                    required 
+                    className="input input-bordered input-sm w-full" 
+                    value={formData.companyName}
+                    onChange={e => setFormData({...formData, companyName: e.target.value})}
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label label-text text-xs font-semibold text-[var(--muted-text)]">{labels.contactPerson}</label>
+                  <input 
+                    className="input input-bordered input-sm w-full" 
+                    value={formData.contactPerson}
+                    onChange={e => setFormData({...formData, contactPerson: e.target.value})}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label label-text text-xs font-semibold text-[var(--muted-text)]">{labels.whatsapp}</label>
+                  <input 
+                    className="input input-bordered input-sm w-full" 
+                    value={formData.whatsapp}
+                    onChange={e => setFormData({...formData, whatsapp: e.target.value})}
+                    placeholder="9665..."
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label label-text text-xs font-semibold text-[var(--muted-text)]">{labels.email}</label>
+                  <input 
+                    type="email"
+                    className="input input-bordered input-sm w-full" 
+                    value={formData.email}
+                    onChange={e => setFormData({...formData, email: e.target.value})}
+                  />
+                </div>
+
+                {/* Conditional Fields */}
+                {(formData.supplyType === 'product' || formData.supplyType === 'both') && (
+                  <div className="md:col-span-2 form-control animate-fade-in">
+                    <label className="label label-text text-xs font-semibold text-blue-600">{labels.catalogName}</label>
+                    <input 
+                      className="input input-bordered input-sm w-full border-blue-200 focus:border-blue-500" 
+                      value={formData.catalogName}
+                      onChange={e => setFormData({...formData, catalogName: e.target.value})}
+                      placeholder="e.g. Summer Collection 2024"
+                    />
+                  </div>
+                )}
+
+                {(formData.supplyType === 'service' || formData.supplyType === 'both') && (
+                  <div className="md:col-span-2 form-control animate-fade-in">
+                    <label className="label label-text text-xs font-semibold text-purple-600">{labels.serviceDescription}</label>
+                    <textarea 
+                      className="textarea textarea-bordered textarea-sm w-full border-purple-200 focus:border-purple-500" 
+                      value={formData.serviceDescription}
+                      onChange={e => setFormData({...formData, serviceDescription: e.target.value})}
+                      placeholder="e.g. Maintenance and Repair"
+                      rows="2"
+                    />
+                  </div>
+                )}
+
+                {/* Footer Buttons */}
+                <div className={`md:col-span-2 flex gap-3 mt-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button 
+                    type="submit" 
+                    className="btn bg-blue-600 hover:bg-blue-500 text-white flex-1"
+                  >
+                    {labels.save}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={closeModal}
+                    className="btn btn-ghost flex-1"
+                  >
+                    {labels.cancel}
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
   )
 }

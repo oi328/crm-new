@@ -548,7 +548,8 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
                 <th scope="col" className="px-6 py-3">{t('Lead Name')}</th>
                 <th scope="col" className="px-6 py-3">{t('Mobile')}</th>
                 <th scope="col" className="px-6 py-3">{t('Actions')}</th>
-                <th scope="col" className="px-6 py-3">{t('Employee')}</th>
+                <th scope="col" className="px-6 py-3">{t('Source')}</th>
+                <th scope="col" className="px-6 py-3">{t('Sales Person')}</th>
                 <th scope="col" className="px-6 py-3">{t('Stage')}</th>
                 <th scope="col" className="px-6 py-3">{t('Last Comment')}</th>
                 <th scope="col" className="px-6 py-3">{t('Action Date')}</th>
@@ -608,6 +609,7 @@ export const DelayLeads = ({ dateFrom, dateTo, selectedEmployee, stageFilter }) 
                       </button>
                     </div>
                   </td>
+                  <td className={`px-6 py-4`}>{lead.source || '-'}</td>
                   <td className={`px-6 py-4`}>{lead.employeeName || '-'}</td>
                   <td className={`px-6 py-4 ${isLight ? 'stage-cell' : ''}`}>{renderStageBadge(lead.pipelineStage)}</td>
                   <td className={`px-6 py-4`}>{lead.lastComment}</td>

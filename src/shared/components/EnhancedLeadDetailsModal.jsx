@@ -3,9 +3,12 @@ import { createPortal } from 'react-dom';
 import { FaUser, FaTimes, FaCog, FaPlus, FaEdit, FaCheckCircle, FaClock, FaSearch, FaFilter, FaSortAmountDown, FaList, FaCalendarAlt, FaPhone, FaEnvelope, FaTrash, FaEye, FaEllipsisV, FaWhatsapp, FaVideo, FaComments, FaMapMarkerAlt, FaDollarSign, FaUserCheck, FaChevronDown } from 'react-icons/fa';
 import AddActionModal from '@components/AddActionModal';
 import EditLeadModal from '@components/EditLeadModal';
+import PaymentPlanModal from '@components/PaymentPlanModal';
+
+import CreateRequestModal from '@components/CreateRequestModal';
 import { useStages } from '@hooks/useStages';
 
-const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, theme = 'light' }) => {
+const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, theme = 'light', assignees = [], onAssign }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -15,21 +18,49 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
   const [selectedActions, setSelectedActions] = useState([]);
   const [showAddActionModal, setShowAddActionModal] = useState(false);
   const [showEditLeadModal, setShowEditLeadModal] = useState(false);
+  const [showPaymentPlanModal, setShowPaymentPlanModal] = useState(false);
+  const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
+  const [actionType, setActionType] = useState('call');
   const [commFilter, setCommFilter] = useState('all');
   const [showCompose, setShowCompose] = useState(false);
+  const [composeChannel, setComposeChannel] = useState('whatsapp');
   const [composeSubject, setComposeSubject] = useState('');
   const [composeText, setComposeText] = useState('');
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+  const [showAssignMenu, setShowAssignMenu] = useState(false);
+  const [assignStep, setAssignStep] = useState('teams'); // 'teams' or 'members'
+  const [selectedTeam, setSelectedTeam] = useState(null);
+
+  // Mock Teams Data
+  const TEAMS_DATA = {
+    'Sales Team A': ['Ahmed Ali', 'Sara Noor'],
+    'Sales Team B': ['Ibrahim'],
+    'Marketing': ['Dina', 'Elias']
+  };
+
   const headerMenuRef = useRef(null);
   const headerMenuBtnRef = useRef(null);
+  const assignMenuRef = useRef(null);
+  const assignMenuBtnRef = useRef(null);
+  const { stages } = useStages();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!showHeaderMenu) return;
-      const menuEl = headerMenuRef.current;
-      const btnEl = headerMenuBtnRef.current;
-      if (menuEl && !menuEl.contains(e.target) && btnEl && !btnEl.contains(e.target)) {
-        setShowHeaderMenu(false);
+      // Header Menu
+      if (showHeaderMenu) {
+        const menuEl = headerMenuRef.current;
+        const btnEl = headerMenuBtnRef.current;
+        if (menuEl && !menuEl.contains(e.target) && btnEl && !btnEl.contains(e.target)) {
+          setShowHeaderMenu(false);
+        }
+      }
+      // Assign Menu
+      if (showAssignMenu) {
+        const menuEl = assignMenuRef.current;
+        const btnEl = assignMenuBtnRef.current;
+        if (menuEl && !menuEl.contains(e.target) && btnEl && !btnEl.contains(e.target)) {
+          setShowAssignMenu(false);
+        }
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -38,7 +69,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
-  }, [showHeaderMenu]);
+  }, [showHeaderMenu, showAssignMenu]);
   const demoActions = [
     {
       id: 1,
@@ -137,10 +168,11 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
     createdDate: lead?.createdDate || 'Not specified',
     status: lead?.status || 'qualified',
     priority: lead?.priority || 'high',
-    stage: lead?.stage || (isArabic ? 'جديد' : 'New')
+    stage: lead?.stage || (isArabic ? 'جديد' : 'New'),
+    createdBy: lead?.createdBy || 'Not specified',
+    salesPerson: lead?.assignedTo || lead?.salesPerson || 'Not specified'
   };
 
-  const { stages } = useStages();
   const currentStageValue = String(leadData.stage || '').toLowerCase();
   const matchedStage = (Array.isArray(stages) ? stages : []).find((s) => {
     const name = typeof s === 'string' ? s : s?.name;
@@ -320,13 +352,83 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                 )}
                 {/* Assign (icon-only) */}
                 <button
-                  onClick={() => {}}
+                  ref={assignMenuBtnRef}
+                  onClick={() => setShowAssignMenu(prev => !prev)}
                   aria-label={isArabic ? 'تعيين' : 'Assign'}
                   title={isArabic ? 'تعيين' : 'Assign'}
-                  className="btn-icon"
+                  className="btn-icon relative"
                 >
                   <FaUserCheck className="text-sm" />
                 </button>
+                {showAssignMenu && (
+                  <div 
+                    ref={assignMenuRef}
+                    className={`${isLight ? 'bg-white/90 backdrop-blur-md border border-gray-200 text-slate-800' : 'bg-slate-900/90 backdrop-blur-md border border-slate-700 text-white'} absolute right-0 top-10 z-50 rounded-xl shadow-xl min-w-[200px] p-2`}
+                  >
+                    <div className="text-xs font-semibold px-3 py-2 text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                      {assignStep === 'members' && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAssignStep('teams');
+                            setSelectedTeam(null);
+                          }}
+                          className="hover:text-blue-600"
+                        >
+                          {isArabic ? '←' : '←'}
+                        </button>
+                      )}
+                      {assignStep === 'teams' 
+                        ? (isArabic ? 'اختر الفريق' : 'Select Team')
+                        : (isArabic ? 'اختر الموظف' : 'Select Person')
+                      }
+                    </div>
+                    <div className="max-h-60 overflow-y-auto">
+                      {assignStep === 'teams' ? (
+                        Object.keys(TEAMS_DATA).map((team) => (
+                          <button
+                            key={team}
+                            onClick={() => {
+                              setSelectedTeam(team);
+                              setAssignStep('members');
+                            }}
+                            className="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-black/5 text-sm"
+                          >
+                            <span className="truncate">{team}</span>
+                            <span className="text-xs text-gray-400">
+                              ({TEAMS_DATA[team].length})
+                            </span>
+                          </button>
+                        ))
+                      ) : (
+                        TEAMS_DATA[selectedTeam] && TEAMS_DATA[selectedTeam].length > 0 ? (
+                          TEAMS_DATA[selectedTeam].map((assignee) => (
+                            <button
+                              key={assignee}
+                              onClick={() => {
+                                if (onAssign) onAssign(assignee);
+                                setShowAssignMenu(false);
+                                setAssignStep('teams');
+                                setSelectedTeam(null);
+                              }}
+                              className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-black/5 text-sm ${leadData.salesPerson === assignee ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : ''}`}
+                            >
+                              <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">
+                                {assignee.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="truncate">{assignee}</span>
+                              {leadData.salesPerson === assignee && <FaCheckCircle className="ml-auto text-xs" />}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            {isArabic ? 'لا يوجد موظفين' : 'No sales persons found'}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
                 {/* Edit Lead (icon-only) */}
                 <button
                   onClick={() => setShowEditLeadModal(true)}
@@ -350,17 +452,17 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                 {showHeaderMenu && (
                   <div ref={headerMenuRef} className={`${isLight ? 'bg-white/70 backdrop-blur-md border border-gray-200 text-slate-800' : 'bg-slate-900/70 backdrop-blur-md border border-slate-700 text-white'} absolute right-12 top-10 z-50 rounded-xl shadow-xl min-w-[180px] p-2`}
                        onMouseLeave={() => setShowHeaderMenu(false)}>
-                    <button onClick={() => { setShowHeaderMenu(false); setShowAddActionModal(true); }}
+                    <button onClick={() => { setShowHeaderMenu(false); setShowCreateRequestModal(true); }}
                             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
                       <FaList className="text-blue-500" />
                       <span className="text-sm font-medium">{isArabic ? 'إضافة طلب' : 'Add Request'}</span>
                     </button>
-                    <button onClick={() => { setShowHeaderMenu(false); setShowAddActionModal(true); }}
+                    <button onClick={() => { setShowHeaderMenu(false); setShowPaymentPlanModal(true); }}
                             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
                       <FaDollarSign className="text-emerald-500" />
                       <span className="text-sm font-medium">{isArabic ? 'خطة دفع' : 'Payment Plan'}</span>
                     </button>
-                    <button onClick={() => { setShowHeaderMenu(false); setShowAddActionModal(true); }}
+                    <button onClick={() => { setShowHeaderMenu(false); setActionType('call'); setShowAddActionModal(true); }}
                             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
                       <FaPhone className="text-indigo-500" />
                       <span className="text-sm font-medium">{isArabic ? 'إضافة مكالمة' : 'Add Call'}</span>
@@ -369,7 +471,8 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                                 setShowHeaderMenu(false);
                                 const ok = window.confirm(isArabic ? 'هل تريد تحويل العميل إلى عميل فعلي؟' : 'Convert this lead to a customer?');
                                 if (ok) {
-                                  console.log(isArabic ? 'تم التحويل إلى عميل' : 'Converted to customer');
+                                  const evt = new CustomEvent('app:toast', { detail: { type: 'success', message: isArabic ? 'تم التحويل إلى عميل' : 'Converted to customer' } });
+                                  window.dispatchEvent(evt);
                                 }
                               }}
                             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
@@ -421,9 +524,33 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
               onSave={handleAddAction}
               lead={lead}
               inline={true}
+              initialType={actionType}
             />
           </div>
         )}
+
+        <PaymentPlanModal
+          isOpen={showPaymentPlanModal}
+          onClose={() => setShowPaymentPlanModal(false)}
+          onSave={(plan) => {
+             const evt = new CustomEvent('app:toast', { detail: { type: 'success', message: isArabic ? 'تم حفظ خطة الدفع' : 'Payment plan saved' } });
+             window.dispatchEvent(evt);
+          }}
+          lead={lead}
+        />
+
+        
+
+        <CreateRequestModal
+          open={showCreateRequestModal}
+          onClose={() => setShowCreateRequestModal(false)}
+          onSave={(payload) => {
+            const evt = new CustomEvent('app:toast', { detail: { type: 'success', message: isArabic ? 'تم إرسال الطلب بنجاح' : 'Request sent successfully', source: 'lead' } });
+            window.dispatchEvent(evt);
+          }}
+          initial={{ customerName: leadData.name || '', assignedTo: leadData.salesPerson || '' }}
+          isRTL={isArabic}
+        />
 
         {/* Tabs */}
         <div className={`${isLight ? 'bg-white/60 border-gray-200' : 'bg-slate-800 border-slate-700'} px-6 border-b ${showAddActionModal ? 'hidden' : ''}`}>
@@ -484,6 +611,36 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                       <span className={`text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Pending</span>
                     </div>
                   </div>
+
+                  {/* Quick Actions */}
+                  <div className="space-y-4 mt-6">
+                    <h4 className={`${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'} font-semibold mb-3 border-b pb-2`}>Quick Actions</h4>
+                    <div className="flex items-center justify-between gap-4 rtl:flex-row-reverse">
+                      <button 
+                        onClick={() => setShowAddActionModal(true)}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span className="w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center">
+                          <FaPlus className="text-xs" />
+                        </span>
+                        <span className="text-sm">+ Add New Action</span>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const ok = window.confirm(isArabic ? 'هل تريد تحويل العميل إلى عميل فعلي؟' : 'Convert this lead to a customer?');
+                          if (ok) {
+                            console.log(isArabic ? 'تم التحويل إلى عميل' : 'Converted to customer');
+                          }
+                        }}
+                        className={`${isLight ? 'bg-white text-slate-700 border border-gray-300 hover:bg-slate-100' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600'} py-2 px-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2`}
+                      >
+                        <span className="w-5 h-5 rounded-full bg-yellow-600 flex items-center justify-center">
+                          <FaUserCheck className="text-xs text-white" />
+                        </span>
+                        <span className="text-sm">{isArabic ? 'تحويل إلى عميل' : 'Convert to Customer'}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Right: Lead Information */}
@@ -503,6 +660,14 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                       <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.source}</span>
                     </div>
                     <div className="flex justify-between items-center">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Created By:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.createdBy}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Sales Person:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.salesPerson}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
                       <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Created Date:</span>
                       <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.createdDate}</span>
                     </div>
@@ -510,37 +675,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                 </div>
               </div>
 
-              {/* Quick Actions below */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <h4 className={`${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'} font-semibold mb-3 border-b pb-2`}>Quick Actions</h4>
-                  <div className="flex items-center justify-between gap-4 rtl:flex-row-reverse">
-                    <button 
-                      onClick={() => setShowAddActionModal(true)}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2"
-                    >
-                      <span className="w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center">
-                        <FaPlus className="text-xs" />
-                      </span>
-                      <span className="text-sm">+ Add New Action</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        const ok = window.confirm(isArabic ? 'هل تريد تحويل العميل إلى عميل فعلي؟' : 'Convert this lead to a customer?');
-                        if (ok) {
-                          console.log(isArabic ? 'تم التحويل إلى عميل' : 'Converted to customer');
-                        }
-                      }}
-                      className={`${isLight ? 'bg-white text-slate-700 border border-gray-300 hover:bg-slate-100' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600'} py-2 px-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2`}
-                    >
-                      <span className="w-5 h-5 rounded-full bg-yellow-600 flex items-center justify-center">
-                        <FaUserCheck className="text-xs text-white" />
-                      </span>
-                      <span className="text-sm">{isArabic ? 'تحويل إلى عميل' : 'Convert to Customer'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+
             </div>
           )}
           
@@ -654,7 +789,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                     </button>
                   </div>
                 ) : (
-                  <div className={`rounded-xl overflow-hidden ${isLight ? 'bg-white border border-gray-200 divide-y divide-gray-200' : 'border border-slate-600 divide-y divide-slate-700'}`}>
+                  <div className={`rounded-xl overflow-hidden ${isLight ? 'bg-white border border-gray-200 divide-y divide-gray-300' : 'border border-slate-600 divide-y divide-slate-600'}`}>
                     {filteredActions.map((action) => (
                       <div
                         key={action.id}
@@ -683,7 +818,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                                 <span className={`px-2 py-1 rounded border text-xs ${getTypeColor(action.type)}`}>{getTypeLabel(action.type)}</span>
                               </div>
                               <div className="flex items-center gap-1 min-w-0">
-                                <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'مسؤول المبيعات:' : 'Sales Man:'}</span>
+                                <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'مسؤول المبيعات:' : 'Sales Person:'}</span>
                                 <span className={`${isLight ? 'text-slate-800' : 'text-slate-300'} max-w-[200px] break-words`}>{action.assignee}</span>
                               </div>
                               <div className="flex items-center gap-1">
@@ -803,15 +938,20 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                         <div>
                           <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-gray-700' : 'text-white'}`}>{isArabic ? 'القناة' : 'Channel'}</label>
                           <div className="relative">
-                            <select className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLight ? 'border-gray-300' : 'bg-slate-800/70 text-white border-slate-700'}`}>
-                              <option>{isArabic ? 'واتساب' : 'WhatsApp'}</option>
-                              <option>{isArabic ? 'بريد إلكتروني' : 'Email'}</option>
-                              <option>{isArabic ? 'جوجل ميت' : 'Google Meet'}</option>
-                              <option>{isArabic ? 'مكالمات' : 'Calls'}</option>
+                            <select 
+                              value={composeChannel}
+                              onChange={(e) => setComposeChannel(e.target.value)}
+                              className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLight ? 'border-gray-300' : 'bg-slate-800/70 text-white border-slate-700'}`}
+                            >
+                              <option value="whatsapp">{isArabic ? 'واتساب' : 'WhatsApp'}</option>
+                              <option value="email">{isArabic ? 'بريد إلكتروني' : 'Email'}</option>
+                              <option value="meet">{isArabic ? 'جوجل ميت' : 'Google Meet'}</option>
+                              <option value="call">{isArabic ? 'مكالمات' : 'Calls'}</option>
                             </select>
                             <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-slate-500' : 'text-white/70'}`} />
                           </div>
                         </div>
+                        {composeChannel !== 'whatsapp' && (
                         <div>
                           <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-gray-700' : 'text-white'}`}>{isArabic ? 'القالب' : 'Template'}</label>
                           <div className="relative">
@@ -825,11 +965,14 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                             <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-slate-500' : 'text-white/70'}`} />
                           </div>
                         </div>
+                        )}
                       </div>
+                      {composeChannel === 'email' && (
                       <div>
                         <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-gray-700' : 'text-white'}`}>{isArabic ? 'الموضوع (للإيميل)' : 'Subject (for Email)'}</label>
                         <input type="text" placeholder={isArabic ? 'موضوع الرسالة...' : 'Message subject...'} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLight ? 'border-gray-300' : 'bg-slate-800/70 text-white border-slate-700 placeholder-slate-300'}`} />
                       </div>
+                      )}
                       <div>
                         <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-gray-700' : 'text-white'}`}>{isArabic ? 'نص الرسالة' : 'Message Content'}</label>
                         <textarea rows="4" placeholder={isArabic ? 'اكتب رسالتك هنا... يمكنك استخدام {الاسم} و {رقم_العرض} كمتغيرات ديناميكية' : 'Type your message here... You can use {name} and {quote_number} as dynamic variables'} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLight ? 'border-gray-300' : 'bg-slate-800/70 text-white border-slate-700 placeholder-slate-300'}`}></textarea>

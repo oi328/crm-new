@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import NewTaskModal from '../components/NewTaskModal'
 import TaskDetailsModal from '../components/TaskDetailsModal'
@@ -68,6 +68,13 @@ export default function Tasks() {
   const toggleAdvEnable = (key) => setAdvFilters(prev => ({ ...prev, [key]: !prev[key] }))
   const resetAdv = () => setAdvFilters({ search: '', createdAt: '', endDate: '', assignedTo: '', relatedType: '', status: '', priority: '', createdBy: '', useCreatedAt: false, useEndDate: false, overdueOnly: false })
   const toggleIn = (group, key) => setFilters(prev => ({ ...prev, [group]: { ...prev[group], [key]: !prev[group][key] } }))
+  const filterByStatusOnly = (key) => {
+    setFilters(prev => {
+      const newS = { ...prev.status }
+      Object.keys(newS).forEach(k => newS[k] = (k === key))
+      return { ...prev, status: newS }
+    })
+  }
 
   const normalizeCode = (s) => {
     const v = (s || '').trim().replace(/\s|-/g, '')
@@ -214,9 +221,19 @@ export default function Tasks() {
     return c
   }, [rows])
 
-  // تحكم في عدد الصفوف المعروضة
+  // تحكم في عدد الصفوف المعروضة والصفحة الحالية
   const [pageSize, setPageSize] = useState(20)
-  const pagedRows = useMemo(() => shownRows.slice(0, pageSize), [shownRows, pageSize])
+  const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [shownRows.length, pageSize])
+
+  const totalPages = Math.ceil(shownRows.length / pageSize) || 1
+  const pagedRows = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return shownRows.slice(start, start + pageSize)
+  }, [shownRows, pageSize, currentPage])
 
   // إدارة تحديد الصفوف وأكشنز الجدول
   const [selectedIds, setSelectedIds] = useState({})
@@ -271,7 +288,7 @@ export default function Tasks() {
     <div className="px-4 md:px-6 py-4">
         {/* Page header */}
          <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold tracking-wide">{isArabic ? 'المهمات' : 'ALL TASK'}</h1>
+          <h1 className="text-lg font-semibold tracking-wide">{t('Tasks')}</h1>
            <button
              type="button"
              onClick={closePage}
@@ -292,7 +309,7 @@ export default function Tasks() {
          <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-between">
           <button
             onClick={() => setShowAdvancedFilters(v => !v)}
-           className="inline-flex items-center gap-2 px-2.5 py-1.5 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm rounded-md bg-[var(--dropdown-bg)] text-[var(--content-text)]"
+           className="inline-flex items-center gap-2 px-2.5 py-1.5 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm rounded-md border bg-[var(--dropdown-bg)] text-[var(--content-text)] transition-colors hover:bg-[var(--table-row-hover)]"
             title={isArabic ? 'إظهار/إخفاء الفلاتر المتقدمة' : 'Toggle advanced filters'}
             aria-label={isArabic ? 'فلتر' : 'Filter'}
           >
@@ -302,19 +319,22 @@ export default function Tasks() {
                <path d="M10 18h4" />
             </svg>
             <span className="text-sm font-medium">{isArabic ? 'خيارات الفلتر' : 'Filter options'}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-4 h-4 opacity-70 transition-transform duration-200 ${showAdvancedFilters ? 'rotate-180' : ''}`}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
            <div className="flex items-center gap-2">
              <button
                onClick={() => setShowNewTaskModal(true)}
-               className="inline-flex items-center gap-2 px-2.5 py-1.5 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm rounded-md bg-[var(--dropdown-bg)] text-[var(--content-text)]"
-               title={isArabic ? 'مهمة جديدة' : 'New Task'}
+               className="inline-flex items-center gap-2 px-2.5 py-1.5 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+               title={t('New Task')}
              >
                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
                  <path d="M12 4v16M4 12h16" />
                </svg>
-               {isArabic ? 'جديد' : 'New'}
+               {t('New Task')}
              </button>
-            <button onClick={exportTasks} className="inline-flex items-center gap-2 px-2.5 py-1.5 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm rounded-md bg-[var(--dropdown-bg)] text-[var(--content-text)]" title={isArabic ? 'تصدير' : 'Export'}>
+            <button onClick={exportTasks} className="inline-flex items-center gap-2 px-2.5 py-1.5 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition-colors" title={isArabic ? 'تصدير' : 'Export'}>
                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
                  <path d="M12 5v8m0 0l-3-3m3 3l3-3" />
                  <path d="M5 19h14" />
@@ -383,69 +403,97 @@ export default function Tasks() {
           {/* Assigned To */}
           <div className="flex flex-col">
             <label className="text-xs opacity-70 mb-1">{isArabic ? 'مسند إلى' : 'Assigned To'}</label>
-            <select
-              value={advFilters.assignedTo}
-              onChange={(e) => updateAdv('assignedTo', e.target.value)}
-              className="px-3 py-2 rounded-md border bg-[var(--dropdown-bg)] text-sm w-full"
-            >
-              <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
-              <option>Team A</option>
-              <option>Team B</option>
-              <option>Support</option>
-              <option>Sales</option>
-              <option>Admin</option>
-              <option>Ibrahim</option>
-              <option>Ahmed</option>
-            </select>
+            <div className="relative">
+              <select
+                value={advFilters.assignedTo}
+                onChange={(e) => updateAdv('assignedTo', e.target.value)}
+                className={`px-3 py-2 rounded-md border bg-[var(--dropdown-bg)] text-sm w-full appearance-none ${isArabic ? 'pl-8' : 'pr-8'}`}
+              >
+                <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
+                <option>Team A</option>
+                <option>Team B</option>
+                <option>Support</option>
+                <option>Sales</option>
+                <option>Admin</option>
+                <option>Ibrahim</option>
+                <option>Ahmed</option>
+              </select>
+              <div className={`absolute top-1/2 -translate-y-1/2 pointer-events-none ${isArabic ? 'left-2' : 'right-2'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 opacity-70">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
 
           {/* Status */}
           <div className="flex flex-col">
             <label className="text-xs opacity-70 mb-1">{isArabic ? 'الحالة' : 'Status'}</label>
-            <select
-              value={advFilters.status}
-              onChange={(e) => updateAdv('status', e.target.value)}
-              className="px-3 py-2 rounded-md border bg-[var(--dropdown-bg)] text-sm w-full"
-            >
-              <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
-              <option>PENDING</option>
-              <option>ACCEPTING</option>
-              <option>FINISHED</option>
-              <option>CANCELLED</option>
-            </select>
+            <div className="relative">
+              <select
+                value={advFilters.status}
+                onChange={(e) => updateAdv('status', e.target.value)}
+                className={`px-3 py-2 rounded-md border bg-[var(--dropdown-bg)] text-sm w-full appearance-none ${isArabic ? 'pl-8' : 'pr-8'}`}
+              >
+                <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
+                <option>PENDING</option>
+                <option>ACCEPTING</option>
+                <option>FINISHED</option>
+                <option>CANCELLED</option>
+              </select>
+              <div className={`absolute top-1/2 -translate-y-1/2 pointer-events-none ${isArabic ? 'left-2' : 'right-2'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 opacity-70">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
 
           {/* Priority */}
           <div className="flex flex-col">
             <label className="text-xs opacity-70 mb-1">{isArabic ? 'الأولوية' : 'Priority'}</label>
-            <select
-              value={advFilters.priority}
-              onChange={(e) => updateAdv('priority', e.target.value)}
-              className="px-3 py-2 rounded-md border bg-[var(--dropdown-bg)] text-sm w-full"
-            >
-              <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
+            <div className="relative">
+              <select
+                value={advFilters.priority}
+                onChange={(e) => updateAdv('priority', e.target.value)}
+                className={`px-3 py-2 rounded-md border bg-[var(--dropdown-bg)] text-sm w-full appearance-none ${isArabic ? 'pl-8' : 'pr-8'}`}
+              >
+                <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+              <div className={`absolute top-1/2 -translate-y-1/2 pointer-events-none ${isArabic ? 'left-2' : 'right-2'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 opacity-70">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
 
           {/* Related Module */}
           <div className="flex flex-col">
             <label className="text-xs opacity-70 mb-1">{isArabic ? 'الموديول المرتبط' : 'Related Module'}</label>
-            <select
-              value={advFilters.relatedType}
-              onChange={(e) => updateAdv('relatedType', e.target.value)}
-              className="px-3 py-2 rounded-md border bg-[var(--dropdown-bg)] text-sm w-full"
-            >
-              <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
-              <option>Lead</option>
-              <option>Deal</option>
-              <option>Contact</option>
-              <option>Opportunity</option>
-              <option>Ticket</option>
-              <option>Project</option>
-            </select>
+            <div className="relative">
+              <select
+                value={advFilters.relatedType}
+                onChange={(e) => updateAdv('relatedType', e.target.value)}
+                className={`px-3 py-2 rounded-md border bg-[var(--dropdown-bg)] text-sm w-full appearance-none ${isArabic ? 'pl-8' : 'pr-8'}`}
+              >
+                <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
+                <option>Lead</option>
+                <option>Deal</option>
+                <option>Contact</option>
+                <option>Opportunity</option>
+                <option>Ticket</option>
+                <option>Project</option>
+              </select>
+              <div className={`absolute top-1/2 -translate-y-1/2 pointer-events-none ${isArabic ? 'left-2' : 'right-2'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 opacity-70">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -473,10 +521,21 @@ export default function Tasks() {
       {/* Data toolbar */}
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <Chip label={isArabic ? 'قيد الانتظار' : 'PENDING'} tone="yellow" active={!!filters.status.PENDING} count={countsByStatus.PENDING} onClick={() => toggleIn('status','PENDING')} />
-          <Chip label={isArabic ? 'قبول' : 'ACCEPTING'} tone="blue" active={!!filters.status.ACCEPTING} count={countsByStatus.ACCEPTING} onClick={() => toggleIn('status','ACCEPTING')} />
-          <Chip label={isArabic ? 'منتهية' : 'FINISHED'} tone="green" active={!!filters.status.FINISHED} count={countsByStatus.FINISHED} onClick={() => toggleIn('status','FINISHED')} />
-          <Chip label={isArabic ? 'ملغاة' : 'CANCELLED'} tone="red" active={!!filters.status.CANCELLED} count={countsByStatus.CANCELLED} onClick={() => toggleIn('status','CANCELLED')} />
+          <Chip 
+            label={t('All')} 
+            tone="default" 
+            active={Object.values(filters.status).every(Boolean)} 
+            count={rows.length} 
+            onClick={() => setFilters(prev => {
+              const newS = { ...prev.status }
+              Object.keys(newS).forEach(k => newS[k] = true)
+              return { ...prev, status: newS }
+            })} 
+          />
+          <Chip label={isArabic ? 'قيد الانتظار' : 'PENDING'} tone="yellow" active={!!filters.status.PENDING} count={countsByStatus.PENDING} onClick={() => filterByStatusOnly('PENDING')} />
+          <Chip label={isArabic ? 'قبول' : 'ACCEPTING'} tone="blue" active={!!filters.status.ACCEPTING} count={countsByStatus.ACCEPTING} onClick={() => filterByStatusOnly('ACCEPTING')} />
+          <Chip label={isArabic ? 'منتهية' : 'FINISHED'} tone="green" active={!!filters.status.FINISHED} count={countsByStatus.FINISHED} onClick={() => filterByStatusOnly('FINISHED')} />
+          <Chip label={isArabic ? 'ملغاة' : 'CANCELLED'} tone="red" active={!!filters.status.CANCELLED} count={countsByStatus.CANCELLED} onClick={() => filterByStatusOnly('CANCELLED')} />
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={clearTasks} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md border text-xs sm:text-sm bg-[var(--dropdown-bg)]">{isArabic ? 'مسح البيانات' : 'Clear Data'}</button>
@@ -487,15 +546,22 @@ export default function Tasks() {
        <div className="mb-2 flex items-center justify-between">
          <div className="text-xs opacity-70">{isArabic ? `المحدّد: ${selectedCount}` : `Selected: ${selectedCount}`}</div>
          <div className="flex items-center gap-2">
-           <button type="button" onClick={deleteSelected} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md border text-xs sm:text-sm bg-[var(--dropdown-bg)]">{isArabic ? 'مسح المحدد' : 'Delete Selected'}</button>
            <label className="text-xs opacity-70">{isArabic ? 'إعادة تعيين إلى' : 'Reassign to'}</label>
-           <select value={reassignTo} onChange={(e) => setReassignTo(e.target.value)} className="px-2 py-1 rounded-md border bg-[var(--dropdown-bg)] text-xs sm:text-sm">
-             <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
-             <option>Ibrahim</option>
-             <option>Admin</option>
-             <option>Ahmed</option>
-           </select>
+           <div className="relative">
+             <select value={reassignTo} onChange={(e) => setReassignTo(e.target.value)} className={`px-2 py-1 rounded-md border bg-[var(--dropdown-bg)] text-xs sm:text-sm appearance-none ${isArabic ? 'pl-6' : 'pr-6'}`}>
+               <option value="">{isArabic ? 'اختيار' : 'Select'}</option>
+               <option>Ibrahim</option>
+               <option>Admin</option>
+               <option>Ahmed</option>
+             </select>
+             <div className={`absolute top-1/2 -translate-y-1/2 pointer-events-none ${isArabic ? 'left-1' : 'right-1'}`}>
+               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3 opacity-70">
+                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+               </svg>
+             </div>
+           </div>
            <button type="button" onClick={reassignSelected} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md border text-xs sm:text-sm bg-[var(--dropdown-bg)]">{isArabic ? 'تنفيذ' : 'Apply'}</button>
+           <button type="button" onClick={deleteSelected} className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-md border text-xs sm:text-sm bg-red-600 hover:bg-red-700 text-white border-transparent transition-colors">{isArabic ? 'مسح المحدد' : 'Delete Selected'}</button>
          </div>
        </div>
 
@@ -655,7 +721,7 @@ export default function Tasks() {
       </div>
 
       {/* Show footer */}
-      <div className="mt-3 flex items-center justify-between">
+      <div className="mt-3 flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <span className="text-sm opacity-70">{isArabic ? 'عرض' : 'Show'}</span>
           <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))} className="px-2 py-1 rounded-md border bg-[var(--dropdown-bg)] text-sm">
@@ -665,8 +731,51 @@ export default function Tasks() {
             <option value={50}>50</option>
             <option value={100}>100</option>
           </select>
+          <span className="text-sm opacity-70">{shownRows.length} {isArabic ? 'سجلات' : 'entries'}</span>
         </div>
-        <div className="text-sm opacity-70">{isArabic ? `من ${shownRows.length}` : `of ${shownRows.length}`}</div>
+
+        <div className="flex items-center gap-1" dir="ltr">
+          <button 
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            className="w-8 h-8 flex items-center justify-center rounded border disabled:opacity-50 hover:bg-[var(--table-row-hover)]"
+          >
+            {'<'}
+          </button>
+          
+          {(() => {
+              const pages = [];
+              if (totalPages <= 7) {
+                 for (let i = 1; i <= totalPages; i++) pages.push(i);
+              } else {
+                 if (currentPage <= 4) {
+                    pages.push(1, 2, 3, 4, 5, '...', totalPages);
+                 } else if (currentPage >= totalPages - 3) {
+                    pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+                 } else {
+                    pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+                 }
+              }
+              return pages.map((p, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => typeof p === 'number' && setCurrentPage(p)}
+                  disabled={p === '...'}
+                  className={`w-8 h-8 flex items-center justify-center rounded border text-sm ${p === currentPage ? 'bg-indigo-600 text-white border-indigo-600' : 'hover:bg-[var(--table-row-hover)]'}`}
+                >
+                  {p}
+                </button>
+              ));
+           })()}
+
+          <button 
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            className="w-8 h-8 flex items-center justify-center rounded border disabled:opacity-50 hover:bg-[var(--table-row-hover)]"
+          >
+             {'>'}
+          </button>
+        </div>
       </div>
       <NewTaskModal
         isOpen={showNewTaskModal}

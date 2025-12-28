@@ -62,26 +62,49 @@ export default function SalesOpportunities() {
   const [quickAddLoading, setQuickAddLoading] = useState(false)
   const [showQuickAddModal, setShowQuickAddModal] = useState(false)
 
+  // Listen for external updates (e.g. from Inventory)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  useEffect(() => {
+    const handleUpdate = () => setRefreshTrigger(prev => prev + 1)
+    window.addEventListener('crm_opportunities_updated', handleUpdate)
+    return () => window.removeEventListener('crm_opportunities_updated', handleUpdate)
+  }, [])
+
   useEffect(() => {
     let mounted = true
     setLoading(true)
     setError('')
+    
+    // Load local opportunities first
+    let localOpportunities = []
+    try {
+      const stored = localStorage.getItem('crm_opportunities')
+      if (stored) localOpportunities = JSON.parse(stored)
+    } catch {}
+
     api.get('/api/customers/opportunities')
       .then((res) => {
         if (!mounted) return
         const data = res?.data?.data
         const list = Array.isArray(data?.items) ? data.items : []
-        setItems(list.length > 0 ? list : MOCK_OPPORTUNITIES)
+        // Merge local opportunities with API results (local on top)
+        const combined = [...localOpportunities, ...(list.length > 0 ? list : MOCK_OPPORTUNITIES)]
+        // Remove duplicates if any
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+        setItems(unique)
       })
       .catch((err) => {
         if (!mounted) return
         const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) || '/'
         setError(`Failed to load from ${base}/api/customers/opportunities`)
-        setItems(MOCK_OPPORTUNITIES)
+        // Merge local opportunities with Mock results
+        const combined = [...localOpportunities, ...MOCK_OPPORTUNITIES]
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+        setItems(unique)
       })
       .finally(() => mounted && setLoading(false))
     return () => { mounted = false }
-  }, [])
+  }, [refreshTrigger])
 
   // Load customers for selector
   useEffect(() => {

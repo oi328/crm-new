@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import CalendarModal from './CalendarModal'
 import { NotificationsContent } from '@pages/Notifications'
 import SearchModal from './SearchModal'
@@ -9,6 +9,33 @@ const AVATAR_PLACEHOLDER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.or
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom'
 import logo from '@assets/be-souhola-logo.svg'
+
+const FlagUS = () => (
+  <svg viewBox="0 0 640 480" className="w-5 h-3.5 object-cover rounded-[2px] shadow-sm flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <path fill="#bd3d44" d="M0 0h640v480H0"/>
+    <path stroke="#fff" strokeWidth="37" d="M0 55.3h640M0 129h640M0 202.8h640M0 276.5h640M0 350.2h640M0 423.9h640"/>
+    <path fill="#192f5d" d="M0 0h296.4v258.5H0"/>
+    <g fill="#fff">
+      <circle cx="35" cy="30" r="13" />
+      <circle cx="135" cy="30" r="13" />
+      <circle cx="235" cy="30" r="13" />
+      <circle cx="85" cy="80" r="13" />
+      <circle cx="185" cy="80" r="13" />
+      <circle cx="35" cy="130" r="13" />
+      <circle cx="135" cy="130" r="13" />
+      <circle cx="235" cy="130" r="13" />
+    </g>
+  </svg>
+)
+
+const FlagEG = () => (
+  <svg viewBox="0 0 900 600" className="w-5 h-3.5 object-cover rounded-[2px] shadow-sm flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <rect width="900" height="600" fill="#ce1126"/>
+    <rect width="900" height="400" y="200" fill="#fff"/>
+    <rect width="900" height="200" y="400" fill="#000"/>
+    <path fill="#c09300" d="M450 250 c50 0 80 30 80 80 s-30 80 -80 80 s-80 -30 -80 -80 s30 -80 80 -80 z" />
+  </svg>
+)
 
 const BellBadge = ({ count }) => (
   <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-red-500 text-white">
@@ -72,7 +99,7 @@ export default function Topbar({ onMobileToggle, mobileSidebarOpen }) {
         i18n.changeLanguage(savedLang)
       }
     } catch {}
-  }, [])
+  }, [i18n])
 
   const [calendarOpen, setCalendarOpen] = useState(false)
 
@@ -131,7 +158,7 @@ export default function Topbar({ onMobileToggle, mobileSidebarOpen }) {
       document.removeEventListener('mousedown', onDocClick)
       document.removeEventListener('touchstart', onDocClick)
     }
-  }, [isSearchDropdownOpen, isNotificationsOpen, isLanguageOpen, profilePreviewOpen, isProfileMobileOpen])
+  }, [isSearchDropdownOpen, isNotificationsOpen, isLanguageOpen, isMobileLanguageOpen, profilePreviewOpen, isProfileMobileOpen])
 
   // Header buttons unified styles with glass morphism effects
   const headerBtnBase = 'inline-flex items-center justify-center p-2 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500';
@@ -274,8 +301,12 @@ export default function Topbar({ onMobileToggle, mobileSidebarOpen }) {
             </IconButton>
             {isLanguageOpen && (
               <div className={`dropdown-panel absolute top-12 ${isRTL ? 'left-0' : 'right-0'} w-44 backdrop-blur-md ${isLight ? 'bg-white/80 border border-white/30' : 'bg-gray-900/80 border border-gray-600/30'} rounded-xl shadow-2xl z-50`} role="menu" aria-label={t('Language')}>
-                <button className="w-full text-center px-4 py-2 text-sm hover:bg-[var(--table-row-hover)]" onClick={() => { i18n.changeLanguage('en'); try { localStorage.setItem('language','en'); } catch {} }}>English</button>
-                <button className="w-full text-center px-4 py-2 text-sm hover:bg-[var(--table-row-hover)]" onClick={() => { i18n.changeLanguage('ar'); try { localStorage.setItem('language','ar'); } catch {} }}>العربية</button>
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm hover:bg-[var(--table-row-hover)]" onClick={() => { i18n.changeLanguage('en'); try { localStorage.setItem('language','en'); } catch {} }}>
+                  <FlagUS /> {isRTL ? 'الانجليزية' : 'English'}
+                </button>
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm hover:bg-[var(--table-row-hover)]" onClick={() => { i18n.changeLanguage('ar'); try { localStorage.setItem('language','ar'); } catch {} }}>
+                  <FlagEG /> {isRTL ? 'العربية' : 'Arabic'}
+                </button>
               </div>
             )}
           </div>
@@ -453,11 +484,11 @@ export default function Topbar({ onMobileToggle, mobileSidebarOpen }) {
             {isMobileLanguageOpen && (
               <div ref={mobileLanguageRef} className={`col-span-4 mt-2 rounded-lg border ${isLight ? 'bg-white border-gray-200' : 'bg-gray-900 border-gray-700'} p-2`}>
                 <div className="grid grid-cols-2 gap-2">
-                  <button className={`px-3 py-2 rounded-md text-sm ${isLight ? 'bg-gray-50 hover:bg-gray-100 text-gray-800 border border-gray-200' : 'bg-gray-800 hover:bg-gray-700 text-gray-100 border border-gray-700'}`} onClick={() => { i18n.changeLanguage('en'); try { localStorage.setItem('language','en') } catch {} }}>
-                    English
+                  <button className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm ${isLight ? 'bg-gray-50 hover:bg-gray-100 text-gray-800 border border-gray-200' : 'bg-gray-800 hover:bg-gray-700 text-gray-100 border border-gray-700'}`} onClick={() => { i18n.changeLanguage('en'); try { localStorage.setItem('language','en') } catch {} }}>
+                    <FlagUS /> {isRTL ? 'الانجليزية' : 'English'}
                   </button>
-                  <button className={`px-3 py-2 rounded-md text-sm ${isLight ? 'bg-gray-50 hover:bg-gray-100 text-gray-800 border border-gray-200' : 'bg-gray-800 hover:bg-gray-700 text-gray-100 border border-gray-700'}`} onClick={() => { i18n.changeLanguage('ar'); try { localStorage.setItem('language','ar') } catch {} }}>
-                    العربية
+                  <button className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm ${isLight ? 'bg-gray-50 hover:bg-gray-100 text-gray-800 border border-gray-200' : 'bg-gray-800 hover:bg-gray-700 text-gray-100 border border-gray-700'}`} onClick={() => { i18n.changeLanguage('ar'); try { localStorage.setItem('language','ar') } catch {} }}>
+                    <FlagEG /> {isRTL ? 'العربية' : 'Arabic'}
                   </button>
                 </div>
               </div>

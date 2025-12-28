@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { Children, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@shared/context/ThemeProvider'
@@ -28,7 +28,7 @@ export default function SearchableSelect({
   const opts = useMemo(() => {
     if (!options && children) {
       const items = []
-      React.Children.forEach(children, (child) => {
+      Children.forEach(children, (child) => {
         if (!child || typeof child !== 'object') return
         if (child.type === 'option') {
           const val = child.props?.value ?? (Array.isArray(child.props?.children) ? child.props.children.join(' ') : child.props?.children)
@@ -99,7 +99,7 @@ export default function SearchableSelect({
       window.removeEventListener('resize', handler)
       window.removeEventListener('scroll', handler, true)
     }
-  }, [open])
+  }, [open, menuWidth, usePortal])
 
   useEffect(() => {
     if (open && inputRef.current) {
@@ -115,13 +115,13 @@ export default function SearchableSelect({
     <div ref={ref} className={`relative ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
       <button
         type="button"
-        className={`input w-full flex items-center justify-between ${className}`}
+        className={`w-full flex items-center justify-between rounded border px-3 py-2 ${isLight ? 'bg-white border-gray-300 text-gray-900' : 'bg-gray-800 border-gray-600 text-white'} ${className}`}
         onClick={() => setOpen(v => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className={`truncate ${selectedLabel ? '' : 'text-[var(--muted-text)]'}`}>{selectedLabel || (placeholder ?? (isArabic ? 'اختر...' : 'Select...'))}</span>
-        <svg className="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <span className={`truncate`}>{selectedLabel || (placeholder ?? (isArabic ? 'اختر...' : 'Select...'))}</span>
+        <svg className={`w-4 h-4 opacity-80 ${isLight ? 'text-gray-700' : 'text-white'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {open && (
         usePortal
@@ -129,7 +129,7 @@ export default function SearchableSelect({
               <div ref={menuRef} style={menuStyle} className={`rounded-md shadow-xl ${isLight ? 'bg-white border border-gray-200' : 'bg-gray-900/95 border border-gray-700'}`} onMouseDown={(e) => e.stopPropagation()}>
                 <div className="p-2 border-b border-base-300">
                   <input
-                    className="input input-sm w-full"
+                    className={`input input-sm w-full ${isLight ? 'text-gray-900 placeholder-gray-500' : 'text-white placeholder-white'}`}
                     placeholder={isArabic ? 'ابحث بالكتابة...' : 'Type to search...'}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -159,7 +159,7 @@ export default function SearchableSelect({
               <div ref={menuRef} style={menuStyle} className={`rounded-md shadow-xl ${isLight ? 'bg-white border border-gray-200' : 'bg-gray-900/95 border border-gray-700'}`} onMouseDown={(e) => e.stopPropagation()}>
                 <div className="p-2 border-b border-base-300">
                   <input
-                    className="input input-sm w-full"
+                    className={`input input-sm w-full ${isLight ? 'text-gray-900 placeholder-gray-500' : 'text-white placeholder-white'}`}
                     placeholder={isArabic ? 'ابحث بالكتابة...' : 'Type to search...'}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}

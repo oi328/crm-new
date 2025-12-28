@@ -1,22 +1,52 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { FaColumns, FaUndoAlt } from 'react-icons/fa';
 
 const ColumnToggle = ({ columns, visibleColumns, onColumnToggle, onResetColumns, align = 'right', compact = false }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [menuStyle, setMenuStyle] = useState({});
   const dropdownRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const [dropdownStyle, setDropdownStyle] = useState({});
-  const menuRef = useRef(null);
+  const buttonRef = useRef(null);
+
+  const isRtl = i18n?.dir ? i18n.dir() === 'rtl' : i18n?.language === 'ar';
+
+  const updatePosition = () => {
+    if (buttonRef.current && isOpen) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuStyle({
+        position: 'fixed',
+        top: `${rect.bottom + 8}px`, // 8px for mt-2
+        left: align === 'right' 
+          ? (isRtl ? `${rect.left}px` : `${rect.right - 288}px`) // 288px is w-72
+          : (isRtl ? `${rect.right - 288}px` : `${rect.left}px`),
+        zIndex: 9999,
+        width: '18rem' // w-72
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+    }
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen, align, isRtl]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const insideTrigger = dropdownRef.current && dropdownRef.current.contains(event.target);
-      const insideMenu = menuRef.current && menuRef.current.contains(event.target);
-      if (insideTrigger || insideMenu) return;
+      // Check if click is inside the dropdown (which might be rendered via portal or fixed)
+      // Since we are not using portal but fixed position, the DOM structure is preserved?
+      // No, fixed position element is still in DOM tree.
+      const insideTrigger = buttonRef.current && buttonRef.current.contains(event.target);
+      const insideDropdown = dropdownRef.current && dropdownRef.current.contains(event.target);
+      if (insideTrigger || insideDropdown) return;
       setIsOpen(false);
     };
 
@@ -26,36 +56,10 @@ const ColumnToggle = ({ columns, visibleColumns, onColumnToggle, onResetColumns,
     };
   }, []);
 
-  useEffect(() => {
-    const update = () => setIsMobile(window.innerWidth < 640);
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const el = dropdownRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    if (isMobile) {
-      const maxWidth = Math.min(320, window.innerWidth - 24);
-      const top = rect.bottom + window.scrollY + 8;
-      let left = rect.left + window.scrollX;
-      left = Math.min(Math.max(left, 12), window.innerWidth + window.scrollX - 12 - maxWidth);
-      setDropdownStyle({ position: 'absolute', top, left, maxWidth });
-    } else {
-      const width = 288; // w-72
-      const top = rect.bottom + 8;
-      let left = align === 'right' ? rect.right - width : rect.left;
-      left = Math.min(Math.max(left, 12), window.innerWidth - 12 - width);
-      setDropdownStyle({ position: 'fixed', top, left, width });
-    }
-  }, [isOpen, isMobile, align]);
-
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative">
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-2'} rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500`}
         aria-expanded={isOpen}
@@ -67,109 +71,53 @@ const ColumnToggle = ({ columns, visibleColumns, onColumnToggle, onResetColumns,
       </button>
 
       {isOpen && (
-        isMobile
-          ? createPortal(
-              <div
-                className={`absolute w-auto inline-block rounded-lg shadow-xl bg-[var(--panel-bg)] text-[var(--content-text)] ring-1 ring-[var(--panel-border)] z-[10000] pointer-events-auto text-xs`}
-                style={dropdownStyle}
-                ref={menuRef}
-              >
-                <div className="p-2 space-y-2" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-semibold">
-                      {t('Show/Hide Columns')}
-                    </div>
-                    {onResetColumns && (
-                      <button
-                        type="button"
-                        onClick={onResetColumns}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] bg-[var(--table-header-bg)] hover:bg-[var(--table-row-hover)] text-[var(--content-text)]"
-                        title={t('Reset Columns')}
-                      >
-                        <FaUndoAlt className="h-3 w-3" />
-                        {t('Reset Columns')}
-                      </button>
-                    )}
-                  </div>
+        <div
+          style={menuStyle}
+          className={`rounded-lg shadow-xl bg-white dark:bg-slate-800/90 dark:backdrop-blur-md text-gray-900 dark:text-white ring-1 ring-gray-200 dark:ring-slate-700/50 z-[50] pointer-events-auto`}
+        >
+          <div className="p-3 space-y-3" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold">
+                {t('Show/Hide Columns')}
+              </div>
+              {onResetColumns && (
+                <button
+                  type="button"
+                  onClick={onResetColumns}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-gray-100 dark:bg-slate-700/50 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-white"
+                  title={t('Reset')}
+                >
+                  <FaUndoAlt className="h-3 w-3" />
+                  {t('Reset')}
+                </button>
+              )}
+            </div>
 
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={t('Search columns...')}
-                    className="w-full px-2 py-1 text-xs rounded-md border border-[var(--panel-border)] bg-[var(--panel-bg)] text-[var(--content-text)] focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={t('Search columns...')}
+              className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
 
-                  <div className="max-h-[70vh] overflow-y-auto divide-y divide-[var(--divider)]">
-                    {Object.keys(columns)
-                      .filter((key) => columns[key].toLowerCase().includes(searchTerm.toLowerCase()))
-                      .map((key) => (
-                        <label key={key} className="flex items-center gap-2 px-2 py-1 text-xs hover:bg-[var(--table-row-hover)] cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="w-3 h-3 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                            checked={visibleColumns[key]}
-                            onChange={() => onColumnToggle(key)}
-                          />
-                          <span>{columns[key]}</span>
-                        </label>
-                      ))}
-                  </div>
-                </div>
-              </div>,
-              document.body
-            )
-          : createPortal(
-              <div
-                className={`fixed w-72 rounded-lg shadow-xl bg-[var(--panel-bg)] text-[var(--content-text)] ring-1 ring-[var(--panel-border)] z-[10000] pointer-events-auto`}
-                style={dropdownStyle}
-                ref={menuRef}
-              >
-                <div className="p-3 space-y-3" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold">
-                      {t('Show/Hide Columns')}
-                    </div>
-                    {onResetColumns && (
-                      <button
-                        type="button"
-                        onClick={onResetColumns}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-[var(--table-header-bg)] hover:bg-[var(--table-row-hover)] text-[var(--content-text)]"
-                        title={t('Reset Columns')}
-                      >
-                        <FaUndoAlt className="h-3 w-3" />
-                        {t('Reset Columns')}
-                      </button>
-                    )}
-                  </div>
-
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={t('Search columns...')}
-                    className="w-full px-3 py-2 text-sm rounded-md border border-[var(--panel-border)] bg-[var(--panel-bg)] text-[var(--content-text)] focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-
-                  <div className="max-h-64 overflow-y-auto divide-y divide-[var(--divider)]">
-                    {Object.keys(columns)
-                      .filter((key) => columns[key].toLowerCase().includes(searchTerm.toLowerCase()))
-                      .map((key) => (
-                        <label key={key} className="flex items-center gap-3 px-2 py-2 text-sm hover:bg-[var(--table-row-hover)] cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                            checked={visibleColumns[key]}
-                            onChange={() => onColumnToggle(key)}
-                          />
-                          <span>{columns[key]}</span>
-                        </label>
-                      ))}
-                  </div>
-                </div>
-              </div>,
-              document.body
-            )
+            <div className="max-h-64 overflow-y-auto divide-y divide-gray-100 dark:divide-slate-700/50">
+              {Object.keys(columns)
+                .filter((key) => String(columns[key] || '').toLowerCase().includes(searchTerm.toLowerCase()))
+                .map((key) => (
+                  <label key={key} className="flex items-center gap-3 px-2 py-2 text-sm hover:bg-gray-50 dark:hover:bg-slate-700/30 cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-slate-700/50"
+                      checked={visibleColumns[key]}
+                      onChange={() => onColumnToggle(key)}
+                    />
+                    <span>{columns[key]}</span>
+                  </label>
+                ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

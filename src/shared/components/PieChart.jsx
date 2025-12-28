@@ -1,4 +1,4 @@
-import React from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 ChartJS.register(ArcElement, Tooltip, Legend)
@@ -100,9 +100,9 @@ export const PieChart = ({
   }
 
   function CountUp({ value, duration }) {
-    const [display, setDisplay] = React.useState(value)
-    const prev = React.useRef(value)
-    React.useEffect(() => {
+    const [display, setDisplay] = useState(value)
+    const prev = useRef(value)
+    useEffect(() => {
       if (typeof value !== 'number') { setDisplay(value); return }
       const from = typeof prev.current === 'number' ? prev.current : 0
       const to = value

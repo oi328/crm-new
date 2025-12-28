@@ -18,6 +18,14 @@ import SupportCustomers from '../pages/SupportCustomers'
 import SupportSLA from '../pages/SupportSLA'
 import SupportReports from '../pages/SupportReports'
 import SupportFeedbacks from '../pages/SupportFeedbacks'
+import Families from '../pages/inventory/Families'
+import Brands from '../pages/inventory/Brands'
+import Buildings from '../pages/inventory/Buildings'
+import ThirdParties from '../pages/inventory/ThirdParties'
+import Groups from '../pages/inventory/Groups'
+import GeneralRequests from '../pages/inventory/RequestsPage'
+import RealEstateRequests from '../pages/inventory/RealEstateRequestsPage'
+import RealEstatePriceBooks from '../pages/inventory/RealEstatePriceBooks'
 import Projects from '../pages/Projects'
 import Properties from '../pages/Properties'
 import Requests from '../pages/Requests'
@@ -63,13 +71,14 @@ import StagesSetup from '../pages/StagesSetup'
 import CancelReasons from '../pages/CancelReasons'
 import PaymentPlans from '../pages/PaymentPlans'
 import Products from '../pages/Products'
-import Items from '../pages/Items'
+import ItemsPage from '../pages/inventory/ItemsPage'
 import Categories from '../pages/Categories'
-import Brokers from '../pages/Brokers'
+import Brokers from "../pages/inventory/Brokers";
 import Developers from '../pages/Developers'
 import StockManagement from '../pages/StockManagement'
 import InventoryTransactions from '../pages/InventoryTransactions'
 import Suppliers from '../pages/Suppliers'
+import PriceBooks from '../pages/inventory/PriceBooks'
 import Warehouse from '../pages/Warehouse'
 import Campaigns from '../pages/Campaigns'
 import LandingPages from '../pages/LandingPages'
@@ -155,12 +164,32 @@ export default function AppRouter() {
               <Route path="/stages-setup" element={<StagesSetup />} />
             </Route>
 
+            {/* Inventory Module */}
+            <Route path="/inventory/families" element={<Families />} />
+            <Route path="/inventory/categories" element={<Categories />} />
+            <Route path="/inventory/groups" element={<Groups />} />
+            <Route path="/inventory/items" element={<ItemsPage />} />
+            <Route path="/inventory/brands" element={<Brands />} />
+            <Route path="/inventory/price-books" element={<PriceBooks />} />
+            <Route path="/inventory/third-parties" element={<ThirdParties />} />
+            <Route path="/inventory/suppliers" element={<Suppliers />} />
+            <Route path="/inventory/warehouse" element={<Warehouse />} />
+            <Route path="/inventory/stock-management" element={<StockManagement />} />
+            <Route path="/inventory/transactions" element={<InventoryTransactions />} />
+            <Route path="/inventory/products" element={<Products />} />
+            
+            {/* Real Estate Inventory */}
             <Route path="/inventory/projects" element={<Projects />} />
+            <Route path="/inventory/buildings" element={<Buildings />} />
             <Route path="/inventory/properties" element={<Properties />} />
-            <Route path="/inventory/requests" element={<Requests />} />
+            <Route path="/inventory/developers" element={<Developers />} />
+            <Route path="/inventory/brokers" element={<Brokers />} />
+            <Route path="/inventory/requests" element={<GeneralRequests />} />
+            <Route path="/inventory/real-estate-requests" element={<RealEstateRequests />} />
+            <Route path="/inventory/real-estate-price-books" element={<RealEstatePriceBooks />} />
+            <Route path="/requests" element={<Requests />} />
             <Route path="/inventory/buyer-requests" element={<BuyerRequests />} />
             <Route path="/inventory/seller-requests" element={<SellerRequests />} />
-            <Route path="/inventory/dev-companies" element={<DevCompanies />} />
 
             <Route element={<ProtectedModuleRoute moduleKey="campaigns" />}> 
               <Route path="/marketing" element={<Marketing />} />
@@ -248,15 +277,7 @@ export default function AppRouter() {
             <Route path="/user-management/roles" element={<UserManagementRoles />} />
             <Route path="/user-management/roles/:name" element={<UserManagementRoleEdit />} />
 
-            <Route path="/inventory/products" element={<Products />} />
-            <Route path="/inventory/items" element={<Items />} />
-            <Route path="/inventory/categories" element={<Categories />} />
-            <Route path="/inventory/brokers" element={<Brokers />} />
-            <Route path="/inventory/developers" element={<Developers />} />
-            <Route path="/inventory/stock-management" element={<StockManagement />} />
-            <Route path="/inventory/transactions" element={<InventoryTransactions />} />
-            <Route path="/inventory/warehouse" element={<Warehouse />} />
-            <Route path="/inventory/suppliers" element={<Suppliers />} />
+
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/notifications" element={<Notifications />} />

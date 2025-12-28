@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api } from '../utils/api'
+import SearchableSelect from '../components/SearchableSelect'
 
 const defaultForm = {
   name: '',
@@ -73,6 +75,8 @@ const MOCK_CUSTOMERS = [
 ]
 
 export const Customers = () => {
+  const { t, i18n } = useTranslation()
+  const isRTL = String(i18n.language || '').startsWith('ar')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -86,6 +90,18 @@ export const Customers = () => {
   const [filterRep, setFilterRep] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [showAllFilters, setShowAllFilters] = useState(true)
+
+  const typeOptions = useMemo(() => {
+    const set = new Set()
+    items.forEach(c => { if (c.type) set.add(c.type) })
+    return Array.from(set)
+  }, [items])
+  const repOptions = useMemo(() => {
+    const set = new Set()
+    items.forEach(c => { if (c.assignedSalesRep || c.assignedTo) set.add(c.assignedSalesRep || c.assignedTo) })
+    return Array.from(set)
+  }, [items])
 
   const load = async () => {
     try {
@@ -218,32 +234,69 @@ export const Customers = () => {
       <div className="space-y-4 bg-[var(--content-bg)] text-[var(--content-text)] overflow-x-hidden overflow-y-auto">
         {/* Page Title */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Customers</h1>
-          <div>
-            <button className="btn btn-primary" onClick={() => { setShowForm(true); setEditingId(null); setForm(defaultForm) }}>Add Customer</button>
+          <h1 className="text-2xl font-bold">{isRTL ? 'العملاء' : 'Customers'}</h1>
+          <div className={`flex ${isRTL ? 'justify-start' : 'justify-end'}`}>
+            <button className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none" onClick={() => { setShowForm(true); setEditingId(null); setForm(defaultForm) }}>{isRTL ? 'إضافة عميل' : 'Add Customer'}</button>
           </div>
         </div>
 
         {/* Filters */}
-        <section className="nova-card glass-neon p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <input className="input w-full min-w-0" placeholder="Search name/phone/email" value={q} onChange={(e) => setQ(e.target.value)} />
-            <select className="input w-full min-w-0" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-              <option value="">All Types</option>
-              <option value="Individual">Individual</option>
-              <option value="Company">Company</option>
-            </select>
-            <input className="input w-full min-w-0" placeholder="Assigned Sales Rep" value={filterRep} onChange={(e) => setFilterRep(e.target.value)} />
-            <div className="grid grid-cols-2 gap-2">
-              <input type="date" className="input w-full min-w-0" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-              <input type="date" className="input w-full min-w-0" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        <div className="glass-panel rounded-xl p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-sm font-semibold">{isRTL ? 'تصفية' : 'Filter'}</h2>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowAllFilters(v => !v)} className="btn btn-glass btn-compact">
+                {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'إظهار' : 'Show')}
+              </button>
+              <button
+                onClick={() => { setQ(''); setFilterType(''); setFilterRep(''); setDateFrom(''); setDateTo(''); load() }}
+                className="btn btn-glass btn-compact"
+              >
+                {isRTL ? 'مسح المرشحات' : 'Clear Filters'}
+              </button>
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {/* Removed Apply button; filters auto-apply on change */}
-            <button className="btn" onClick={() => { setQ(''); setFilterType(''); setFilterRep(''); setDateFrom(''); setDateTo(''); load() }}>Reset</button>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[var(--muted-text)]">{isRTL ? 'بحث' : 'Search'}</label>
+                <input className="input w-full min-w-0" placeholder={isRTL ? 'ابحث بالاسم/الهاتف/البريد' : 'Search name/phone/email'} value={q} onChange={(e) => setQ(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[var(--muted-text)]">{isRTL ? 'النوع' : 'Type'}</label>
+                <SearchableSelect
+                  options={typeOptions}
+                  value={filterType}
+                  onChange={(val) => setFilterType(val)}
+                  isRTL={isRTL}
+                  placeholder={isRTL ? 'الكل' : 'All'}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[var(--muted-text)]">{isRTL ? 'مندوب المبيعات' : 'Sales Rep'}</label>
+                <SearchableSelect
+                  options={repOptions}
+                  value={filterRep}
+                  onChange={(val) => setFilterRep(val)}
+                  isRTL={isRTL}
+                  placeholder={isRTL ? 'الكل' : 'All'}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-[var(--muted-text)]">{isRTL ? 'من تاريخ' : 'From Date'}</label>
+                  <input type="date" className="input w-full min-w-0" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-[var(--muted-text)]">{isRTL ? 'إلى تاريخ' : 'To Date'}</label>
+                  <input type="date" className="input w-full min-w-0" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+                </div>
+              </div>
+            </div>
+            <div className={`transition-all duration-300 overflow-hidden ${showAllFilters ? 'max-h-[300px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
+            </div>
           </div>
-        </section>
+        </div>
 
         {/* Form */}
         {showForm && (
@@ -332,8 +385,8 @@ export const Customers = () => {
 
               {/* Actions */}
               <div className="lg:col-span-2 flex gap-2">
-                <button type="submit" className="btn btn-primary" disabled={loading}>{editingId ? 'Save Changes' : 'Create Customer'}</button>
-                <button type="button" className="btn" onClick={resetForm}>Cancel</button>
+                <button type="submit" className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none" disabled={loading}>{editingId ? 'Save Changes' : 'Create Customer'}</button>
+                <button type="button" className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none" onClick={resetForm}>Cancel</button>
               </div>
               {error && <div className="lg:col-span-2 text-red-500 text-sm">{error}</div>}
             </form>
@@ -395,10 +448,31 @@ export const Customers = () => {
                     <td className="py-2 px-3 text-xs">{new Date(c.createdAt).toLocaleString()}</td>
                     <td className="py-2 px-3">
                       <div className="flex gap-2">
-                        {!c.deletedAt && <button className="btn btn-secondary" onClick={() => startEdit(c)}>Edit</button>}
-                        {!c.deletedAt && <button className="btn" onClick={() => remove(c.id)}>Delete</button>}
-                        {c.deletedAt && <button className="btn btn-secondary" onClick={() => restore(c.id)}>Restore</button>}
-                      </div>
+                  {!c.deletedAt && (
+                    <button
+                      className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
+                      onClick={() => startEdit(c)}
+                    >
+                      {isRTL ? 'تعديل' : 'Edit'}
+                    </button>
+                  )}
+                  {!c.deletedAt && (
+                    <button
+                      className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none"
+                      onClick={() => remove(c.id)}
+                    >
+                      {isRTL ? 'حذف' : 'Delete'}
+                    </button>
+                  )}
+                  {c.deletedAt && (
+                    <button
+                      className="btn btn-sm bg-gray-600 hover:bg-gray-700 text-white border-none"
+                      onClick={() => restore(c.id)}
+                    >
+                      {isRTL ? 'استعادة' : 'Restore'}
+                    </button>
+                  )}
+                </div>
                     </td>
                   </tr>
                 ))}

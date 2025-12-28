@@ -26,7 +26,8 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
       comment: 'العميل مهتم جداً بالمنتج وسيقوم بالشراء الأسبوع القادم',
       timestamp: 'منذ 5 دقائق',
       type: 'follow_up',
-      priority: 'high'
+      priority: 'high',
+      source: 'Website'
     },
     {
       id: 2,
@@ -35,7 +36,8 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
       comment: 'تم إرسال عرض السعر وتنتظر الموافقة',
       timestamp: 'منذ 15 دقيقة',
       type: 'proposal',
-      priority: 'medium'
+      priority: 'medium',
+      source: 'Referral'
     },
     {
       id: 3,
@@ -44,7 +46,8 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
       comment: 'العميل طلب مزيد من المعلومات التقنية حول المنتج',
       timestamp: 'منذ 30 دقيقة',
       type: 'inquiry',
-      priority: 'low'
+      priority: 'low',
+      source: 'LinkedIn'
     },
     {
       id: 4,
@@ -53,7 +56,8 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
       comment: 'تم حل مشكلة الخدمة والعميل راضٍ عن النتيجة',
       timestamp: 'منذ ساعة',
       type: 'support',
-      priority: 'medium'
+      priority: 'medium',
+      source: 'Cold Call'
     },
     {
       id: 5,
@@ -62,7 +66,8 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
       comment: 'تم تأكيد الموعد غداً الساعة 3 مساءً في المكتب',
       timestamp: 'منذ ساعتين',
       type: 'meeting',
-      priority: 'high'
+      priority: 'high',
+      source: 'Website'
     },
     {
       id: 6,
@@ -71,7 +76,8 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
       comment: 'العميل يحتاج للتفكير وطلب الاتصال به الأسبوع القادم',
       timestamp: 'منذ 3 ساعات',
       type: 'follow_up',
-      priority: 'low'
+      priority: 'low',
+      source: 'Facebook Ads'
     },
     {
       id: 7,
@@ -80,7 +86,8 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
       comment: 'تم التفاوض على السعر والعميل يطلب خصم إضافي',
       timestamp: 'منذ 4 ساعات',
       type: 'proposal',
-      priority: 'high'
+      priority: 'high',
+      source: 'Referral'
     },
     {
       id: 8,
@@ -89,7 +96,8 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
       comment: 'العميل مهتم بالحزمة المتقدمة ويريد عرض سعر مخصص',
       timestamp: 'منذ 5 ساعات',
       type: 'inquiry',
-      priority: 'medium'
+      priority: 'medium',
+      source: 'Instagram'
     },
     {
       id: 9,
@@ -98,7 +106,8 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
       comment: 'تم إصلاح المشكلة التقنية والعميل سعيد بالخدمة',
       timestamp: 'منذ 6 ساعات',
       type: 'support',
-      priority: 'low'
+      priority: 'low',
+      source: 'Email Campaign'
     },
     {
       id: 10,
@@ -107,7 +116,8 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
       comment: 'تم تحديد موعد العرض التجريبي يوم الثلاثاء القادم',
       timestamp: 'منذ 7 ساعات',
       type: 'meeting',
-      priority: 'high'
+      priority: 'high',
+      source: 'Website'
     }
   ];
 
@@ -240,7 +250,7 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
               </div>
               <div className="space-y-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium ${isLight ? 'text-gray-700' : 'text-gray-400'}`}>{t('Employee')}:</span>
+                  <span className={`text-xs font-medium ${isLight ? 'text-gray-700' : 'text-gray-400'}`}>{t('Sales Person')}:</span>
                   <span className={`text-sm font-medium ${isLight ? 'text-gray-900' : 'text-gray-200'}`}>{comment.employeeName}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -270,31 +280,31 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
           <table className="comments-table w-full min-w-max text-sm text-left">
             <thead className={`text-xs uppercase sticky top-0 ${isLight ? 'bg-gray-200' : 'bg-gray-900'}`}>
               <tr>
-                <th scope="col" className="px-6 py-3">{t('Employee')}</th>
-                <th scope="col" className="px-6 py-3">{t('Lead')}</th>
-                <th scope="col" className="px-6 py-3">{t('Last Comments')}</th>
-                <th scope="col" className="px-6 py-3">{t('Priority')}</th>
+                <th scope="col" className="px-6 py-3">{t('Lead Name')}</th>
                 <th scope="col" className="px-6 py-3">{t('Stage')}</th>
-                <th scope="col" className="px-6 py-3">{t('Actions')}</th>
-                <th scope="col" className="px-6 py-3">{t('Action time')}</th>
+                <th scope="col" className="px-6 py-3">{t('Priority')}</th>
+                <th scope="col" className="px-6 py-3">{t('Source')}</th>
+                <th scope="col" className="px-6 py-3">{t('Sales Person')}</th>
+                <th scope="col" className="px-6 py-3">{t('Last Comment')}</th>
+                <th scope="col" className="px-6 py-3">{t('Action date')}</th>
               </tr>
             </thead>
             <tbody>
               {displayComments.map((comment) => (
                 <tr key={comment.id} className={`border-b ${isLight ? 'bg-white border-gray-200 hover:bg-gray-50' : 'bg-gray-800 border-gray-700 dark:hover:bg-blue-900/25'}`}>
-                  <td className="px-6 py-4">{comment.employeeName}</td>
-                  <td className={`px-6 py-4`}>{comment.leadName}</td>
-                  <td className={`px-6 py-4`}>{comment.comment}</td>
-                  <td className={`px-6 py-4`}>{t(comment.priority)}</td>
-                  <td className={`px-6 py-4`}>{t(comment.type)}</td>
                   <td className={`px-6 py-4`}>
                     <button 
-                      className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                      className="text-blue-500 hover:underline"
                       onClick={() => { setSelectedLead({ fullName: comment.leadName }); setIsLeadModalOpen(true); }}
                     >
-                      {t('View Lead')}
+                      {comment.leadName}
                     </button>
                   </td>
+                  <td className={`px-6 py-4`}>{t(comment.type)}</td>
+                  <td className={`px-6 py-4`}>{t(comment.priority)}</td>
+                  <td className={`px-6 py-4`}>{comment.source || '-'}</td>
+                  <td className="px-6 py-4">{comment.employeeName}</td>
+                  <td className={`px-6 py-4`}>{comment.comment}</td>
                   <td className={`px-6 py-4`}>{comment.timestamp}</td>
                 </tr>
               ))}

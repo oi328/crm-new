@@ -104,7 +104,7 @@ const TeamPerformanceReport = () => {
       if (teamParam) setSelectedTeam(teamParam)
       if (managerParam) setSelectedManager(managerParam)
     } catch (e) {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [location.search])
 
   // KPIs

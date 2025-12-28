@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@shared/context/ThemeProvider'
 import SearchableSelect from '@shared/components/SearchableSelect'
@@ -12,8 +12,8 @@ export default function SearchModal({ onClose, variant = 'modal' }) {
   const [filterField, setFilterField] = useState('all');
   const [query, setQuery] = useState('');
   const [flagEmoji, setFlagEmoji] = useState('')
-  const flagsMapRef = React.useRef(null)
-  const flagsLoadingRef = React.useRef(false)
+  const flagsMapRef = useRef(null)
+  const flagsLoadingRef = useRef(false)
 
   const normalizeCode = (s) => {
     const v = (s || '').trim().replace(/\s|-/g, '')
@@ -25,7 +25,7 @@ export default function SearchModal({ onClose, variant = 'modal' }) {
     if (d) return `+${d[1]}`
     return ''
   }
-  React.useEffect(() => {
+  useEffect(() => {
     if (!flagsMapRef.current && !flagsLoadingRef.current) {
       flagsLoadingRef.current = true
       fetch('https://restcountries.com/v3.1/all?fields=idd,flag')
@@ -48,7 +48,7 @@ export default function SearchModal({ onClose, variant = 'modal' }) {
         .finally(() => { flagsLoadingRef.current = false })
     }
   }, [])
-  React.useEffect(() => {
+  useEffect(() => {
     const code = normalizeCode(query)
     if (!code) { setFlagEmoji(''); return }
     const map = flagsMapRef.current

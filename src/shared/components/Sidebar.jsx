@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
  import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '@shared/context/ThemeProvider'
 import { useAppState } from '@shared/context/AppStateProvider'
@@ -127,6 +127,33 @@ const getInventoryItemIcon = (key) => {
   }
 
   switch (key) {
+    case 'Families':
+      return (
+        <svg {...common} aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16" />
+          <circle cx="2" cy="6" r="1" />
+          <circle cx="2" cy="12" r="1" />
+          <circle cx="2" cy="18" r="1" />
+        </svg>
+      )
+    case 'Overview':
+      return (
+        <svg {...common} aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+        </svg>
+      )
+    case 'Groups':
+      return (
+        <svg {...common} aria-hidden="true">
+          <rect x="2" y="2" width="9" height="9" rx="1" />
+          <rect x="13" y="2" width="9" height="9" rx="1" />
+          <rect x="2" y="13" width="9" height="9" rx="1" />
+          <rect x="13" y="13" width="9" height="9" rx="1" />
+        </svg>
+      )
     case 'Categories':
       return (
         <svg {...common} aria-hidden="true">
@@ -136,6 +163,13 @@ const getInventoryItemIcon = (key) => {
           <rect x="2" y="5" width="2" height="2" rx="0.5" />
           <rect x="2" y="10" width="2" height="2" rx="0.5" />
           <rect x="2" y="15" width="2" height="2" rx="0.5" />
+        </svg>
+      )
+    case 'Brands':
+      return (
+        <svg {...common} aria-hidden="true">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+          <line x1="7" y1="7" x2="7.01" y2="7" />
         </svg>
       )
     case 'Developers':
@@ -187,6 +221,14 @@ const getInventoryItemIcon = (key) => {
           <path d="M7 18h10" />
         </svg>
       )
+    case 'Price Books':
+      // Book/Price tag icon
+      return (
+        <svg {...common} aria-hidden="true">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        </svg>
+      )
     case 'Suppliers':
       // Truck/cart icon for suppliers/vendors
       return (
@@ -234,6 +276,8 @@ const getInventoryItemIcon = (key) => {
         </svg>
       )
     case 'Requests':
+    case 'Requests (General)':
+    case 'Requests (Real Estate)':
       // Inbox/document icon
       return (
         <svg {...common} aria-hidden="true">
@@ -353,10 +397,19 @@ const getMarketingItemIcon = (key) => {
   }
 }
 
-export const Sidebar = ({ isOpen, onClose = () => {}, className }) => {
+export const Sidebar = ({ isOpen, onClose = () => {}, className, collapsed, setCollapsed }) => {
   const { activeModules, user } = useAppState()
   const { theme } = useTheme()
   const { t, i18n } = useTranslation();
+  
+  // Handle Collapsed State (Prop or Local)
+  const [localCollapsed, setLocalCollapsed] = useState(false)
+  const isCollapsed = collapsed !== undefined ? collapsed : localCollapsed
+  const toggleCollapsed = () => {
+    if (setCollapsed) setCollapsed(!isCollapsed)
+    else setLocalCollapsed(!localCollapsed)
+  }
+
   const location = useLocation();
   const navigate = useNavigate();
   const isLight = theme === 'light'
@@ -458,7 +511,7 @@ const isCustomersActive = location.pathname.startsWith('/customers') || location
   const isDataMgmtActiveFlag = location.pathname.startsWith('/settings/data')
   const roleLower = String(user?.role || '').toLowerCase()
   const isAdminOwnerUser = roleLower.includes('admin') || roleLower.includes('super admin') || roleLower.includes('owner')
-const isReportsActive = location.pathname.startsWith('/reports') || location.pathname.startsWith('/marketing/reports')
+const _isReportsActive = location.pathname.startsWith('/reports') || location.pathname.startsWith('/marketing/reports')
 const isUsersActive = location.pathname.startsWith('/user-management')
   const isSupportActive = location.pathname.startsWith('/support')
   const isCoreReportsActive = location.pathname.startsWith('/reports')
@@ -606,8 +659,8 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
   }, [isMarketingReportsActive, marketingReportsOpen])
    
    const { stages } = useStages()
-   const safeStages = Array.isArray(stages) ? stages.map(s => typeof s === 'string' ? { name: s, nameAr: '', color: '#3B82F6', icon: '📊' } : s) : []
-   const currentStageParam = (() => { try { return new URLSearchParams(location.search || '').get('stage') || null } catch (e) { return null } })()
+   const _safeStages = Array.isArray(stages) ? stages.map(s => typeof s === 'string' ? { name: s, nameAr: '', color: '#3B82F6', icon: '📊' } : s) : []
+   const currentStageParam = (() => { try { return new URLSearchParams(location.search || '').get('stage') || null } catch { return null } })()
  
    // Leads data for counts and percentages (shared with Dashboard)
    const [refreshTrigger, setRefreshTrigger] = useState(0)
@@ -631,7 +684,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
       return []
     }
   }, [refreshTrigger])
-  const currentLeadsDataset = isRecycleActive ? deletedLeads : allLeads
+  const _currentLeadsDataset = isRecycleActive ? deletedLeads : allLeads
    useEffect(() => {
      const handleStorageChange = () => setRefreshTrigger(prev => prev + 1)
      window.addEventListener('storage', handleStorageChange)
@@ -646,7 +699,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
    }, [])
 
   // Helpers for color styles (hex and named presets)
-  const isHexColor = (c) => typeof c === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)
+  const _isHexColor = (c) => typeof c === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)
   const hexToRgb = (hex) => {
     try {
       let h = hex.replace('#', '')
@@ -660,11 +713,11 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
       return { r: 0, g: 0, b: 0 }
     }
   }
-  const withAlpha = (hex, alpha) => {
+  const _withAlpha = (hex, alpha) => {
     const { r, g, b } = hexToRgb(hex)
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
   }
-  const COLOR_STYLES = {
+  const _COLOR_STYLES = {
     blue: { container: 'border-blue-400 dark:border-blue-500 bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300 dark:from-blue-800 dark:via-blue-700 dark:to-blue-600', iconBg: 'bg-blue-600 dark:bg-blue-500' },
     green: { container: 'border-green-400 dark:border-green-500 bg-gradient-to-br from-green-100 via-green-200 to-green-300 dark:from-green-800 dark:via-green-700 dark:to-green-600', iconBg: 'bg-green-600 dark:bg-green-500' },
     yellow: { container: 'border-yellow-400 dark:border-yellow-500 bg-gradient-to-br from-yellow-100 via-yellow-200 to-yellow-300 dark:from-yellow-800 dark:via-yellow-700 dark:to-yellow-600', iconBg: 'bg-yellow-600 dark:bg-yellow-500' },
@@ -672,18 +725,52 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
     purple: { container: 'border-purple-400 dark:border-purple-500 bg-gradient-to-br from-purple-100 via-purple-200 to-purple-300 dark:from-purple-800 dark:via-purple-700 dark:to-purple-600', iconBg: 'bg-purple-600 dark:bg-purple-500' },
     orange: { container: 'border-orange-400 dark:border-orange-500 bg-gradient-to-br from-orange-100 via-orange-200 to-orange-300 dark:from-orange-800 dark:via-orange-700 dark:to-orange-600', iconBg: 'bg-orange-600 dark:bg-orange-500' },
   }
+  const [inventoryMode, setInventoryMode] = useState(() => {
+    try {
+      return typeof window !== 'undefined' ? (window.localStorage.getItem('inventoryMode') || 'Advanced') : 'Advanced'
+    } catch { return 'Advanced' }
+  })
+
+  // Listen for inventory mode changes from settings
+  useEffect(() => {
+    const handleInventoryModeChange = () => {
+      const newMode = window.localStorage.getItem('inventoryMode') || 'Advanced';
+      setInventoryMode(newMode);
+    };
+
+    window.addEventListener('storage', handleInventoryModeChange);
+    window.addEventListener('inventoryModeUpdated', handleInventoryModeChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleInventoryModeChange);
+      window.removeEventListener('inventoryModeUpdated', handleInventoryModeChange);
+    };
+  }, []);
+
+  // Expose toggle function for testing or settings page
+  useEffect(() => {
+    window.toggleInventoryMode = () => {
+        setInventoryMode(prev => {
+            const next = prev === 'Advanced' ? 'Simple' : 'Advanced';
+            window.localStorage.setItem('inventoryMode', next);
+            window.dispatchEvent(new Event('inventoryModeUpdated'));
+            return next;
+        });
+    }
+  }, []);
+
   const asideTone = isLight ? 'bg-gray-100 border-gray-200 text-gray-800' : 'bg-gray-900 border-gray-800 text-gray-100'
   const baseLink = isLight
-    ? 'group flex items-center gap-3 px-4 py-1.5 rounded-md text-gray-700 hover:bg-blue-50 transition overflow-hidden'
-    : 'group flex items-center gap-3 px-4 py-1.5 rounded-md text-gray-200 hover:bg-gray-800 transition overflow-hidden'
+    ? 'group flex items-center gap-3 px-4 py-2.5 rounded-md text-gray-700 hover:bg-blue-50 transition overflow-hidden'
+    : 'group flex items-center gap-3 px-4 py-2.5 rounded-md text-gray-200 hover:bg-gray-800 transition overflow-hidden'
   const iconContainer = 'flex-shrink-0 nova-icon flex items-center justify-center'
   const activeLink = isLight
-    ? `bg-blue-100 text-blue-700 ${isRTL ? 'active-link-indicator' : 'border-l-4'} border-blue-500 font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]`
-    : `bg-gray-800 text-blue-400 ${isRTL ? 'active-link-indicator' : 'border-l-4'} border-blue-500 font-medium`
+    ? `bg-blue-100 text-blue-700 ${isRTL ? 'active-link-indicator' : 'border-l-4'} border-blue-500 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]`
+    : `bg-gray-800 text-blue-400 ${isRTL ? 'active-link-indicator' : 'border-l-4'} border-blue-500 font-bold`
   const iconTone = isLight ? 'text-gray-500 group-hover:text-blue-600' : 'text-gray-400 group-hover:text-blue-400'
   const backLabel = langCode.startsWith('ar') ? 'رجوع' : 'Back'
 
-  const items = [
+  const _items = [
     { to: '/', key: 'Dashboard' },
     { to: '/leads', key: 'Lead Management' },
     // Inventory & Marketing will be rendered as sections below
@@ -695,20 +782,38 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
     // Contact us is rendered separately at the bottom
   ]
 
-  const inventoryChildren = [
-    { to: '/inventory/warehouse', key: 'Warehouse' },
-    { to: '/inventory/suppliers', key: 'Suppliers' },
-    { to: '/inventory/categories', key: 'Categories' },
-    { to: '/inventory/products', key: 'Products' },
-    { to: '/inventory/items', key: 'Items' },
-    { to: '/inventory/stock-management', key: 'Stock Management' },
-    { to: '/inventory/transactions', key: 'Transactions' },
-    { to: '/inventory/developers', key: 'Developers' },
-    { to: '/inventory/brokers', key: 'Brokers' },
-    { to: '/inventory/projects', key: 'Projects' },
-    { to: '/inventory/properties', key: 'Properties' },
-    { to: '/inventory/requests', key: 'Requests' },
-  ]
+  const inventoryChildren = useMemo(() => {
+    const isSimple = (inventoryMode || '').toLowerCase() === 'simple';
+    return [
+      { 
+        key: 'General Inventory', 
+        isSection: true,
+        children: [
+          ...(isSimple ? [] : [{ to: '/inventory/families', key: 'Families' }]),
+          { to: '/inventory/categories', key: 'Categories' },
+          ...(isSimple ? [] : [{ to: '/inventory/groups', key: 'Groups' }]),
+          { to: '/inventory/brands', key: 'Brands' },
+          { to: '/inventory/items', key: 'Items' },
+          { to: '/inventory/price-books', key: 'Price Books' },
+          { to: '/inventory/suppliers', key: 'Suppliers' },
+          { to: '/inventory/requests', key: 'Requests (General)' },
+        ]
+      },
+      { 
+        key: 'Real Estate Inventory', 
+        isSection: true,
+        children: [
+          { to: '/inventory/projects', key: 'Projects' },
+          { to: '/inventory/buildings', key: 'Buildings' },
+          { to: '/inventory/properties', key: 'Properties' },
+          { to: '/inventory/real-estate-price-books', key: 'Price Books' },
+          { to: '/inventory/developers', key: 'Developers' },
+          { to: '/inventory/brokers', key: 'Brokers' },
+          { to: '/inventory/real-estate-requests', key: 'Requests (Real Estate)' },
+        ]
+      },
+    ]
+  }, [inventoryMode]);
 
   const marketingChildren = [
     { to: '/marketing', key: 'Dashboard' },
@@ -732,9 +837,11 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
     <aside 
       id="app-sidebar"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className={`nova-sidebar group fixed inset-y-0 z-[130] md:z-[100] p-4 ${asideTone} flex flex-col h-full relative overflow-x-hidden overflow-y-hidden ${
-        isRTL ? 'right-0 border-l' : 'left-0 border-r'
-      } ${isOpen ? 'sidebar-open' : ''} ${className || ''}`}
+      className={`nova-sidebar group fixed inset-y-0 z-[130] md:z-[100] ${isCollapsed ? 'px-0' : 'px-4'} py-4 ${asideTone} flex flex-col h-full relative ${isCollapsed ? 'overflow-visible' : 'overflow-x-hidden overflow-y-hidden'} transition-all duration-300 ease-in-out ${
+        isCollapsed ? 'w-0' : 'w-[280px]'
+      } ${
+        isRTL ? 'right-0' : 'left-0'
+      } ${isCollapsed ? '' : (isRTL ? 'border-l' : 'border-r')} ${isOpen ? 'sidebar-open' : ''} ${className || ''}`}
     >
       <button
         type="button"
@@ -745,24 +852,34 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
         <RiCloseLine className={`${isLight ? 'text-gray-900' : 'text-white'} text-2xl`} />
       </button>
       
+      {/* Styles for collapsed state */}
+      {isCollapsed && (
+        <style>{`
+          .link-label { display: none !important; }
+          .nova-badge { display: none !important; }
+          .close-btn span { display: none !important; }
+        `}</style>
+      )}
+
+
 
       {/* Logo and company name */}
         <button
           type="button"
           aria-label={t('Dashboard')}
           onClick={() => navigate('/dashboard')}
-          className="logo-brand flex items-center gap-1 mb-1 mt-0 cursor-pointer"
+          className={`logo-brand flex items-center gap-1 mb-1 mt-0 cursor-pointer ${isCollapsed ? 'hidden' : ''}`}
         >
           <img src={logo} alt="Be Souhola" className="w-11 h-11 flex-shrink-0" style={{ backgroundColor: 'transparent' }} />
-          <div className="flex flex-col leading-tight min-w-0">
+          <div className={`flex flex-col leading-tight min-w-0 transition-opacity duration-200 ${isCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
             <span className={`sidebar-label whitespace-nowrap hidden md:block ${isLight ? 'text-[11px] text-[#0b2b4f]' : 'text-[10px] text-white'}`}>Make everything...</span>
             <span className="sidebar-label font-semibold text-base truncate bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent drop-shadow-sm">Be Souhola</span>
           </div>
         </button>
       {/* Spacer below brand to push menu down */}
-        <div className="sidebar-brand-spacer h-2"></div>
+        <div className={`sidebar-brand-spacer h-2 ${isCollapsed ? 'hidden' : ''}`}></div>
       
-        <nav ref={navRef} className={`flex-1 pt-2 md:pt-3 overflow-y-auto overflow-x-hidden mt-0 pb-3 ${inventoryOpen ? 'inventory-open' : ''}`}>
+        <nav ref={navRef} className={`flex-1 pt-2 md:pt-3 overflow-y-auto overflow-x-hidden mt-0 pb-3 ${inventoryOpen ? 'inventory-open' : ''} ${isCollapsed ? 'hidden' : ''}`}>
         {/* Dashboard */}
         {!isSectionViewOpen && !isMarketingActive && !isCoreReportsActive && (
           <NavLink
@@ -798,7 +915,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
               to="/leads"
               end
               onClick={() => setLeadMgmtOpen(true)}
-              className={({ isActive }) => `${baseLink} w-full justify-between`}
+              className={() => `${baseLink} w-full justify-between`}
             >
               <span className="nova-icon-label">
                 <span className={`${iconContainer} ${iconTone}`}>{getIcon('Lead Management')}</span>
@@ -877,7 +994,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                     <NavLink
                       key={`fixed-stage-${idx}-${s.key}`}
                       to={toUrl}
-                      className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-10' : '!pl-10'} ${highlight}`}
+                      className={() => `${baseLink} ${isRTL ? '!pr-10' : '!pl-10'} ${highlight}`}
                     >
                       <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>{s.icon}</span><span className="text-[15px] link-label">{t(s.key)}</span></span>
                     </NavLink>
@@ -937,12 +1054,36 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
 
           <div
             className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
-            style={{ maxHeight: inventoryOpen ? '480px' : '0', overflow: 'hidden', opacity: inventoryOpen ? 1 : 0 }}
+            style={{ maxHeight: inventoryOpen ? '1000px' : '0', overflow: 'hidden', opacity: inventoryOpen ? 1 : 0 }}
           >
             {/** extra indent for all sub items */}
             {/** note: keeping baseLink styles while adding side-specific padding */}
             {/** subLinkIndent applied below per direction */}
-            {inventoryChildren.map(child => (
+            {inventoryChildren.map(child => {
+              if (child.isSection) {
+                return (
+                  <div key={child.key} className="mt-2 mb-1">
+                    <div className={`px-4 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+                      {t(child.key)}
+                    </div>
+                    {child.children.map(subChild => (
+                      <NavLink
+                        key={subChild.to}
+                        to={subChild.to}
+                        className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-4' : '!pl-4'} ${isActive ? activeLink : ''}`}
+                      >
+                        <span className="nova-icon-label">
+                          <span className={`${iconContainer} ${iconTone}`}>
+                            {getInventoryItemIcon(subChild.key)}
+                          </span>
+                          <span className="text-[15px] link-label">{t(subChild.key)}</span>
+                        </span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )
+              }
+              return (
               <NavLink
                 key={child.to}
                 to={child.to}
@@ -955,7 +1096,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                   <span className="text-[15px] link-label">{t(child.key)}</span>
                 </span>
               </NavLink>
-            ))}
+            )})}
           </div>
         </div>
         )}
@@ -1412,7 +1553,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                   setCustomersOpen(false)
                   setReportsOpen(false)
                 }}
-                className={({ isActive }) => `${baseLink} group/settings w-full justify-between ${isSettingsActive ? 'active-parent' : ''} bg-indigo-50 dark:bg-gray-800 border border-indigo-200 dark:border-gray-700`}
+                className={() => `${baseLink} group/settings w-full justify-between ${isSettingsActive ? 'active-parent' : ''} bg-indigo-50 dark:bg-gray-800 border border-indigo-200 dark:border-gray-700`}
               >
                 <span className="nova-icon-label">
                   <span className={`${iconContainer} ${iconTone}`}>{getIcon('Settings')}</span>
@@ -1743,7 +1884,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
       )}
 
       {/* Bottom Contact us section */}
-      <div className="mt-auto pt-2 w-full">
+      <div className={`mt-auto pt-2 w-full ${isCollapsed ? 'hidden' : ''}`}>
         <div className={`border-t ${isLight ? 'border-gray-200' : 'border-gray-800'} mb-3`}></div>
         <NavLink
           to="/contact"

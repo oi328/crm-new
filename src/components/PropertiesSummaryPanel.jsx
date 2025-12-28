@@ -12,12 +12,13 @@ export default function PropertiesSummaryPanel({ stats, isRTL, onFilter }) {
   )
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       <Item tone="tinted-blue" label={isRTL ? 'إجمالي العقارات' : 'Total Properties'} value={stats.total} filter={{type: 'all'}} />
-      <Item tone="tinted-indigo" label={isRTL ? 'إجمالي الوحدات' : 'Total Units'} value={stats.totalUnits} />
-      <Item tone="tinted-emerald" label={isRTL ? 'المباعة' : 'Sold'} value={stats.sold} filter={{type: 'status', value: 'Sold'}} />
       <Item tone="tinted-amber" label={isRTL ? 'المتاحة' : 'Available'} value={stats.available} filter={{type: 'status', value: 'Available'}} />
       <Item tone="tinted-violet" label={isRTL ? 'الحجوزات' : 'Reserved'} value={stats.reserved} filter={{type: 'status', value: 'Reserved'}} />
+      <Item tone="tinted-emerald" label={isRTL ? 'المباعة' : 'Sold'} value={stats.sold} filter={{type: 'status', value: 'Sold'}} />
+      <Item tone="tinted-orange" label={isRTL ? 'إعادة بيع' : 'Resale'} value={stats.resale} filter={{type: 'status', value: 'Resale'}} />
+      <Item tone="tinted-cyan" label={isRTL ? 'إيجار' : 'Rent'} value={stats.rent} filter={{type: 'status', value: 'Rent'}} />
     </div>
   )
 }
