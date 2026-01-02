@@ -29,6 +29,10 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
     proposalDiscount: '',
     proposalValidityDays: '',
     proposalAttachmentUrl: '',
+    reservationType: 'project',
+    reservationCategory: '',
+    reservationItem: '',
+    reservationNotes: '',
     reservationProject: '',
     reservationUnit: '',
     reservationAmount: '',
@@ -88,6 +92,32 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
     { value: 'unit_303', label: 'Unit 303' }
   ];
 
+  const reservationTypes = [
+    { value: 'project', label: isArabic ? 'مشروع' : 'Project' },
+    { value: 'general', label: isArabic ? 'عام' : 'General' }
+  ];
+
+  const categoryOptions = [
+    { value: 'product', label: isArabic ? 'منتج' : 'Product' },
+    { value: 'service', label: isArabic ? 'خدمة' : 'Service' },
+    { value: 'subscription', label: isArabic ? 'اشتراك' : 'Subscription' }
+  ];
+
+  const itemOptions = [
+    { value: 'item_1', label: isArabic ? 'عنصر 1' : 'Item 1', price: 1000 },
+    { value: 'item_2', label: isArabic ? 'عنصر 2' : 'Item 2', price: 2000 },
+    { value: 'item_3', label: isArabic ? 'عنصر 3' : 'Item 3', price: 3000 }
+  ];
+
+  useEffect(() => {
+    if (actionData.reservationType === 'general' && actionData.reservationItem) {
+      const selectedItem = itemOptions.find(item => item.value === actionData.reservationItem);
+      if (selectedItem) {
+        setActionData(prev => ({ ...prev, reservationAmount: selectedItem.price }));
+      }
+    }
+  }, [actionData.reservationItem, actionData.reservationType]);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setActionData(prev => ({
@@ -134,8 +164,24 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Clean up data based on reservation type to avoid confusion
+    const cleanedData = { ...actionData };
+    if (cleanedData.nextAction === 'reservation') {
+      if (cleanedData.reservationType === 'general') {
+        // If General, remove Project/Unit fields
+        cleanedData.reservationProject = '';
+        cleanedData.reservationUnit = '';
+      } else {
+        // If Project (default), remove General fields
+        cleanedData.reservationCategory = '';
+        cleanedData.reservationItem = '';
+        cleanedData.reservationType = 'project'; // Ensure type is explicit
+      }
+    }
+
     const newAction = {
-      ...actionData,
+      ...cleanedData,
       type: actionData.actionType,
       id: Date.now(),
       leadId: lead?.id,
@@ -168,6 +214,10 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
       proposalDiscount: '',
       proposalValidityDays: '',
       proposalAttachmentUrl: '',
+      reservationType: 'project',
+      reservationCategory: '',
+      reservationItem: '',
+      reservationNotes: '',
       reservationProject: '',
       reservationUnit: '',
       reservationAmount: '',
@@ -382,43 +432,118 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
 
           {/* Reservation fields */}
           {actionData.nextAction === 'reservation' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              {/* Type Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'المشروع' : 'Project'}</label>
+                <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'النوع' : 'Type'}</label>
                 <div className="relative">
                   <select
-                    name="reservationProject"
-                    value={actionData.reservationProject}
+                    name="reservationType"
+                    value={actionData.reservationType}
                     onChange={handleInputChange}
                     className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
                   >
-                    {projectOptions.map((opt) => (
+                    {reservationTypes.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
                   <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'الوحدة' : 'Unit'}</label>
-                <div className="relative">
-                  <select
-                    name="reservationUnit"
-                    value={actionData.reservationUnit}
-                    onChange={handleInputChange}
-                    className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
-                  >
-                    {unitOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+
+              {actionData.reservationType === 'project' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'العميل' : 'Customer'}</label>
+                    <input type="text" value={lead?.name || ''} disabled className={`${isLight ? 'w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-slate-500' : 'w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-gray-400'}`} />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'المشروع' : 'Project'}</label>
+                    <div className="relative">
+                      <select
+                        name="reservationProject"
+                        value={actionData.reservationProject}
+                        onChange={handleInputChange}
+                        className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                      >
+                        {projectOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'الوحدة' : 'Unit'}</label>
+                    <div className="relative">
+                      <select
+                        name="reservationUnit"
+                        value={actionData.reservationUnit}
+                        onChange={handleInputChange}
+                        className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                      >
+                        {unitOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'قيمة الحجز' : 'Reservation Amount'}</label>
+                    <input name="reservationAmount" type="number" value={actionData.reservationAmount} onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'قيمة الحجز' : 'Reservation Amount'}</label>
-                <input name="reservationAmount" type="number" value={actionData.reservationAmount} onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
-              </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'العميل' : 'Customer'}</label>
+                    <input type="text" value={lead?.name || ''} disabled className={`${isLight ? 'w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-slate-500' : 'w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-gray-400'}`} />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'الفئة' : 'Category'}</label>
+                    <div className="relative">
+                      <select
+                        name="reservationCategory"
+                        value={actionData.reservationCategory}
+                        onChange={handleInputChange}
+                        className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                      >
+                         <option value="">{isArabic ? 'اختر' : 'Select'}</option>
+                        {categoryOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'العنصر' : 'Item'}</label>
+                    <div className="relative">
+                      <select
+                        name="reservationItem"
+                        value={actionData.reservationItem}
+                        onChange={handleInputChange}
+                        className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                      >
+                         <option value="">{isArabic ? 'اختر' : 'Select'}</option>
+                        {itemOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'القيمة' : 'Amount'}</label>
+                    <input name="reservationAmount" type="number" value={actionData.reservationAmount} onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'ملاحظات' : 'Notes'}</label>
+                    <textarea name="reservationNotes" value={actionData.reservationNotes} onChange={handleInputChange} rows="2" className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'} resize-none`} />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

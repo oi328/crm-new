@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FaTimes, FaTrash, FaFilter, FaSearch, FaChevronDown } from 'react-icons/fa'
+import { FaTimes, FaTrash, FaFilter, FaSearch, FaChevronDown, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import SearchableSelect from '../components/SearchableSelect'
 
 const MOCK_RECORDS = [
@@ -116,6 +116,10 @@ export default function StockManagement() {
     categoryName: '',
     categoryType: ''
   })
+
+  // Pagination
+  const [page, setPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(5)
 
   // Load
   useEffect(() => {
@@ -261,6 +265,20 @@ export default function StockManagement() {
       return true
     })
   }, [records, filters, items, products, warehouses, suppliers, categories])
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginated = useMemo(() => {
+    const start = (page - 1) * itemsPerPage
+    return filtered.slice(start, start + itemsPerPage)
+  }, [filtered, page, itemsPerPage])
+
+  useEffect(() => {
+    setPage(1)
+  }, [filtered, itemsPerPage])
+
+  const goPrevPage = () => setPage(p => Math.max(1, p - 1))
+  const goNextPage = () => setPage(p => Math.min(totalPages, p + 1))
 
   function clearFilters() {
     setFilters({
@@ -435,7 +453,7 @@ export default function StockManagement() {
         {/* Records List */}
         <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
           <h2 className="text-xl font-medium mb-4">{labels.listTitle}</h2>
-          {records.length === 0 ? (
+          {paginated.length === 0 ? (
             <p className="text-sm text-[var(--muted-text)]">{labels.empty}</p>
           ) : (
             <div className="overflow-x-auto">
@@ -453,7 +471,7 @@ export default function StockManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((rec) => {
+                  {paginated.map((rec) => {
                     const effective = (rec.qtyAvailable || 0) - (rec.qtyReserved || 0)
                     const low = effective <= (rec.minAlert || 0)
                     return (
@@ -487,6 +505,48 @@ export default function StockManagement() {
               </table>
             </div>
           )}
+
+          {/* Pagination Footer */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-2 text-sm text-[var(--muted-text)]">
+            <div className="flex items-center gap-2">
+              <span>{isArabic ? 'عرض' : 'Showing'}</span>
+              <select 
+                value={itemsPerPage} 
+                onChange={(e) => setItemsPerPage(Number(e.target.value))} 
+                className="select select-bordered select-xs w-16"
+              >
+                <option>5</option>
+                <option>10</option>
+                <option>20</option>
+                <option>50</option>
+              </select>
+              <span>{isArabic ? 'من' : 'of'} {filtered.length} {isArabic ? 'عنصر' : 'entries'}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+               <span className="text-xs">
+                {isArabic ? 'صفحة' : 'Page'} {page} {isArabic ? 'من' : 'of'} {totalPages}
+              </span>
+              <div className="join">
+                <button 
+                  className="join-item btn btn-sm btn-ghost" 
+                  onClick={goPrevPage} 
+                  disabled={page <= 1}
+                  title={isArabic ? 'السابق' : 'Prev'}
+                >
+                  <FaChevronLeft className={isArabic ? 'scale-x-[-1]' : ''} />
+                </button>
+                <button 
+                  className="join-item btn btn-sm btn-ghost" 
+                  onClick={goNextPage} 
+                  disabled={page >= totalPages}
+                  title={isArabic ? 'التالي' : 'Next'}
+                >
+                  <FaChevronRight className={isArabic ? 'scale-x-[-1]' : ''} />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaUserTie, FaTruck, FaFilter, FaThList, FaThLarge, FaTimes, FaPhone, FaMapMarkerAlt, FaGlobe } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaUserTie, FaTruck, FaFilter, FaThList, FaThLarge, FaTimes, FaPhone, FaMapMarkerAlt, FaGlobe, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 
 const STORAGE_KEY = 'inventoryThirdParties';
@@ -98,6 +98,25 @@ export default function ThirdParties() {
       return matchesSearch && matchesType;
     });
   }, [parties, filters]);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(6)
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filters, itemsPerPage])
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredParties.length / itemsPerPage)
+  const paginatedParties = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return filteredParties.slice(start, start + itemsPerPage)
+  }, [filteredParties, currentPage, itemsPerPage])
+
+  const shownFrom = (filteredParties.length === 0) ? 0 : (currentPage - 1) * itemsPerPage + 1
+  const shownTo = Math.min(currentPage * itemsPerPage, filteredParties.length)
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -234,7 +253,7 @@ export default function ThirdParties() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredParties.map((party) => (
+                        {paginatedParties.map((party) => (
                             <tr key={party.id}>
                                 <td className="px-3">
                                     <div className="flex items-center gap-3">
@@ -269,7 +288,7 @@ export default function ThirdParties() {
         ) : (
             /* Grid View */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredParties.map(party => (
+                {paginatedParties.map(party => (
                     <div key={party.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-md transition-shadow relative group">
                         <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-3">
@@ -311,6 +330,52 @@ export default function ThirdParties() {
                     </div>
                 ))}
             </div>
+        )}
+
+        {/* Pagination Footer */}
+        {filteredParties.length > 0 && (
+          <div className="mt-2 flex items-center justify-between rounded-xl p-2 glass-panel">
+            <div className="text-xs text-[var(--muted-text)]">
+              {isRTL 
+                ? `عرض ${shownFrom}–${shownTo} من ${filteredParties.length}`
+                : `Showing ${shownFrom}–${shownTo} of ${filteredParties.length}`
+              }
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  title={isRTL ? 'السابق' : 'Prev'}
+                >
+                  <FaChevronLeft className={isRTL ? 'scale-x-[-1]' : ''} size={14} />
+                </button>
+                <span className="text-sm">{isRTL ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  title={isRTL ? 'التالي' : 'Next'}
+                >
+                  <FaChevronRight className={isRTL ? 'scale-x-[-1]' : ''} size={14} />
+                </button>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-[var(--muted-text)]">{isRTL ? 'لكل صفحة:' : 'Per page:'}</span>
+                <select
+                  className="input w-24 text-sm h-8 min-h-0"
+                  value={itemsPerPage}
+                  onChange={e => setItemsPerPage(Number(e.target.value))}
+                >
+                  <option value={6}>6</option>
+                  <option value={12}>12</option>
+                  <option value={24}>24</option>
+                  <option value={48}>48</option>
+                </select>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 

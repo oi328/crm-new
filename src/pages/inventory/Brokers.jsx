@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Search, Edit2, Trash2, X, Users, Phone, Mail, Percent, Building2, Filter, ChevronDown } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Users, Phone, Mail, Percent, Building2, Filter, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FaFilter, FaShareAlt, FaEllipsisV, FaPlus, FaMapMarkerAlt, FaBuilding, FaTimes, FaEye, FaEdit, FaTrash, FaUpload, FaSearch, FaChevronDown, FaChevronUp, FaImage, FaFilePdf, FaVideo, FaPaperclip, FaTags, FaCity, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaDownload, FaFileExcel } from 'react-icons/fa'
 
 export default function Brokers() {
   const { i18n } = useTranslation();
@@ -119,6 +120,25 @@ export default function Brokers() {
     });
   }, [brokers, filters]);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, itemsPerPage]);
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredBrokers.length / itemsPerPage);
+  const paginatedBrokers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredBrokers.slice(start, start + itemsPerPage);
+  }, [filteredBrokers, currentPage, itemsPerPage]);
+
+  const shownFrom = (filteredBrokers.length === 0) ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const shownTo = Math.min(currentPage * itemsPerPage, filteredBrokers.length);
+
   const clearFilters = () => {
     setFilters({
       search: '',
@@ -143,10 +163,12 @@ export default function Brokers() {
         </div>
         <button
           onClick={() => { resetForm(); setShowForm(true); }}
-          className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center gap-2"
+          className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none flex items-center gap-2"
         >
-          <Plus size={16} />
-          <span>{isArabic ? 'إضافة وسيط' : 'Add Broker'}</span>
+
+        <span className="inline-flex items-center gap-2">
+             <FaPlus /> {isArabic ? 'إضافة وسيط' : 'Add Broker'}
+        </span>
         </button>
       </div>
 
@@ -157,12 +179,9 @@ export default function Brokers() {
             <Filter className="text-blue-500" size={16} /> {isArabic ? 'تصفية' : 'Filter'}
           </h2>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowAllFilters(prev => !prev)} className="btn btn-glass btn-compact text-blue-600 flex items-center gap-1">
-              {showAllFilters ? (isArabic ? 'إخفاء' : 'Hide') : (isArabic ? 'إظهار' : 'Show')} 
-              <ChevronDown size={14} className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
-            </button>
-            <button onClick={clearFilters} className="btn btn-glass btn-compact text-[var(--muted-text)] hover:text-red-500">
-              {isArabic ? 'مسح المرشحات' : 'Clear Filters'}
+
+            <button onClick={clearFilters} className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+              {isArabic ? 'إعادة تعيين' : 'Reset'}
             </button>
           </div>
         </div>
@@ -220,7 +239,7 @@ export default function Brokers() {
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredBrokers.map(broker => (
+        {paginatedBrokers.map(broker => (
           <div key={broker.id} className="glass-panel rounded-xl p-6 hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-4">
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -285,6 +304,52 @@ export default function Brokers() {
           </div>
         ))}
       </div>
+
+      {/* Pagination Footer */}
+      {filteredBrokers.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center justify-between rounded-xl p-2 glass-panel gap-4">
+          <div className="text-xs text-[var(--muted-text)]">
+            {isArabic 
+              ? `عرض ${shownFrom}–${shownTo} من ${filteredBrokers.length}`
+              : `Showing ${shownFrom}–${shownTo} of ${filteredBrokers.length}`
+            }
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                title={isArabic ? 'السابق' : 'Prev'}
+              >
+                <FaChevronLeft className={isArabic ? 'scale-x-[-1]' : ''} />
+              </button>
+              <span className="text-sm whitespace-nowrap">{isArabic ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                title={isArabic ? 'التالي' : 'Next'}
+              >
+                <FaChevronRight className={isArabic ? 'scale-x-[-1]' : ''} />
+              </button>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-[var(--muted-text)] whitespace-nowrap">{isArabic ? 'لكل صفحة:' : 'Per page:'}</span>
+              <select
+                className="input w-16 text-sm py-0 px-2 h-8"
+                value={itemsPerPage}
+                onChange={e => setItemsPerPage(Number(e.target.value))}
+              >
+                <option value={6}>6</option>
+                <option value={12}>12</option>
+                <option value={24}>24</option>
+                <option value={48}>48</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {showForm && (

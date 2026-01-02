@@ -6,6 +6,8 @@ import PropertyCard from '../components/PropertyCard'
 import PropertiesSummaryPanel from '../components/PropertiesSummaryPanel'
 import ImportPropertiesModal from '../components/ImportPropertiesModal'
 import CreatePropertyModal from '../components/CreatePropertyModal'
+import { projectsData } from '../data/projectsData'
+import { useCompanySetup } from './settings/company-setup/store/CompanySetupContext.jsx'
 
 // Range Slider Component
 const RangeSlider = ({ min, max, value, onChange, label, isRTL, unit = '' }) => {
@@ -115,6 +117,7 @@ const RangeSlider = ({ min, max, value, onChange, label, isRTL, unit = '' }) => 
 export default function Properties() {
   const { i18n } = useTranslation()
   const isRTL = String(i18n.language || '').startsWith('ar')
+  const { companySetup } = useCompanySetup()
   useEffect(() => {
     try { document.documentElement.dir = isRTL ? 'rtl' : 'ltr' } catch {}
   }, [isRTL])
@@ -133,11 +136,16 @@ export default function Properties() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) {
-        setProperties(JSON.parse(raw))
+        const data = JSON.parse(raw).map(p => ({...p, purpose: p.purpose || (['Resale', 'Rent'].includes(p.status) ? p.status : 'Primary')}))
+        setProperties(data)
       } else {
-        setProperties(SAMPLE_PROPERTIES)
+        const data = SAMPLE_PROPERTIES.map(p => ({...p, purpose: p.purpose || (['Resale', 'Rent'].includes(p.status) ? p.status : 'Primary')}))
+        setProperties(data)
       }
-    } catch { setProperties(SAMPLE_PROPERTIES) }
+    } catch { 
+      const data = SAMPLE_PROPERTIES.map(p => ({...p, purpose: p.purpose || (['Resale', 'Rent'].includes(p.status) ? p.status : 'Primary')}))
+      setProperties(data) 
+    }
 
     // Load Buildings
     try {
@@ -151,6 +159,7 @@ export default function Properties() {
       if (raw) setThirdParties(JSON.parse(raw))
     } catch {}
   }, [])
+
 
   useEffect(() => {
     if (properties.length > 0) {
@@ -166,7 +175,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1200&auto=format&fit=crop',
       description: 'Prime apartments overlooking the Nile with modern amenities.', progress: 35, estimatedRevenue: 85000000,
       type: 'Apartment', createdBy: 'Admin', createdDate: '2025-01-10', paymentPlan: 'Standard',
-      rooms: 3, doors: 1
+      rooms: 3, floor: 1
     },
     {
       id: 2, name: 'Palm Villas', city: 'Giza', developer: 'Hima Dev', status: 'Reserved',
@@ -175,7 +184,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1505691728975-327f93beedb3?q=80&w=1200&auto=format&fit=crop',
       description: 'Luxury villas with private gardens and pools.', progress: 60, estimatedRevenue: 120000000,
       type: 'Villa', createdBy: 'Sales Agent', createdDate: '2025-02-15', paymentPlan: 'Premium',
-      rooms: 5, doors: 2
+      rooms: 5, floor: 2
     },
     {
       id: 3, name: 'Smart Offices', city: 'New Cairo', developer: 'TechBuild', status: 'Sold',
@@ -184,7 +193,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?q=80&w=1200&auto=format&fit=crop',
       description: 'Modern offices with smart building features.', progress: 100, estimatedRevenue: 48000000,
       type: 'Office', createdBy: 'Admin', createdDate: '2025-03-20', paymentPlan: 'Standard',
-      rooms: 2, doors: 1
+      rooms: 2, floor: 1
     },
     {
       id: 4, name: 'Marina Bay Apartments', city: 'Alexandria', developer: 'SeaSide Dev', status: 'Available',
@@ -193,7 +202,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1449844908441-774d237f3b16?q=80&w=1200&auto=format&fit=crop',
       description: 'Sea view apartments with premium facilities.', progress: 45, estimatedRevenue: 150000000,
       type: 'Apartment', createdBy: 'Manager', createdDate: '2025-04-05', paymentPlan: 'Flexible',
-      rooms: 2, doors: 1
+      rooms: 2, floor: 1
     },
     {
       id: 5, name: 'City Heights', city: 'Cairo', developer: 'Hima Dev', status: 'Resale',
@@ -202,7 +211,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop',
       description: 'Luxury apartment for resale in City Heights.', progress: 100, estimatedRevenue: 3500000,
       type: 'Apartment', createdBy: 'Agent 2', createdDate: '2025-05-12', paymentPlan: 'Cash',
-      rooms: 3, doors: 1
+      rooms: 3, floor: 1
     },
     {
       id: 6, name: 'Downtown Loft', city: 'Giza', developer: 'TechBuild', status: 'Rent',
@@ -211,7 +220,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1200&auto=format&fit=crop',
       description: 'Modern loft available for rent.', progress: 100, estimatedRevenue: 180000,
       type: 'Apartment', createdBy: 'Admin', createdDate: '2025-06-01', paymentPlan: 'Monthly',
-      rooms: 1, doors: 1
+      rooms: 1, floor: 1
     },
     {
       id: 7, name: 'Green Valley Villas', city: 'New Cairo', developer: 'Hima Dev', status: 'Available',
@@ -220,7 +229,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1600596542815-22b5c03295b6?q=80&w=1200&auto=format&fit=crop',
       description: 'Spacious villas in a green compound.', progress: 80, estimatedRevenue: 450000000,
       type: 'Villa', createdBy: 'Sales Agent', createdDate: '2025-07-10', paymentPlan: 'Premium',
-      rooms: 6, doors: 2
+      rooms: 6, floor: 2
     },
     {
       id: 8, name: 'Skyline Tower', city: 'Cairo', developer: 'TechBuild', status: 'Reserved',
@@ -229,7 +238,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1200&auto=format&fit=crop',
       description: 'High-rise apartments with city views.', progress: 55, estimatedRevenue: 330000000,
       type: 'Apartment', createdBy: 'Manager', createdDate: '2025-08-05', paymentPlan: 'Standard',
-      rooms: 2, doors: 1
+      rooms: 2, floor: 1
     },
     {
       id: 9, name: 'Seaside Resort', city: 'Alexandria', developer: 'SeaSide Dev', status: 'Sold',
@@ -238,7 +247,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=1200&auto=format&fit=crop',
       description: 'Cozy chalets by the sea.', progress: 100, estimatedRevenue: 120000000,
       type: 'Apartment', createdBy: 'Admin', createdDate: '2025-08-20', paymentPlan: 'Cash',
-      rooms: 1, doors: 1
+      rooms: 1, floor: 1
     },
     {
       id: 10, name: 'Tech Park Offices', city: 'New Cairo', developer: 'TechBuild', status: 'Available',
@@ -247,7 +256,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1200&auto=format&fit=crop',
       description: 'Premium office spaces in Tech Park.', progress: 90, estimatedRevenue: 90000000,
       type: 'Office', createdBy: 'Sales Agent', createdDate: '2025-09-01', paymentPlan: 'Flexible',
-      rooms: 3, doors: 1
+      rooms: 3, floor: 1
     },
     {
       id: 11, name: 'Garden City Apartment', city: 'Cairo', developer: 'Hima Dev', status: 'Rent',
@@ -256,7 +265,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?q=80&w=1200&auto=format&fit=crop',
       description: 'Historic apartment in Garden City.', progress: 100, estimatedRevenue: 300000,
       type: 'Apartment', createdBy: 'Agent 2', createdDate: '2025-09-15', paymentPlan: 'Monthly',
-      rooms: 4, doors: 2
+      rooms: 4, floor: 2
     },
     {
       id: 12, name: 'Pyramids View', city: 'Giza', developer: 'Hima Dev', status: 'Available',
@@ -265,7 +274,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1200&auto=format&fit=crop',
       description: 'Apartments with a direct view of the Pyramids.', progress: 20, estimatedRevenue: 280000000,
       type: 'Apartment', createdBy: 'Manager', createdDate: '2025-10-01', paymentPlan: 'Standard',
-      rooms: 3, doors: 1
+      rooms: 3, floor: 1
     },
     {
       id: 13, name: 'Mediterranean Villa', city: 'Alexandria', developer: 'SeaSide Dev', status: 'Resale',
@@ -274,7 +283,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?q=80&w=1200&auto=format&fit=crop',
       description: 'Exclusive villa on the Mediterranean coast.', progress: 100, estimatedRevenue: 12000000,
       type: 'Villa', createdBy: 'Admin', createdDate: '2025-10-10', paymentPlan: 'Cash',
-      rooms: 7, doors: 3
+      rooms: 7, floor: 3
     },
     {
       id: 14, name: 'Urban Loft', city: 'New Cairo', developer: 'TechBuild', status: 'Available',
@@ -283,7 +292,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1505693416388-502844569c43?q=80&w=1200&auto=format&fit=crop',
       description: 'Stylish lofts for young professionals.', progress: 60, estimatedRevenue: 38000000,
       type: 'Apartment', createdBy: 'Sales Agent', createdDate: '2025-10-20', paymentPlan: 'Flexible',
-      rooms: 2, doors: 1
+      rooms: 2, floor: 1
     },
     {
       id: 15, name: 'Corporate Hub', city: 'Cairo', developer: 'TechBuild', status: 'Reserved',
@@ -292,7 +301,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=1200&auto=format&fit=crop',
       description: 'Headquarters ready office spaces.', progress: 95, estimatedRevenue: 50000000,
       type: 'Office', createdBy: 'Manager', createdDate: '2025-11-01', paymentPlan: 'Premium',
-      rooms: 5, doors: 2
+      rooms: 5, floor: 2
     },
     {
       id: 16, name: 'Sunset Apartments', city: 'Giza', developer: 'Hima Dev', status: 'Available',
@@ -301,7 +310,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1484154218962-a1c002085d2f?q=80&w=1200&auto=format&fit=crop',
       description: 'Affordable apartments with sunset views.', progress: 40, estimatedRevenue: 160000000,
       type: 'Apartment', createdBy: 'Agent 2', createdDate: '2025-11-10', paymentPlan: 'Standard',
-      rooms: 2, doors: 1
+      rooms: 2, floor: 1
     },
     {
       id: 17, name: 'Royal Palace', city: 'New Cairo', developer: 'Hima Dev', status: 'Sold',
@@ -310,7 +319,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=1200&auto=format&fit=crop',
       description: 'Ultra-luxury palaces for the elite.', progress: 100, estimatedRevenue: 125000000,
       type: 'Villa', createdBy: 'Admin', createdDate: '2025-11-20', paymentPlan: 'Cash',
-      rooms: 10, doors: 4
+      rooms: 10, floor: 4
     },
     {
       id: 18, name: 'Blue Lagoon', city: 'Alexandria', developer: 'SeaSide Dev', status: 'Available',
@@ -319,7 +328,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1512918760513-95f69295d7eb?q=80&w=1200&auto=format&fit=crop',
       description: 'Apartments surrounding a large lagoon.', progress: 30, estimatedRevenue: 216000000,
       type: 'Apartment', createdBy: 'Sales Agent', createdDate: '2025-12-01', paymentPlan: 'Flexible',
-      rooms: 2, doors: 1
+      rooms: 2, floor: 1
     },
     {
       id: 19, name: 'Creative Studio', city: 'Cairo', developer: 'TechBuild', status: 'Rent',
@@ -328,7 +337,7 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1504384308090-c54be3855833?q=80&w=1200&auto=format&fit=crop',
       description: 'Small studios for creative work.', progress: 100, estimatedRevenue: 50000,
       type: 'Office', createdBy: 'Manager', createdDate: '2025-12-05', paymentPlan: 'Monthly',
-      rooms: 1, doors: 1
+      rooms: 1, floor: 1
     },
     {
       id: 20, name: 'Family Home', city: 'Giza', developer: 'Hima Dev', status: 'Available',
@@ -337,11 +346,67 @@ export default function Properties() {
       mainImage: 'https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?q=80&w=1200&auto=format&fit=crop',
       description: 'Perfect homes for growing families.', progress: 70, estimatedRevenue: 240000000,
       type: 'Apartment', createdBy: 'Agent 2', createdDate: '2025-12-10', paymentPlan: 'Standard',
-      rooms: 3, doors: 1
+      rooms: 3, floor: 1
+    },
+    {
+      id: 1001,
+      adTitle: 'Luxury Apartment – Nile View',
+      name: 'Nile View Prime Unit A-12',
+      city: 'Cairo',
+      developer: 'Be Souhola Dev',
+      status: 'Available',
+      units: 1,
+      unit: 'NV-A12',
+      area: 165,
+      totalArea: 165,
+      areaUnit: 'm²',
+      price: 4200000,
+      currency: 'EGP',
+      lastUpdated: '2025-12-31',
+      logo: 'https://dummyimage.com/120x120/1e40af/ffffff.png&text=BS',
+      mainImage: 'https://images.unsplash.com/photo-1512918760513-95f69295d7eb?q=80&w=1200&auto=format&fit=crop',
+      description: 'Fully finished luxury apartment with direct Nile view, high-end finishes, smart home features, and access to premium amenities.',
+      type: 'Apartment',
+      propertyType: 'Apartment',
+      createdBy: 'Admin',
+      createdDate: '2025-12-31',
+      paymentPlan: 'Standard',
+      rooms: 3,
+      bedrooms: 3,
+      bathrooms: 2,
+      floor: 12,
+      ownerMobile: '+201001234567',
+      contactName: 'Sales Team',
+      contactEmail: 'sales@example.com',
+      contactPhone: '+201001234567',
+      marketingPackage: 'Premium',
+      address: 'Corniche El Nile, Garden City, Cairo',
+      locationUrl: 'https://www.google.com/maps?q=30.0444,31.2357',
+      images: [
+        'https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1504384308090-c54be3855833?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop'
+      ],
+      floorPlans: [
+        'https://images.unsplash.com/photo-1505693416388-502844569c43?q=80&w=1200&auto=format&fit=crop',
+        'https://example.com/floorplan-a12.pdf'
+      ],
+      documents: [
+        'https://example.com/brochure-a12.pdf',
+        'https://example.com/specs-a12.pdf'
+      ],
+      videoUrl: 'https://cdn.example.com/videos/nile-view-a12.mp4',
+      virtualTourUrl: 'https://example.com/virtual-tour/nv-a12',
+      installmentPlans: [
+        { downPayment: '10%', years: 4, deliveryDate: '2026-06-01' },
+        { downPayment: '20%', years: 5, deliveryDate: '2026-12-01' }
+      ],
+      amenities: ['Central AC', 'Smart Home', 'Security 24/7', 'Underground Parking', 'Gym Access']
     }
   ], [])
 
-  const [showAllFilters, setShowAllFilters] = useState(true)
+  const [showAllFilters, setShowAllFilters] = useState(false)
   const [filters, setFilters] = useState({
     search: '',
     project: '',
@@ -360,7 +425,7 @@ export default function Properties() {
     createdDate: '',
     paymentPlan: '',
     room: '',
-    door: ''
+    floor: ''
   })
   
   const [showImportModal, setShowImportModal] = useState(false)
@@ -370,16 +435,16 @@ export default function Properties() {
   const [showExportMenu, setShowExportMenu] = useState(false)
 
   
-  const cities = ['Cairo','Giza','New Cairo','Alexandria']
-  const developers = ['Hima Dev','TechBuild','SeaSide Dev']
-  const types = ['Apartment','Villa','Office']
-  const allStatuses = ['Available','Reserved','Sold','Resale','Rent']
+  const cities = useMemo(() => Array.from(new Set([...projectsData.map(p => p.city), ...properties.map(p => p.city)].filter(Boolean))).sort(), [properties])
+  const developers = useMemo(() => Array.from(new Set([...projectsData.map(p => p.developer), ...properties.map(p => p.developer)].filter(Boolean))).sort(), [properties])
+  const types = useMemo(() => Array.from(new Set([...projectsData.map(p => p.category), ...properties.map(p => p.type)].filter(Boolean))).sort(), [properties])
+  const allStatuses = useMemo(() => Array.from(new Set([...projectsData.map(p => p.status), ...properties.map(p => p.status)].filter(Boolean))).sort(), [properties])
   const allPaymentPlans = useMemo(() => Array.from(new Set(properties.map(p => p.paymentPlan).filter(Boolean))).sort(), [properties])
   const allUnits = useMemo(() => Array.from(new Set(properties.map(p => p.unit).filter(Boolean))).sort(), [properties])
-  const allProjects = useMemo(() => Array.from(new Set(properties.map(p => p.name))).sort(), [properties])
+  const allProjects = useMemo(() => Array.from(new Set([...projectsData.map(p => p.name), ...properties.map(p => p.name)])).sort(), [properties])
   const allUsers = useMemo(() => Array.from(new Set(properties.map(p => p.createdBy).filter(Boolean))).sort(), [properties])
   const allRooms = useMemo(() => Array.from(new Set(properties.map(p => p.rooms).filter(Boolean))).sort((a,b)=>a-b), [properties])
-  const allDoors = useMemo(() => Array.from(new Set(properties.map(p => p.doors).filter(Boolean))).sort((a,b)=>a-b), [properties])
+  const allfloor = useMemo(() => Array.from(new Set(properties.map(p => p.floor).filter(Boolean))).sort((a,b)=>a-b), [properties])
   
   const allBuildings = useMemo(() => buildings.map(b => b.name), [buildings])
   const allOwners = useMemo(() => thirdParties.filter(t => t.type === 'Owner').map(t => t.name), [thirdParties])
@@ -432,8 +497,8 @@ export default function Properties() {
       // 12. Rooms
       if (filters.room && p.rooms !== Number(filters.room)) return false
       
-      // 13. Doors
-      if (filters.door && p.doors !== Number(filters.door)) return false
+      // 13. floor
+      if (filters.floor && p.floor !== Number(filters.floor)) return false
 
       return true
     })
@@ -470,7 +535,7 @@ export default function Properties() {
       createdDate: '',
       paymentPlan: '',
       room: '',
-      door: ''
+      floor: ''
     })
   }
 
@@ -498,7 +563,7 @@ export default function Properties() {
     filter: isRTL ? 'تصفية' : 'Filter',
     importProperties: isRTL ? 'استيراد' : 'Import',
     createProperty: isRTL ? 'إضافة عقار' : 'Add Property',
-    clearFilters: isRTL ? 'مسح الفلاتر' : 'Clear Filters',
+    clearFilters: isRTL ? 'اعادة التعيين' : 'Reset',
     exportCSV: isRTL ? 'تصدير CSV' : 'Export CSV',
     exportPDF: isRTL ? 'تصدير PDF' : 'Export PDF',
     projects: isRTL ? 'المشاريع' : 'Projects',
@@ -515,7 +580,7 @@ export default function Properties() {
     createdBy: isRTL ? 'بواسطة' : 'Created By',
     createdDate: isRTL ? 'تاريخ الإنشاء' : 'Created Date',
     room: isRTL ? 'الغرف' : 'Rooms',
-    door: isRTL ? 'الأبواب' : 'Doors',
+    floor: isRTL ? 'الدور' : 'Floor',
   }
 
   const exportCSV = () => {
@@ -541,28 +606,48 @@ export default function Properties() {
     doc.save('properties.pdf')
   }
 
-  const perPage = 6
   const [page, setPage] = useState(1)
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
-  const paged = useMemo(()=> filtered.slice((page-1)*perPage, page*perPage), [filtered, page])
+  const [pageSize, setPageSize] = useState(6)
+
+  useEffect(() => {
+    setPage(1)
+  }, [filtered, pageSize])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const paged = useMemo(()=> filtered.slice((page-1)*pageSize, page*pageSize), [filtered, page, pageSize])
+
+  const goPrevPage = () => setPage(p => Math.max(1, p - 1))
+  const goNextPage = () => setPage(p => Math.min(totalPages, p + 1))
+
+  const shownFrom = useMemo(() => (filtered.length === 0 ? 0 : (page - 1) * pageSize + 1), [page, pageSize, filtered.length])
+  const shownTo = useMemo(() => Math.min(page * pageSize, filtered.length), [page, pageSize, filtered.length])
 
   return (
     <div className="p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-x-hidden min-w-0">
         <div className="glass-panel rounded-xl p-4 mb-4 relative z-20">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <div className="relative flex flex-col items-start gap-1">
-              <h1 className="page-title text-2xl font-bold text-start">{Label.title}</h1>
-              <span
-                aria-hidden="true"
-                className="inline-block h-[2px] w-full rounded bg-gradient-to-r from-blue-500 to-purple-600"
-              />
+            <div className="flex items-center gap-3">
+              <div className="relative flex flex-col items-start gap-1">
+                <h1 className="page-title text-2xl font-bold text-start">{Label.title}</h1>
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-[2px] w-full rounded bg-gradient-to-r from-blue-500 to-purple-600"
+                />
+              </div>
+              {/* Mobile Pagination */}
+            
             </div>
-            <div className={`flex items-center gap-2 flex-wrap`}>
+
+            <div className="flex items-center gap-2">
+              {/* Mobile Add Button */}
+              
+              
               <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none" onClick={()=>setShowImportModal(true)}>
                 {Label.importProperties}
               </button>
-              <button className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none" onClick={()=>{ setIsEdit(false); setShowCreateModal(true) }}>
+              {/* Desktop Add Button */}
+              <button className="hidden md:inline-flex btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none" onClick={()=>{ setIsEdit(false); setShowCreateModal(true) }}>
                 <span className="inline-flex items-center gap-2">
                 <FaPlus /> {Label.createProperty}
                 </span>
@@ -613,16 +698,18 @@ export default function Properties() {
                 <FaFilter className="text-blue-500" /> {Label.filter}
               </h2>
               <div className="flex items-center gap-2">
-                <button onClick={() => setShowAllFilters(prev => !prev)} className="btn btn-sm btn-ghost text-blue-600">
-                  {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'إظهار' : 'Show')} <FaChevronDown className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
+                <button onClick={() => setShowAllFilters(prev => !prev)} className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+                  {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')}
+                  <FaChevronDown size={10} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
                 </button>
-                <button onClick={clearFilters} className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none">
+                <button onClick={clearFilters} className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                   {Label.clearFilters}
                 </button>
               </div>
             </div>
 
-            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 transition-all duration-300 overflow-hidden ${showAllFilters ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            {/* First Row (Always Visible) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-3">
                 {/* 1. Search */}
                 <div className="space-y-1">
                    <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaSearch className="text-blue-500" size={10} /> {Label.search}</label>
@@ -661,6 +748,10 @@ export default function Properties() {
                      isRTL={isRTL} 
                    />
                 </div>
+            </div>
+
+            {/* Collapsible Section (Rest of the filters) */}
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 transition-all duration-300 overflow-hidden ${showAllFilters ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
 
                 {/* 3.2 Owners */}
                 <div className="space-y-1">
@@ -785,13 +876,13 @@ export default function Properties() {
                    />
                 </div>
 
-                {/* 14. Doors */}
+                {/* 14. floor */}
                 <div className="space-y-1">
-                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaFilter className="text-blue-500" size={10} /> {Label.door}</label>
+                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaFilter className="text-blue-500" size={10} /> {Label.floor}</label>
                    <SearchableSelect 
-                     options={allDoors.map(String)} 
-                     value={filters.door} 
-                     onChange={val => setFilters({...filters, door: val})} 
+                     options={allfloor.map(String)} 
+                     value={filters.floor} 
+                     onChange={val => setFilters({...filters, floor: val})} 
                      isRTL={isRTL} 
                    />
                 </div>
@@ -816,20 +907,107 @@ export default function Properties() {
         <div className="h-4" />
 
         {/* Properties List */}
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           {paged.map(p => (
-            <PropertyCard key={p.id} p={p} isRTL={isRTL} onView={setSelected} onEdit={()=>{ setSelected(p); setIsEdit(true); setShowCreateModal(true) }} onShare={()=>navigator?.share ? navigator.share({ title: p.name, text: p.description, url: window.location.href }) : alert('Share not supported')} onDelete={()=>alert('Delete clicked')} />
+            <PropertyCard
+              key={p.id}
+              p={p}
+              isRTL={isRTL}
+              onView={setSelected}
+              onEdit={()=>{ setSelected(p); setIsEdit(true); setShowCreateModal(true) }}
+              onShare={() => {
+                try {
+                  const payload = {
+                    id: p.id,
+                    name: p.adTitle || p.name,
+                    city: p.city,
+                    mainImage: p.mainImage,
+                    price: p.price,
+                    currency: p.currency,
+                    bedrooms: p.bedrooms ?? p.rooms,
+                    bathrooms: p.bathrooms ?? p.doors,
+                    area: p.area ?? p.totalArea,
+                    areaUnit: p.areaUnit,
+                    description: p.description,
+                    ownerMobile: p.ownerMobile,
+                    propertyType: p.propertyType || p.type,
+                    logo: p.logo,
+                    images: Array.isArray(p.images) ? p.images : [],
+                    floorPlans: Array.isArray(p.floorPlans) ? p.floorPlans : [],
+                    documents: Array.isArray(p.documents) ? p.documents : [],
+                    videoUrl: p.videoUrl,
+                    virtualTourUrl: p.virtualTourUrl,
+                    address: p.address,
+                    locationUrl: p.locationUrl,
+                    installmentPlans: Array.isArray(p.installmentPlans) ? p.installmentPlans : [],
+                  }
+                  const json = JSON.stringify(payload)
+                  const bytes = new TextEncoder().encode(json)
+                  let bin = ''
+                  bytes.forEach(b => { bin += String.fromCharCode(b) })
+                  const data = btoa(bin)
+                  const base = (import.meta.env?.BASE_URL || '/')
+                  const prefix = base.endsWith('/') ? base.slice(0, -1) : base
+                  const scope = prefix === '/' ? '' : prefix
+                  const companyName = (companySetup && companySetup.companyInfo && companySetup.companyInfo.companyName) || ''
+                  const companyParam = companyName ? `&company=${encodeURIComponent(companyName)}` : ''
+                  const url = `${window.location.origin}${scope}/#/landing/property?data=${encodeURIComponent(data)}${companyParam}`
+                  if (navigator?.share) {
+                    navigator.share({ title: payload.name || 'Property', text: 'View property details', url })
+                  } else {
+                    navigator.clipboard && navigator.clipboard.writeText(url)
+                    const evt = new CustomEvent('app:toast', { detail: { type: 'success', message: (isRTL ? 'تم نسخ رابط المشاركة' : 'Share link copied') } })
+                    window.dispatchEvent(evt)
+                  }
+                } catch {}
+              }}
+              onDelete={()=>alert('Delete clicked')}
+            />
           ))}
         </div>
 
         {/* صف فاضي تحت الكروت */}
         <div className="h-4" />
 
-        {/* Pagination */}
-        <div className={`mt-4 flex items-center justify-center gap-2 ${isRTL ? '' : ''}`}>
-          <button className="btn btn-glass" onClick={()=>setPage(p => Math.max(1, p-1))}>{isRTL ? 'السابق' : 'Prev'}</button>
-          <span className="text-sm text-[var(--muted-text)]">{isRTL ? 'صفحة' : 'Page'} {page} / {totalPages}</span>
-          <button className="btn btn-glass" onClick={()=>setPage(p => Math.min(totalPages, p+1))}>{isRTL ? 'التالي' : 'Next'}</button>
+        {/* Pagination Footer */}
+        <div className="mt-2 flex items-center justify-between rounded-xl p-2 glass-panel">
+          <div className="text-xs text-[var(--muted-text)]">
+            {isRTL ? `عرض ${shownFrom}–${shownTo} من ${filtered.length}` : `Showing ${shownFrom}–${shownTo} of ${filtered.length}`}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={goPrevPage}
+                disabled={page <= 1}
+                title={isRTL ? 'السابق' : 'Prev'}
+              >
+                <FaChevronLeft className={isRTL ? 'scale-x-[-1]' : ''} />
+              </button>
+              <span className="text-sm">{isRTL ? `الصفحة ${page} من ${totalPages}` : `Page ${page} of ${totalPages}`}</span>
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={goNextPage}
+                disabled={page >= totalPages}
+                title={isRTL ? 'التالي' : 'Next'}
+              >
+                <FaChevronRight className={isRTL ? 'scale-x-[-1]' : ''} />
+              </button>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-[var(--muted-text)]">{isRTL ? 'لكل صفحة:' : 'Per page:'}</span>
+              <select
+                className="input w-24 text-sm"
+                value={pageSize}
+                onChange={e => setPageSize(Number(e.target.value))}
+              >
+                <option value={4}>4</option>
+                <option value={6}>6</option>
+                <option value={8}>8</option>
+                <option value={12}>12</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Modals */}
@@ -1014,14 +1192,48 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
                 <SectionTitle>{isRTL ? 'المخططات' : 'Floor Plans'}</SectionTitle>
                 {Array.isArray(p.floorPlans) && p.floorPlans.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {p.floorPlans.map((img, idx) => (
-                      <button key={idx} className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 focus:outline-none" onClick={()=>openPreview(p.floorPlans, idx)} title={isRTL ? 'عرض' : 'View'}>
-                        <img src={typeof img === 'string' ? img : URL.createObjectURL(img)} alt={`floor-${idx}`} className="w-full h-auto object-contain" />
-                      </button>
-                    ))}
+                    {p.floorPlans.map((item, idx) => {
+                      const isFile = item instanceof File
+                      const isPdf = isFile ? String(item.type || '').includes('pdf') : (typeof item === 'string' ? item.toLowerCase().endsWith('.pdf') : false)
+                      if (isPdf) {
+                        const href = isFile ? URL.createObjectURL(item) : String(item)
+                        const name = isFile ? (item.name || `plan-${idx}.pdf`) : `plan-${idx}.pdf`
+                        return (
+                          <a key={idx} href={href} download={name} target="_blank" rel="noreferrer" className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-2 text-sm">
+                            <FaPaperclip /> {isRTL ? 'تحميل مخطط PDF' : 'Download PDF Plan'}
+                          </a>
+                        )
+                      }
+                      const src = typeof item === 'string' ? item : URL.createObjectURL(item)
+                      return (
+                        <button key={idx} className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 focus:outline-none" onClick={()=>openPreview(p.floorPlans, idx)} title={isRTL ? 'عرض' : 'View'}>
+                          <img src={src} alt={`floor-${idx}`} className="w-full h-auto object-contain" />
+                        </button>
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-10 text-[var(--muted-text)] border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">{isRTL ? 'لا توجد مخططات' : 'No plans'}</div>
+                )}
+              </div>
+              <div className="space-y-4">
+                <SectionTitle>{isRTL ? 'الملفات' : 'Documents'}</SectionTitle>
+                {Array.isArray(p.documents) && p.documents.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {p.documents.map((doc, idx) => {
+                      const isFile = doc instanceof File
+                      const href = isFile ? URL.createObjectURL(doc) : String(doc)
+                      const name = isFile ? (doc.name || `document-${idx}.pdf`) : `document-${idx}.pdf`
+                      return (
+                        <a key={idx} href={href} download={name} target="_blank" rel="noreferrer" className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-between gap-2 text-sm">
+                          <span className="flex items-center gap-2"><FaPaperclip /> {name}</span>
+                          <span className="btn btn-glass inline-flex items-center gap-2 text-xs"><FaCloudDownloadAlt /> {isRTL ? 'تنزيل' : 'Download'}</span>
+                        </a>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-[var(--muted-text)]">{isRTL ? 'لا توجد ملفات' : 'No documents'}</div>
                 )}
               </div>
               <div className="space-y-4">

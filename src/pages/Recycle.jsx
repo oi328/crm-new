@@ -25,7 +25,6 @@ export const Leads = () => {
   const [leads, setLeads] = useState([])
   const [filteredLeads, setFilteredLeads] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
   const [sourceFilter, setSourceFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   // New filter states
@@ -161,6 +160,7 @@ export const Leads = () => {
   }, [location.search])
 
   // Hover tooltip state
+  const [activeRowId, setActiveRowId] = useState(null)
   const [hoveredLead, setHoveredLead] = useState(null)
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
   const [showTooltip, setShowTooltip] = useState(false)
@@ -279,7 +279,6 @@ export const Leads = () => {
     stage: t('Stage'),
     expectedRevenue: t('Expected Revenue'),
     priority: t('Priority'),
-    status: t('Status'),
     actions: t('Actions')
   }
 
@@ -290,7 +289,6 @@ export const Leads = () => {
     email: ['email', 'البريد', 'البريد الإلكتروني'],
     phone: ['phone', 'الهاتف', 'رقم الهاتف', 'contact'],
     company: ['company', 'الشركة'],
-    status: ['status', 'الحالة'],
     priority: ['priority', 'الأولوية'],
     source: ['source', 'المصدر'],
     assignedTo: ['assignedto', 'assigned', 'المسؤول', 'المسند إليه', 'salesperson'],
@@ -377,12 +375,11 @@ export const Leads = () => {
     contact: true,
     source: true,
     project: true,
-    sales: true,
+    salesPerson: true,
     lastComment: true,
     stage: true,
     expectedRevenue: true,
     priority: true,
-    status: true,
     actions: true
   })
 
@@ -503,7 +500,6 @@ export const Leads = () => {
                            String(lead.company || '').toLowerCase().includes(searchTerm.toLowerCase())
 
       // FIX 2: Added String() and || '' for safe access and toLowerCase() for case-insensitive comparison
-      const matchesStatus = statusFilter === 'all' || String(lead.status || '').toLowerCase() === statusFilter.toLowerCase()
       const matchesSource = sourceFilter === 'all' || String(lead.source || '').toLowerCase() === sourceFilter.toLowerCase()
       const matchesPriority = priorityFilter === 'all' || String(lead.priority || '').toLowerCase() === priorityFilter.toLowerCase()
       
@@ -530,7 +526,7 @@ export const Leads = () => {
       const matchesEmail = !emailFilter || (lead.email && lead.email.toLowerCase().includes(emailFilter.toLowerCase()))
       const matchesExpectedRevenue = !expectedRevenueFilter || (lead.estimatedValue && lead.estimatedValue.toString().includes(expectedRevenueFilter))
       
-      return matchesSearch && matchesStatus && matchesSource && matchesPriority &&
+      return matchesSearch && matchesSource && matchesPriority &&
              matchesProject && matchesStage && matchesManager && matchesSalesPerson &&
              matchesCreatedBy && matchesOldStage && matchesCampaign && matchesCountry &&
              matchesWhatsappIntents && matchesCallType && matchesDuplicateStatus &&
@@ -557,7 +553,7 @@ export const Leads = () => {
 
     setFilteredLeads(filtered)
     setCurrentPage(1)
-  }, [leads, searchTerm, statusFilter, sourceFilter, priorityFilter, sortBy, sortOrder,
+  }, [leads, searchTerm, sourceFilter, priorityFilter, sortBy, sortOrder,
       projectFilter, stageFilter, managerFilter, salesPersonFilter, createdByFilter,
       assignDateFilter, actionDateFilter, creationDateFilter, oldStageFilter, closedDateFilter,
       campaignFilter, countryFilter, expectedRevenueFilter, emailFilter, whatsappIntentsFilter,
@@ -922,14 +918,13 @@ export const Leads = () => {
             <FaFilter size={16} className="text-blue-500 dark:text-blue-400" /> {t('Filters')}
           </h2>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowAllFilters(prev => !prev)} className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition-colors btn-compact">
+            <button onClick={() => setShowAllFilters(prev => !prev)} className={`flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 rounded-lg transition-all duration-200 border-0 ${showAllFilters ? 'ring-2 ring-blue-200 dark:ring-blue-800' : ''} px-3 py-1.5`}>
               {showAllFilters ? t('Hide ') : t('Show ')}
-              <FaChevronDown size={10} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
+              <FaChevronDown size={12} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
             </button>
             <button
               onClick={() => {
                 setSearchTerm('')
-                setStatusFilter('all')
                 setSourceFilter('all')
                 setPriorityFilter('all')
                 setProjectFilter('all')
@@ -953,12 +948,9 @@ export const Leads = () => {
                 setSortOrder('desc')
                 setCurrentPage(1)
               }}
-              className="inline-flex items-center gap-1 font-semibold  dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors btn-compact"
+              className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              {t('Reset ')}
+              {t('Reset')}
             </button>
           </div>
         </div>
@@ -978,34 +970,11 @@ export const Leads = () => {
                 placeholder={t('Search leads...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                className="w-full px-2 py-1 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
               />
             </div>
 
-            {/* Status Filter */}
-            <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
-                <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {t('Status')}
-              </label>
-              <div className="relative">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                >
-                  <option value="all">{t('All Statuses')}</option>
-                  {statuses.map((s) => (
-                    <option key={s} value={s}>{t(s)}</option>
-                  ))}
-                </select>
-                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                  <FaChevronDown size={12} />
-                </button>
-              </div>
-            </div>
+
 
             {/* Source Filter */}
             <div className="space-y-1">
@@ -1056,36 +1025,39 @@ export const Leads = () => {
                 </button>
               </div>
             </div>
+
+            {/* Project Filter */}
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                {t('Project')}
+              </label>
+              <div className="relative">
+                <select
+                  value={projectFilter}
+                  onChange={(e) => setProjectFilter(e.target.value)}
+                  className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
+                >
+                  <option value="all">{t('All Projects')}</option>
+                  {/* Assuming projects list exists in leads data or separate state */}
+                  {Array.from(new Set(leads.map(l => l.project).filter(Boolean))).map(project => (
+                    <option key={project} value={project}>{t(project)}</option>
+                  ))}
+                </select>
+                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
+                  <FaChevronDown size={12} />
+                </button>
+              </div>
+            </div>
+
+
           </div>
 
           {/* Additional Filters (Show/Hide) */}
           <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showAllFilters ? 'max-h-[800px] opacity-100 pt-3' : 'max-h-0 opacity-0'}`}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-              {/* Project Filter */}
-              <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
-                  <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  {t('Project')}
-                </label>
-                <div className="relative">
-                  <select
-                    value={projectFilter}
-                    onChange={(e) => setProjectFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Projects')}</option>
-                    {/* Assuming projects list exists in leads data or separate state */}
-                    {Array.from(new Set(leads.map(l => l.project).filter(Boolean))).map(project => (
-                      <option key={project} value={project}>{t(project)}</option>
-                    ))}
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
-              </div>
 
               {/* Stage Filter (using sidebar stages for options) */}
               <div className="space-y-1">
@@ -1556,14 +1528,14 @@ export const Leads = () => {
                   </th>
                 )}
 
-                {['source','project','sales','lastComment','stage','expectedRevenue','priority','status'].map((key) => (
+                {['source','project','salesPerson','lastComment','stage','expectedRevenue','priority'].map((key) => (
                   visibleColumns[key] ? (
                     <th
                       key={key}
                       scope="col"
-                      className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white ${['lead','contact'].includes(key) ? '' : ''} ${['source','stage','priority','status','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
+                      className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white ${['lead','contact'].includes(key) ? '' : ''} ${['source','stage','priority','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
                       style={{ backgroundColor: 'var(--table-header-bg)' }}
-                      onClick={['source','stage','priority','status','expectedRevenue'].includes(key) ? () => {
+                      onClick={['source','stage','priority','expectedRevenue'].includes(key) ? () => {
                         if (sortBy === key) {
                           setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
                         } else {
@@ -1592,7 +1564,8 @@ export const Leads = () => {
                   
                   onMouseEnter={() => setHoveredLead(lead)}
                   onMouseLeave={() => setHoveredLead(null)}
-                  style={{ cursor: 'default' }}
+                  onClick={() => setActiveRowId(activeRowId === lead.id ? null : lead.id)}
+                  style={{ cursor: 'pointer' }}
                 >
                   {/* Checkbox Cell */}
                   <td className="w-10 px-6 py-4 whitespace-nowrap">
@@ -1623,21 +1596,21 @@ export const Leads = () => {
 
                   {/* Actions (after Contact) */}
                   {visibleColumns.actions && (
-                    <td className={`px-6 py-4 whitespace-nowrap text-xs font-medium sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-transparent`}>
+                    <td className={`px-6 py-3 whitespace-nowrap text-xs font-medium ${activeRowId === lead.id ? `sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-gray-50 dark:bg-slate-900/25 border border-gray-200 dark:border-slate-700/40 shadow-sm` : ''} `}>
                       <div className="flex items-center gap-2 flex-nowrap">
                         <button
                           title={t('Preview')}
                           onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowLeadModal(true); }}
-                          className="inline-flex items-center justify-center  dark:text-indigo-300 hover:text-blue-500"
+                          className="inline-flex items-center justify-center text-gray-500 dark:text-white hover:text-blue-500"
                         >
-                          <FaEye size={16} className=" dark:text-indigo-300" />
+                          <FaEye size={16} />
                         </button>
                         <button
                           title={t('Add Action')}
                           onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowAddActionModal(true) }}
-                          className="inline-flex items-center justify-center  dark:text-emerald-300 hover:text-emerald-400"
+                          className="inline-flex items-center justify-center text-gray-500 dark:text-white hover:text-emerald-500"
                         >
-                          <FaPlus size={16} className=" dark:text-emerald-300" />
+                          <FaPlus size={16} />
                         </button>
                         <button
                           title={t('Call')}
@@ -1724,12 +1697,7 @@ export const Leads = () => {
                     </td>
                   )}
 
-                  {/* Status */}
-                  {visibleColumns.status && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
-                      {t(lead.status || 'N/A')}
-                    </td>
-                  )}
+
 
                   {/* Actions Column (removed sticky; now positioned after Contact) */}
                 </tr>

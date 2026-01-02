@@ -2,8 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@shared/context/ThemeProvider';
 import { useNavigate } from 'react-router-dom';
 import { useStages } from '../hooks/useStages';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaChevronDown, FaChevronUp, FaTimes } from 'react-icons/fa';
+import { projectsData } from '../data/projectsData';
 
 const COUNTRY_CODES = [
   // الدول العربية في المقدمة
@@ -79,6 +80,75 @@ const COUNTRY_CODES = [
   { iso2: 'HU', nameAr: 'المجر', nameEn: 'Hungary', dialCode: '+36', flag: '🇭🇺' },
 ];
 
+const CountryCodeSelect = ({ value, onChange, isLight, inputTone, isRTL }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  // تصفية القائمة بناءً على المدخلات
+  const filteredCodes = COUNTRY_CODES.filter((c) => {
+    const val = value || '';
+    if (!val) return true;
+
+    // تطبيع الأرقام: إزالة + أو 00 أو 0 من البداية للمقارنة
+    const normalize = (str) => str.replace(/^(\+|00|0)/, '');
+    const normVal = normalize(val);
+    const normDial = normalize(c.dialCode);
+
+    return (
+      normDial.startsWith(normVal) ||
+      c.dialCode.toLowerCase().includes(val.toLowerCase()) ||
+      c.nameEn.toLowerCase().includes(val.toLowerCase()) ||
+      c.nameAr.includes(val)
+    );
+  });
+
+  const optionsToShow = filteredCodes.length > 0 ? filteredCodes : [];
+
+  return (
+    <div className="relative w-28">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setIsOpen(true);
+        }}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        className={`w-full rounded-md border px-2 py-2 text-center text-sm ${inputTone}`}
+        placeholder="+20"
+        dir="ltr"
+      />
+      {/* Chevron icon purely visual or can toggle */}
+      <FaChevronDown 
+          className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${isLight ? 'text-gray-500' : 'text-gray-400'}`} 
+      />
+      
+      {isOpen && (
+        <div className={`absolute top-full left-0 mt-1 max-h-60 w-64 overflow-y-auto rounded-md border shadow-lg z-50 ${isLight ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700'}`}>
+          {optionsToShow.map((c) => (
+            <div
+              key={c.iso2}
+              className={`cursor-pointer px-3 py-2 text-sm flex items-center gap-2 transition-colors duration-150
+                ${isLight ? 'hover:bg-black/5' : 'hover:bg-white/10'} 
+                ${value === c.dialCode ? (isLight ? 'bg-blue-100/50' : 'bg-blue-900/30') : ''}`}
+              onClick={() => onChange(c.dialCode)}
+            >
+              <span className="text-lg">{c.flag}</span>
+              <span className="font-bold min-w-[3rem] text-left" dir="ltr">{c.dialCode}</span>
+              <span className={`truncate flex-1 ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>{isRTL ? c.nameAr : c.nameEn}</span>
+            </div>
+          ))}
+          {optionsToShow.length === 0 && (
+              <div className={`px-3 py-2 text-xs ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>
+                  {isRTL ? 'لا توجد نتائج' : 'No results'}
+              </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const AddNewLead = () => {
   const { t, i18n } = useTranslation();
   const { theme } = useTheme();
@@ -103,6 +173,21 @@ export const AddNewLead = () => {
   const [status, setStatus] = useState('');
   const [priority, setPriority] = useState('medium');
   const [primaryCollapsed, setPrimaryCollapsed] = useState(false);
+  const [projectsList, setProjectsList] = useState([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('inventoryProjects');
+      if (stored) {
+        setProjectsList(JSON.parse(stored));
+      } else {
+        setProjectsList(projectsData);
+      }
+    } catch (e) {
+      console.error('Failed to load projects', e);
+      setProjectsList(projectsData);
+    }
+  }, []);
 
   const [extraLeads, setExtraLeads] = useState([]);
 
@@ -177,6 +262,21 @@ export const AddNewLead = () => {
     setMobileNumbers(prev => [...prev, { code: prev[0]?.code || '+20', number: '' }]);
   };
 
+  const removeMobileNumber = (idx) => {
+    setMobileNumbers(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const deleteExtraLeadNumber = (idx, nIdx) => {
+    setExtraLeads((prev) =>
+      prev.map((l, i) => {
+        if (i !== idx) return l;
+        const arr = l.mobileNumbers || [{ code: '+20', number: '' }];
+        const updated = arr.filter((_, j) => j !== nIdx);
+        return { ...l, mobileNumbers: updated };
+      })
+    );
+  };
+
   const updateMobileNumber = (idx, field, value) => {
     setMobileNumbers(prev => prev.map((n, i) => (i === idx ? { ...n, [field]: value } : n)));
   };
@@ -191,48 +291,20 @@ export const AddNewLead = () => {
     name.trim().length > 0 &&
     source.trim().length > 0 &&
     project.trim().length > 0 &&
-    String(expectedRevenue).trim().length > 0 &&
     mobileNumbers.length > 0 &&
-    mobileNumbers.every((n) => n.number.trim().length > 0) &&
-    email.trim().length > 0 &&
-    assignedTo.trim().length > 0 &&
-    stage !== '' &&
-    status !== '';
+    mobileNumbers.every((n) => n.number.trim().length > 0);
 
   const isLeadValid = (l) =>
     (l.name || '').trim().length > 0 &&
     (l.source || '').trim().length > 0 &&
     (l.project || '').trim().length > 0 &&
-    String(l.expectedRevenue || '').trim().length > 0 &&
     Array.isArray(l.mobileNumbers) &&
     l.mobileNumbers.length > 0 &&
-    l.mobileNumbers.every((n) => (n.number || '').trim().length > 0) &&
-    (l.email || '').trim().length > 0 &&
-    (l.assignedTo || '').trim().length > 0 &&
-    (l.stage || '') !== '' &&
-    (l.status || '') !== '';
+    l.mobileNumbers.every((n) => (n.number || '').trim().length > 0);
 
   const isFormValid = isPrimaryValid && extraLeads.every(isLeadValid);
 
-  // مكوّن اختيار كود الدولة مع العلم فقط
-  const CountryCodeSelect = ({ value, onChange }) => {
-    return (
-      <div className="relative w-20">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={`w-full appearance-none rounded-md border pl-2 pr-8 py-2 ${inputTone}`}
-        >
-          {COUNTRY_CODES.map((c) => (
-            <option key={c.iso2 + c.dialCode} value={c.dialCode}>
-              {c.flag} {c.dialCode}
-            </option>
-          ))}
-        </select>
-        <FaChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-      </div>
-    );
-  };
+
 
   // حفظ البيانات إلى localStorage وإطلاق حدث التحديث
   const handleSave = () => {
@@ -242,12 +314,7 @@ export const AddNewLead = () => {
     if (!nameTrimmed) missing.push(i18n.language === 'ar' ? 'الاسم' : t('Name'));
     if (!source.trim()) missing.push(i18n.language === 'ar' ? 'المصدر' : t('Source'));
     if (!project.trim()) missing.push(i18n.language === 'ar' ? 'المشروع' : t('Project'));
-    if (!expectedRevenue.trim()) missing.push(i18n.language === 'ar' ? 'الإيراد المتوقع' : t('Expected Revenue'));
     if (!mobileNumbers.length || !mobileNumbers.every((n) => n.number.trim())) missing.push(i18n.language === 'ar' ? 'رقم الموبايل' : t('Mobile'));
-    if (!email.trim()) missing.push(i18n.language === 'ar' ? 'البريد الإلكتروني' : t('Email'));
-    if (!assignedTo.trim()) missing.push(i18n.language === 'ar' ? 'المسؤول' : t('Sales'));
-    if (!stage) missing.push(i18n.language === 'ar' ? 'المرحلة' : t('Stage'));
-    if (!status) missing.push(i18n.language === 'ar' ? 'الحالة' : t('Status'));
 
     if (missing.length > 0) {
       alert(
@@ -373,24 +440,26 @@ export const AddNewLead = () => {
                 <div className="space-y-4">
                   {/* Name */}
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Name')}</label>
+                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Name')} <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className={`w-full rounded-md border px-3 py-2 ${inputTone}`}
                       placeholder={t('Enter name')}
+                      required
                     />
                   </div>
 
                   {/* Source (select) */}
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Source')}</label>
+                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Source')} <span className="text-red-500">*</span></label>
                     <div className="relative">
                       <select
                         value={source}
                         onChange={(e) => setSource(e.target.value)}
                         className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
+                        required
                       >
                         <option value="">{t('Select')}</option>
                         <option value="social-media">Facebook</option>
@@ -404,14 +473,21 @@ export const AddNewLead = () => {
 
                   {/* Project */}
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Project')}</label>
-                    <input
-                      type="text"
-                      value={project}
-                      onChange={(e) => setProject(e.target.value)}
-                      className={`w-full rounded-md border px-3 py-2 ${inputTone}`}
-                      placeholder={t('Project name')}
-                    />
+                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Project')} <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <select
+                        value={project}
+                        onChange={(e) => setProject(e.target.value)}
+                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
+                        required
+                      >
+                        <option value="">{t('Select')}</option>
+                        {projectsList.map((p, idx) => (
+                          <option key={p.id || idx} value={p.name || p.companyName || p}>{p.name || p.companyName || p}</option>
+                        ))}
+                      </select>
+                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
+                    </div>
                   </div>
 
                   {/* Type */}
@@ -451,7 +527,9 @@ export const AddNewLead = () => {
                       value={expectedRevenue}
                       onChange={(e) => setExpectedRevenue(e.target.value)}
                       className={`w-full rounded-md border px-3 py-2 ${inputTone}`}
-                      placeholder={t('Amount')}
+                      placeholder={t('0.00')}
+                      min="0"
+                      step="0.01"
                     />
                   </div>
 
@@ -497,11 +575,12 @@ export const AddNewLead = () => {
                 <div className="space-y-4">
                   {/* Mobile: country code select + main input + plus button */}
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Mobile')}</label>
+                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Mobile')} <span className="text-red-500">*</span></label>
                     <div className="flex items-center gap-3">
                       <CountryCodeSelect
                         value={mobileNumbers[0]?.code}
                         onChange={(val) => updateMobileNumber(0, 'code', val)}
+                        isLight={isLight} inputTone={inputTone} isRTL={isRTL}
                       />
                       <input
                         type="tel"
@@ -528,6 +607,7 @@ export const AddNewLead = () => {
                         <CountryCodeSelect
                           value={m.code}
                           onChange={(val) => updateMobileNumber(idx + 1, 'code', val)}
+                          isLight={isLight} inputTone={inputTone} isRTL={isRTL}
                         />
                         <input
                           type="tel"
@@ -536,6 +616,15 @@ export const AddNewLead = () => {
                           className={`flex-1 rounded-md border px-3 py-2 ${inputTone}`}
                           placeholder={t('Another mobile number')}
                         />
+                        <button
+                          type="button"
+                          onClick={() => removeMobileNumber(idx + 1)}
+                          className={`inline-flex items-center justify-center px-3 py-2 rounded-md border ${isLight ? 'bg-red-50 border-red-300 text-red-700 hover:bg-red-100' : 'bg-gray-800 border-gray-700 text-red-300 hover:bg-gray-700'}`}
+                          aria-label={t('Remove number')}
+                          title={t('Remove number')}
+                        >
+                          <FaTimes className="w-4 h-4" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -549,7 +638,7 @@ export const AddNewLead = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className={`w-full rounded-md border px-3 py-2 ${inputTone}`}
-                      placeholder={t('Email address')}
+                      placeholder={t('Enter email address')}
                     />
                   </div>
 
@@ -567,39 +656,19 @@ export const AddNewLead = () => {
 
                   {/* Sales (Assigned To) */}
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Sales')}</label>
+                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Sales (Assigned To)')}</label>
                     <input
                       type="text"
                       value={assignedTo}
                       onChange={(e) => setAssignedTo(e.target.value)}
                       className={`w-full rounded-md border px-3 py-2 ${inputTone}`}
-                      placeholder={t('Assigned to')}
+                      placeholder={t('Enter sales rep name')}
                     />
-                  </div>
-
-                  {/* Status */}
-                  <div>
-                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Status')}</label>
-                    <div className="relative">
-                      <select
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value)}
-                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
-                      >
-                        <option value="">{t('Select')}</option>
-                        {statuses.map((s) => (
-                          <option key={s.name} value={s.name}>
-                            {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
-                          </option>
-                        ))}
-                      </select>
-                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                    </div>
                   </div>
 
                   {/* Note */}
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Last Comment')}</label>
+                    <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Note')}</label>
                     <textarea
                       rows={4}
                       value={note}
@@ -681,9 +750,9 @@ export const AddNewLead = () => {
                           <input type="number" value={l.expectedRevenue} onChange={(e) => updateExtraLeadField(i, 'expectedRevenue', e.target.value)} className={`w-full rounded-md border px-3 py-2 ${inputTone}`} />
                         </div>
                         <div>
-                          <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Mobile')}</label>
+                          <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Mobile')} <span className="text-red-500">*</span></label>
                           <div className="flex items-center gap-3">
-                            <CountryCodeSelect value={l.mobileNumbers?.[0]?.code || '+20'} onChange={(val) => updateExtraLeadNumber(i, 0, 'code', val)} />
+                            <CountryCodeSelect value={l.mobileNumbers?.[0]?.code || '+20'} onChange={(val) => updateExtraLeadNumber(i, 0, 'code', val)} isLight={isLight} inputTone={inputTone} isRTL={isRTL} />
                             <input type="tel" value={l.mobileNumbers?.[0]?.number || ''} onChange={(e) => updateExtraLeadNumber(i, 0, 'number', e.target.value)} className={`flex-1 rounded-md border px-3 py-2 ${inputTone}`} />
                             <button type="button" onClick={() => addExtraLeadNumber(i)} className={`inline-flex items-center justify-center px-3 py-2 rounded-md border ${isLight ? 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100' : 'bg-gray-800 border-gray-700 text-blue-300 hover:bg-gray-700'}`} aria-label={t('Add another number')} title={t('Add another number')}>
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -693,8 +762,11 @@ export const AddNewLead = () => {
                           </div>
                           {(l.mobileNumbers || []).slice(1).map((m, idx) => (
                             <div key={idx} className="mt-2 flex items-center gap-3">
-                              <CountryCodeSelect value={m.code} onChange={(val) => updateExtraLeadNumber(i, idx + 1, 'code', val)} />
+                              <CountryCodeSelect value={m.code} onChange={(val) => updateExtraLeadNumber(i, idx + 1, 'code', val)} isLight={isLight} inputTone={inputTone} isRTL={isRTL} />
                               <input type="tel" value={m.number} onChange={(e) => updateExtraLeadNumber(i, idx + 1, 'number', e.target.value)} className={`flex-1 rounded-md border px-3 py-2 ${inputTone}`} />
+                              <button type="button" onClick={() => deleteExtraLeadNumber(i, idx + 1)} className={`inline-flex items-center justify-center px-3 py-2 rounded-md border ${isLight ? 'bg-red-50 border-red-300 text-red-700 hover:bg-red-100' : 'bg-gray-800 border-gray-700 text-red-300 hover:bg-gray-700'}`} aria-label={t('Remove number')} title={t('Remove number')}>
+                                <FaTimes className="w-4 h-4" />
+                              </button>
                             </div>
                           ))}
                         </div>
@@ -735,22 +807,8 @@ export const AddNewLead = () => {
                             <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
                           </div>
                         </div>
-                        <div>
-                          <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Status')}</label>
-                          <div className="relative">
-                            <select value={l.status} onChange={(e) => updateExtraLeadField(i, 'status', e.target.value)} className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}>
-                              <option value="">{t('Select')}</option>
-                              {statuses.map((s) => (
-                                <option key={s.name} value={s.name}>
-                                  {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
-                                </option>
-                              ))}
-                            </select>
-                            <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                          </div>
-                        </div>
                         <div className="md:col-span-2">
-                          <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Last Comment')}</label>
+                          <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Note')}</label>
                           <textarea rows={3} value={l.note} onChange={(e) => updateExtraLeadField(i, 'note', e.target.value)} className={`w-full rounded-md border px-3 py-2 ${inputTone}`} />
                         </div>
                       </div>

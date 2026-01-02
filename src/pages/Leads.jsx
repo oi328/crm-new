@@ -25,7 +25,6 @@ export const Leads = () => {
   const [leads, setLeads] = useState([])
   const [filteredLeads, setFilteredLeads] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
   const [sourceFilter, setSourceFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   // New filter states
@@ -67,6 +66,29 @@ export const Leads = () => {
   const [showImportModal, setShowImportModal] = useState(false)
   const [stageDefs, setStageDefs] = useState([])
   const [isMobile, setIsMobile] = useState(false)
+
+  // One-time migration to clear actions history as requested
+  useEffect(() => {
+    const hasCleared = localStorage.getItem('actions_cleared_v2');
+    if (!hasCleared) {
+      const saved = localStorage.getItem('leadsData');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const cleaned = parsed.map(l => ({ ...l, actions: [] }));
+          localStorage.setItem('leadsData', JSON.stringify(cleaned));
+          setLeads(cleaned);
+          // If we just loaded, filteredLeads might be stale or not set yet, 
+          // but since this runs on mount, useEffect dependencies might matter.
+          // We'll just update localStorage and let the initial load logic pick it up 
+          // or force a state update if leads are already loaded.
+        } catch (e) {
+          console.error('Failed to clear actions', e);
+        }
+      }
+      localStorage.setItem('actions_cleared_v2', 'true');
+    }
+  }, []);
   
   const textColor = 'text-gray-900 dark:text-white'
   const bgColor = 'bg-white dark:bg-gray-900'
@@ -201,8 +223,15 @@ export const Leads = () => {
       const saved = JSON.parse(localStorage.getItem('crmStages') || '[]');
       const normalized = Array.isArray(saved)
         ? (typeof saved[0] === 'string'
-            ? saved.map((name) => ({ name, color: defaultColorForName(name), icon: defaultIconForName(name) }))
-            : saved.map((s) => ({ name: s.name || String(s), color: s.color || defaultColorForName(s.name || String(s)), icon: s.icon || defaultIconForName(s.name || String(s)) }))
+            ? saved.map((name) => ({ name, nameAr: '', type: '', color: defaultColorForName(name), icon: defaultIconForName(name) }))
+            : saved.map((s) => ({ 
+                name: s.name || String(s), 
+                nameAr: s.nameAr || '',
+                type: s.type || '',
+                order: s.order,
+                color: s.color || defaultColorForName(s.name || String(s)), 
+                icon: s.icon || defaultIconForName(s.name || String(s)) 
+              }))
           )
         : [];
       
@@ -281,7 +310,6 @@ export const Leads = () => {
     stage: t('Stage'),
     expectedRevenue: t('Expected Revenue'),
     priority: t('Priority'),
-    status: t('Status'),
     actions: t('Actions')
   }
 
@@ -292,7 +320,6 @@ export const Leads = () => {
     email: ['email', 'البريد', 'البريد الإلكتروني'],
     phone: ['phone', 'الهاتف', 'رقم الهاتف', 'contact'],
     company: ['company', 'الشركة'],
-    status: ['status', 'الحالة'],
     priority: ['priority', 'الأولوية'],
     source: ['source', 'المصدر'],
     assignedTo: ['assignedto', 'assigned', 'المسؤول', 'المسند إليه', 'salesperson'],
@@ -384,7 +411,6 @@ export const Leads = () => {
     stage: true,
     expectedRevenue: true,
     priority: true,
-    status: true,
     actions: true
   })
 
@@ -527,7 +553,6 @@ export const Leads = () => {
                            String(lead.company || '').toLowerCase().includes(searchTerm.toLowerCase())
 
       // FIX 2: Added String() and || '' for safe access and toLowerCase() for case-insensitive comparison
-      const matchesStatus = statusFilter === 'all' || String(lead.status || '').toLowerCase() === statusFilter.toLowerCase()
       const matchesSource = sourceFilter === 'all' || String(lead.source || '').toLowerCase() === sourceFilter.toLowerCase()
       const matchesPriority = priorityFilter === 'all' || String(lead.priority || '').toLowerCase() === priorityFilter.toLowerCase()
       
@@ -554,7 +579,7 @@ export const Leads = () => {
       const matchesEmail = !emailFilter || (lead.email && lead.email.toLowerCase().includes(emailFilter.toLowerCase()))
       const matchesExpectedRevenue = !expectedRevenueFilter || (lead.estimatedValue && lead.estimatedValue.toString().includes(expectedRevenueFilter))
       
-      return matchesSearch && matchesStatus && matchesSource && matchesPriority &&
+      return matchesSearch && matchesSource && matchesPriority &&
              matchesProject && matchesStage && matchesManager && matchesSalesPerson &&
              matchesCreatedBy && matchesOldStage && matchesCampaign && matchesCountry &&
              matchesWhatsappIntents && matchesCallType && matchesDuplicateStatus &&
@@ -581,7 +606,7 @@ export const Leads = () => {
 
     setFilteredLeads(filtered)
     setCurrentPage(1)
-  }, [leads, searchTerm, statusFilter, sourceFilter, priorityFilter, sortBy, sortOrder,
+  }, [leads, searchTerm, sourceFilter, priorityFilter, sortBy, sortOrder,
       projectFilter, stageFilter, managerFilter, salesPersonFilter, createdByFilter,
       assignDateFilter, actionDateFilter, creationDateFilter, oldStageFilter, closedDateFilter,
       campaignFilter, countryFilter, expectedRevenueFilter, emailFilter, whatsappIntentsFilter,
@@ -666,11 +691,34 @@ export const Leads = () => {
   }, [leads])
 
   const handleAssignLead = (leadId, newAssignee) => {
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, assignedTo: newAssignee } : l))
+    const updatedLeads = leads.map(l => l.id === leadId ? { ...l, assignedTo: newAssignee, stage: 'Follow Up' } : l)
+    setLeads(updatedLeads)
+    setFilteredLeads(prev => prev.map(l => l.id === leadId ? { ...l, assignedTo: newAssignee, stage: 'Follow Up' } : l))
+    localStorage.setItem('leadsData', JSON.stringify(updatedLeads))
+
     // Also update selectedLead if it matches, so the modal reflects the change immediately
     if (selectedLead && selectedLead.id === leadId) {
-      setSelectedLead(prev => ({ ...prev, assignedTo: newAssignee }))
+      setSelectedLead(prev => ({ ...prev, assignedTo: newAssignee, stage: 'Follow Up' }))
     }
+    if (hoveredLead && hoveredLead.id === leadId) {
+      setHoveredLead(prev => ({ ...prev, assignedTo: newAssignee, stage: 'Follow Up' }))
+    }
+    window.dispatchEvent(new CustomEvent('leadsDataUpdated'))
+  }
+
+  const handleUpdateLead = (updatedLead) => {
+    const updatedLeads = leads.map(l => l.id === updatedLead.id ? updatedLead : l)
+    setLeads(updatedLeads)
+    setFilteredLeads(prev => prev.map(l => l.id === updatedLead.id ? updatedLead : l))
+    localStorage.setItem('leadsData', JSON.stringify(updatedLeads))
+    
+    if (selectedLead && selectedLead.id === updatedLead.id) {
+      setSelectedLead(updatedLead)
+    }
+    if (hoveredLead && hoveredLead.id === updatedLead.id) {
+      setHoveredLead(updatedLead)
+    }
+    window.dispatchEvent(new CustomEvent('leadsDataUpdated'))
   }
 
   // Rotation rules: guard bulk assignment using settings (working hours, allow/delay)
@@ -696,7 +744,7 @@ export const Leads = () => {
       return
     }
     setLeads(prev => prev.map(l => (
-      selectedLeads.includes(l.id) ? { ...l, assignedTo: target } : l
+      selectedLeads.includes(l.id) ? { ...l, assignedTo: target, stage: 'Follow Up' } : l
     )))
     setBulkFeedback({ key: 'bulk.assignSuccess', params: { count: selectedLeads.length, target } })
     setSelectedLeads([])
@@ -889,7 +937,6 @@ export const Leads = () => {
       'Phone': l.phone,
       'Company': l.company,
       'Stage': l.stage,
-      'Status': l.status,
       'Priority': l.priority,
       'Source': l.source,
       'Assigned To': l.assignedTo,
@@ -913,7 +960,6 @@ export const Leads = () => {
     stage: 140,
     expectedRevenue: 160,
     priority: 140,
-    status: 140,
   };
 
   return (
@@ -955,14 +1001,13 @@ export const Leads = () => {
             <FaFilter size={16} className="text-blue-500 dark:text-blue-400" /> {t('Filters')}
           </h2>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowAllFilters(prev => !prev)} className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition-colors btn-compact">
+            <button onClick={() => setShowAllFilters(prev => !prev)} className={`flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 rounded-lg transition-all duration-200 border-0 ${showAllFilters ? 'ring-2 ring-blue-200 dark:ring-blue-800' : ''} px-2 py-1`}>
               {showAllFilters ? t('Hide ') : t('Show ')}
-              <FaChevronDown size={10} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
+              <FaChevronDown size={12} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
             </button>
             <button
               onClick={() => {
                 setSearchTerm('')
-                setStatusFilter('all')
                 setSourceFilter('all')
                 setPriorityFilter('all')
                 setProjectFilter('all')
@@ -986,11 +1031,8 @@ export const Leads = () => {
                 setSortOrder('desc')
                 setCurrentPage(1)
               }}
-              className="inline-flex items-center gap-1 font-semibold  dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors btn-compact"
+              className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
               {t('Reset')}
             </button>
           </div>
@@ -1011,33 +1053,8 @@ export const Leads = () => {
                 placeholder={t('Search leads...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                className="w-full px-2 py-1 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
               />
-            </div>
-
-            {/* Status Filter */}
-            <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
-                <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {t('Status')}
-              </label>
-              <div className="relative">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                >
-                  <option value="all">{t('All Statuses')}</option>
-                  {statuses.map((s) => (
-                    <option key={s} value={s}>{t(s)}</option>
-                  ))}
-                </select>
-                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                  <FaChevronDown size={12} />
-                </button>
-              </div>
             </div>
 
             {/* Source Filter */}
@@ -1089,36 +1106,37 @@ export const Leads = () => {
                 </button>
               </div>
             </div>
+
+            {/* Project Filter */}
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                {t('Project')}
+              </label>
+              <div className="relative">
+                <select
+                  value={projectFilter}
+                  onChange={(e) => setProjectFilter(e.target.value)}
+                  className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
+                >
+                  <option value="all">{t('All Projects')}</option>
+                  {/* Assuming projects list exists in leads data or separate state */}
+                  {Array.from(new Set(leads.map(l => l.project).filter(Boolean))).map(project => (
+                    <option key={project} value={project}>{t(project)}</option>
+                  ))}
+                </select>
+                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
+                  <FaChevronDown size={12} />
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Additional Filters (Show/Hide) */}
           <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showAllFilters ? 'max-h-[800px] opacity-100 pt-3' : 'max-h-0 opacity-0'}`}>
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2">
-              {/* Project Filter */}
-              <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
-                  <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  {t('Project')}
-                </label>
-                <div className="relative">
-                  <select
-                    value={projectFilter}
-                    onChange={(e) => setProjectFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Projects')}</option>
-                    {/* Assuming projects list exists in leads data or separate state */}
-                    {Array.from(new Set(leads.map(l => l.project).filter(Boolean))).map(project => (
-                      <option key={project} value={project}>{t(project)}</option>
-                    ))}
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
-              </div>
 
               {/* Stage Filter (using sidebar stages for options) */}
               <div className="space-y-1">
@@ -1623,14 +1641,14 @@ export const Leads = () => {
                   </th>
                 )}
 
-                {['source','project','salesPerson','lastComment','stage','expectedRevenue','priority','status'].map((key) => (
+                {['source','project','salesPerson','lastComment','stage','expectedRevenue','priority'].map((key) => (
                   visibleColumns[key] ? (
                     <th
                       key={key}
                       scope="col"
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white whitespace-nowrap ${['source','stage','priority','status','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
+                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white whitespace-nowrap ${['source','stage','priority','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
                       style={{ minWidth: `${columnMinWidths[key] || 140}px`, backgroundColor: 'var(--table-header-bg)' }}
-                      onClick={['source','stage','priority','status','expectedRevenue'].includes(key) ? () => {
+                      onClick={['source','stage','priority','expectedRevenue'].includes(key) ? () => {
                         if (sortBy === key) {
                           setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
                         } else {
@@ -1685,53 +1703,59 @@ export const Leads = () => {
                   {visibleColumns.contact && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
                       <div className="font-normal dark:text-white">{lead.email}</div>
-                      <div className="font-normal dark:text-white">{lead.phone}</div>
+                      <div 
+                        className="font-normal dark:text-white hover:text-[#25D366] cursor-pointer transition-colors duration-200 flex items-center gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const raw = lead.phone || lead.mobile || '';
+                          const digits = String(raw).replace(/[^0-9]/g, '');
+                          if (digits) window.open(`https://wa.me/${digits}`, '_blank');
+                        }}
+                        title={t('Open WhatsApp')}
+                      >
+                        <FaWhatsapp size={12} className="text-[#25D366]" />
+                        {lead.phone}
+                      </div>
                     </td>
                   )}
 
                   {/* Actions (after Contact) */}
                   {visibleColumns.actions && (
-                    <td className={`px-6 py-4 whitespace-nowrap text-xs font-medium ${activeRowId === lead.id ? `sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-gray-50 dark:bg-slate-900/25 border border-gray-200 dark:border-slate-700/40 shadow-sm` : ''} `}>
+                    <td className={`px-6 py-3 whitespace-nowrap text-xs font-medium ${activeRowId === lead.id ? `sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-gray-50 dark:bg-slate-900/25 border border-gray-200 dark:border-slate-700/40 shadow-sm` : ''} `}>
                       <div className="flex items-center gap-2 flex-nowrap">
                         <button
                           title={t('Preview')}
                           onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowLeadModal(true); }}
-                          className="btn btn-sm btn-circle btn-ghost text-indigo-600 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
+                          className="inline-flex items-center justify-center text-gray-500 dark:text-white hover:text-blue-500"
                         >
                           <FaEye size={16} />
                         </button>
                         <button
                           title={t('Add Action')}
                           onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowAddActionModal(true) }}
-                          className="btn btn-sm btn-circle btn-ghost text-emerald-600 hover:text-emerald-700 dark:text-emerald-300 dark:hover:text-emerald-200"
+                          className="inline-flex items-center justify-center text-gray-500 dark:text-white hover:text-emerald-500"
                         >
                           <FaPlus size={16} />
                         </button>
                         <button
                           title={t('Call')}
                           onClick={(e) => { e.stopPropagation(); const raw = lead.phone || lead.mobile || ''; const digits = String(raw).replace(/[^0-9]/g, ''); if (digits) window.open(`tel:${digits}`); }}
-                          className="btn btn-sm btn-circle btn-ghost text-blue-600 dark:text-blue-400 hover:text-blue-500"
+                          className="inline-flex items-center justify-center text-blue-600 dark:text-[#2563EB] hover:opacity-80"
                         >
                           <FaPhone size={16} />
                         </button>
-                        <button
-                          title="WhatsApp"
-                          onClick={(e) => { e.stopPropagation(); const raw = lead.phone || lead.mobile || ''; const digits = String(raw).replace(/[^0-9]/g, ''); if (digits) window.open(`https://wa.me/${digits}`); }}
-                          className="btn btn-sm btn-circle btn-ghost dark:text-green-400 hover:text-green-500"
-                        >
-                          <FaWhatsapp size={16} style={{ color: '#25D366' }} />
-                        </button>
+
                         <button
                           title={t('Email')}
                           onClick={(e) => { e.stopPropagation(); if (lead.email) window.open(`mailto:${lead.email}`); }}
-                          className="btn btn-sm btn-circle btn-ghost dark:text-gray-200 hover:text-blue-500"
+                          className="inline-flex items-center justify-center text-[#FFA726] hover:opacity-80"
                         >
-                          <FaEnvelope size={16} style={{ color: '#FFA726' }} />
+                          <FaEnvelope size={16} />
                         </button>
                         <button
                           title="Google Meet"
                           onClick={(e) => { e.stopPropagation(); window.open('https://meet.google.com/', '_blank'); }}
-                          className="btn btn-sm btn-circle btn-ghost dark:text-gray-200 hover:text-blue-500"
+                          className="inline-flex items-center justify-center hover:opacity-80"
                         >
                           <img src={MEET_ICON_URL} alt="Google Meet" className="w-4 h-4" />
                         </button>
@@ -1756,7 +1780,11 @@ export const Leads = () => {
                   {/* Sales Person */}
                   {visibleColumns.salesPerson && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.salesPerson}px` }}>
-                      {lead.assignedTo || '-'}
+                      {(() => {
+                        const s = String(lead.stage || '').toLowerCase();
+                        const isNew = s.includes('new') || s.includes('جديد') || s.includes('نيوليد');
+                        return isNew ? '-' : (lead.assignedTo || '-');
+                      })()}
                     </td>
                   )}
 
@@ -1789,13 +1817,6 @@ export const Leads = () => {
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold leading-5 rounded-full ${getPriorityColor(lead.priority)}`}>
                         {t(lead.priority || 'N/A')}
                       </span>
-                    </td>
-                  )}
-
-                  {/* Status */}
-                  {visibleColumns.status && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.status}px` }}>
-                      {t(lead.status || 'N/A')}
                     </td>
                   )}
 
@@ -1992,8 +2013,122 @@ export const Leads = () => {
           isOpen={showAddActionModal}
           onClose={() => setShowAddActionModal(false)}
           lead={selectedLead}
-          onSave={() => {
-            // Logic to refresh lead actions or state if needed
+          onSave={(newAction) => {
+            if (newAction && selectedLead) {
+                let newStage = null;
+                // Helper to normalize string
+                const norm = (str) => String(str || '').toLowerCase().trim();
+                
+                let matchedStageObj = null;
+
+                // 1. Try to match by type (most robust, works with renamed stages)
+                const typeMatches = (Array.isArray(stages) ? stages : []).filter(s => s.type === newAction.nextAction);
+                
+                if (typeMatches.length > 0) {
+                   if (newAction.nextAction === 'follow_up') {
+                       // Priority 1: Exact "Follow Up" or "Pending" match by name
+                       const priorityMatch = typeMatches.find(s => {
+                           const n = norm(s.name);
+                           const nAr = norm(s.nameAr);
+                           return n === 'follow up' || n === 'follow-up' || n === 'pending' ||
+                                  nAr === 'متابعة' || nAr === 'قيد الانتظار';
+                       });
+
+                       if (priorityMatch) {
+                           matchedStageObj = priorityMatch;
+                       } else {
+                           // Priority 2: Anything that is NOT "No Answer"
+                           const notNoAnswer = typeMatches.find(s => {
+                               const n = norm(s.name);
+                               const nAr = norm(s.nameAr);
+                               return !n.includes('no answer') && !nAr.includes('لا رد') && !n.includes('phone off');
+                           });
+                           matchedStageObj = notNoAnswer;
+                       }
+                   } else {
+                       matchedStageObj = typeMatches[0];
+                   }
+                }
+
+                // 2. If no type match, fall back to Name matching
+                if (!matchedStageObj) {
+                    const normalizedNextAction = String(newAction.nextAction || '').replace(/_/g, ' ').toLowerCase();
+
+                    // Expanded map to cover more cases and exact default stage names
+                    const actionToStageMap = {
+                      'reservation': ['reservation', 'booking', 'won', 'closed', 'حجز', 'مباع'],
+                      'closing_deals': ['closing deal', 'closing', 'deal', 'won', 'closed', 'إغلاق', 'صفقة'],
+                      'rent': ['rent', 'leased', 'won', 'إيجار', 'مؤجر'],
+                      'cancel': ['cancelation', 'cancellation', 'cancelled', 'lost', 'archive', 'cold calls', 'إلغاء', 'خسارة', 'مكالمات باردة'],
+                      'meeting': ['meeting', 'negotiation', 'pending', 'اجتماع', 'تفاوض'],
+                      'proposal': ['proposal', 'quote', 'negotiation', 'pending', 'عرض سعر', 'عرض'],
+                      'follow_up': ['follow up', 'follow-up', 'pending', 'متابعة', 'قيد الانتظار']
+                    };
+
+                    let candidates = actionToStageMap[newAction.nextAction] || [];
+                    if (!candidates.includes(normalizedNextAction)) {
+                        candidates = [normalizedNextAction, ...candidates];
+                    }
+
+                    for (const candidate of candidates) {
+                      const match = (Array.isArray(stages) ? stages : []).find(s => {
+                        const sName = norm(typeof s === 'string' ? s : s.name);
+                        const sNameAr = norm(s.nameAr);
+                        
+                        // 1. Exact match
+                        if (sName === candidate || sNameAr === candidate) return true;
+                        
+                        // 2. Partial match (if candidate is significant length)
+                        if (candidate.length > 3 && (sName.includes(candidate) || (sNameAr && sNameAr.includes(candidate)))) return true;
+                        
+                        return false;
+                      });
+                      
+                      if (match) {
+                        matchedStageObj = typeof match === 'string' ? { name: match } : match;
+                        break;
+                      }
+                    }
+                }
+                
+                if (matchedStageObj) {
+                    newStage = matchedStageObj.name;
+                }
+                
+                let updatedLead = { ...selectedLead };
+                let hasChanges = false;
+
+                // Update stage if changed
+                if (newStage && newStage !== selectedLead.stage) {
+                  updatedLead.stage = newStage;
+                  hasChanges = true;
+                }
+
+                // Update notes (Last Comment) if present
+                const newNote = newAction.description || newAction.notes;
+                if (newNote) {
+                   updatedLead.notes = newNote;
+                   hasChanges = true;
+                }
+
+                // Add action to history and update last contact
+                if (!updatedLead.actions) updatedLead.actions = [];
+                const actionEntry = {
+                    ...newAction,
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    stageAtCreation: newStage || selectedLead.stage, // Capture new stage if changed, otherwise current
+                    assignee: newAction.assignedTo || newAction.assignee || selectedLead.assignedTo || selectedLead.salesPerson || 'غير محدد'
+                };
+                updatedLead.actions = [actionEntry, ...updatedLead.actions];
+                updatedLead.lastAction = actionEntry;
+                updatedLead.lastContact = new Date().toISOString();
+                hasChanges = true;
+
+                if (hasChanges) {
+                  handleUpdateLead(updatedLead);
+                }
+             }
             setShowAddActionModal(false)
           }}
         />
@@ -2033,6 +2168,7 @@ export const Leads = () => {
           theme={theme}
           assignees={uniqueAssignees}
           onAssign={(newAssignee) => handleAssignLead(selectedLead.id, newAssignee)}
+          onUpdateLead={handleUpdateLead}
         />
       )}
     </div>

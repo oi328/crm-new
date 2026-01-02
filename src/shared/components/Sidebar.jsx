@@ -788,13 +788,8 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
         key: 'General Inventory', 
         isSection: true,
         children: [
-          ...(isSimple ? [] : [{ to: '/inventory/families', key: 'Families' }]),
           { to: '/inventory/categories', key: 'Categories' },
-          ...(isSimple ? [] : [{ to: '/inventory/groups', key: 'Groups' }]),
-          { to: '/inventory/brands', key: 'Brands' },
           { to: '/inventory/items', key: 'Items' },
-          { to: '/inventory/price-books', key: 'Price Books' },
-          { to: '/inventory/suppliers', key: 'Suppliers' },
           { to: '/inventory/requests', key: 'Requests (General)' },
         ]
       },
@@ -803,9 +798,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
         isSection: true,
         children: [
           { to: '/inventory/projects', key: 'Projects' },
-          { to: '/inventory/buildings', key: 'Buildings' },
           { to: '/inventory/properties', key: 'Properties' },
-          { to: '/inventory/real-estate-price-books', key: 'Price Books' },
           { to: '/inventory/developers', key: 'Developers' },
           { to: '/inventory/brokers', key: 'Brokers' },
           { to: '/inventory/real-estate-requests', key: 'Requests (Real Estate)' },

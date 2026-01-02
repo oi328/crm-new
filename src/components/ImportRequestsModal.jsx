@@ -1,6 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { FaTimes } from 'react-icons/fa';
+import { useTheme } from '../shared/context/ThemeProvider';
 
 export default function ImportRequestsModal({ open, onClose, onImport, isRTL = false, currentUser = 'admin' }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [files, setFiles] = useState([]);
   const [rows, setRows] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -91,69 +95,89 @@ export default function ImportRequestsModal({ open, onClose, onImport, isRTL = f
   if (!open) return null;
 
   return (
-    <div dir={dir} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-[95vw] max-w-4xl p-4 flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Import Requests</h2>
-          <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost text-red-600">
+    <div dir={dir} className="fixed inset-0 z-[2000] flex items-start justify-center pt-20 bg-black/50">
+      <div 
+        className="relative max-w-2xl w-full mx-4 rounded-2xl shadow-2xl border flex flex-col max-h-[85vh] transition-colors duration-200" 
+        style={{ 
+          backgroundColor: isDark ? '#172554' : 'white', 
+          borderColor: isDark ? '#1e3a8a' : '#e5e7eb', 
+          color: isDark ? 'white' : '#111827' 
+        }} 
+      >
+        <div 
+          className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b transition-colors duration-200"
+          style={{ borderColor: isDark ? '#1e3a8a' : '#e5e7eb' }}
+        >
+          <h2 className="text-lg font-bold" style={{ color: isDark ? 'white' : '#111827' }}>Import Requests</h2>
+          <button 
+            onClick={onClose} 
+            className="btn btn-sm btn-circle btn-ghost text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          >
             <FaTimes size={20} />
           </button>
         </div>
 
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded p-6 text-center text-gray-600 dark:text-gray-300"
-        >
-          <p>Drag & drop CSV/XLSX files here, or click to select</p>
-          <input type="file" multiple accept=".csv,.xlsx,.xls" onChange={(e) => handleFiles(e.target.files)} className="mt-3" />
-        </div>
+        <div className="px-6 py-6 overflow-y-auto custom-scrollbar flex flex-col gap-4">
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="border-2 border-dashed rounded-2xl p-6 text-center transition-colors duration-300"
+            style={{
+              backgroundColor: isDark ? 'rgba(30, 58, 138, 0.2)' : 'rgba(255, 255, 255, 0.7)',
+              borderColor: isDark ? '#3b82f6' : '#93c5fd',
+              color: isDark ? '#d1d5db' : '#374151'
+            }}
+          >
+            <p>Drag & drop CSV/XLSX files here, or click to select</p>
+            <input type="file" multiple accept=".csv,.xlsx,.xls" onChange={(e) => handleFiles(e.target.files)} className="mt-3" />
+          </div>
 
-        <div className="flex items-center gap-2">
-          <button onClick={() => downloadTemplate('csv')} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">Download CSV Template</button>
-          <button onClick={() => downloadTemplate('xlsx')} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">Download XLSX Template</button>
-        </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => downloadTemplate('csv')} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">Download CSV Template</button>
+            <button onClick={() => downloadTemplate('xlsx')} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">Download XLSX Template</button>
+          </div>
 
-        <div className="overflow-auto max-h-60 border border-gray-200 dark:border-gray-700 rounded">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                {columns.map((c) => (
-                  <th key={c} className="px-2 py-1 text-left text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700">{c}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.slice(0, 50).map((r, idx) => (
-                <tr key={idx} className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-700">
+          <div className="overflow-auto max-h-60 border rounded" style={{ borderColor: isDark ? '#1e3a8a' : '#e5e7eb' }}>
+            <table className="min-w-full text-sm">
+              <thead style={{ backgroundColor: isDark ? 'rgba(30, 58, 138, 0.4)' : '#f9fafb' }}>
+                <tr>
                   {columns.map((c) => (
-                    <td key={c} className="px-2 py-1 text-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700">{r[c]}</td>
+                    <th key={c} className="px-2 py-1 text-left border-b" style={{ borderColor: isDark ? '#1e3a8a' : '#e5e7eb', color: isDark ? '#e5e7eb' : '#374151' }}>{c}</th>
                   ))}
                 </tr>
-              ))}
-              {!rows.length && (
-                <tr>
-                  <td colSpan={columns.length} className="px-2 py-6 text-center text-gray-500 dark:text-gray-400">No data preview</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="text-xs max-h-28 overflow-auto border border-gray-200 dark:border-gray-700 rounded p-2 w-1/2">
-            {logs.map((l, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 rounded ${l.level === 'success' ? 'bg-green-50 text-green-700' : l.level === 'error' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-700'}`}>{l.level}</span>
-                <span className="text-gray-700 dark:text-gray-200">{l.ts}</span>
-                <span className="text-gray-600 dark:text-gray-300">{l.user}</span>
-                <span className="text-gray-800 dark:text-gray-100">{l.message}</span>
-              </div>
-            ))}
+              </thead>
+              <tbody>
+                {rows.slice(0, 50).map((r, idx) => (
+                  <tr key={idx} className="transition-colors" style={{ backgroundColor: idx % 2 === 0 ? (isDark ? 'transparent' : 'white') : (isDark ? 'rgba(30, 58, 138, 0.1)' : '#f9fafb') }}>
+                    {columns.map((c) => (
+                      <td key={c} className="px-2 py-1 border-b" style={{ borderColor: isDark ? '#1e3a8a' : '#e5e7eb', color: isDark ? '#e5e7eb' : '#1f2937' }}>{r[c]}</td>
+                    ))}
+                  </tr>
+                ))}
+                {!rows.length && (
+                  <tr>
+                    <td colSpan={columns.length} className="px-2 py-6 text-center" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>No data preview</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={handleImport} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">Import</button>
-            <button onClick={onClose} className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none">Cancel</button>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-xs max-h-28 overflow-auto border rounded p-2 w-1/2" style={{ borderColor: isDark ? '#1e3a8a' : '#e5e7eb', backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'white' }}>
+              {logs.map((l, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded ${l.level === 'success' ? 'bg-green-100 text-green-800' : l.level === 'error' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>{l.level}</span>
+                  <span style={{ color: isDark ? '#d1d5db' : '#4b5563' }}>{l.ts}</span>
+                  <span style={{ color: isDark ? '#d1d5db' : '#4b5563' }}>{l.user}</span>
+                  <span style={{ color: isDark ? 'white' : '#111827' }}>{l.message}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={handleImport} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">Import</button>
+              <button onClick={onClose} className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none">Cancel</button>
+            </div>
           </div>
         </div>
       </div>

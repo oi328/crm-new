@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react' // 1. استورد useEffect
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -18,11 +19,7 @@ import SupportCustomers from '../pages/SupportCustomers'
 import SupportSLA from '../pages/SupportSLA'
 import SupportReports from '../pages/SupportReports'
 import SupportFeedbacks from '../pages/SupportFeedbacks'
-import Families from '../pages/inventory/Families'
-import Brands from '../pages/inventory/Brands'
-import Buildings from '../pages/inventory/Buildings'
 import ThirdParties from '../pages/inventory/ThirdParties'
-import Groups from '../pages/inventory/Groups'
 import GeneralRequests from '../pages/inventory/RequestsPage'
 import RealEstateRequests from '../pages/inventory/RealEstateRequestsPage'
 import RealEstatePriceBooks from '../pages/inventory/RealEstatePriceBooks'
@@ -31,7 +28,6 @@ import Properties from '../pages/Properties'
 import Requests from '../pages/Requests'
 import BuyerRequests from '../pages/BuyerRequests'
 import SellerRequests from '../pages/SellerRequests'
-import DevCompanies from '../pages/DevCompanies'
 import Marketing from '../pages/Marketing'
 import Settings from '../pages/Settings'
 import ProfileSettings from '../pages/settings/profile/ProfileSettings'
@@ -73,8 +69,8 @@ import PaymentPlans from '../pages/PaymentPlans'
 import Products from '../pages/Products'
 import ItemsPage from '../pages/inventory/ItemsPage'
 import Categories from '../pages/Categories'
-import Brokers from "../pages/inventory/Brokers";
-import Developers from '../pages/Developers'
+import Brokers from '../pages/inventory/Brokers'
+import Developers from '../pages/inventory/Developers'
 import StockManagement from '../pages/StockManagement'
 import InventoryTransactions from '../pages/InventoryTransactions'
 import Suppliers from '../pages/Suppliers'
@@ -165,11 +161,8 @@ export default function AppRouter() {
             </Route>
 
             {/* Inventory Module */}
-            <Route path="/inventory/families" element={<Families />} />
             <Route path="/inventory/categories" element={<Categories />} />
-            <Route path="/inventory/groups" element={<Groups />} />
             <Route path="/inventory/items" element={<ItemsPage />} />
-            <Route path="/inventory/brands" element={<Brands />} />
             <Route path="/inventory/price-books" element={<PriceBooks />} />
             <Route path="/inventory/third-parties" element={<ThirdParties />} />
             <Route path="/inventory/suppliers" element={<Suppliers />} />
@@ -180,7 +173,6 @@ export default function AppRouter() {
             
             {/* Real Estate Inventory */}
             <Route path="/inventory/projects" element={<Projects />} />
-            <Route path="/inventory/buildings" element={<Buildings />} />
             <Route path="/inventory/properties" element={<Properties />} />
             <Route path="/inventory/developers" element={<Developers />} />
             <Route path="/inventory/brokers" element={<Brokers />} />

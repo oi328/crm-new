@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { FaChevronDown, FaSearch, FaTimes } from 'react-icons/fa'
 
-export default function SearchableSelect({ options, value, onChange, placeholder, label, isRTL, icon: Icon }) {
+export default function SearchableSelect({ options, value, onChange, placeholder, label, isRTL, icon: Icon, multiple = false }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 })
@@ -13,20 +13,25 @@ export default function SearchableSelect({ options, value, onChange, placeholder
     function handleClickOutside(event) {
       const clickedWrapper = wrapperRef.current && wrapperRef.current.contains(event.target)
       const clickedDropdown = dropdownRef.current && dropdownRef.current.contains(event.target)
-      
       if (!clickedWrapper && !clickedDropdown) {
         setIsOpen(false)
       }
     }
-    
-    function handleScroll() {
-      if (isOpen) setIsOpen(false)
+
+    function handleScroll(event) {
+      if (!isOpen) return
+      const target = event?.target
+      const insideWrapper = target && wrapperRef.current && wrapperRef.current.contains(target)
+      const insideDropdown = target && dropdownRef.current && dropdownRef.current.contains(target)
+      if (!insideWrapper && !insideDropdown) {
+        setIsOpen(false)
+      }
     }
 
     document.addEventListener("mousedown", handleClickOutside)
     window.addEventListener("scroll", handleScroll, true)
     window.addEventListener("resize", handleScroll)
-    
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
       window.removeEventListener("scroll", handleScroll, true)
@@ -50,6 +55,9 @@ export default function SearchableSelect({ options, value, onChange, placeholder
     String(opt).toLowerCase().includes(search.toLowerCase())
   )
 
+  const isSelected = (opt) => multiple ? Array.isArray(value) && value.includes(opt) : value === opt
+  const clearValue = () => multiple ? onChange([]) : onChange('')
+
   const dropdownContent = (
     <div 
       ref={dropdownRef}
@@ -61,6 +69,7 @@ export default function SearchableSelect({ options, value, onChange, placeholder
         zIndex: 9999
       }}
       className="bg-[var(--panel-bg)] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-hidden flex flex-col"
+      dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div className="p-2 border-b border-gray-200 dark:border-gray-700">
         <div className="relative">
@@ -77,11 +86,11 @@ export default function SearchableSelect({ options, value, onChange, placeholder
         </div>
       </div>
       <div className="overflow-y-auto max-h-48 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-         <div
-            className={`px-3 py-2 cursor-pointer hover:shadow-md hover:backdrop-blur-sm hover:bg-gray-500/10 text-sm text-[var(--text-primary)] ${value === '' ? 'bg-blue-500/10 text-blue-500' : ''}`}
+          <div
+            className={`px-3 py-2 cursor-pointer hover:shadow-md hover:backdrop-blur-sm hover:bg-gray-500/10 text-sm text-[var(--text-primary)] ${(!multiple && value === '') || (multiple && Array.isArray(value) && value.length === 0) ? 'bg-blue-500/10 text-blue-500' : ''}`}
             onClick={() => {
-              onChange('')
-              setIsOpen(false)
+              clearValue()
+              if (!multiple) setIsOpen(false)
               setSearch('')
             }}
           >
@@ -91,10 +100,17 @@ export default function SearchableSelect({ options, value, onChange, placeholder
           filteredOptions.map((opt, idx) => (
             <div
               key={idx}
-              className={`px-3 py-2 cursor-pointer hover:shadow-md hover:backdrop-blur-sm hover:bg-gray-500/10 text-sm text-[var(--text-primary)] ${value === opt ? 'bg-blue-500/10 text-blue-500' : ''}`}
+              className={`px-3 py-2 cursor-pointer hover:shadow-md hover:backdrop-blur-sm hover:bg-gray-500/10 text-sm text-[var(--text-primary)] ${isSelected(opt) ? 'bg-blue-500/10 text-blue-500' : ''}`}
               onClick={() => {
-                onChange(opt)
-                setIsOpen(false)
+                if (multiple) {
+                  const cur = Array.isArray(value) ? value : []
+                  const exists = cur.includes(opt)
+                  const next = exists ? cur.filter(v => v !== opt) : [...cur, opt]
+                  onChange(next)
+                } else {
+                  onChange(opt)
+                  setIsOpen(false)
+                }
                 setSearch('')
               }}
             >
@@ -116,20 +132,22 @@ export default function SearchableSelect({ options, value, onChange, placeholder
         className="input dark:bg-gray-800 w-full flex items-center justify-between cursor-pointer bg-[var(--panel-bg)] border border-black dark:border-gray-700 rounded-lg px-3 py-2"
         onClick={toggleOpen}
       >
-        <span className={`text-sm ${!value ? "text-[var(--muted-text)]" : "text-[var(--text-primary)]"}`}>
-          {value || placeholder || (isRTL ? 'الكل' : 'All')}
+        <span className={`text-sm ${(!multiple && !value) || (multiple && Array.isArray(value) && value.length === 0) ? "text-[var(--muted-text)]" : "text-[var(--text-primary)]"}`}>
+          {multiple
+            ? ((Array.isArray(value) && value.length > 0) ? value.join(', ') : (placeholder || (isRTL ? 'الكل' : 'All')))
+            : (value || placeholder || (isRTL ? 'الكل' : 'All'))}
         </span>
         <div className="flex items-center gap-2">
-           {value && value !== 'All' && value !== 'الكل' && (
+           {(!multiple && value && value !== 'All' && value !== 'الكل') || (multiple && Array.isArray(value) && value.length > 0) ? (
              <FaTimes 
                className="text-[var(--muted-text)] hover:text-red-500 z-10" 
                size={12}
                onClick={(e) => {
                  e.stopPropagation()
-                 onChange('')
+                 clearValue()
                }}
              />
-           )}
+           ) : null}
            <FaChevronDown className={`text-[var(--muted-text)] transition-transform ${isOpen ? 'rotate-180' : ''}`} size={10} />
         </div>
       </div>

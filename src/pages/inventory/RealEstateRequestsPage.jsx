@@ -2,40 +2,18 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
     FaSearch, FaFilter, FaPlus, FaCheck, FaTimes, FaFileContract, 
-    FaBuilding, FaUser, FaClipboardList, FaEllipsisV, FaChevronDown, FaEdit, FaTrash 
+    FaBuilding, FaUser, FaClipboardList, FaEllipsisV, FaChevronDown, FaEdit, FaTrash, FaChevronLeft, FaChevronRight 
 } from 'react-icons/fa';
 import SearchableSelect from '../../components/SearchableSelect';
-
-const MOCK_REQUESTS = [
-    { id: 1, customer: 'Ahmed Ali', project: 'Nile Tower', unit: 'NTR-101', status: 'Pending', type: 'Booking', date: '2025-12-25' },
-    { id: 2, customer: 'Sarah Smith', project: 'October Park', unit: 'OBP-205', status: 'Approved', type: 'Inquiry', date: '2025-12-24' },
-    { id: 3, customer: 'Mohamed Hassan', project: 'Nile Tower', unit: 'NTR-105', status: 'Rejected', type: 'Maintenance', date: '2025-12-23' },
-    { id: 4, customer: 'Laila Mahmoud', project: 'Sea View', unit: 'SV-303', status: 'Converted', type: 'Booking', date: '2025-12-22' },
-    { id: 5, customer: 'Omar Khaled', project: 'Zayed Heights', unit: 'ZHT-102', status: 'Pending', type: 'Inquiry', date: '2025-12-21' },
-    { id: 6, customer: 'Nour El-Din', project: 'Maadi Gardens', unit: 'MGD-404', status: 'Approved', type: 'Booking', date: '2025-12-20' },
-    { id: 7, customer: 'Fatma Ibrahim', project: 'Nasr City Hub', unit: 'NCH-202', status: 'Pending', type: 'Maintenance', date: '2025-12-19' },
-    { id: 8, customer: 'Karim Adel', project: 'Nile Tower', unit: 'NTR-305', status: 'Converted', type: 'Booking', date: '2025-12-18' },
-    { id: 9, customer: 'Yasmine Zaki', project: 'Sea View', unit: 'SV-101', status: 'Rejected', type: 'Inquiry', date: '2025-12-17' },
-    { id: 10, customer: 'Hassan Moustafa', project: 'October Park', unit: 'OBP-505', status: 'Pending', type: 'Booking', date: '2025-12-16' },
-    { id: 11, customer: 'Rana Ahmed', project: 'Zayed Heights', unit: 'ZHT-303', status: 'Approved', type: 'Maintenance', date: '2025-12-15' },
-    { id: 12, customer: 'Tarek Salim', project: 'Maadi Gardens', unit: 'MGD-101', status: 'Converted', type: 'Booking', date: '2025-12-14' },
-    { id: 13, customer: 'Mona Farouk', project: 'Nasr City Hub', unit: 'NCH-105', status: 'Pending', type: 'Inquiry', date: '2025-12-13' },
-    { id: 14, customer: 'Khaled Saeed', project: 'Nile Tower', unit: 'NTR-202', status: 'Rejected', type: 'Booking', date: '2025-12-12' },
-    { id: 15, customer: 'Dina Magdy', project: 'Sea View', unit: 'SV-404', status: 'Approved', type: 'Maintenance', date: '2025-12-11' },
-    { id: 16, customer: 'Amr Diab', project: 'October Park', unit: 'OBP-101', status: 'Pending', type: 'Inquiry', date: '2025-12-10' },
-    { id: 17, customer: 'Sherine Reda', project: 'Zayed Heights', unit: 'ZHT-505', status: 'Converted', type: 'Booking', date: '2025-12-09' },
-    { id: 18, customer: 'Mahmoud El-Gendy', project: 'Maadi Gardens', unit: 'MGD-202', status: 'Pending', type: 'Maintenance', date: '2025-12-08' },
-    { id: 19, customer: 'Samia Gamal', project: 'Nasr City Hub', unit: 'NCH-303', status: 'Approved', type: 'Booking', date: '2025-12-07' },
-    { id: 20, customer: 'Fady Youssef', project: 'Nile Tower', unit: 'NTR-404', status: 'Pending', type: 'Inquiry', date: '2025-12-06' }
-];
+import { getRequests, saveRequest, deleteRequest } from '../../data/realEstateRequests';
 
 export default function RealEstateRequestsPage() {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === 'ar';
     
-    const STORAGE_KEY = 'real_estate_requests';
-
     const [requests, setRequests] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(5);
     const [showAllFilters, setShowAllFilters] = useState(false);
     const [filters, setFilters] = useState({
         status: '',
@@ -54,33 +32,23 @@ export default function RealEstateRequestsPage() {
         notes: ''
     });
 
-    // Load data from localStorage
+    // Load data from localStorage and listen for updates
     useEffect(() => {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                setRequests(JSON.parse(stored));
-            } else {
-                setRequests(MOCK_REQUESTS);
-            }
-        } catch (error) {
-            console.error('Error loading requests:', error);
-            setRequests(MOCK_REQUESTS);
-        }
+        setRequests(getRequests());
+
+        const handleUpdate = () => {
+            setRequests(getRequests());
+        };
+
+        window.addEventListener('real-estate-requests-updated', handleUpdate);
+        return () => window.removeEventListener('real-estate-requests-updated', handleUpdate);
     }, []);
 
-    // Save data to localStorage
-    useEffect(() => {
-        try {
-            if (requests.length > 0) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
-            }
-        } catch (error) {
-            console.error('Error saving requests:', error);
-        }
-    }, [requests]);
-
     // Derived Data
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters]);
+
     const filteredRequests = useMemo(() => {
         return requests.filter(req => {
             if (filters.search) {
@@ -99,15 +67,28 @@ export default function RealEstateRequestsPage() {
     const projectOptions = useMemo(() => [...new Set(requests.map(r => r.project))], [requests]);
     const statusOptions = ['Pending', 'Approved', 'Rejected', 'Converted'];
 
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+    const paginatedRequests = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredRequests.slice(start, start + itemsPerPage);
+    }, [filteredRequests, currentPage]);
+
     // Handlers
     const handleStatusChange = (id, newStatus) => {
-        setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+        const request = requests.find(r => r.id === id);
+        if (request) {
+            saveRequest({ ...request, status: newStatus });
+        }
     };
 
     const handleAddRequest = (e) => {
         e.preventDefault();
         if (editingId) {
-            setRequests(prev => prev.map(r => r.id === editingId ? { ...r, ...newRequest } : r));
+            const request = requests.find(r => r.id === editingId);
+            if (request) {
+                saveRequest({ ...request, ...newRequest });
+            }
             setEditingId(null);
         } else {
             const request = {
@@ -116,7 +97,7 @@ export default function RealEstateRequestsPage() {
                 status: 'Pending',
                 date: new Date().toISOString().split('T')[0]
             };
-            setRequests(prev => [request, ...prev]);
+            saveRequest(request);
         }
         setShowAddModal(false);
         setNewRequest({ customer: '', project: '', unit: '', type: 'Booking', notes: '' });
@@ -136,7 +117,7 @@ export default function RealEstateRequestsPage() {
 
     const handleDelete = (id) => {
         if (window.confirm(isRTL ? 'هل أنت متأكد من الحذف؟' : 'Are you sure you want to delete this request?')) {
-            setRequests(prev => prev.filter(r => r.id !== id));
+            deleteRequest(id);
         }
     };
 
@@ -215,13 +196,13 @@ export default function RealEstateRequestsPage() {
                             onClick={() => setShowAllFilters(prev => !prev)} 
                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 rounded-lg transition-colors"
                         >
-                            {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'إظهار' : 'Show')} <FaChevronDown className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
+                            {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')} <FaChevronDown className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
                         </button>
                         <button 
                             onClick={clearFilters} 
                             className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                         >
-                            {isRTL ? 'مسح المرشحات' : 'Clear Filters'}
+                            {isRTL ? 'إعادة تعيين' : 'Reset'}
                         </button>
                     </div>
                 </div>
@@ -285,7 +266,7 @@ export default function RealEstateRequestsPage() {
             {/* Table */}
             <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
                 <h2 className="text-xl font-medium mb-4">{isRTL ? 'قائمة الطلبات' : 'Requests List'}</h2>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto hidden md:block">
                     <table className="nova-table w-full">
                         <thead className="thead-soft">
                             <tr >
@@ -300,7 +281,7 @@ export default function RealEstateRequestsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {filteredRequests.map((request) => (
+                            {paginatedRequests.map((request) => (
                                 <tr key={request.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                     <td className="px-3 py-4 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-gray-400">
                                         #{request.id}
@@ -387,14 +368,149 @@ export default function RealEstateRequestsPage() {
                         </tbody>
                     </table>
                 </div>
-                {/* Pagination (Placeholder) */}
-                <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-sm ">
-                    <span>{isRTL ? 'عرض 1 إلى 4 من 4' : 'Showing 1 to 4 of 4'}</span>
-                    <div className="flex gap-2">
-                        <button className="px-3 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50" disabled>{isRTL ? 'السابق' : 'Previous'}</button>
-                        <button className="px-3 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50" disabled>{isRTL ? 'التالي' : 'Next'}</button>
-                    </div>
+
+                {/* Mobile Card View */}
+                <div className="grid grid-cols-1 gap-4 md:hidden">
+                    {paginatedRequests.map((request) => (
+                        <div key={request.id} className="p-4 rounded-xl glass-panel border border-gray-100 dark:border-gray-700/50 space-y-3">
+                            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/30">
+                                <span className="text-sm font-medium text-blue-600 dark:text-blue-400">#{request.id}</span>
+                                <span className="text-xs text-[var(--muted-text)]">{request.date}</span>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-[var(--muted-text)]">{isRTL ? 'العميل' : 'Customer'}:</span>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center dark:text-blue-400 font-bold text-[10px]">
+                                            {request.customer.charAt(0)}
+                                        </div>
+                                        <span className="text-sm font-medium">{request.customer}</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-[var(--muted-text)]">{isRTL ? 'النوع' : 'Type'}:</span>
+                                    <span className="text-sm">{request.type}</span>
+                                </div>
+                                
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-[var(--muted-text)]">{isRTL ? 'المشروع' : 'Project'}:</span>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <FaBuilding size={12} className="text-[var(--muted-text)]" />
+                                        <span>{request.project}</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-[var(--muted-text)]">{isRTL ? 'الوحدة' : 'Unit'}:</span>
+                                    <span className="text-sm font-mono">{request.unit}</span>
+                                </div>
+                                
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-[var(--muted-text)]">{isRTL ? 'الحالة' : 'Status'}:</span>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                        ${request.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 
+                                          request.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' : 
+                                          request.status === 'Converted' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400' :
+                                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'}`}>
+                                        {request.status}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div className="pt-3 border-t border-gray-100 dark:border-gray-700/30 flex justify-end gap-2">
+                                {request.status === 'Pending' && (
+                                    <>
+                                        <button 
+                                            onClick={() => handleStatusChange(request.id, 'Approved')}
+                                            className="w-8 h-8 rounded-full flex items-center justify-center text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                                            title={isRTL ? 'قبول' : 'Approve'}
+                                        >
+                                            <FaCheck size={16} />
+                                        </button>
+                                        <button 
+                                            onClick={() => handleStatusChange(request.id, 'Rejected')}
+                                            className="w-8 h-8 rounded-full flex items-center justify-center text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                            title={isRTL ? 'رفض' : 'Reject'}
+                                        >
+                                            <FaTimes size={16} />
+                                        </button>
+                                    </>
+                                )}
+                                {request.status === 'Approved' && (
+                                    <button 
+                                        onClick={() => handleConvertToDeal(request)}
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                                        title={isRTL ? 'تحويل إلى صفقة' : 'Convert to Deal'}
+                                    >
+                                        <FaFileContract size={16} />
+                                    </button>
+                                )}
+                                <button 
+                                    onClick={() => handleEdit(request)}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                    title={isRTL ? 'تعديل' : 'Edit'}
+                                >
+                                    <FaEdit size={16} />
+                                </button>
+                                <button 
+                                    onClick={() => handleDelete(request.id)}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                    title={isRTL ? 'حذف' : 'Delete'}
+                                >
+                                    <FaTrash size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
+
+                {/* Pagination Footer */}
+                {filteredRequests.length > 0 && (
+                    <div className="mt-2 flex flex-wrap items-center justify-between rounded-xl p-2 glass-panel gap-4">
+                        <div className="text-xs text-[var(--muted-text)]">
+                            {isRTL 
+                                ? `عرض ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, filteredRequests.length)} من ${filteredRequests.length}`
+                                : `Showing ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, filteredRequests.length)} of ${filteredRequests.length}`
+                            }
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                                <button
+                                    className="btn btn-sm btn-ghost"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage <= 1}
+                                    title={isRTL ? 'السابق' : 'Prev'}
+                                >
+                                    <FaChevronLeft className={isRTL ? 'scale-x-[-1]' : ''} />
+                                </button>
+                                <span className="text-sm whitespace-nowrap">{isRTL ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
+                                <button
+                                    className="btn btn-sm btn-ghost"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage >= totalPages}
+                                    title={isRTL ? 'التالي' : 'Next'}
+                                >
+                                    <FaChevronRight className={isRTL ? 'scale-x-[-1]' : ''} />
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="text-xs text-[var(--muted-text)] whitespace-nowrap">{isRTL ? 'لكل صفحة:' : 'Per page:'}</span>
+                                <select
+                                    className="input w-16 text-sm py-0 px-2 h-8"
+                                    value={itemsPerPage}
+                                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                                >
+                                    <option value={5}>5</option>
+                                    <option value={10}>10</option>
+                                    <option value={20}>20</option>
+                                    <option value={50}>50</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Add Request Modal */}

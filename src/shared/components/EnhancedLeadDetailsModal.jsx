@@ -7,8 +7,10 @@ import PaymentPlanModal from '@components/PaymentPlanModal';
 
 import CreateRequestModal from '@components/CreateRequestModal';
 import { useStages } from '@hooks/useStages';
+import { saveRequest as saveRealEstateRequest } from '../../data/realEstateRequests';
+import { saveRequest as saveInventoryRequest } from '../../data/inventoryRequests';
 
-const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, theme = 'light', assignees = [], onAssign }) => {
+const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, theme = 'light', assignees = [], onAssign, onUpdateLead }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -137,25 +139,18 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
       demo: true
     }
   ];
-  const [actions, setActions] = useState(demoActions);
+  const [paymentPlan, setPaymentPlan] = useState(lead?.paymentPlan || null);
+
+  useEffect(() => {
+    setPaymentPlan(lead?.paymentPlan || null);
+  }, [lead]);
+
+  const [actions, setActions] = useState(lead?.actions || []);
   React.useEffect(() => {
-    setActions(demoActions);
-  }, [isArabic]);
+    setActions(lead?.actions || []);
+  }, [lead]);
 
   if (!isOpen) return null;
-
-  // Handle adding new action
-  const handleAddAction = (newAction) => {
-    console.log('إضافة إجراء جديد:', newAction);
-    setActions(prev => [
-      {
-        ...newAction,
-        assignee: newAction.assignedTo || newAction.assignee || 'غير محدد'
-      },
-      ...prev
-    ]);
-    setShowAddActionModal(false);
-  };
 
   // Sample data for demonstration
   const leadData = {
@@ -170,24 +165,289 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
     priority: lead?.priority || 'high',
     stage: lead?.stage || (isArabic ? 'جديد' : 'New'),
     createdBy: lead?.createdBy || 'Not specified',
-    salesPerson: lead?.assignedTo || lead?.salesPerson || 'Not specified'
+    salesPerson: (() => {
+      const s = String(lead?.stage || '').toLowerCase();
+      const isNew = s.includes('new') || s.includes('جديد') || s.includes('نيوليد');
+      return isNew ? '-' : (lead?.assignedTo || lead?.salesPerson || 'Not specified');
+    })()
   };
 
-  const currentStageValue = String(leadData.stage || '').toLowerCase();
-  const matchedStage = (Array.isArray(stages) ? stages : []).find((s) => {
-    const name = typeof s === 'string' ? s : s?.name;
-    const nameAr = typeof s === 'string' ? '' : s?.nameAr;
-    return String(name || '').toLowerCase() === currentStageValue || String(nameAr || '').toLowerCase() === currentStageValue;
-  });
-  const stageColorStyle = matchedStage ? (
-    (typeof matchedStage !== 'string' && typeof matchedStage.color === 'string')
-      ? (matchedStage.color.trim().startsWith('#')
-          ? { backgroundColor: matchedStage.color }
-          : { background: `var(--stage-${matchedStage.color}-swatch, ${matchedStage.color})` }
-        )
-      : {}
-  ) : {};
-  const stageBadgeClass = `px-3 py-1 text-white text-sm rounded-full font-medium${matchedStage ? '' : ' bg-blue-500'}`;
+  // Handle adding new action
+  const handleAddAction = (newAction) => {
+    console.log('إضافة إجراء جديد:', newAction);
+
+    // Save reservation data if applicable
+    if (newAction.nextAction === 'reservation') {
+       console.log('Processing Reservation. Raw Action:', newAction);
+
+       // Intelligent Type Detection to resolve potential mismatches
+       let effectiveType = newAction.reservationType;
+       // If item is present (and it's not a project), force general
+       if (newAction.reservationItem && newAction.reservationItem !== '') {
+           effectiveType = 'general';
+       }
+       // If project is present (and it's not general item), force project
+       if (newAction.reservationProject && newAction.reservationProject !== '') {
+           effectiveType = 'project';
+       }
+
+       console.log('Effective Reservation Type:', effectiveType);
+
+       if (effectiveType === 'project') {
+          const realEstateRequest = {
+              id: Date.now(),
+              customer: leadData.name,
+              project: newAction.reservationProject,
+              unit: newAction.reservationUnit,
+              amount: newAction.reservationAmount,
+              status: 'Pending',
+              type: 'Booking',
+              date: new Date().toISOString().split('T')[0],
+              notes: newAction.reservationNotes,
+              phone: leadData.phone
+          };
+          console.log('Saving to Real Estate:', realEstateRequest);
+          saveRealEstateRequest(realEstateRequest);
+          const evt = new CustomEvent('app:toast', { detail: { type: 'success', message: isArabic ? 'تم حفظ طلب المشروع' : 'Project Request Saved' } });
+          window.dispatchEvent(evt);
+       } else if (effectiveType === 'general') {
+          let requestType = 'Purchase Order';
+          if (newAction.reservationCategory === 'service') requestType = 'Inquiry';
+          if (newAction.reservationCategory === 'subscription') requestType = 'Subscription';
+
+          const inventoryRequest = {
+              id: `REQ-${Date.now()}`,
+              customer: leadData.name,
+              item: newAction.reservationItem || 'Unspecified Item',
+              amount: Number(newAction.reservationAmount) || 0,
+              type: requestType,
+              status: 'Pending',
+              date: new Date().toISOString().split('T')[0],
+              notes: newAction.reservationNotes || '',
+              phone: leadData.phone
+          };
+
+          try {
+              console.log('Saving inventory request:', inventoryRequest);
+              saveInventoryRequest(inventoryRequest);
+              // Dispatch event to ensure RequestsPage updates
+              window.dispatchEvent(new Event('inventory-requests-updated'));
+
+              const evt = new CustomEvent('app:toast', { detail: { type: 'success', message: isArabic ? 'تم حفظ طلب المخزون' : 'Inventory Request Saved' } });
+              window.dispatchEvent(evt);
+          } catch (error) {
+              console.error('Error saving inventory request:', error);
+              const evt = new CustomEvent('app:toast', { detail: { type: 'error', message: isArabic ? 'حدث خطأ أثناء الحفظ' : 'Error saving request' } });
+              window.dispatchEvent(evt);
+          }
+       }
+    }
+
+    // Update Lead Stage if nextAction corresponds to a stage
+    if (newAction.nextAction) {
+      let newStage = null;
+      // Helper to normalize string
+      const norm = (str) => String(str || '').toLowerCase().trim();
+      
+      let matchedStageObj = null;
+
+      // 1. Try to match by type (most robust, works with renamed stages)
+      const typeMatches = (Array.isArray(stages) ? stages : []).filter(s => s.type === newAction.nextAction);
+      
+      if (typeMatches.length > 0) {
+         if (newAction.nextAction === 'follow_up') {
+             // Priority 1: Exact "Follow Up" or "Pending" match by name
+             const priorityMatch = typeMatches.find(s => {
+                 const n = norm(s.name);
+                 const nAr = norm(s.nameAr);
+                 return n === 'follow up' || n === 'follow-up' || n === 'pending' ||
+                        nAr === 'متابعة' || nAr === 'قيد الانتظار';
+             });
+
+             if (priorityMatch) {
+                 matchedStageObj = priorityMatch;
+             } else {
+                 // Priority 2: Anything that is NOT "No Answer"
+                 const notNoAnswer = typeMatches.find(s => {
+                     const n = norm(s.name);
+                     const nAr = norm(s.nameAr);
+                     return !n.includes('no answer') && !nAr.includes('لا رد') && !n.includes('phone off');
+                 });
+                 matchedStageObj = notNoAnswer;
+             }
+         } else {
+             matchedStageObj = typeMatches[0];
+         }
+      }
+
+      // 2. If no type match, fall back to Name matching
+      if (!matchedStageObj) {
+          const normalizedNextAction = String(newAction.nextAction).replace(/_/g, ' ').toLowerCase();
+
+          // Expanded map to cover more cases and exact default stage names
+          const actionToStageMap = {
+            'reservation': ['reservation', 'booking', 'won', 'closed', 'حجز', 'مباع'],
+            'closing_deals': ['closing deal', 'closing', 'deal', 'won', 'closed', 'إغلاق', 'صفقة'],
+            'rent': ['rent', 'leased', 'won', 'إيجار', 'مؤجر'],
+            'cancel': ['cancelation', 'cancellation', 'cancelled', 'lost', 'archive', 'cold calls', 'إلغاء', 'خسارة', 'مكالمات باردة'],
+            'meeting': ['meeting', 'negotiation', 'pending', 'اجتماع', 'تفاوض'],
+            'proposal': ['proposal', 'quote', 'negotiation', 'pending', 'عرض سعر', 'عرض'],
+            'follow_up': ['follow up', 'follow-up', 'pending', 'متابعة', 'قيد الانتظار']
+          };
+
+          let candidates = actionToStageMap[newAction.nextAction] || [];
+          if (!candidates.includes(normalizedNextAction)) {
+              candidates = [normalizedNextAction, ...candidates];
+          }
+
+          for (const candidate of candidates) {
+            const match = (Array.isArray(stages) ? stages : []).find(s => {
+              const sName = norm(typeof s === 'string' ? s : s.name);
+              const sNameAr = norm(s.nameAr);
+              
+              // 1. Exact match
+              if (sName === candidate || sNameAr === candidate) return true;
+              
+              // 2. Partial match (if candidate is significant length)
+              if (candidate.length > 3 && (sName.includes(candidate) || (sNameAr && sNameAr.includes(candidate)))) return true;
+              
+              return false;
+            });
+            
+            if (match) {
+              matchedStageObj = typeof match === 'string' ? { name: match } : match;
+              break;
+            }
+          }
+      }
+
+      if (matchedStageObj) {
+          newStage = matchedStageObj.name;
+      }
+
+      // If a valid new stage is found and it's different, update everything
+      const updatedLead = { ...lead };
+      let hasChanges = false;
+      const stageToUse = newStage || (lead ? lead.stage : '');
+
+      if (newStage && lead && newStage !== lead.stage) {
+        updatedLead.stage = newStage;
+        hasChanges = true;
+      }
+
+      // Add action to lead history for persistence
+      const actionEntry = {
+          ...newAction,
+          id: Date.now(),
+          date: newAction.date || new Date().toISOString().split('T')[0],
+          time: newAction.time || new Date().toTimeString().slice(0, 5),
+          stageAtCreation: stageToUse,
+          description: newAction.description || newAction.notes || '',
+          assignee: newAction.assignedTo || newAction.assignee || lead?.assignedTo || lead?.salesPerson || 'غير محدد'
+      };
+
+      if (lead) {
+          if (!updatedLead.actions) updatedLead.actions = [];
+          
+          updatedLead.actions = [actionEntry, ...updatedLead.actions];
+          updatedLead.lastAction = actionEntry;
+          updatedLead.lastContact = new Date().toISOString();
+          
+          // Also update notes if description is present
+          if (newAction.description || newAction.notes) {
+              updatedLead.notes = newAction.description || newAction.notes;
+          }
+          hasChanges = true;
+      }
+
+      // Update local state immediately with the new action containing stageAtCreation
+      setActions(prev => [actionEntry, ...prev]);
+
+      if (hasChanges) {
+        // Update parent
+        if (onUpdateLead) {
+          onUpdateLead(updatedLead);
+        }
+        
+        // Update LocalStorage (Global Source of Truth)
+        try {
+          const storedLeads = JSON.parse(localStorage.getItem('leadsData') || '[]');
+          const leadIndex = storedLeads.findIndex(l => l.id === lead.id);
+          if (leadIndex >= 0) {
+            storedLeads[leadIndex] = updatedLead;
+            localStorage.setItem('leadsData', JSON.stringify(storedLeads));
+            // Dispatch event for other components (like LeadsPage) to refresh
+            window.dispatchEvent(new CustomEvent('leadsDataUpdated'));
+          }
+        } catch (e) {
+          console.error('Failed to update lead stage in storage', e);
+        }
+      }
+    } else {
+        // Even if stage doesn't change, we should persist the action
+         const updatedLead = { ...lead };
+         if (!updatedLead.actions) updatedLead.actions = [];
+         const actionEntry = {
+              ...newAction,
+              id: Date.now(),
+              date: new Date().toISOString(),
+              stageAtCreation: lead ? lead.stage : '',
+              assignee: newAction.assignedTo || newAction.assignee || 'غير محدد'
+          };
+          updatedLead.actions = [actionEntry, ...updatedLead.actions];
+          updatedLead.lastAction = actionEntry;
+          updatedLead.lastContact = new Date().toISOString();
+           if (newAction.description || newAction.notes) {
+              updatedLead.notes = newAction.description || newAction.notes;
+          }
+          
+          // Update local state immediately
+          setActions(prev => [actionEntry, ...prev]);
+          
+          if (onUpdateLead) {
+            onUpdateLead(updatedLead);
+          }
+          
+           // Update LocalStorage
+            try {
+              const storedLeads = JSON.parse(localStorage.getItem('leadsData') || '[]');
+              const leadIndex = storedLeads.findIndex(l => l.id === lead.id);
+              if (leadIndex >= 0) {
+                storedLeads[leadIndex] = updatedLead;
+                localStorage.setItem('leadsData', JSON.stringify(storedLeads));
+                window.dispatchEvent(new CustomEvent('leadsDataUpdated'));
+              }
+            } catch (e) {
+              console.error('Failed to update lead action in storage', e);
+            }
+    }
+
+    setShowAddActionModal(false);
+  };
+
+  const getStageStyle = (stageName) => {
+    const currentStageValue = String(stageName || '').toLowerCase();
+    const matchedStage = (Array.isArray(stages) ? stages : []).find((s) => {
+      const name = typeof s === 'string' ? s : s?.name;
+      const nameAr = typeof s === 'string' ? '' : s?.nameAr;
+      return String(name || '').toLowerCase() === currentStageValue || String(nameAr || '').toLowerCase() === currentStageValue;
+    });
+    
+    const style = matchedStage ? (
+      (typeof matchedStage !== 'string' && typeof matchedStage.color === 'string')
+        ? (matchedStage.color.trim().startsWith('#')
+            ? { backgroundColor: matchedStage.color }
+            : { background: `var(--stage-${matchedStage.color}-swatch, ${matchedStage.color})` }
+          )
+        : {}
+    ) : {};
+    
+    const className = `px-3 py-1 text-white text-sm rounded-full font-medium${matchedStage ? '' : ' bg-blue-500'}`;
+    
+    return { style, className };
+  };
+
+  const { style: stageColorStyle, className: stageBadgeClass } = getStageStyle(leadData.stage);
   const activities = [
     {
       id: 1,
@@ -452,15 +712,14 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                 {showHeaderMenu && (
                   <div ref={headerMenuRef} className={`${isLight ? 'bg-white/70 backdrop-blur-md border border-gray-200 text-slate-800' : 'bg-slate-900/70 backdrop-blur-md border border-slate-700 text-white'} absolute right-12 top-10 z-50 rounded-xl shadow-xl min-w-[180px] p-2`}
                        onMouseLeave={() => setShowHeaderMenu(false)}>
-                    <button onClick={() => { setShowHeaderMenu(false); setShowCreateRequestModal(true); }}
-                            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
-                      <FaList className="text-blue-500" />
-                      <span className="text-sm font-medium">{isArabic ? 'إضافة طلب' : 'Add Request'}</span>
-                    </button>
                     <button onClick={() => { setShowHeaderMenu(false); setShowPaymentPlanModal(true); }}
                             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
                       <FaDollarSign className="text-emerald-500" />
-                      <span className="text-sm font-medium">{isArabic ? 'خطة دفع' : 'Payment Plan'}</span>
+                      <span className="text-sm font-medium">
+                        {isArabic 
+                          ? (paymentPlan ? 'تعديل خطة الدفع' : 'إضافة خطة دفع') 
+                          : (paymentPlan ? 'Edit Payment Plan' : 'Add Payment Plan')}
+                      </span>
                     </button>
                     <button onClick={() => { setShowHeaderMenu(false); setActionType('call'); setShowAddActionModal(true); }}
                             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
@@ -533,6 +792,9 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
           isOpen={showPaymentPlanModal}
           onClose={() => setShowPaymentPlanModal(false)}
           onSave={(plan) => {
+             const updatedLead = { ...lead, paymentPlan: plan };
+             setPaymentPlan(plan);
+             if (onUpdateLead) onUpdateLead(updatedLead);
              const evt = new CustomEvent('app:toast', { detail: { type: 'success', message: isArabic ? 'تم حفظ خطة الدفع' : 'Payment plan saved' } });
              window.dispatchEvent(evt);
           }}
@@ -672,8 +934,61 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                       <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.createdDate}</span>
                     </div>
                   </div>
+
+
                 </div>
               </div>
+
+              {/* Payment Plan Information */}
+              {paymentPlan && (
+                <>
+                  <h3 className={`text-lg font-semibold mb-4 mt-6 border-b pb-2 ${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'}`}>
+                    {isArabic ? 'خطة الدفع' : 'Payment Plan'}
+                  </h3>
+                  <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 rounded-lg ${isLight ? 'bg-white border border-gray-200' : 'bg-slate-700'}`}>
+                    <div className="flex flex-col gap-1">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'المشروع:' : 'Project:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.projectName || '-'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'رقم الوحدة:' : 'Unit No:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.unitNo || '-'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'سعر الوحدة:' : 'Unit Price:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.totalAmount ? Number(paymentPlan.totalAmount).toLocaleString() : '0'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'الجراج:' : 'Garage:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.garageAmount ? Number(paymentPlan.garageAmount).toLocaleString() : '0'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'الصيانة:' : 'Maintenance:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.maintenanceAmount ? Number(paymentPlan.maintenanceAmount).toLocaleString() : '0'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'صافي المبلغ:' : 'Net Amount:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-bold text-lg`}>{paymentPlan.netAmount ? Number(paymentPlan.netAmount).toLocaleString() : '0'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'المقدم:' : 'Down Payment:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.downPayment ? Number(paymentPlan.downPayment).toLocaleString() : '0'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'أقساط إضافية:' : 'Extra Installments:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.extraInstallments ? Number(paymentPlan.extraInstallments).toLocaleString() : '0'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'قيمة القسط:' : 'Installment:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.installmentAmount ? Number(paymentPlan.installmentAmount).toLocaleString() : '0'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'عدد الأشهر:' : 'Months:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.noOfMonths || '0'}</span>
+                    </div>
+                  </div>
+                </>
+              )}
 
 
             </div>
@@ -728,7 +1043,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
 
               {/* Search and Filters (Status & Type) */}
               <div className={`${isLight ? 'bg-white border border-gray-200' : 'bg-slate-700'} p-4 rounded-lg space-y-3 mb-2`}>
-                <div className="flex flex-col md:flex-row gap-3 items-center">
+                <div className="flex flex-row gap-3 items-center">
                   <div className="flex-1 relative w-full">
                     <FaSearch className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isLight ? 'text-slate-400' : 'text-slate-400'}`} />
                     <input
@@ -740,17 +1055,6 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <FaFilter className={`${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className={`rounded-lg px-3 py-2 text-sm focus:outline-none ${isLight ? 'bg-white border border-gray-300 text-black focus:border-emerald-500' : 'bg-slate-600 border border-slate-500 text-white focus:border-emerald-400'}`}
-                    >
-                      <option value="all">{isArabic ? 'جميع الحالات' : 'All statuses'}</option>
-                      <option value="completed">{isArabic ? 'مكتملة' : 'Completed'}</option>
-                      <option value="pending">{isArabic ? 'معلقة' : 'Pending'}</option>
-                      <option value="scheduled">{isArabic ? 'مجدولة' : 'Scheduled'}</option>
-                    </select>
                     <select
                       value={filterType}
                       onChange={(e) => setFilterType(e.target.value)}
@@ -807,7 +1111,11 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'المرحلة:' : 'Stage:'}</span>
-                                <span className={stageBadgeClass} style={stageColorStyle}>{leadData.stage}</span>
+                                {(() => {
+                                  const actionStage = action.stageAtCreation || leadData.stage;
+                                  const { style, className } = getStageStyle(actionStage);
+                                  return <span className={className} style={style}>{actionStage}</span>;
+                                })()}
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'الأولوية:' : 'Priority:'}</span>
@@ -819,16 +1127,27 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                               </div>
                               <div className="flex items-center gap-1 min-w-0">
                                 <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'مسؤول المبيعات:' : 'Sales Person:'}</span>
-                                <span className={`${isLight ? 'text-slate-800' : 'text-slate-300'} max-w-[200px] break-words`}>{action.assignee}</span>
+                                <span className={`${isLight ? 'text-slate-800' : 'text-slate-300'} max-w-[200px] break-words`}>
+                                  {(() => {
+                                    const candidates = [action.assignee, action.user, leadData.salesPerson, lead?.assignedTo];
+                                    const valid = candidates.find(c => c && c !== 'غير محدد' && c !== 'Not specified' && c !== '-');
+                                    return valid || (isArabic ? 'غير محدد' : 'Not specified');
+                                  })()}
+                                </span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs`}>{isArabic ? 'التاريخ والوقت:' : 'Date & Time:'}</span>
-                                <span className={`${isLight ? 'text-slate-800' : 'text-slate-300'} whitespace-nowrap`}>{`${action.date} ${action.time || ''}`}</span>
+                                <span className={`${isLight ? 'text-slate-800' : 'text-slate-300'} whitespace-nowrap`}>
+                                  {(() => {
+                                    const datePart = (action.date || '').includes('T') ? action.date.split('T')[0] : action.date;
+                                    return `${datePart} ${action.time || ''}`;
+                                  })()}
+                                </span>
                               </div>
                             </div>
                             <div className="mt-2 w-full">
                               <div className={`${isLight ? 'text-slate-600' : 'text-slate-400'} text-xs mb-1`}>{isArabic ? 'التعليق:' : 'Comment:'}</div>
-                              <div className={`${isLight ? 'text-black' : 'text-slate-300'} text-sm break-words whitespace-pre-line`}>{action.description}</div>
+                              <div className={`${isLight ? 'text-black' : 'text-slate-300'} text-sm break-words whitespace-pre-line`}>{action.description || action.notes}</div>
                             </div>
                           </div>
                         </div>

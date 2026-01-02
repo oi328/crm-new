@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import SearchableSelect from '../components/SearchableSelect'
-import { FaFilter, FaSearch, FaChevronDown, FaTimes, FaEdit, FaTrash } from 'react-icons/fa'
+import { FaFilter, FaSearch, FaChevronDown, FaTimes, FaEdit, FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 
 export default function Products() {
   const { i18n } = useTranslation()
@@ -58,6 +58,10 @@ export default function Products() {
   const [showForm, setShowForm] = useState(false)
   const [showAllFilters, setShowAllFilters] = useState(false)
   const [filters, setFilters] = useState({ search: '', brand: '', productName: '', category: '', supplier: '', uom: '', minPrice: '', maxPrice: '' })
+  
+  // Pagination
+  const [page, setPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(6)
 
   const brandOptions = useMemo(() => Array.from(new Set(products.map(p => p.brand).filter(Boolean))), [products])
   const productNameOptions = useMemo(() => Array.from(new Set(products.map(p => p.name).filter(Boolean))), [products])
@@ -262,7 +266,7 @@ export default function Products() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(p => (
+                  {paginated.map(p => (
                     <tr key={p.id}>
                       <td className="px-3"><span className="font-medium">{p.name}</span></td>
                       <td className="px-3">{p.category}</td>
@@ -295,6 +299,48 @@ export default function Products() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          
+          {/* Pagination Footer */}
+          {filtered.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-2 text-sm text-[var(--muted-text)]">
+              <div className="flex items-center gap-2">
+                <span>{isArabic ? 'عرض' : 'Showing'}</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  className="select select-bordered select-xs w-16"
+                >
+                  <option>5</option>
+                  <option>10</option>
+                  <option>20</option>
+                  <option>50</option>
+                </select>
+                <span>{isArabic ? 'من' : 'of'} {filtered.length} {isArabic ? 'عنصر' : 'entries'}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs">
+                  {isArabic ? 'صفحة' : 'Page'} {page} {isArabic ? 'من' : 'of'} {Math.ceil(filtered.length / itemsPerPage)}
+                </span>
+                <div className="join">
+                  <button
+                    className="join-item btn btn-sm btn-ghost"
+                    disabled={page === 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                  >
+                    <FaChevronLeft className={isArabic ? 'transform scale-x-[-1]' : ''} />
+                  </button>
+                  <button
+                    className="join-item btn btn-sm btn-ghost"
+                    disabled={page === Math.ceil(filtered.length / itemsPerPage)}
+                    onClick={() => setPage(p => Math.min(Math.ceil(filtered.length / itemsPerPage), p + 1))}
+                  >
+                    <FaChevronRight className={isArabic ? 'transform scale-x-[-1]' : ''} />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { api } from '@utils/api'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -41,7 +42,7 @@ const MapPicker = ({ location, setLocation, setLocationUrl }) => {
 
 // --- Constants & Options ---
 const STEPS = [
-  { id: 1, label: 'Core Details', labelAr: 'التفاصيل الأساسية', icon: FaBuilding },
+  { id: 1, label: 'Details', labelAr: 'التفاصيل الأساسية', icon: FaBuilding },
   { id: 2, label: 'Features', labelAr: 'مواصفات المشروع', icon: FaList },
   { id: 3, label: 'Media', labelAr: 'الوسائط', icon: FaImages },
   { id: 4, label: 'Location', labelAr: 'الموقع', icon: FaMapMarkedAlt },
@@ -53,8 +54,23 @@ const STEPS = [
 const PROJECT_CATEGORIES = ['Residential', 'Commercial', 'Administrative', 'Medical', 'Coastal', 'Mixed Use']
 const DEVELOPERS = ['Palm Hills', 'Mountain View', 'Sodic', 'Emaar Misr', 'Ora Developers', 'City Edge', 'Tatweer Misr', 'Hyde Park']
 const CITIES = ['New Cairo', 'Sheikh Zayed', 'New Capital', 'North Coast', 'Ain Sokhna', 'October City', 'Maadi']
-const PROJECT_STATUS = ['Under Construction', 'Ready to Move', 'Launch Soon', 'Sold Out']
+const COUNTRIES = ['Egypt', 'Saudi Arabia', 'United Arab Emirates', 'Qatar', 'Kuwait', 'Bahrain', 'Jordan', 'Morocco', 'Tunisia']
+const PROJECT_STATUS = ['Under construction', 'Launch soon', 'Ready to sale', 'Sold out']
 const AMENITIES = ['Club House', 'Gym', 'Spa', 'Kids Area', 'Commercial Area', 'Mosque', 'Swimming Pools', 'Security', 'Parking', 'Medical Center', 'School', 'University']
+const AMENITY_LABELS = {
+  'Club House': { en: 'Club House', ar: 'النادي' },
+  'Gym': { en: 'Gym', ar: 'صالة رياضية' },
+  'Spa': { en: 'Spa', ar: 'سبا' },
+  'Kids Area': { en: 'Kids Area', ar: 'منطقة الأطفال' },
+  'Commercial Area': { en: 'Commercial Area', ar: 'منطقة تجارية' },
+  'Mosque': { en: 'Mosque', ar: 'مسجد' },
+  'Swimming Pools': { en: 'Swimming Pools', ar: 'مسابح' },
+  'Security': { en: 'Security', ar: 'أمن' },
+  'Parking': { en: 'Parking', ar: 'موقف سيارات' },
+  'Medical Center': { en: 'Medical Center', ar: 'مركز طبي' },
+  'School': { en: 'School', ar: 'مدرسة' },
+  'University': { en: 'University', ar: 'جامعة' },
+}
 
 // --- Helper Components ---
 const Tooltip = ({ text }) => (
@@ -98,14 +114,19 @@ const FileUploader = ({ label, subLabel, files, onDrop, accept = "*", multiple =
 // --- Main Component ---
 export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'create', initialValues = null }) {
   const [currentStep, setCurrentStep] = useState(1)
+  const [inputLanguage, setInputLanguage] = useState('en')
+  const [showEnglish, setShowEnglish] = useState(false)
   const [formData, setFormData] = useState({
     // Step 1: Core Details
     name: '',
+    nameAr: '',
     developer: '',
-    category: '',
-    status: 'Under Construction',
-    deliveryDate: '',
+    categories: [],
+    status: 'Under construction',
+    completion: 0,
+    country: '',
     description: '',
+    descriptionAr: '',
     
     // Step 2: Features
     amenities: [],
@@ -121,6 +142,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
     // Step 4: Location
     city: '',
     address: '',
+    addressAr: '',
     location: null,
     locationUrl: '',
     
@@ -134,9 +156,13 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
     
     // Step 6: CIL
     cilTo: '',
+    cilToAr: '',
     cilSubject: '',
+    cilSubjectAr: '',
     cilContent: '',
+    cilContentAr: '',
     cilSignature: '',
+    cilSignatureAr: '',
     cilAttachments: [],
     
     // Step 7: Publish
@@ -149,6 +175,15 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
       setFormData(prev => ({
         ...prev,
         ...initialValues,
+        // Map Arabic fields if they exist in initialValues
+        nameAr: initialValues.nameAr || '',
+        descriptionAr: initialValues.descriptionAr || '',
+        addressAr: initialValues.addressAr || '',
+        cilToAr: initialValues.cil?.toAr || '',
+        cilSubjectAr: initialValues.cil?.subjectAr || '',
+        cilContentAr: initialValues.cil?.contentAr || '',
+        cilSignatureAr: initialValues.cil?.signatureAr || '',
+
         // Ensure arrays are arrays
         amenities: initialValues.amenities || [],
         paymentPlans: initialValues.paymentPlans || [],
@@ -174,6 +209,13 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
     }
   }, [initialValues])
 
+  useEffect(() => {
+    if (isRTL) {
+      setInputLanguage('ar')
+      setShowEnglish(false)
+    }
+  }, [isRTL])
+
   const [errors, setErrors] = useState({})
 
   // Scroll to top
@@ -183,40 +225,69 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
   }, [currentStep])
 
   // Validation
-  const validateStep = (step) => {
+  const validateForm = () => {
     const newErrors = {}
-    
-    if (step === 1) {
-      if (!formData.name.trim()) newErrors.name = 'Project Name is required'
-      if (!formData.developer) newErrors.developer = 'Developer is required'
-      if (!formData.category) newErrors.category = 'Category is required'
+    // Only Project Name is mandatory
+    if (!formData.name.trim() && !formData.nameAr.trim()) {
+      newErrors.name = 'Project Name is required'
     }
     
-    if (step === 5) {
-      if (!formData.minPrice) newErrors.minPrice = 'Min Price is required'
-    }
-
-    if (step === 6) {
-      if (!formData.cilTo.trim()) newErrors.cilTo = 'To is required'
-      if (!formData.cilSubject.trim()) newErrors.cilSubject = 'Subject is required'
-    }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleNext = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, STEPS.length))
-    }
-  }
-
-  const handleBack = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1))
-  }
-
   const handleFinish = () => {
-    if (validateStep(currentStep)) {
+    if (validateForm()) {
+      const payload = {
+        name_en: formData.name,
+        name_ar: formData.nameAr,
+        description_en: formData.description,
+        description_ar: formData.descriptionAr,
+        address_en: formData.address,
+        address_ar: formData.addressAr,
+        developer: formData.developer,
+        category: Array.isArray(formData.categories) ? formData.categories.join(', ') : '',
+        status: formData.status,
+        completion: formData.completion,
+        country: formData.country,
+        city: formData.city,
+        location: formData.location,
+        location_url: formData.locationUrl,
+        min_price: formData.minPrice,
+        max_price: formData.maxPrice,
+        min_space: formData.minSpace,
+        max_space: formData.maxSpace,
+        currency: formData.currency,
+        amenities: formData.amenities,
+        media: {
+          logo: formData.logo,
+          mainImage: formData.mainImage,
+          gallery: formData.gallery,
+          masterPlan: formData.masterPlan,
+          videoUrl: formData.videoUrl,
+          brochure: formData.brochure,
+        },
+        cil: {
+          to_en: formData.cilTo,
+          to_ar: formData.cilToAr,
+          subject_en: formData.cilSubject,
+          subject_ar: formData.cilSubjectAr,
+          content_en: formData.cilContent,
+          content_ar: formData.cilContentAr,
+          signature_en: formData.cilSignature,
+          signature_ar: formData.cilSignatureAr,
+          attachments: formData.cilAttachments,
+        },
+        publish: {
+          contactName: formData.contactName,
+          marketingPackage: formData.marketingPackage,
+        },
+      }
+      try {
+        void api.post('/api/projects', payload)
+        const evt = new CustomEvent('app:toast', { detail: { type: 'success', message: inputLanguage === 'ar' ? 'تم حفظ بيانات المشروع' : 'Project data saved' } })
+        window.dispatchEvent(evt)
+      } catch (_) {}
       onSave && onSave(formData)
       onClose()
     }
@@ -256,50 +327,104 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
       <div className="space-y-2">
         <label className="label flex items-center gap-2">
           <FaHeading className="text-gray-400" />
-          {isRTL ? 'اسم المشروع' : 'Project Name'}
+          {inputLanguage === 'ar' ? 'اسم المشروع' : 'Project Name'}
           <span className="text-red-500">*</span>
         </label>
-        <input 
-          className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.name ? 'border-red-500' : ''}`}
-          value={formData.name}
-          onChange={e => setFormData({...formData, name: e.target.value})}
-          placeholder={isRTL ? 'مثال: بالم هيلز القاهرة الجديدة' : 'e.g., Palm Hills New Cairo'}
-        />
+        {inputLanguage === 'ar' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {showEnglish && (
+            <div>
+              <label className="text-xs text-[var(--muted-text)]">English</label>
+              <input 
+                className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.name ? 'border-red-500' : ''}`}
+                value={formData.name}
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                placeholder={'e.g., Palm Hills New Cairo'}
+                dir={'ltr'}
+              />
+            </div>
+            )}
+            <div>
+              <label className="text-xs text-[var(--muted-text)]">عربي</label>
+              <input 
+                className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.name ? 'border-red-500' : ''}`}
+                value={formData.nameAr}
+                onChange={e => setFormData({...formData, nameAr: e.target.value})}
+                placeholder={'مثال: بالم هيلز القاهرة الجديدة'}
+                dir={'rtl'}
+              />
+            </div>
+          </div>
+        ) : (
+          <input 
+            className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.name ? 'border-red-500' : ''}`}
+            value={formData.name}
+            onChange={e => setFormData({...formData, name: e.target.value})}
+            placeholder={'e.g., Palm Hills New Cairo'}
+            dir={'ltr'}
+          />
+        )}
         {errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Country */}
+        <div className="space-y-2">
+          <label className="label">{inputLanguage === 'ar' ? 'الدولة' : 'Country'}</label>
+          <SearchableSelect 
+            options={COUNTRIES} 
+            value={formData.country} 
+            onChange={v => setFormData({...formData, country: v})} 
+            isRTL={inputLanguage === 'ar'}
+            placeholder={inputLanguage === 'ar' ? 'اختر الدولة' : 'Select Country'}
+          />
+        </div>
+
+        {/* City */}
+        <div className="space-y-2">
+          <label className="label">{inputLanguage === 'ar' ? 'المدينة' : 'City'}</label>
+          <SearchableSelect 
+            options={CITIES} 
+            value={formData.city} 
+            onChange={v => setFormData({...formData, city: v})} 
+            isRTL={inputLanguage === 'ar'}
+            placeholder={inputLanguage === 'ar' ? 'اختر المدينة' : 'Select City'}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Developer */}
         <div className="space-y-2">
-          <label className="label">{isRTL ? 'المطور' : 'Developer'}</label>
+          <label className="label">{inputLanguage === 'ar' ? 'المطور' : 'Developer'}</label>
           <SearchableSelect 
             options={DEVELOPERS} 
             value={formData.developer} 
             onChange={v => setFormData({...formData, developer: v})} 
-            isRTL={isRTL}
-            placeholder={isRTL ? 'اختر المطور' : 'Select Developer'}
+            isRTL={inputLanguage === 'ar'}
+            placeholder={inputLanguage === 'ar' ? 'اختر المطور' : 'Select Developer'}
           />
           {errors.developer && <p className="text-red-500 text-xs">{errors.developer}</p>}
         </div>
 
         {/* Category */}
         <div className="space-y-2">
-          <label className="label">{isRTL ? 'التصنيف' : 'Category'}</label>
+          <label className="label">{inputLanguage === 'ar' ? 'التصنيفات' : 'Categories'}</label>
           <SearchableSelect 
             options={PROJECT_CATEGORIES} 
-            value={formData.category} 
-            onChange={v => setFormData({...formData, category: v})} 
-            isRTL={isRTL}
-            placeholder={isRTL ? 'اختر التصنيف' : 'Select Category'}
+            value={formData.categories} 
+            onChange={(arr) => setFormData({...formData, categories: arr})} 
+            isRTL={inputLanguage === 'ar'}
+            multiple={true}
+            placeholder={inputLanguage === 'ar' ? 'اختر التصنيفات' : 'Select Categories'}
           />
-          {errors.category && <p className="text-red-500 text-xs">{errors.category}</p>}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Status */}
         <div className="space-y-2">
-          <label className="label">{isRTL ? 'الحالة' : 'Status'}</label>
+          <label className="label">{inputLanguage === 'ar' ? 'الحالة' : 'Status'}</label>
           <select 
             className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
             value={formData.status}
@@ -308,18 +433,20 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
             {PROJECT_STATUS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
-
-        {/* Delivery Date */}
+        {/* Completion (%) */}
         <div className="space-y-2">
-          <label className="label flex items-center gap-2">
-            <FaCalendarAlt className="text-gray-400" />
-            {isRTL ? 'تاريخ التسليم' : 'Delivery Date'}
-          </label>
-          <input 
-            type="date"
+          <label className="label">{inputLanguage === 'ar' ? 'نسبة الإنجاز (%)' : 'Completion (%)'}</label>
+          <input
+            type="number"
+            min={0}
+            max={100}
             className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-            value={formData.deliveryDate}
-            onChange={e => setFormData({...formData, deliveryDate: e.target.value})}
+            value={formData.completion}
+            onChange={e => {
+              const v = Math.max(0, Math.min(100, Number(e.target.value || 0)))
+              setFormData({...formData, completion: v})
+            }}
+            placeholder={inputLanguage === 'ar' ? '0 إلى 100' : '0 to 100'}
           />
         </div>
       </div>
@@ -330,14 +457,42 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
       <div className="space-y-2">
         <label className="label flex items-center gap-2">
           <FaAlignLeft className="text-gray-400" />
-          {isRTL ? 'وصف المشروع' : 'Project Description'}
+          {inputLanguage === 'ar' ? 'وصف المشروع' : 'Project Description'}
         </label>
-        <textarea 
-          className="input dark:bg-gray-800 w-full min-h-[150px] font-sans border border-black dark:border-gray-700"
-          value={formData.description}
-          onChange={e => setFormData({...formData, description: e.target.value})}
-          placeholder={isRTL ? 'اكتب وصفاً شاملاً للمشروع...' : 'Write a comprehensive description...'}
-        />
+          {inputLanguage === 'ar' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {showEnglish && (
+            <div>
+              <label className="text-xs text-[var(--muted-text)]">English</label>
+              <textarea 
+                className="input dark:bg-gray-800 w-full min-h-[150px] font-sans border border-black dark:border-gray-700"
+                value={formData.description}
+                onChange={e => setFormData({...formData, description: e.target.value})}
+                placeholder={'Write a comprehensive description...'}
+                dir={'ltr'}
+              />
+            </div>
+            )}
+            <div>
+              <label className="text-xs text-[var(--muted-text)]">عربي</label>
+              <textarea 
+                className="input dark:bg-gray-800 w-full min-h-[150px] font-sans border border-black dark:border-gray-700"
+                value={formData.descriptionAr}
+                onChange={e => setFormData({...formData, descriptionAr: e.target.value})}
+                placeholder={'اكتب وصفاً شاملاً للمشروع...'}
+                dir={'rtl'}
+              />
+            </div>
+          </div>
+        ) : (
+          <textarea 
+            className="input dark:bg-gray-800 w-full min-h-[150px] font-sans border border-black dark:border-gray-700"
+            value={formData.description}
+            onChange={e => setFormData({...formData, description: e.target.value})}
+            placeholder={'Write a comprehensive description...'}
+            dir={'ltr'}
+          />
+        )}
       </div>
     </div>
   )
@@ -345,7 +500,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
   const renderStep2 = () => (
     <div className="space-y-6 animate-fadeIn">
       <div className="space-y-4">
-        <h3 className="font-semibold text-lg">{isRTL ? 'مرافق المشروع' : 'Project Amenities'}</h3>
+        <h3 className="font-semibold text-lg">{inputLanguage === 'ar' ? 'مرافق المشروع' : 'Project Amenities'}</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {AMENITIES.map(item => (
             <label key={item} className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
@@ -358,7 +513,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
                 }}
                 className="checkbox rounded text-blue-600"
               />
-              <span className="text-sm">{item}</span>
+              <span className="text-sm">{inputLanguage === 'ar' ? (AMENITY_LABELS[item]?.ar || item) : (AMENITY_LABELS[item]?.en || item)}</span>
             </label>
           ))}
         </div>
@@ -371,9 +526,9 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Logo */}
         <div className="space-y-2">
-          <label className="label">{isRTL ? 'شعار المشروع' : 'Project Logo'}</label>
+          <label className="label">{inputLanguage === 'ar' ? 'شعار المشروع' : 'Project Logo'}</label>
           <FileUploader 
-            label={isRTL ? 'تحميل الشعار' : 'Upload Logo'}
+            label={inputLanguage === 'ar' ? 'تحميل الشعار' : 'Upload Logo'}
             subLabel="PNG, JPG"
             files={formData.logo}
             onDrop={(files) => setFormData(prev => ({...prev, logo: files}))}
@@ -384,9 +539,9 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
 
         {/* Main Image */}
         <div className="space-y-2">
-          <label className="label">{isRTL ? 'الصورة الرئيسية' : 'Main Image'}</label>
+          <label className="label">{inputLanguage === 'ar' ? 'الصورة الرئيسية' : 'Main Image'}</label>
           <FileUploader 
-            label={isRTL ? 'تحميل الصورة' : 'Upload Cover'}
+            label={inputLanguage === 'ar' ? 'تحميل الصورة' : 'Upload Cover'}
             subLabel="High Quality"
             files={formData.mainImage}
             onDrop={(files) => setFormData(prev => ({...prev, mainImage: files}))}
@@ -398,10 +553,10 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
 
       {/* Gallery */}
       <div className="space-y-2">
-        <label className="label">{isRTL ? 'معرض الصور' : 'Gallery'}</label>
+        <label className="label">{inputLanguage === 'ar' ? 'معرض الصور' : 'Gallery'}</label>
         <FileUploader 
-          label={isRTL ? 'صور المشروع' : 'Project Photos'}
-          subLabel={isRTL ? 'اسحب وأفلت الصور' : 'Drag & Drop Photos'}
+          label={inputLanguage === 'ar' ? 'صور المشروع' : 'Project Photos'}
+          subLabel={inputLanguage === 'ar' ? 'اسحب وأفلت الصور' : 'Drag & Drop Photos'}
           files={formData.gallery}
           onDrop={(files) => setFormData(prev => ({...prev, gallery: [...prev.gallery, ...files]}))}
           accept="image/*"
@@ -410,9 +565,9 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
 
       {/* Master Plan */}
       <div className="space-y-2">
-        <label className="label">{isRTL ? 'المخطط العام' : 'Master Plan'}</label>
+        <label className="label">{inputLanguage === 'ar' ? 'المخطط العام' : 'Master Plan'}</label>
         <FileUploader 
-          label={isRTL ? 'تحميل المخطط' : 'Upload Master Plan'}
+          label={inputLanguage === 'ar' ? 'تحميل المخطط' : 'Upload Master Plan'}
           subLabel="Image or PDF"
           files={formData.masterPlan}
           onDrop={(files) => setFormData(prev => ({...prev, masterPlan: [...prev.masterPlan, ...files]}))}
@@ -424,7 +579,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
       <div className="space-y-2">
         <label className="label flex items-center gap-2">
           <FaLink className="text-gray-400" />
-          {isRTL ? 'رابط الفيديو' : 'Video URL'}
+          {inputLanguage === 'ar' ? 'رابط الفيديو' : 'Video URL'}
         </label>
         <input 
           className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
@@ -438,39 +593,53 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
 
   const renderStep4 = () => (
     <div className="space-y-6 animate-fadeIn">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* City */}
-        <div className="space-y-2">
-          <label className="label flex items-center gap-2">
-            <FaCity className="text-gray-400" />
-            {isRTL ? 'المدينة' : 'City'}
-          </label>
-          <SearchableSelect 
-            options={CITIES} 
-            value={formData.city} 
-            onChange={v => setFormData({...formData, city: v})} 
-            isRTL={isRTL}
-          />
-        </div>
-
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         {/* Address */}
         <div className="space-y-2">
           <label className="label flex items-center gap-2">
             <FaMapMarkerAlt className="text-gray-400" />
-            {isRTL ? 'العنوان' : 'Address'}
+            {inputLanguage === 'ar' ? 'العنوان' : 'Address'}
           </label>
-          <input 
-            className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-            value={formData.address}
-            onChange={e => setFormData({...formData, address: e.target.value})}
-            placeholder={isRTL ? 'العنوان بالتفصيل...' : 'Detailed address...'}
-          />
+          {inputLanguage === 'ar' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {showEnglish && (
+              <div>
+                <label className="text-xs text-[var(--muted-text)]">English</label>
+                <input 
+                  className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+                  value={formData.address}
+                  onChange={e => setFormData({...formData, address: e.target.value})}
+                  placeholder={'Detailed address...'}
+                  dir={'ltr'}
+                />
+              </div>
+              )}
+              <div>
+                <label className="text-xs text-[var(--muted-text)]">عربي</label>
+                <input 
+                  className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+                  value={formData.addressAr}
+                  onChange={e => setFormData({...formData, addressAr: e.target.value})}
+                  placeholder={'العنوان بالتفصيل...'}
+                  dir={'rtl'}
+                />
+              </div>
+            </div>
+          ) : (
+            <input 
+              className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+              value={formData.address}
+              onChange={e => setFormData({...formData, address: e.target.value})}
+              placeholder={'Detailed address...'}
+              dir={'ltr'}
+            />
+          )}
         </div>
       </div>
 
       {/* Map */}
       <div className="space-y-2">
-        <label className="label">{isRTL ? 'تحديد الموقع على الخريطة' : 'Pin Location on Map'}</label>
+        <label className="label">{inputLanguage === 'ar' ? 'تحديد الموقع على الخريطة' : 'Pin Location on Map'}</label>
         <div className="h-[300px] rounded-xl overflow-hidden border border-gray-300 dark:border-gray-700 relative z-0">
           <MapContainer center={[30.0444, 31.2357]} zoom={13} style={{ height: '100%', width: '100%' }}>
             <TileLayer
@@ -497,11 +666,11 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
       <div className="space-y-4">
         <h3 className="font-semibold flex items-center gap-2">
           <FaTag className="text-blue-500" />
-          {isRTL ? 'نطاق السعر' : 'Price Range'}
+          {inputLanguage === 'ar' ? 'نطاق السعر' : 'Price Range'}
         </h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="label text-xs">{isRTL ? 'من' : 'From'}</label>
+            <label className="label text-xs">{inputLanguage === 'ar' ? 'من' : 'From'}</label>
             <input 
               type="number"
               className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.minPrice ? 'border-red-500' : ''}`}
@@ -511,7 +680,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
             />
           </div>
           <div className="space-y-2">
-            <label className="label text-xs">{isRTL ? 'إلى' : 'To'}</label>
+            <label className="label text-xs">{inputLanguage === 'ar' ? 'إلى' : 'To'}</label>
             <input 
               type="number"
               className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
@@ -527,11 +696,11 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
       <div className="space-y-4">
         <h3 className="font-semibold flex items-center gap-2">
           <FaRulerCombined className="text-blue-500" />
-          {isRTL ? 'نطاق المساحة (متر مربع)' : 'Space Range (sqm)'}
+          {inputLanguage === 'ar' ? 'نطاق المساحة (متر مربع)' : 'Space Range (sqm)'}
         </h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="label text-xs">{isRTL ? 'من' : 'From'}</label>
+            <label className="label text-xs">{inputLanguage === 'ar' ? 'من' : 'From'}</label>
             <input 
               type="number"
               className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
@@ -541,7 +710,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
             />
           </div>
           <div className="space-y-2">
-            <label className="label text-xs">{isRTL ? 'إلى' : 'To'}</label>
+            <label className="label text-xs">{inputLanguage === 'ar' ? 'إلى' : 'To'}</label>
             <input 
               type="number"
               className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
@@ -558,10 +727,10 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
         <div className="flex items-center justify-between">
            <h3 className="font-semibold flex items-center gap-2">
              <FaHandHoldingUsd className="text-blue-500" />
-             {isRTL ? 'خطط الدفع' : 'Payment Plans'}
+             {inputLanguage === 'ar' ? 'خطط الدفع' : 'Payment Plans'}
            </h3>
            <button onClick={addPaymentPlan} className="text-blue-600 text-sm hover:underline flex items-center gap-1">
-             <FaPlus size={10} /> {isRTL ? 'إضافة خطة' : 'Add Plan'}
+             <FaPlus size={10} /> {inputLanguage === 'ar' ? 'إضافة خطة' : 'Add Plan'}
            </button>
         </div>
         
@@ -572,7 +741,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
             </button>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1">
-                <label className="text-xs text-[var(--muted-text)]">{isRTL ? 'المقدم (%)' : 'Down Payment (%)'}</label>
+                <label className="text-xs text-[var(--muted-text)]">{inputLanguage === 'ar' ? 'المقدم (%)' : 'Down Payment (%)'}</label>
                 <input 
                   type="number" 
                   className="input py-1 px-2 text-sm w-full border border-black dark:border-gray-700"
@@ -582,7 +751,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-[var(--muted-text)]">{isRTL ? 'عدد السنوات' : 'Years'}</label>
+                <label className="text-xs text-[var(--muted-text)]">{inputLanguage === 'ar' ? 'عدد السنوات' : 'Years'}</label>
                 <input 
                   type="number" 
                   className="input py-1 px-2 text-sm w-full border border-black dark:border-gray-700"
@@ -592,7 +761,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-[var(--muted-text)]">{isRTL ? 'الاستلام' : 'Delivery'}</label>
+                <label className="text-xs text-[var(--muted-text)]">{inputLanguage === 'ar' ? 'الاستلام' : 'Delivery'}</label>
                 <input 
                   type="text" 
                   className="input py-1 px-2 text-sm w-full border border-black dark:border-gray-700"
@@ -606,7 +775,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
         ))}
         {formData.paymentPlans.length === 0 && (
           <p className="text-sm text-[var(--muted-text)] text-center py-4 bg-gray-50 dark:bg-gray-800/30 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
-            {isRTL ? 'لا توجد خطط دفع مضافة' : 'No payment plans added'}
+            {inputLanguage === 'ar' ? 'لا توجد خطط دفع مضافة' : 'No payment plans added'}
           </p>
         )}
       </div>
@@ -618,10 +787,10 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
       <div className="p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl mb-4">
          <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
             <FaAddressCard />
-            {isRTL ? 'خطاب اهتمام العميل (CIL)' : 'Client Interest Letter (CIL)'}
+            {inputLanguage === 'ar' ? 'خطاب معلومات العميل (CIL)' : 'Customer information leter(CIL)'}
          </h3>
          <p className="text-xs text-blue-600 dark:text-blue-300">
-            {isRTL ? 'قم بتعبئة بيانات الخطاب لإرساله.' : 'Fill in the letter details to send it.'}
+            {inputLanguage === 'ar' ? 'قم بتعبئة بيانات الخطاب لإرساله.' : 'Fill in the letter details to send it.'}
          </p>
       </div>
 
@@ -630,15 +799,42 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
         <div className="space-y-2">
           <label className="label flex items-center gap-2">
             <FaUser className="text-gray-400" />
-            {isRTL ? 'إلى' : 'To'}
-            <span className="text-red-500">*</span>
+            {inputLanguage === 'ar' ? 'إلى' : 'To'}
           </label>
-          <input 
-            className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.cilTo ? 'border-red-500' : ''}`}
-            value={formData.cilTo}
-            onChange={e => setFormData({...formData, cilTo: e.target.value})}
-            placeholder={isRTL ? 'اسم المستقبل' : 'Recipient Name'}
-          />
+          {inputLanguage === 'ar' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {showEnglish && (
+              <div>
+                <label className="text-xs text-[var(--muted-text)]">English</label>
+                <input 
+                  className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.cilTo ? 'border-red-500' : ''}`}
+                  value={formData.cilTo}
+                  onChange={e => setFormData({...formData, cilTo: e.target.value})}
+                  placeholder={'Recipient Name'}
+                  dir={'ltr'}
+                />
+              </div>
+              )}
+              <div>
+                <label className="text-xs text-[var(--muted-text)]">عربي</label>
+                <input 
+                  className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.cilTo ? 'border-red-500' : ''}`}
+                  value={formData.cilToAr}
+                  onChange={e => setFormData({...formData, cilToAr: e.target.value})}
+                  placeholder={'اسم المستقبل'}
+                  dir={'rtl'}
+                />
+              </div>
+            </div>
+          ) : (
+            <input 
+              className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.cilTo ? 'border-red-500' : ''}`}
+              value={formData.cilTo}
+              onChange={e => setFormData({...formData, cilTo: e.target.value})}
+              placeholder={'Recipient Name'}
+              dir={'ltr'}
+            />
+          )}
           {errors.cilTo && <p className="text-red-500 text-xs">{errors.cilTo}</p>}
         </div>
 
@@ -646,15 +842,42 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
         <div className="space-y-2">
           <label className="label flex items-center gap-2">
             <FaTag className="text-gray-400" />
-            {isRTL ? 'الموضوع' : 'Subject'}
-            <span className="text-red-500">*</span>
+            {inputLanguage === 'ar' ? 'الموضوع' : 'Subject'}
           </label>
-          <input 
-            className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.cilSubject ? 'border-red-500' : ''}`}
-            value={formData.cilSubject}
-            onChange={e => setFormData({...formData, cilSubject: e.target.value})}
-            placeholder={isRTL ? 'موضوع الخطاب' : 'Letter Subject'}
-          />
+          {inputLanguage === 'ar' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {showEnglish && (
+              <div>
+                <label className="text-xs text-[var(--muted-text)]">English</label>
+                <input 
+                  className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.cilSubject ? 'border-red-500' : ''}`}
+                  value={formData.cilSubject}
+                  onChange={e => setFormData({...formData, cilSubject: e.target.value})}
+                  placeholder={'Letter Subject'}
+                  dir={'ltr'}
+                />
+              </div>
+              )}
+              <div>
+                <label className="text-xs text-[var(--muted-text)]">عربي</label>
+                <input 
+                  className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.cilSubject ? 'border-red-500' : ''}`}
+                  value={formData.cilSubjectAr}
+                  onChange={e => setFormData({...formData, cilSubjectAr: e.target.value})}
+                  placeholder={'موضوع الخطاب'}
+                  dir={'rtl'}
+                />
+              </div>
+            </div>
+          ) : (
+            <input 
+              className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.cilSubject ? 'border-red-500' : ''}`}
+              value={formData.cilSubject}
+              onChange={e => setFormData({...formData, cilSubject: e.target.value})}
+              placeholder={'Letter Subject'}
+              dir={'ltr'}
+            />
+          )}
           {errors.cilSubject && <p className="text-red-500 text-xs">{errors.cilSubject}</p>}
         </div>
 
@@ -662,38 +885,94 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
         <div className="space-y-2">
           <label className="label flex items-center gap-2">
             <FaAlignLeft className="text-gray-400" />
-            {isRTL ? 'المحتوى' : 'Content'}
+            {inputLanguage === 'ar' ? 'المحتوى' : 'Content'}
           </label>
-          <textarea 
-            className="input dark:bg-gray-800 w-full min-h-[150px] font-sans border border-black dark:border-gray-700"
-            value={formData.cilContent}
-            onChange={e => setFormData({...formData, cilContent: e.target.value})}
-            placeholder={isRTL ? 'اكتب محتوى الخطاب هنا...' : 'Write letter content here...'}
-          />
+          {inputLanguage === 'ar' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {showEnglish && (
+              <div>
+                <label className="text-xs text-[var(--muted-text)]">English</label>
+                <textarea 
+                  className="input dark:bg-gray-800 w-full min-h-[150px] font-sans border border-black dark:border-gray-700"
+                  value={formData.cilContent}
+                  onChange={e => setFormData({...formData, cilContent: e.target.value})}
+                  placeholder={'Write letter content here...'}
+                  dir={'ltr'}
+                />
+              </div>
+              )}
+              <div>
+                <label className="text-xs text-[var(--muted-text)]">عربي</label>
+                <textarea 
+                  className="input dark:bg-gray-800 w-full min-h-[150px] font-sans border border-black dark:border-gray-700"
+                  value={formData.cilContentAr}
+                  onChange={e => setFormData({...formData, cilContentAr: e.target.value})}
+                  placeholder={'اكتب محتوى الخطاب هنا...'}
+                  dir={'rtl'}
+                />
+              </div>
+            </div>
+          ) : (
+            <textarea 
+              className="input dark:bg-gray-800 w-full min-h-[150px] font-sans border border-black dark:border-gray-700"
+              value={formData.cilContent}
+              onChange={e => setFormData({...formData, cilContent: e.target.value})}
+              placeholder={'Write letter content here...'}
+              dir={'ltr'}
+            />
+          )}
         </div>
 
         {/* Signature */}
         <div className="space-y-2">
           <label className="label flex items-center gap-2">
             <FaFileContract className="text-gray-400" />
-            {isRTL ? 'التوقيع' : 'Signature'}
+            {inputLanguage === 'ar' ? 'التوقيع' : 'Signature'}
           </label>
-          <input 
-            className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-            value={formData.cilSignature}
-            onChange={e => setFormData({...formData, cilSignature: e.target.value})}
-            placeholder={isRTL ? 'توقيعك' : 'Your Signature'}
-          />
+          {inputLanguage === 'ar' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {showEnglish && (
+              <div>
+                <label className="text-xs text-[var(--muted-text)]">English</label>
+                <input 
+                  className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+                  value={formData.cilSignature}
+                  onChange={e => setFormData({...formData, cilSignature: e.target.value})}
+                  placeholder={'Your Signature'}
+                  dir={'ltr'}
+                />
+              </div>
+              )}
+              <div>
+                <label className="text-xs text-[var(--muted-text)]">عربي</label>
+                <input 
+                  className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+                  value={formData.cilSignatureAr}
+                  onChange={e => setFormData({...formData, cilSignatureAr: e.target.value})}
+                  placeholder={'توقيعك'}
+                  dir={'rtl'}
+                />
+              </div>
+            </div>
+          ) : (
+            <input 
+              className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+              value={formData.cilSignature}
+              onChange={e => setFormData({...formData, cilSignature: e.target.value})}
+              placeholder={'Your Signature'}
+              dir={'ltr'}
+            />
+          )}
         </div>
 
         {/* Attachments */}
         <div className="space-y-2">
           <label className="label flex items-center gap-2">
             <FaCloudUploadAlt className="text-gray-400" />
-            {isRTL ? 'المرفقات' : 'Attachments'}
+            {inputLanguage === 'ar' ? 'المرفقات' : 'Attachments'}
           </label>
           <FileUploader 
-            label={isRTL ? 'رفع مرفقات' : 'Upload Attachments'}
+            label={inputLanguage === 'ar' ? 'رفع مرفقات' : 'Upload Attachments'}
             subLabel="PDF, JPG, PNG"
             files={formData.cilAttachments}
             onDrop={(files) => setFormData(prev => ({...prev, cilAttachments: [...prev.cilAttachments, ...files]}))}
@@ -710,29 +989,29 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
         <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center mb-4">
           <FaCheck size={40} />
         </div>
-        <h3 className="text-2xl font-bold">{isRTL ? 'المشروع جاهز للنشر!' : 'Project Ready to Publish!'}</h3>
+        <h3 className="text-2xl font-bold">{inputLanguage === 'ar' ? 'المشروع جاهز للنشر!' : 'Project Ready to Publish!'}</h3>
         <p className="text-[var(--muted-text)] max-w-md">
-          {isRTL ? 'تم إدخال جميع البيانات المطلوبة. يمكنك الآن نشر المشروع ليكون متاحاً للعملاء.' : 'All required details have been entered. You can now publish the project to make it available to clients.'}
+          {inputLanguage === 'ar' ? 'تم إدخال جميع البيانات المطلوبة. يمكنك الآن نشر المشروع ليكون متاحاً للعملاء.' : 'All required details have been entered. You can now publish the project to make it available to clients.'}
         </p>
       </div>
 
       <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-        <h4 className="font-semibold mb-4">{isRTL ? 'ملخص المشروع' : 'Project Summary'}</h4>
+        <h4 className="font-semibold mb-4">{inputLanguage === 'ar' ? 'ملخص المشروع' : 'Project Summary'}</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div>
-             <span className="block text-[var(--muted-text)] text-xs">{isRTL ? 'الاسم' : 'Name'}</span>
-             <span className="font-medium">{formData.name || '—'}</span>
+             <span className="block text-[var(--muted-text)] text-xs">{inputLanguage === 'ar' ? 'الاسم' : 'Name'}</span>
+             <span className="font-medium">{formData.name || formData.nameAr || '—'}</span>
           </div>
           <div>
-             <span className="block text-[var(--muted-text)] text-xs">{isRTL ? 'المطور' : 'Developer'}</span>
+             <span className="block text-[var(--muted-text)] text-xs">{inputLanguage === 'ar' ? 'المطور' : 'Developer'}</span>
              <span className="font-medium">{formData.developer || '—'}</span>
           </div>
           <div>
-             <span className="block text-[var(--muted-text)] text-xs">{isRTL ? 'الحالة' : 'Status'}</span>
+             <span className="block text-[var(--muted-text)] text-xs">{inputLanguage === 'ar' ? 'الحالة' : 'Status'}</span>
              <span className="font-medium">{formData.status || '—'}</span>
           </div>
           <div>
-             <span className="block text-[var(--muted-text)] text-xs">{isRTL ? 'السعر يبدأ من' : 'Min Price'}</span>
+             <span className="block text-[var(--muted-text)] text-xs">{inputLanguage === 'ar' ? 'السعر يبدأ من' : 'Min Price'}</span>
              <span className="font-medium">{formData.minPrice || '—'}</span>
           </div>
         </div>
@@ -749,7 +1028,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
       <div 
         className="relative z-[210] bg-white dark:!bg-slate-950 rounded-2xl w-[900px] max-w-full h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden"
         style={{ background: 'var(--panel-bg)' }}
-        dir={isRTL ? 'rtl' : 'ltr'}
+        dir={inputLanguage === 'ar' ? 'rtl' : 'ltr'}
       >
         
         {/* Header & Progress Bar */}
@@ -758,16 +1037,25 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
                   <div className="flex items-center justify-between mb-1">
                     <h2 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent px-4">
               {mode === 'edit' 
-                ? (isRTL ? 'تعديل المشروع' : 'Edit Project')
-                : (isRTL ? 'إضافة مشروع جديد' : 'Add Project')
+                ? (inputLanguage === 'ar' ? 'تعديل المشروع' : 'Edit Project')
+                : (inputLanguage === 'ar' ? 'إضافة مشروع جديد' : 'Add Project')
               }
                     </h2>
-                    <button
-            onClick={onClose}
-            className="btn btn-sm btn-circle btn-ghost text-red-500"
-          >
-            <FaTimes size={20} />
-          </button>
+                    
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => { setInputLanguage(prev => prev === 'en' ? 'ar' : 'en'); if (inputLanguage === 'ar') setShowEnglish(false) }}
+                        className={`btn btn-sm ${inputLanguage === 'ar' ? ' text-white' : ' text-gray-700'} border-none px-3`}
+                      >
+                        {inputLanguage === 'ar' ? 'English' : 'Arabic'}
+                      </button>
+                      <button
+                        onClick={onClose}
+                        className="btn btn-sm btn-circle btn-ghost text-red-500"
+                      >
+                        <FaTimes size={20} />
+                      </button>
+                    </div>
                   </div>
         
                   {/* Stepper */}
@@ -782,7 +1070,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
                       const isActive = step.id === currentStep
                       const isCompleted = step.id < currentStep
                       return (
-                        <div key={step.id} className="flex flex-col items-center gap-1 relative group cursor-pointer" onClick={() => step.id < currentStep && setCurrentStep(step.id)}>
+                        <div key={step.id} className="flex flex-col items-center gap-1 relative group cursor-pointer" onClick={() => setCurrentStep(step.id)}>
                           <div 
                             className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all duration-300 z-10 ${
                               isActive 
@@ -797,7 +1085,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
                           <span className={`absolute top-full mt-0.5 text-[9px] font-medium whitespace-nowrap transition-colors duration-300 ${
                             isActive ? 'text-blue-600' : 'text-gray-400'
                           } hidden md:block`}>
-                            {isRTL ? step.labelAr : step.label}
+                            {inputLanguage === 'ar' ? step.labelAr : step.label}
                           </span>
                         </div>
                       )
@@ -819,33 +1107,25 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
         {/* Footer Actions */}
         <div
                   className="p-2 dark:bg-slate-900/70 backdrop-blur-md border-t border-blue-200 dark:border-slate-800 flex items-center justify-between"
+                  dir={inputLanguage === 'ar' ? 'rtl' : 'ltr'}
                 >
                   <button 
-            onClick={handleBack}
-            disabled={currentStep === 1}
-            className={`btn btn-sm bg-gray-500 hover:bg-gray-600 text-white border-none px-3 py-1 text-xs flex items-center gap-2 ${currentStep === 1 ? 'opacity-0 pointer-events-none' : ''}`}
+            onClick={onClose}
+            className={`btn btn-sm bg-gray-500 hover:bg-gray-600 text-white border-none px-3 py-1 text-xs flex items-center gap-2`}
           >
-                    {isRTL ? <FaArrowRight /> : <FaArrowLeft />}
-                    {isRTL ? 'السابق' : 'Back'}
+                    <FaTimes />
+                    {inputLanguage === 'ar' ? 'إلغاء' : 'Cancel'}
                   </button>
         
                   <div className="text-xs text-[var(--muted-text)] font-medium">
-                    {isRTL ? `خطوة ${currentStep} من ${STEPS.length}` : `Step ${currentStep} of ${STEPS.length}`}
+                    {inputLanguage === 'ar' ? `خطوة ${currentStep} من ${STEPS.length}` : `Step ${currentStep} of ${STEPS.length}`}
                   </div>
         
                   <button 
-                  onClick={currentStep === STEPS.length ? handleFinish : handleNext}
+                  onClick={handleFinish}
                   className={`btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none font-medium flex items-center gap-2`}
                 >
-                  {currentStep === STEPS.length ? (
-                    <>
-                      <FaCheck /> {isRTL ? 'نشر الإعلان' : 'Publish Listing'}
-                    </>
-                  ) : (
-                    <>
-                      {isRTL ? 'التالي' : 'Next'} {isRTL ? <FaArrowLeft /> : <FaArrowRight />}
-                    </>
-                  )}
+                    <FaCheck /> {inputLanguage === 'ar' ? 'حفظ' : 'Save'}
                 </button>
                 </div>
       </div>

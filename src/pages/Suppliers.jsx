@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
   FaFilter, FaSearch, FaPlus, FaTimes, FaEdit, FaTrash, 
-  FaWhatsapp, FaEnvelope, FaBoxOpen, FaTools, FaLink, FaLayerGroup 
+  FaWhatsapp, FaEnvelope, FaBoxOpen, FaTools, FaLink, FaLayerGroup,
+  FaChevronLeft, FaChevronRight 
 } from 'react-icons/fa'
 
 // Helper for localStorage
@@ -61,6 +62,10 @@ export default function Suppliers() {
     serviceDescription: ''
   }
   const [formData, setFormData] = useState(initialForm)
+  
+  // Pagination
+  const [page, setPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(5)
 
   // Load Data
   useEffect(() => {
@@ -292,14 +297,14 @@ export default function Suppliers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {filteredSuppliers.length === 0 ? (
+              {paginated.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="text-center py-8 text-gray-500">
                     {isArabic ? 'لا توجد بيانات' : 'No suppliers found'}
                   </td>
                 </tr>
               ) : (
-                filteredSuppliers.map((supplier) => (
+                paginated.map((supplier) => (
                   <tr key={supplier.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     <td className="p-4">
                       <div className="font-semibold text-gray-800 dark:text-gray-200">{supplier.companyName}</div>
@@ -360,6 +365,48 @@ export default function Suppliers() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-2 text-sm text-[var(--muted-text)]">
+          <div className="flex items-center gap-2">
+            <span>{isArabic ? 'عرض' : 'Showing'}</span>
+            <select 
+              value={itemsPerPage} 
+              onChange={(e) => setItemsPerPage(Number(e.target.value))} 
+              className="select select-bordered select-xs w-16"
+            >
+              <option>5</option>
+              <option>10</option>
+              <option>20</option>
+              <option>50</option>
+            </select>
+            <span>{isArabic ? 'من' : 'of'} {filteredSuppliers.length} {isArabic ? 'عنصر' : 'entries'}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+             <span className="text-xs">
+              {isArabic ? 'صفحة' : 'Page'} {page} {isArabic ? 'من' : 'of'} {totalPages}
+            </span>
+            <div className="join">
+              <button 
+                className="join-item btn btn-sm btn-ghost" 
+                onClick={goPrevPage} 
+                disabled={page <= 1}
+                title={isArabic ? 'السابق' : 'Prev'}
+              >
+                <FaChevronLeft className={isArabic ? 'scale-x-[-1]' : ''} />
+              </button>
+              <button 
+                className="join-item btn btn-sm btn-ghost" 
+                onClick={goNextPage} 
+                disabled={page >= totalPages}
+                title={isArabic ? 'التالي' : 'Next'}
+              >
+                <FaChevronRight className={isArabic ? 'scale-x-[-1]' : ''} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

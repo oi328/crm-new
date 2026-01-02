@@ -305,7 +305,13 @@ const LeadModal = ({ isOpen, onClose, lead, theme = 'light', assignees = [], onA
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className={`text-sm font-medium ${secondaryTextColor}`}>{t('Assigned To')}</label>
-                <p className="text-base">{lead.assignedTo || 'N/A'}</p>
+                <p className="text-base">
+                  {(() => {
+                    const s = String(lead.stage || '').toLowerCase();
+                    const isNew = s.includes('new') || s.includes('جديد') || s.includes('نيوليد');
+                    return isNew ? '-' : (lead.assignedTo || 'N/A');
+                  })()}
+                </p>
               </div>
               <div>
                 <label className={`text-sm font-medium ${secondaryTextColor}`}>{t('Estimated Value')}</label>

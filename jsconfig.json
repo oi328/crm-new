@@ -9,7 +9,9 @@
       "@hooks/*": ["src/hooks/*"],
       "@utils/*": ["src/utils/*"],
       "@assets/*": ["src/assets/*"],
-      "@config/*": ["src/config/*"]
+      "@config/*": ["src/config/*"],
+      "@features/*": ["src/features/*"],
+      "@router/*": ["src/router/*"]
     }
   }
 }

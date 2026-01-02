@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useTheme } from '../shared/context/ThemeProvider'
 import SearchableSelect from '../components/SearchableSelect'
-import { FaFilter, FaShareAlt, FaEllipsisV, FaPlus, FaMapMarkerAlt, FaBuilding, FaTimes, FaEye, FaEdit, FaTrash, FaUpload, FaSearch, FaChevronDown, FaChevronUp, FaImage, FaFilePdf, FaVideo, FaPaperclip, FaTags, FaCity, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
+import { FaFilter, FaShareAlt, FaEllipsisV, FaPlus, FaMapMarkerAlt, FaBuilding, FaTimes, FaEye, FaEdit, FaTrash, FaUpload, FaSearch, FaChevronDown, FaChevronUp, FaImage, FaFilePdf, FaVideo, FaPaperclip, FaTags, FaCity, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaDownload, FaFileExcel } from 'react-icons/fa'
 import * as XLSX from 'xlsx'
 import { Bar } from 'react-chartjs-2'
 import maplibregl from 'maplibre-gl'
@@ -23,10 +24,14 @@ function pickImage(seed) {
   return REAL_IMAGES[h % REAL_IMAGES.length]
 }
 import CreateProjectModal from '../components/CreateProjectModal'
+import CreatePropertyModal from '../components/CreatePropertyModal'
+import { useCompanySetup } from './settings/company-setup/store/CompanySetupContext.jsx'
+import { projectsData } from '../data/projectsData'
 
 export default function Projects() {
   const { i18n } = useTranslation()
   const isRTL = String(i18n.language || '').startsWith('ar')
+  const { companySetup } = useCompanySetup()
 
   useEffect(() => {
     try { document.documentElement.dir = isRTL ? 'rtl' : 'ltr' } catch {}
@@ -40,6 +45,8 @@ export default function Projects() {
   const [editProject, setEditProject] = useState(null)
   const [toasts, setToasts] = useState([])
   const [_importLogs, setImportLogs] = useState([])
+  const [showCreateUnitModal, setShowCreateUnitModal] = useState(false)
+  const [unitProject, setUnitProject] = useState(null)
 
   const [filters, setFilters] = useState({
     search: '',
@@ -116,780 +123,19 @@ export default function Projects() {
   }
 
 
-  const [projects, setProjects] = useState(() => ([
-    {
-      name: 'Nile Tower Residences',
-      developer: 'Nile Real Estate',
-      category: 'Residential',
-      unitPrefix: 'NTR',
-      indirectName: 'Ahmed Hassan',
-      indirectPhone: '+201001234567',
-      city: 'New Cairo',
-      address: 'North 90 St, New Cairo',
-      minPrice: 5000000,
-      maxPrice: 12000000,
-      minSpace: 120,
-      maxSpace: 350,
-      driveUrl: 'https://drive.google.com/drive/folders/example',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=1200&auto=format&fit=crop',
-      videoFiles: ['https://www.w3schools.com/html/mov_bbb.mp4'],
-      videoUrls: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      galleryImages: [
-        'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=800',
-        'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?q=80&w=800',
-        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800',
-        'https://images.unsplash.com/photo-1600573472592-401b489a3cdc?q=80&w=800'
-      ],
-      pdfFiles: [{ name: 'Brochure.pdf', url: '#' }, { name: 'Floor_Plans.pdf', url: '#' }],
-      masterPlanImages: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?q=80&w=1200'],
-      paymentPlan: [
-        { no: 1, label: 'Down Payment', dueDate: '2025-01-01', amount: 500000 },
-        { no: 2, label: 'Installment 1', dueDate: '2025-04-01', amount: 200000 },
-        { no: 3, label: 'Installment 2', dueDate: '2025-07-01', amount: 200000 }
-      ],
-      cil: {
-        to: 'Sales Director',
-        subject: 'Client Registration',
-        content: 'Please register Mr. Ali for a 3BR unit.',
-        attachment: { name: 'ID_Card.pdf' }
-      },
-      lat: 30.0444,
-      lng: 31.2357,
-      mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3454.244327962896!2d31.48972231511478!3d30.03050098188737!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x145822cffcd270e7%3A0x98b73d6878944d!2sNew%20Cairo%2C%20Cairo%20Governorate!5e0!3m2!1sen!2seg!4v1625647891234!5m2!1sen!2seg',
-      status: 'Sales',
-      completion: 70,
-      phases: 5,
-      docs: 42,
-      units: 180,
-      lastUpdated: '2025-12-10',
-      description: 'Luxury apartments overlooking the Nile corridor with modern amenities.'
-    },
-    {
-      name: 'October Business Park',
-      developer: 'Horizon Builders',
-      category: 'Commercial',
-      unitPrefix: 'OBP',
-      indirectName: 'Sarah Mahmoud',
-      indirectPhone: '+201223344556',
-      city: '6th of October',
-      address: 'Central Axis, 6th of October',
-      minPrice: 3500000,
-      maxPrice: 8000000,
-      minSpace: 60,
-      maxSpace: 200,
-      driveUrl: 'https://drive.google.com/drive/folders/example2',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1523217582562-09d0def993a6?q=80&w=1200&auto=format&fit=crop',
-      videoFiles: [],
-      videoUrls: 'https://vimeo.com/123456789',
-      galleryImages: [
-        'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=800',
-        'https://images.unsplash.com/photo-1497366811353-6870744d04b2?q=80&w=800',
-        'https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=800'
-      ],
-      pdfFiles: [{ name: 'Business_Brief.pdf', url: '#' }],
-      masterPlanImages: ['https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=1200'],
-      paymentPlan: [
-        { no: 1, label: 'Reservation', dueDate: '2025-02-01', amount: 100000 },
-        { no: 2, label: 'Contract', dueDate: '2025-03-01', amount: 400000 },
-        { no: 3, label: 'Quarter 1', dueDate: '2025-06-01', amount: 150000 }
-      ],
-      cil: null,
-      lat: 29.9757,
-      lng: 30.9443,
-      mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3457.7323862272895!2d30.92556231511214!3d29.9625679819124!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x145855e2475e33d5%3A0x6286cb815335520!2s6th%20of%20October%20City%2C%20Giza%20Governorate!5e0!3m2!1sen!2seg!4v1625647954321!5m2!1sen!2seg',
-      status: 'Active',
-      completion: 55,
-      phases: 3,
-      docs: 28,
-      units: 65,
-      lastUpdated: '2025-12-08',
-      description: 'Mixed-use business complex with offices and retail spaces.'
-    },
-    {
-      name: 'Marina Seaview',
-      developer: 'Marina Group',
-      category: 'Residential',
-      unitPrefix: 'MSV',
-      indirectName: 'Omar Khaled',
-      indirectPhone: '+201112223334',
-      city: 'Alexandria',
-      address: 'Corniche Road, Alexandria',
-      minPrice: 4200000,
-      maxPrice: 9500000,
-      minSpace: 90,
-      maxSpace: 250,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?q=80&w=1200&auto=format&fit=crop',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [
-        'https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=800',
-        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=800',
-        'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?q=80&w=800'
-      ],
-      pdfFiles: [{ name: 'Summer_Promo.pdf', url: '#' }],
-      masterPlanImages: ['https://images.unsplash.com/photo-1531835551805-16d864c8d311?q=80&w=1200'],
-      paymentPlan: [
-        { no: 1, label: 'Full Payment', dueDate: '2025-01-15', amount: 4000000 }
-      ],
-      cil: {
-        to: 'Sales Manager',
-        subject: 'Unit Reservation',
-        content: 'Requesting reservation for Unit 402, Block B.',
-        attachment: { name: 'Check_Copy.jpg' }
-      },
-      lat: 31.2001,
-      lng: 29.9187,
-      mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3410.758368943789!2d29.91873831514834!3d31.20008698147672!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14f5c49126a4571f%3A0xa757270c30870947!2sAlexandria%2C%20Alexandria%20Governorate!5e0!3m2!1sen!2seg!4v1625648012345!5m2!1sen!2seg',
-      status: 'Completed',
-      completion: 100,
-      phases: 6,
-      docs: 60,
-      units: 120,
-      lastUpdated: '2025-11-25',
-      description: 'Beachfront residences with panoramic sea views and club access.'
-    },
-    {
-      name: 'Maadi Gardens',
-      developer: 'Alpha Dev',
-      category: 'Residential',
-      unitPrefix: 'MGD',
-      indirectName: 'Hoda Ali',
-      indirectPhone: '+201555666777',
-      city: 'Maadi',
-      address: 'Ring Road, Maadi',
-      minPrice: 2800000,
-      maxPrice: 6000000,
-      minSpace: 100,
-      maxSpace: 220,
-      driveUrl: 'https://drive.google.com',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=1200&auto=format&fit=crop',
-      videoFiles: [],
-      videoUrls: 'https://youtu.be/sample1\nhttps://youtu.be/sample2',
-      galleryImages: [
-        'https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=800',
-        'https://images.unsplash.com/photo-1558036117-15d82a90b9b1?q=80&w=800',
-        'https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=800'
-      ],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [
-        { no: 1, label: 'Down Payment', dueDate: '2025-01-10', amount: 140000 },
-        { no: 2, label: 'Installment', dueDate: '2025-07-10', amount: 50000 }
-      ],
-      cil: null,
-      lat: 29.9602,
-      lng: 31.2569,
-      mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3456.027289876458!2d31.25685431511345!3d29.9602349819131!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14584799052e0089%3A0xf639e944d6185808!2sMaadi%2C%20Cairo%20Governorate!5e0!3m2!1sen!2seg!4v1625648078901!5m2!1sen!2seg',
-      status: 'Active',
-      completion: 48,
-      phases: 4,
-      docs: 33,
-      units: 90,
-      lastUpdated: '2025-12-12',
-      description: 'Green compound offering family-friendly living with parks and pools.'
-    },
-    {
-      name: 'Nasr City Medical Hub',
-      developer: 'CarePlus Developments',
-      category: 'Medical',
-      unitPrefix: 'NMH',
-      indirectName: 'Dr. Sameh',
-      indirectPhone: '+201009988776',
-      city: 'Nasr City',
-      address: 'Abbas El Akkad, Nasr City',
-      minPrice: 1500000,
-      maxPrice: 4000000,
-      minSpace: 40,
-      maxSpace: 120,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1200&auto=format&fit=crop',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [
-        'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=800',
-        'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=800'
-      ],
-      pdfFiles: [{ name: 'Specs.pdf', url: '#' }],
-      masterPlanImages: ['https://images.unsplash.com/photo-1554469384-e58fac16e23a?q=80&w=1200'],
-      paymentPlan: [
-        { no: 1, label: 'Reservation', dueDate: '2025-05-01', amount: 50000 },
-        { no: 2, label: 'Contract', dueDate: '2025-06-01', amount: 150000 }
-      ],
-      cil: {
-        to: 'Development Head',
-        subject: 'Clinic Layout Approval',
-        content: 'Kindly review the attached layout for Dr. Sameh.',
-        attachment: null
-      },
-      lat: 30.0561,
-      lng: 31.3301,
-      mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3453.68728954321!2d31.3301123151152!3d30.05610898187765!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14583fa60b21beeb%3A0x79dfb296e8423bba!2sNasr%20City%2C%20Cairo%20Governorate!5e0!3m2!1sen!2seg!4v1625648145678!5m2!1sen!2seg',
-      status: 'Planning',
-      completion: 20,
-      phases: 2,
-      docs: 18,
-      units: 40,
-      lastUpdated: '2025-12-05',
-      description: 'Integrated medical hub with clinics, labs, and outpatient facilities.'
-    },
-    {
-      name: 'Zayed Heights',
-      developer: 'Skyline Properties',
-      category: 'Residential',
-      unitPrefix: 'ZHT',
-      indirectName: 'Mona Zaki',
-      indirectPhone: '+201222222222',
-      city: 'Elshiekh Zayed',
-      address: 'Entrance 2, Zayed City',
-      minPrice: 6000000,
-      maxPrice: 15000000,
-      minSpace: 180,
-      maxSpace: 500,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1200&auto=format&fit=crop',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [
-        'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=800',
-        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=800',
-        'https://images.unsplash.com/photo-1484154218962-a1c002085d2f?q=80&w=800'
-      ],
-      pdfFiles: [{ name: 'Villas.pdf', url: '#' }, { name: 'Price_List.pdf', url: '#' }],
-      masterPlanImages: ['https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=1200'],
-      paymentPlan: [
-        { no: 1, label: 'Down Payment', dueDate: '2025-01-01', amount: 600000 },
-        { no: 2, label: 'Installment 1', dueDate: '2025-04-01', amount: 300000 }
-      ],
-      cil: null,
-      lat: 30.0501,
-      lng: 30.9600,
-      mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3453.897289654321!2d30.96001231511234!3d30.05012398187987!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14585673645321ab%3A0x6286cb815335520!2sEl%20Sheikh%20Zayed%20City%2C%20Giza%20Governorate!5e0!3m2!1sen!2seg!4v1625648212345!5m2!1sen!2seg',
-      status: 'Sales',
-      completion: 62,
-      phases: 5,
-      docs: 39,
-      units: 150,
-      lastUpdated: '2025-12-09',
-      description: 'Premium high-rise living close to business districts and schools.'
-    },
-    {
-      name: 'River Walk',
-      developer: 'Green Valley',
-      category: 'Residential',
-      unitPrefix: 'RWK',
-      indirectName: 'Hassan Ali',
-      indirectPhone: '+201005554444',
-      city: 'New Cairo',
-      address: 'Waterway, New Cairo',
-      minPrice: 7000000,
-      maxPrice: 18000000,
-      minSpace: 160,
-      maxSpace: 400,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.035,
-      lng: 31.470,
-      mapUrl: '',
-      status: 'Active',
-      completion: 80,
-      phases: 2,
-      docs: 15,
-      units: 100,
-      lastUpdated: '2025-12-15',
-      description: 'River-side apartments with scenic views.'
-    },
-    {
-      name: 'Capital Business Hub',
-      developer: 'Capital Developments',
-      category: 'Administrative',
-      unitPrefix: 'CBH',
-      indirectName: 'Dina Magdy',
-      indirectPhone: '+201119998888',
-      city: 'New Capital',
-      address: 'Financial District, New Capital',
-      minPrice: 2000000,
-      maxPrice: 5500000,
-      minSpace: 50,
-      maxSpace: 150,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.010,
-      lng: 31.720,
-      mapUrl: '',
-      status: 'Planning',
-      completion: 10,
-      phases: 1,
-      docs: 5,
-      units: 200,
-      lastUpdated: '2025-12-20',
-      description: 'Modern offices in the heart of the New Capital.'
-    },
-    {
-      name: 'Blue Lagoon Resort',
-      developer: 'Sea Breeze',
-      category: 'Coastal',
-      unitPrefix: 'BLR',
-      indirectName: 'Tarek Omar',
-      indirectPhone: '+201227776666',
-      city: 'North Coast',
-      address: 'Km 120, Alexandria-Matrouh Rd',
-      minPrice: 4500000,
-      maxPrice: 12000000,
-      minSpace: 100,
-      maxSpace: 300,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.950,
-      lng: 28.850,
-      mapUrl: '',
-      status: 'Sales',
-      completion: 40,
-      phases: 3,
-      docs: 20,
-      units: 150,
-      lastUpdated: '2025-11-30',
-      description: 'Exclusive resort with private beach access.'
-    },
-    {
-      name: 'El Shorouk Gardens',
-      developer: 'Sunrise Homes',
-      category: 'Residential',
-      unitPrefix: 'ESG',
-      indirectName: 'Noha Samy',
-      indirectPhone: '+201004443333',
-      city: 'El Shorouk',
-      address: 'Suez Rd Entrance',
-      minPrice: 3000000,
-      maxPrice: 6500000,
-      minSpace: 140,
-      maxSpace: 280,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.120,
-      lng: 31.600,
-      mapUrl: '',
-      status: 'Active',
-      completion: 90,
-      phases: 4,
-      docs: 30,
-      units: 120,
-      lastUpdated: '2025-12-05',
-      description: 'Quiet residential community with lush greenery.'
-    },
-    {
-      name: 'Industrial Park West',
-      developer: 'Industrial Co',
-      category: 'Industrial',
-      unitPrefix: 'IPW',
-      indirectName: 'Mahmoud Gad',
-      indirectPhone: '+201115552222',
-      city: '10th of Ramadan',
-      address: 'Industrial Zone B',
-      minPrice: 5000000,
-      maxPrice: 20000000,
-      minSpace: 500,
-      maxSpace: 2000,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.300,
-      lng: 31.750,
-      mapUrl: '',
-      status: 'Completed',
-      completion: 100,
-      phases: 2,
-      docs: 10,
-      units: 50,
-      lastUpdated: '2025-10-15',
-      description: 'Warehouses and factories ready for operation.'
-    },
-    {
-      name: 'Sky Mall',
-      developer: 'Retail Group',
-      category: 'Commercial',
-      unitPrefix: 'SKM',
-      indirectName: 'Laila Fawzy',
-      indirectPhone: '+201228889999',
-      city: 'Nasr City',
-      address: 'Makram Ebeid St',
-      minPrice: 8000000,
-      maxPrice: 25000000,
-      minSpace: 80,
-      maxSpace: 500,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1519567241046-7f570eee3ce9?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.060,
-      lng: 31.340,
-      mapUrl: '',
-      status: 'Active',
-      completion: 65,
-      phases: 1,
-      docs: 12,
-      units: 80,
-      lastUpdated: '2025-12-18',
-      description: 'Premier shopping destination with international brands.'
-    },
-    {
-      name: 'Future City Villas',
-      developer: 'Future Living',
-      category: 'Residential',
-      unitPrefix: 'FCV',
-      indirectName: 'Amr Diab',
-      indirectPhone: '+201006667777',
-      city: 'Future City',
-      address: 'Main Boulevard',
-      minPrice: 9000000,
-      maxPrice: 22000000,
-      minSpace: 250,
-      maxSpace: 600,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.150,
-      lng: 31.650,
-      mapUrl: '',
-      status: 'Sales',
-      completion: 30,
-      phases: 5,
-      docs: 25,
-      units: 180,
-      lastUpdated: '2025-12-22',
-      description: 'Luxury standalone villas in a smart city.'
-    },
-    {
-      name: 'Downtown Offices',
-      developer: 'Urban Space',
-      category: 'Administrative',
-      unitPrefix: 'DTO',
-      indirectName: 'Karim Nabil',
-      indirectPhone: '+201114445555',
-      city: 'Downtown Cairo',
-      address: 'Tahrir Square Area',
-      minPrice: 3500000,
-      maxPrice: 9000000,
-      minSpace: 60,
-      maxSpace: 200,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.044,
-      lng: 31.235,
-      mapUrl: '',
-      status: 'Completed',
-      completion: 100,
-      phases: 1,
-      docs: 8,
-      units: 40,
-      lastUpdated: '2025-11-10',
-      description: 'Renovated historic building for modern businesses.'
-    },
-    {
-      name: 'Lotus Towers',
-      developer: 'High Rise Inc',
-      category: 'Residential',
-      unitPrefix: 'LOT',
-      indirectName: 'Salma Hayek',
-      indirectPhone: '+201221112222',
-      city: 'New Cairo',
-      address: 'Lotus District',
-      minPrice: 2500000,
-      maxPrice: 5000000,
-      minSpace: 110,
-      maxSpace: 220,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.020,
-      lng: 31.480,
-      mapUrl: '',
-      status: 'Active',
-      completion: 75,
-      phases: 2,
-      docs: 18,
-      units: 140,
-      lastUpdated: '2025-12-14',
-      description: 'Affordable luxury apartments in the Lotus area.'
-    },
-    {
-      name: 'Palm Hills Extension',
-      developer: 'Palm Hills',
-      category: 'Residential',
-      unitPrefix: 'PHE',
-      indirectName: 'Youssef Mansour',
-      indirectPhone: '+201008889999',
-      city: '6th of October',
-      address: 'Dahshur Link',
-      minPrice: 5500000,
-      maxPrice: 14000000,
-      minSpace: 180,
-      maxSpace: 450,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 29.980,
-      lng: 30.950,
-      mapUrl: '',
-      status: 'Sales',
-      completion: 50,
-      phases: 3,
-      docs: 22,
-      units: 200,
-      lastUpdated: '2025-12-01',
-      description: 'Extension phase of the prestigious Palm Hills compound.'
-    },
-    {
-      name: 'Medical Plaza',
-      developer: 'Health Care Dev',
-      category: 'Medical',
-      unitPrefix: 'MDP',
-      indirectName: 'Dr. Magdi Yacoub',
-      indirectPhone: '+201112223333',
-      city: 'Sheikh Zayed',
-      address: 'Central Axis',
-      minPrice: 2000000,
-      maxPrice: 6000000,
-      minSpace: 45,
-      maxSpace: 120,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1516549655169-df83a0833860?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.045,
-      lng: 30.970,
-      mapUrl: '',
-      status: 'Active',
-      completion: 85,
-      phases: 1,
-      docs: 14,
-      units: 60,
-      lastUpdated: '2025-12-16',
-      description: 'Specialized clinics and medical labs.'
-    },
-    {
-      name: 'Red Sea Retreat',
-      developer: 'Red Sea Hotels',
-      category: 'Tourism',
-      unitPrefix: 'RSR',
-      indirectName: 'Sherif Mounir',
-      indirectPhone: '+201223334444',
-      city: 'Hurghada',
-      address: 'Sahl Hasheesh',
-      minPrice: 3000000,
-      maxPrice: 8000000,
-      minSpace: 70,
-      maxSpace: 150,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 27.150,
-      lng: 33.800,
-      mapUrl: '',
-      status: 'Completed',
-      completion: 100,
-      phases: 2,
-      docs: 16,
-      units: 90,
-      lastUpdated: '2025-11-20',
-      description: 'Vacation homes with rental management service.'
-    },
-    {
-      name: 'Smart Village Offices',
-      developer: 'Smart Tech',
-      category: 'Administrative',
-      unitPrefix: 'SVO',
-      indirectName: 'Eng. Naguib',
-      indirectPhone: '+201001110000',
-      city: '6th of October',
-      address: 'Smart Village',
-      minPrice: 10000000,
-      maxPrice: 30000000,
-      minSpace: 300,
-      maxSpace: 1000,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.070,
-      lng: 31.020,
-      mapUrl: '',
-      status: 'Active',
-      completion: 95,
-      phases: 1,
-      docs: 10,
-      units: 20,
-      lastUpdated: '2025-12-19',
-      description: 'High-tech office spaces for multinational companies.'
-    },
-    {
-      name: 'Green Avenues',
-      developer: 'Eco Living',
-      category: 'Residential',
-      unitPrefix: 'GAV',
-      indirectName: 'Rania Youssef',
-      indirectPhone: '+201117776666',
-      city: 'New Capital',
-      address: 'R7 District',
-      minPrice: 3200000,
-      maxPrice: 7000000,
-      minSpace: 130,
-      maxSpace: 260,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1592595896551-12b371d546d5?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 29.990,
-      lng: 31.700,
-      mapUrl: '',
-      status: 'Planning',
-      completion: 5,
-      phases: 3,
-      docs: 8,
-      units: 300,
-      lastUpdated: '2025-12-23',
-      description: 'Sustainable living with solar energy and water recycling.'
-    },
-    {
-      name: 'Uptown Cairo',
-      developer: 'Emaar Misr',
-      category: 'Residential',
-      unitPrefix: 'UTC',
-      indirectName: 'Mohamed Alabbar',
-      indirectPhone: '+201229990000',
-      city: 'Mokattam',
-      address: 'Uptown Drive',
-      minPrice: 8000000,
-      maxPrice: 25000000,
-      minSpace: 150,
-      maxSpace: 500,
-      driveUrl: '',
-      logo: null,
-      image: 'https://images.unsplash.com/photo-1600596542815-3ad19fb21261?q=80&w=1200',
-      videoFiles: [],
-      videoUrls: '',
-      galleryImages: [],
-      pdfFiles: [],
-      masterPlanImages: [],
-      paymentPlan: [],
-      cil: null,
-      lat: 30.030,
-      lng: 31.300,
-      mapUrl: '',
-      status: 'Sales',
-      completion: 70,
-      phases: 4,
-      docs: 40,
-      units: 250,
-      lastUpdated: '2025-12-11',
-      description: 'Integrated community on top of Cairo.'
+  const [projects, setProjects] = useState(() => {
+    try {
+      const stored = localStorage.getItem('inventoryProjects')
+      if (stored) return JSON.parse(stored)
+    } catch (e) {
+      console.error('Failed to load projects from storage', e)
     }
-  ]))
+    return projectsData
+  })
+
+  useEffect(() => {
+    localStorage.setItem('inventoryProjects', JSON.stringify(projects))
+  }, [projects])
 
   const handleSaveProject = (form) => {
     const newP = {
@@ -933,6 +179,18 @@ export default function Projects() {
       setProjects(prev => prev.filter(p => p !== proj))
       addToast('success', isRTL ? 'تم حذف المشروع' : 'Project deleted')
     }
+  }
+
+  const handleAddUnit = (project) => {
+    setUnitProject(project)
+    setShowCreateUnitModal(true)
+  }
+
+  const handleSaveUnit = (newUnit) => {
+    setShowCreateUnitModal(false)
+    setUnitProject(null)
+    setToasts([...toasts, { id: Date.now(), message: isRTL ? 'تمت إضافة الوحدة بنجاح' : 'Unit added successfully', type: 'success' }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== Date.now())), 3000)
   }
 
   const allCities = useMemo(() => Array.from(new Set(projects.map(p => p.city))), [projects])
@@ -988,6 +246,25 @@ export default function Projects() {
     })
   }, [projects, filters])
 
+  // Pagination state and derived values
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(6)
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(filtered.length / pageSize)), [filtered, pageSize])
+  const paginated = useMemo(() => filtered.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize), [filtered, page, pageSize])
+  useEffect(() => { setPage(1) }, [filters, pageSize])
+  const shownFrom = useMemo(() => (filtered.length === 0 ? 0 : (page - 1) * pageSize + 1), [page, pageSize, filtered.length])
+  const shownTo = useMemo(() => Math.min(page * pageSize, filtered.length), [page, pageSize, filtered.length])
+  const goPrevPage = () => setPage(p => Math.max(1, p - 1))
+  const goNextPage = () => setPage(p => Math.min(totalPages, p + 1))
+
+  const seededProjects = []
+  
+  /* 
+  useEffect(() => {
+    setProjects(seededProjects)
+  }, [])
+  */
+
   const addToast = (type, message) => {
     const id = Date.now()
     setToasts(prev => [...prev, { id, type, message }])
@@ -1027,7 +304,7 @@ export default function Projects() {
     status: isRTL ? 'الحالة' : 'Status',
     city: isRTL ? 'المدينة' : 'City',
     phases: isRTL ? 'المراحل' : 'Phases',
-    clearFilters: isRTL ? 'مسح المرشحات' : 'Clear Filters',
+    clearFilters: isRTL ? 'اعادة تعيين' : 'reset',
     exportPdf: isRTL ? 'تصدير PDF' : 'Export PDF',
     createdBy: isRTL ? 'بواسطة' : 'Created By',
     createdDate: isRTL ? 'تاريخ الإنشاء' : 'Created Date'
@@ -1038,19 +315,29 @@ export default function Projects() {
         {/* Header */}
         <div className="glass-panel rounded-xl p-4 relative z-30">
           <div className="flex items-center justify-between">
-            <div className="relative flex flex-col items-start gap-1">
-              <h1 className="page-title text-2xl font-bold text-start">{Label.title}</h1>
-              <span
-                aria-hidden="true"
-                className="inline-block h-[2px] w-full rounded
-             bg-gradient-to-r from-blue-500 to-purple-600"
-              />
+            <div className="flex items-center gap-3">
+              <div className="relative flex flex-col items-start gap-1">
+                <h1 className="page-title text-2xl font-bold text-start">{Label.title}</h1>
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-[2px] w-full rounded
+               bg-gradient-to-r from-blue-500 to-purple-600"
+                />
+              </div>
+              {/* Mobile Pagination */}
+            
             </div>
-            <div className={`flex items-center gap-2 flex-wrap`}>
+
+            <div className="flex items-center gap-2">
+              {/* Mobile Add Button */}
+           
+
               <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none" onClick={()=>setShowImportModal(true)}>
                 {Label.importProjects}
               </button>
-              <button className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none" onClick={()=>setShowCreateModal(true)}>
+
+              {/* Desktop Add Button */}
+              <button className="hidden md:inline-flex btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none" onClick={()=>setShowCreateModal(true)}>
                 <span className="inline-flex items-center gap-2">
                 <FaPlus /> {Label.createProject}
                 </span>
@@ -1101,10 +388,11 @@ export default function Projects() {
                 <FaFilter className="text-blue-500" /> {Label.filter}
               </h2>
               <div className="flex items-center gap-2">
-                <button onClick={() => setShowAllFilters(prev => !prev)} className="btn btn-sm btn-ghost text-blue-600">
-                  {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'إظهار' : 'Show')} <FaChevronDown className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
+                <button onClick={() => setShowAllFilters(prev => !prev)} className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+                  {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')}
+                  <FaChevronDown size={10} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
                 </button>
-                <button onClick={clearFilters} className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none">
+                <button onClick={clearFilters} className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                   {Label.clearFilters}
                 </button>
               </div>
@@ -1241,19 +529,61 @@ export default function Projects() {
 
         {/* Projects list: two per row */}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
-          {filtered.map((p, idx) => (
+          {paginated.map((p, idx) => (
             <div key={idx} className="glass-panel rounded-xl overflow-hidden">
               <ProjectCard
                 p={p}
                 isRTL={isRTL}
                 Label={Label}
+                companySetup={companySetup}
                 onView={(proj)=>setSelectedProject(proj)}
                 onEdit={(proj)=>{ setEditProject(proj); setShowCreateModal(true) }}
                 onDelete={handleDeleteProject}
+                onAddUnit={handleAddUnit}
               />
             </div>
           ))}
           
+        </div>
+        {/* Pagination Footer */}
+        <div className="mt-2 flex items-center justify-between rounded-xl p-2 glass-panel">
+          <div className="text-xs text-[var(--muted-text)]">
+            {isRTL ? `عرض ${shownFrom}–${shownTo} من ${filtered.length}` : `Showing ${shownFrom}–${shownTo} of ${filtered.length}`}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={goPrevPage}
+                disabled={page <= 1}
+                title={isRTL ? 'السابق' : 'Prev'}
+              >
+                <FaChevronLeft className={isRTL ? 'scale-x-[-1]' : ''} />
+              </button>
+              <span className="text-sm">{isRTL ? `الصفحة ${page} من ${totalPages}` : `Page ${page} of ${totalPages}`}</span>
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={goNextPage}
+                disabled={page >= totalPages}
+                title={isRTL ? 'التالي' : 'Next'}
+              >
+                <FaChevronRight className={isRTL ? 'scale-x-[-1]' : ''} />
+              </button>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-[var(--muted-text)]">{isRTL ? 'لكل صفحة:' : 'Per page:'}</span>
+              <select
+                className="input w-24 text-sm"
+                value={pageSize}
+                onChange={e => setPageSize(Number(e.target.value))}
+              >
+                <option value={4}>4</option>
+                <option value={6}>6</option>
+                <option value={8}>8</option>
+                <option value={12}>12</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Import Projects Modal */}
@@ -1269,6 +599,16 @@ export default function Projects() {
             isRTL={isRTL}
             mode={editProject ? 'edit' : 'create'}
             initialValues={editProject}
+          />
+        )}
+
+        {/* Create Unit Modal */}
+        {showCreateUnitModal && (
+          <CreatePropertyModal
+            onClose={() => { setShowCreateUnitModal(false); setUnitProject(null) }}
+            onSave={handleSaveUnit}
+            isRTL={isRTL}
+            initialData={{ project: unitProject?.name }}
           />
         )}
 
@@ -1392,96 +732,287 @@ const RangeSlider = ({ min, max, value, onChange, label, isRTL, unit = '' }) => 
 
 // Import Modal Component
 function ProjectsImportModal({ onClose, isRTL, addToast, addLog }) {
-  const [importFiles, setImportFiles] = useState([])
-  const [previewRows, setPreviewRows] = useState([])
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  const [excelFile, setExcelFile] = useState(null)
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState(null)
+  const [importSummary, setImportSummary] = useState(null)
+  const { t } = useTranslation() // Using hook if possible, otherwise fallback to hardcoded
 
-  const handleTemplate = (type='csv') => {
-    const headerCols = ['Project','City','Developer','Units','Phases','Status','Docs','LastUpdated','Image','Logo','Description']
-    const sampleCols = ['Sample Project','New Cairo','Sample Dev','12','3','Planning','5','2025-10-10','https://picsum.photos/1200/800','','Sample description']
-    if (type==='csv') {
-      const csv = headerCols.join(',') + '\n' + sampleCols.join(',') + '\n'
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'projects_template.csv'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    } else {
-      const ws = XLSX.utils.aoa_to_sheet([headerCols, sampleCols])
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Template')
-      XLSX.writeFile(wb, 'projects_template.xlsx')
-    }
-  }
-
-  const onFilesChange = async (e) => {
-    const list = Array.from(e.target.files || [])
-    setImportFiles(list)
-    if (list[0]) {
-      try {
-        const arrBuff = await list[0].arrayBuffer()
-        const wb = XLSX.read(arrBuff, { type: 'array' })
-        const wsName = wb.SheetNames[0]
-        const ws = wb.Sheets[wsName]
-        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
-        setPreviewRows(rows.slice(0, 50))
-      } catch {
-        addToast('error', isRTL ? 'تعذر قراءة الملف' : 'Failed to read file')
+  // Template Generator
+  const generateTemplate = () => {
+    const templateData = [
+      {
+        'Project Name': 'مشروع المثال',
+        'Developer': 'اسم المطور',
+        'City': 'القاهرة الجديدة',
+        'Status': 'Active',
+        'Units': '100',
+        'Min Price': '1000000',
+        'Max Price': '5000000',
+        'Delivery Date': '2026-01-01',
+        'Description': 'وصف المشروع'
       }
+    ]
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Projects Template')
+    XLSX.writeFile(workbook, 'projects_template.xlsx')
+  }
+
+  // Validate Fields
+  const validateRequiredFields = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result)
+          const workbook = XLSX.read(data, { type: 'array' })
+          const firstSheetName = workbook.SheetNames[0]
+          const worksheet = workbook.Sheets[firstSheetName]
+          const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+          
+          if (rows.length === 0) {
+            reject(new Error(isRTL ? 'الملف فارغ' : 'File is empty'))
+            return
+          }
+
+          const headers = rows[0].map(h => h?.toString()?.toLowerCase()?.trim())
+          const requiredFields = ['project', 'developer', 'city']
+          const missingFields = []
+
+          requiredFields.forEach(field => {
+            const found = headers.some(header => 
+              header.includes(field) || 
+              (header.includes('name') && field === 'project') ||
+              (header.includes('اسم') && field === 'project') ||
+              (header.includes('مطور') && field === 'developer') ||
+              (header.includes('مدينة') && field === 'city')
+            )
+            if (!found) {
+              missingFields.push(field)
+            }
+          })
+
+          if (missingFields.length > 0) {
+            reject(new Error((isRTL ? 'الحقول المطلوبة مفقودة: ' : 'Missing required fields: ') + missingFields.join(', ')))
+          } else {
+            resolve(true)
+          }
+        } catch (error) {
+          reject(new Error(isRTL ? 'خطأ في قراءة الملف' : 'Error reading file'))
+        }
+      }
+      reader.readAsArrayBuffer(file)
+    })
+  }
+
+  // Handle File Upload
+  const handleFileUpload = async (file) => {
+    if (!file) return
+    setImportError(null)
+    setImportSummary(null)
+    
+    try {
+      await validateRequiredFields(file)
+      setExcelFile(file)
+    } catch (error) {
+      setImportError(error.message)
+      setExcelFile(null)
     }
   }
 
-  const onImport = () => {
-    if (!importFiles.length) {
-      addToast('error', isRTL ? 'اختر ملفات أولاً' : 'Select files first')
-      return
+  // Handle Import
+  const handleImport = async () => {
+    if (!excelFile) return
+    setImporting(true)
+    setImportError(null)
+
+    try {
+      // Simulate processing
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const ws = workbook.Sheets[workbook.SheetNames[0]]
+        const json = XLSX.utils.sheet_to_json(ws)
+        
+        // Log the import
+        if (addLog) {
+           addLog({ 
+             fileName: excelFile.name, 
+             user: 'Current User', 
+             timestamp: new Date().toISOString(), 
+             status: 'Success', 
+             count: json.length
+           })
+        }
+        
+        if (addToast) {
+           addToast('success', isRTL ? 'تم الاستيراد بنجاح' : 'Import successful')
+        }
+        
+        setImportSummary({ added: json.length })
+        setImporting(false)
+        
+        // Close after a short delay to show success
+        setTimeout(() => {
+          onClose()
+        }, 1500)
+      }
+      reader.readAsArrayBuffer(excelFile)
+    } catch (err) {
+      setImportError(isRTL ? 'فشل الاستيراد' : 'Import failed')
+      setImporting(false)
     }
-    importFiles.forEach(f => addLog({ fileName: f.name, user: 'Current User', timestamp: new Date().toISOString(), status: 'Success' }))
-    addToast('success', isRTL ? 'تم الاستيراد بنجاح' : 'Import successful')
-    onClose()
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-[210] glass-panel rounded-xl p-4 w-[800px] max-w-[90vw] max-h-[85vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">{isRTL ? 'استيراد المشاريع' : 'Import Projects'}</h2>
-          <button className="btn btn-glass" onClick={onClose}>{isRTL ? 'إغلاق' : 'Close'}</button>
-        </div>
-        <div className="space-y-3 text-sm">
-          <p className="text-[var(--muted-text)]">{isRTL ? 'ارفع ملفات CSV/XLSX، ستظهر معاينة.' : 'Upload CSV/XLSX files, a preview will show.'}</p>
+    <div className={`fixed inset-0 z-[2000] ${isRTL ? 'rtl' : 'ltr'} flex items-start justify-center pt-20`}>
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div 
+        className="relative max-w-2xl w-full mx-4 rounded-2xl shadow-2xl border flex flex-col max-h-[85vh] transition-colors duration-200"
+        style={{
+          backgroundColor: isDark ? '#172554' : 'white',
+          borderColor: isDark ? '#1e3a8a' : '#e5e7eb',
+          color: isDark ? 'white' : '#111827'
+        }}
+      >
+        {/* Header */}
+        <div 
+          className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b transition-colors duration-200"
+          style={{ borderColor: isDark ? '#1e3a8a' : '#e5e7eb' }}
+        >
           <div className="flex items-center gap-3">
-            <input type="file" accept=".csv,.xlsx" multiple onChange={onFilesChange} />
-            <button className="btn btn-glass" onClick={()=>handleTemplate('csv')}>{isRTL ? 'تنزيل قالب CSV' : 'Download CSV Template'}</button>
-            <button className="btn btn-glass" onClick={()=>handleTemplate('xlsx')}>{isRTL ? 'تنزيل قالب XLSX' : 'Download XLSX Template'}</button>
+            <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600 text-white shadow-md">
+              <FaDownload className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-bold" style={{ color: isDark ? 'white' : '#111827' }}>{isRTL ? 'استيراد المشاريع' : 'Import Projects'}</h3>
           </div>
-          {/* Preview */}
-          <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-auto max-h-[300px]">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-gray-800/50">
-                  {previewRows[0] && Object.keys(previewRows[0]).map(k => <th key={k} className="px-2 py-1 text-start">{k}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {previewRows.map((r, idx) => (
-                  <tr key={idx} className="border-t border-gray-100 dark:border-gray-800">
-                    {Object.values(r).map((v, i) => <td key={i} className="px-2 py-1">{String(v)}</td>)}
-                  </tr>
-                ))}
-                {previewRows.length === 0 && (
-                  <tr><td className="px-2 py-3 text-center text-[var(--muted-text)]">{isRTL ? 'لا توجد معاينة' : 'No preview'}</td></tr>
-                )}
-              </tbody>
-            </table>
+          <button
+            onClick={onClose}
+            className="btn btn-sm btn-circle btn-ghost text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          >
+            <FaTimes size={20} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-6 overflow-y-auto custom-scrollbar">
+          {/* Template Download Section */}
+          <div 
+            className="mb-6 p-4 rounded-xl border transition-colors duration-200"
+            style={{
+              backgroundColor: isDark ? 'rgba(30, 58, 138, 0.4)' : '#eff6ff',
+              borderColor: isDark ? '#1e40af' : '#bfdbfe'
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FaFileExcel className="w-5 h-5 text-green-600" />
+                <div>
+                  <h4 className="text-sm font-semibold" style={{ color: isDark ? 'white' : '#111827' }}>
+                    {isRTL ? 'تحميل نموذج Excel' : 'Download Excel Template'}
+                  </h4>
+                  <p className="text-xs" style={{ color: isDark ? '#d1d5db' : '#4b5563' }}>
+                    {isRTL ? 'استخدم هذا النموذج لإضافة مشاريع جديدة' : 'Use this template to add new projects'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={generateTemplate}
+                className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none flex items-center gap-2"
+              >
+                <FaDownload className="w-3 h-3" />
+                {isRTL ? 'تحميل' : 'Download'}
+              </button>
+            </div>
+            <div className="mt-3 text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+              <strong>{isRTL ? 'الحقول المطلوبة: ' : 'Required Fields: '}</strong> Project Name, Developer, City
+            </div>
           </div>
-          <div className="flex items-center justify-end gap-3">
-            <button className="btn btn-glass" onClick={onClose}>{isRTL ? 'إلغاء' : 'Cancel'}</button>
-            <button className="btn btn-primary" onClick={onImport}>{isRTL ? 'استيراد' : 'Import'}</button>
+
+          {/* Dropzone */}
+          <div
+            className="group relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-dashed transition-colors duration-300"
+            style={{
+              backgroundColor: isDark ? 'rgba(30, 58, 138, 0.2)' : 'rgba(255, 255, 255, 0.7)',
+              borderColor: isDark ? '#3b82f6' : '#93c5fd'
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={async (e) => {
+              e.preventDefault()
+              const file = e.dataTransfer.files?.[0]
+              if (file && (/\.xlsx$|\.xls$/i).test(file.name)) {
+                await handleFileUpload(file)
+              }
+            }}
+          >
+            <svg className="w-10 h-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0l-3 3m3-3l3 3m7 4v12m0 0l-3-3m3 3l3-3" />
+            </svg>
+            <p className="text-sm text-center" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+              {isRTL ? 'اسحب وأفلت ملف Excel هنا أو اضغط للاختيار' : 'Drag & drop Excel file here or click to browse'}
+            </p>
+            <input
+              id="modal-excel-file-input"
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={async (e) => {
+                const file = e.target.files?.[0] || null
+                if (file) {
+                  await handleFileUpload(file)
+                } else {
+                  setExcelFile(null)
+                }
+              }}
+              className="hidden"
+            />
+
+            <button
+              type="button"
+              onClick={() => document.getElementById('modal-excel-file-input')?.click()}
+              className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
+            >
+              {isRTL ? 'اختيار ملف' : 'Browse File'}
+            </button>
+
+            {excelFile ? (
+              <div className="mt-2 text-xs" style={{ color: isDark ? '#9ca3af' : '#4b5563' }}>{isRTL ? 'تم اختيار: ' + excelFile.name : 'Selected: ' + excelFile.name}</div>
+            ) : (
+              <div className="mt-2 text-xs" style={{ color: isDark ? '#9ca3af' : '#4b5563' }}>{isRTL ? 'لم يتم اختيار ملف' : 'No file selected'}</div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="mt-5 flex flex-col sm:flex-row gap-3 sm:items-center">
+            <button
+              onClick={handleImport}
+              disabled={!excelFile || importing}
+              className={`btn btn-sm ${importing ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white border-none flex items-center gap-2`}
+            >
+              <FaDownload className="w-4 h-4" />
+              {importing ? (isRTL ? 'جاري الاستيراد...' : 'Importing...') : (isRTL ? 'استيراد البيانات' : 'Import Data')}
+            </button>
+            <span className="text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>{isRTL ? 'الملفات المدعومة: .xlsx, .xls' : 'Supported files: .xlsx, .xls'}</span>
+          </div>
+
+          {/* Feedback */}
+          {importError && (
+            <div className="mt-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/50 dark:text-red-200 dark:border-red-800">
+              {importError}
+            </div>
+          )}
+          {importSummary && (
+            <div className="mt-4 px-4 py-3 rounded-lg bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/50 dark:text-green-200 dark:border-green-800">
+              {isRTL ? `تم استيراد ${importSummary.added} مشروع بنجاح` : `Successfully imported ${importSummary.added} projects`}
+            </div>
+          )}
+
+          <div className="mt-3 text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+            {isRTL ? 'الحقول المدعومة: اسم المشروع، المطور، المدينة، الحالة، الوحدات، السعر، الوصف' : 'Supported Fields: Project Name, Developer, City, Status, Units, Price, Description'}
           </div>
         </div>
       </div>
@@ -1994,27 +1525,55 @@ function CilTab({ isRTL, onClose, onSave }) {
   )
 }
 
-function ProjectCard({ p, isRTL, Label, onView, onEdit, onDelete }) {
+function ProjectCard({ p, isRTL, Label, onView, onEdit, onDelete, onAddUnit, companySetup }) {
   const img = p.image || pickImage(p.name)
   return (
     <div className="p-3">
-      {/* Line header: name + status + actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 min-w-0">
-          {p.logo && <img src={p.logo} alt={`${p.name} logo`} className="h-7 w-auto" />}
-          <h3 className="text-base font-semibold truncate flex-1">{p.name}</h3>
+      <div className="flex items-center gap-3 min-w-0 mb-2">
+        {p.logo && <img src={p.logo} alt={`${p.name} logo`} className="h-7 w-auto" />}
+        <h3 className="text-base font-semibold truncate flex-1">{p.name}</h3>
+        
+        <div className={`flex items-center gap-1`}>
+          <button
+            className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg shadow-sm transition focus:outline-none"
+            title={isRTL ? 'عرض' : 'View'} aria-label={isRTL ? 'عرض' : 'View'} onClick={()=>onView && onView(p)}
+            style={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+          >
+            <FaEye className="w-3 h-3 text-[var(--nova-accent)] dark:text-white" />
+          </button>
+           <button
+            className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg shadow-sm transition focus:outline-none"
+            title={isRTL ? 'إضافة وحدة' : 'Add Unit'} aria-label={isRTL ? 'إضافة وحدة' : 'Add Unit'} onClick={(e)=>{ e.stopPropagation(); onAddUnit && onAddUnit(p); }}
+            style={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+          >
+            <FaPlus className="w-3 h-3 text-[var(--nova-accent)] dark:text-white" />
+          </button>
+          <button
+            className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg shadow-sm transition focus:outline-none"
+            title={isRTL ? 'تعديل' : 'Edit'} aria-label={isRTL ? 'تعديل' : 'Edit'} onClick={()=>onEdit && onEdit(p)}
+            style={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+          >
+            <FaEdit className="w-3 h-3 text-[var(--nova-accent)] dark:text-white" />
+          </button>
+          <button
+            className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg shadow-sm transition focus:outline-none"
+            title={isRTL ? 'حذف' : 'Delete'} aria-label={isRTL ? 'حذف' : 'Delete'} onClick={()=>onDelete && onDelete(p)}
+            style={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+          >
+            <FaTrash className="w-3 h-3 text-[var(--nova-accent)] dark:text-white" />
+          </button>
         </div>
-        <div className={`flex items-center gap-2`}>
-          <button className="btn btn-sm btn-circle btn-ghost text-blue-600 hover:bg-blue-100" title={isRTL ? 'عرض' : 'View'} aria-label={isRTL ? 'عرض' : 'View'} onClick={()=>onView && onView(p)}>
-            <FaEye className="w-4 h-4" />
-          </button>
-          <button className="btn btn-sm btn-circle btn-ghost text-blue-600 hover:bg-blue-100" title={isRTL ? 'تعديل' : 'Edit'} aria-label={isRTL ? 'تعديل' : 'Edit'} onClick={()=>onEdit && onEdit(p)}>
-            <FaEdit className="w-4 h-4" />
-          </button>
-          <button className="btn btn-sm btn-circle btn-ghost text-red-600 hover:bg-red-100" title={isRTL ? 'حذف' : 'Delete'} aria-label={isRTL ? 'حذف' : 'Delete'} onClick={()=>onDelete && onDelete(p)}>
-            <FaTrash className="w-4 h-4" />
-          </button>
-        </div>
+      </div>
+      <div className="mt-1 flex items-center justify-between">
+        {p.status && (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+            (p.status === 'Active' || p.status === 'Sales') ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+            p.status === 'Completed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+            'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+          }`}>
+            {p.status}
+          </span>
+        )}
       </div>
 
       {img && (
@@ -2024,13 +1583,19 @@ function ProjectCard({ p, isRTL, Label, onView, onEdit, onDelete }) {
       )}
 
       {/* Compact line details */}
-      <div className={`mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 text-sm ${isRTL ? 'text-end' : 'text-start'}`}>
-        <div className={`glass-panel tinted-blue px-2 py-1 rounded-md flex items-center gap-2`}><FaMapMarkerAlt className="opacity-70" /> {p.city}</div>
-        <div className={`glass-panel tinted-indigo px-2 py-1 rounded-md flex items-center gap-2`}><FaBuilding className="opacity-70" /> {p.developer}</div>
-        <div className="glass-panel tinted-emerald px-2 py-1 rounded-md">{Label.units}: <span className="font-semibold">{p.units}</span></div>
-        <div className="glass-panel tinted-violet px-2 py-1 rounded-md">{isRTL ? 'المراحل' : 'Phases'}: <span className="font-semibold">{p.phases}</span></div>
-        <div className="glass-panel tinted-amber px-2 py-1 rounded-md">{isRTL ? 'الملفات' : 'Docs'}: <span className="font-semibold">{p.docs}</span></div>
-        <div className="glass-panel tinted-blue px-2 py-1 rounded-md">{isRTL ? 'آخر تحديث' : 'Updated'}: <span className="font-semibold">{p.lastUpdated}</span></div>
+      <div className={`mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 text-xs leading-snug ${isRTL ? 'text-end' : 'text-start'}`}>
+        <div className={`glass-panel tinted-blue px-1.5 py-1 rounded-md flex items-center gap-1.5 min-w-0`} style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+          <FaMapMarkerAlt className="opacity-70 flex-shrink-0" />
+          <span className="min-w-0" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{p.city}</span>
+        </div>
+        <div className={`glass-panel tinted-indigo px-1.5 py-1 rounded-md flex items-center gap-1.5 min-w-0`} style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+          <FaBuilding className="opacity-70 flex-shrink-0" />
+          <span className="min-w-0" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{p.developer}</span>
+        </div>
+        <div className="glass-panel tinted-emerald px-1.5 py-1 rounded-md min-w-0" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{Label.units}: <span className="font-semibold">{p.units}</span></div>
+        <div className="glass-panel tinted-violet px-1.5 py-1 rounded-md min-w-0" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{isRTL ? 'التصنيف' : 'Category'}: <span className="font-semibold">{p.category}</span></div>
+        <div className="glass-panel tinted-amber px-1.5 py-1 rounded-md min-w-0" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{isRTL ? 'الحالة' : 'Status'}: <span className="font-semibold">{p.status}</span></div>
+        <div className="glass-panel tinted-blue px-1.5 py-1 rounded-md min-w-0" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{isRTL ? 'آخر تحديث' : 'Updated'}: <span className="font-semibold">{p.lastUpdated}</span></div>
       </div>
 
       {/* Progress + Revenue (thin) */}
@@ -2042,23 +1607,69 @@ function ProjectCard({ p, isRTL, Label, onView, onEdit, onDelete }) {
           </div>
         </div>
         <div className={`${isRTL ? 'text-end' : 'text-start'}`}>
-          <div className="text-xs text-[var(--muted-text)] mb-1">{isRTL ? 'السعر التقديري' : 'Estimated Price'}</div>
+          <div className="text-xs text-[var(--muted-text)] mb-1">{isRTL ? 'نطاق السعر' : 'Price Range'}</div>
           <div className="text-sm font-semibold flex flex-col">
-             <div className="flex justify-between gap-2">
-               <span className="text-[var(--muted-text)] text-xs font-normal">{isRTL ? 'من' : 'From'}:</span>
-               <span>{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(p.minPrice||0)}</span>
-             </div>
-             <div className="flex justify-between gap-2">
-               <span className="text-[var(--muted-text)] text-xs font-normal">{isRTL ? 'إلى' : 'To'}:</span>
-               <span>{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(p.maxPrice||0)}</span>
-             </div>
+            <div className={`inline-flex items-center ${isRTL ? 'justify-end' : 'justify-start'} gap-1`}>
+              <span className="text-[var(--muted-text)] text-xs font-normal">{isRTL ? 'من' : 'From'}:</span>
+              <span>{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(p.minPrice||0)}</span>
+            </div>
+            <div className={`inline-flex items-center ${isRTL ? 'justify-end' : 'justify-start'} gap-1`}>
+              <span className="text-[var(--muted-text)] text-xs font-normal">{isRTL ? 'إلى' : 'To'}:</span>
+              <span>{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(p.maxPrice||0)}</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Share */}
       <div className="mt-2 flex items-center justify-end">
-        <button className={`inline-flex items-center gap-2 text-primary hover:underline`} title={Label.share}>
+        <button
+          className={`inline-flex items-center gap-2 text-primary hover:underline`}
+          title={Label.share}
+          onClick={() => {
+            try {
+              const payload = {
+                name: p.name,
+                developer: p.developer,
+                city: p.city,
+                category: p.category,
+                image: p.image,
+                description: p.description,
+                minPrice: p.minPrice,
+                maxPrice: p.maxPrice,
+                logo: p.logo,
+                galleryImages: Array.isArray(p.galleryImages) ? p.galleryImages : [],
+                masterPlanImages: Array.isArray(p.masterPlanImages) ? p.masterPlanImages : [],
+                videoUrls: p.videoUrls || '',
+                mapUrl: p.mapUrl,
+                address: p.address,
+                paymentPlan: Array.isArray(p.paymentPlan) ? p.paymentPlan : [],
+                minSpace: p.minSpace,
+                maxSpace: p.maxSpace,
+              }
+              const json = JSON.stringify(payload)
+              const bytes = new TextEncoder().encode(json)
+              let bin = ''
+              bytes.forEach(b => { bin += String.fromCharCode(b) })
+              const data = btoa(bin)
+              const base = (import.meta.env?.BASE_URL || '/')
+              const prefix = base.endsWith('/') ? base.slice(0, -1) : base
+              const scope = prefix === '/' ? '' : prefix
+              const companyName = (companySetup && companySetup.companyInfo && companySetup.companyInfo.companyName) || ''
+              const companyParam = companyName ? `&company=${encodeURIComponent(companyName)}` : ''
+              const url = `${window.location.origin}${scope}/#/landing/project?data=${encodeURIComponent(data)}${companyParam}`
+              if (navigator?.share) {
+                navigator.share({ title: payload.name || 'Project', text: 'View project details', url })
+              } else {
+                navigator.clipboard && navigator.clipboard.writeText(url)
+                const evt = new CustomEvent('app:toast', { detail: { type: 'success', message: (isRTL ? 'تم نسخ رابط المشاركة' : 'Share link copied') } })
+                window.dispatchEvent(evt)
+              }
+            } catch (e) {
+              console.error('Share error:', e)
+            }
+          }}
+        >
           <FaShareAlt className={isRTL ? 'scale-x-[-1]' : ''} /> {Label.share}
         </button>
       </div>
@@ -2097,15 +1708,16 @@ function SummaryPanel({ projects, isRTL, onFilterStatus, onFilterCity }) {
           ))}
         </div>
       </div>
-      {/* Mini chart: projects per status */}
-      <div className="mt-3 h-28">
-        <Bar
-          data={{
-            labels: statusCounts.map(x=>x.s),
-            datasets: [{ label: isRTL ? 'حسب الحالة' : 'By Status', data: statusCounts.map(x=>x.count), backgroundColor: 'rgba(59,130,246,0.6)', borderRadius: 6 }]
-          }}
-          options={{ plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => `${v}` } } } }}
-        />
+      <div className="mt-3 overflow-x-auto">
+        <div className="h-36 min-w-[600px]" style={{ width: `${Math.max((projects||[]).length * 90, 600)}px` }}>
+          <Bar
+            data={{
+              labels: projects.map(p => (p.name || '').length > 12 ? (p.name || '').slice(0,12) + '…' : (p.name || '')),
+              datasets: [{ label: isRTL ? 'الوحدات' : 'Units', data: projects.map(p => p.units || 0), backgroundColor: 'rgba(59,130,246,0.6)', borderRadius: 6 }]
+            }}
+            options={{ plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }, y: { ticks: { callback: v => `${v}` } } } }}
+          />
+        </div>
       </div>
     </div>
   )

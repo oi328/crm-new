@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FaTimes, FaTrash, FaFilter, FaSearch, FaChevronDown } from 'react-icons/fa'
+import { FaTimes, FaTrash, FaFilter, FaSearch, FaChevronDown, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import SearchableSelect from '../components/SearchableSelect'
 import { useTheme } from '../shared/context/ThemeProvider'
 
@@ -413,7 +413,7 @@ export default function InventoryTransactions() {
 
         <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
           <h2 className="text-xl font-medium mb-4">{labels.listTitle}</h2>
-          {transactions.length === 0 ? (
+          {paginated.length === 0 ? (
             <p className="text-sm text-[var(--muted-text)]">{labels.empty}</p>
           ) : (
             <div className="overflow-x-auto">
@@ -430,7 +430,7 @@ export default function InventoryTransactions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((tx) => {
+                  {paginated.map((tx) => {
                     const item = items.find(i => i.id === tx.itemId) || items.find(i => i.itemName === tx.itemName)
                     return (
                     <tr key={tx.id}>
@@ -454,6 +454,48 @@ export default function InventoryTransactions() {
               </table>
             </div>
           )}
+
+          {/* Pagination Footer */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-2 text-sm text-[var(--muted-text)]">
+            <div className="flex items-center gap-2">
+              <span>{isArabic ? 'عرض' : 'Showing'}</span>
+              <select 
+                value={itemsPerPage} 
+                onChange={(e) => setItemsPerPage(Number(e.target.value))} 
+                className="select select-bordered select-xs w-16"
+              >
+                <option>5</option>
+                <option>10</option>
+                <option>20</option>
+                <option>50</option>
+              </select>
+              <span>{isArabic ? 'من' : 'of'} {filtered.length} {isArabic ? 'عنصر' : 'entries'}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+               <span className="text-xs">
+                {isArabic ? 'صفحة' : 'Page'} {page} {isArabic ? 'من' : 'of'} {totalPages}
+              </span>
+              <div className="join">
+                <button 
+                  className="join-item btn btn-sm btn-ghost" 
+                  onClick={goPrevPage} 
+                  disabled={page <= 1}
+                  title={isArabic ? 'السابق' : 'Prev'}
+                >
+                  <FaChevronLeft className={isArabic ? 'scale-x-[-1]' : ''} />
+                </button>
+                <button 
+                  className="join-item btn btn-sm btn-ghost" 
+                  onClick={goNextPage} 
+                  disabled={page >= totalPages}
+                  title={isArabic ? 'التالي' : 'Next'}
+                >
+                  <FaChevronRight className={isArabic ? 'scale-x-[-1]' : ''} />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         

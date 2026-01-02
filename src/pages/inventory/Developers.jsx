@@ -1,286 +1,406 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Plus, Search, Edit2, Trash2, X, Building, Phone, Mail, MapPin } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import SearchableSelect from '../../components/SearchableSelect'
+import { Plus, Search, Edit2, Trash2, X, Users, Phone, Mail, MapPin, Building2, Filter, ChevronDown, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FaFilter, FaShareAlt, FaEllipsisV, FaPlus, FaMapMarkerAlt, FaBuilding, FaTimes, FaEye, FaEdit, FaTrash, FaUpload, FaSearch, FaChevronDown, FaChevronUp, FaImage, FaFilePdf, FaVideo, FaPaperclip, FaTags, FaCity, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaDownload, FaFileExcel } from 'react-icons/fa'
 
 export default function Developers() {
-  const { i18n } = useTranslation();
-  const isArabic = i18n.language === 'ar';
-  const STORAGE_KEY = 'inventoryDevelopers';
+  const { i18n } = useTranslation()
+  const isArabic = i18n.language === 'ar'
+  const isRTL = isArabic
 
-  // State
-  const [developers, setDevelopers] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [form, setForm] = useState({
-    id: null,
-    name: '',
+  const labels = useMemo(() => ({
+    title: isArabic ? ' المطورون' : ' Developers',
+    formTitle: isArabic ? 'بيانات الشركة التطوير' : 'Developer Company Details',
+    add: isArabic ? 'إضافة مطور' : 'Add Developer',
+    close: isArabic ? 'إغلاق' : 'Close',
+    filter: isArabic ? 'تصفية' : 'Filter',
+    search: isArabic ? 'بحث' : 'Search',
+    clearFilters: isArabic ? 'مسح المرشحات' : 'Clear Filters',
+    companyName: isArabic ? 'اسم الشركة' : 'Company Name',
+    contactPerson: isArabic ? 'الشخص المسؤول' : 'Contact Person',
+    phone: isArabic ? 'الهاتف' : 'Phone',
+    email: isArabic ? 'البريد الإلكتروني' : 'Email',
+    city: isArabic ? 'المدينة' : 'City',
+    status: isArabic ? 'الحالة' : 'Status',
+    save: isArabic ? 'حفظ الشركة' : 'Save Company',
+    listTitle: isArabic ? 'قائمة شركات التطوير' : 'Developers List',
+    empty: isArabic ? 'لا توجد سجلات بعد' : 'No records yet',
+    actions: isArabic ? 'الإجراءات' : 'Actions',
+    delete: isArabic ? 'حذف' : 'Delete',
+    edit: isArabic ? 'تعديل' : 'Edit',
+    show: isArabic ? 'إظهار' : 'Show',
+    hide: isArabic ? 'إخفاء' : 'Hide',
+    logo: isArabic ? 'الشعار' : 'Logo',
+    projectType: isArabic ? 'نوع المشروع' : 'Project Type',
+    residential: isArabic ? 'سكنى' : 'Residential',
+    commercial: isArabic ? 'تجارى' : 'Commercial',
+    select: isArabic ? 'اختر' : 'Select',
+  }), [isArabic])
+
+  const STORAGE_KEY = 'inventoryDevelopers'
+
+  const [form, setForm] = useState({ companyName: '', contactPerson: '', phone: '', email: '', city: '', status: isArabic ? 'نشط' : 'Active', logo: '', projectType: '' })
+  const [developers, setDevelopers] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [showAllFilters, setShowAllFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    search: '',
+    companyName: '',
     contactPerson: '',
-    phone: '',
-    email: '',
-    address: '',
-    status: 'Active'
-  });
+    city: '',
+    status: '',
+    phone: ''
+  })
 
-  // Load Data
+  useEffect(() => { 
+    try { 
+      const raw = localStorage.getItem(STORAGE_KEY); 
+      if (raw) { 
+        const parsed = JSON.parse(raw); 
+        if (Array.isArray(parsed) && parsed.length > 0) { setDevelopers(parsed); return } 
+      } 
+      const sample = [
+        { id: 1700000201, companyName: 'Nova Developments', contactPerson: 'Khalid', phone: '555-2011', email: 'hello@nova.dev', city: isArabic ? 'الرياض' : 'Riyadh', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000202, companyName: 'Skyline Builders', contactPerson: 'Mariam', phone: '555-2012', email: 'info@skyline.com', city: isArabic ? 'جدة' : 'Jeddah', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000203, companyName: 'Red Sea Constructions', contactPerson: 'Ahmed', phone: '555-2013', email: 'contact@redsea.co', city: isArabic ? 'جدة' : 'Jeddah', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000204, companyName: 'Cairo Urban', contactPerson: 'Layla', phone: '555-2014', email: 'support@cairourban.eg', city: isArabic ? 'القاهرة' : 'Cairo', status: isArabic ? 'متوقف' : 'Inactive' },
+        { id: 1700000205, companyName: 'Nile Properties', contactPerson: 'Omar', phone: '555-2015', email: 'sales@nileprop.com', city: isArabic ? 'الخرطوم' : 'Khartoum', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000206, companyName: 'Dubai Hills', contactPerson: 'Fatima', phone: '555-2016', email: 'info@dubaihills.ae', city: isArabic ? 'دبي' : 'Dubai', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000207, companyName: 'Amman Stone', contactPerson: 'Yousef', phone: '555-2017', email: 'yousef@ammanstone.jo', city: isArabic ? 'عمان' : 'Amman', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000208, companyName: 'Beirut Towers', contactPerson: 'Nour', phone: '555-2018', email: 'nour@beiruttowers.lb', city: isArabic ? 'بيروت' : 'Beirut', status: isArabic ? 'متوقف' : 'Inactive' },
+        { id: 1700000209, companyName: 'Casablanca Estates', contactPerson: 'Hassan', phone: '555-2019', email: 'hassan@casaestates.ma', city: isArabic ? 'الدار البيضاء' : 'Casablanca', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000210, companyName: 'Doha Heights', contactPerson: 'Aisha', phone: '555-2020', email: 'aisha@dohaheights.qa', city: isArabic ? 'الدوحة' : 'Doha', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000211, companyName: 'Manama Bay', contactPerson: 'Ali', phone: '555-2021', email: 'ali@manamabay.bh', city: isArabic ? 'المنامة' : 'Manama', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000212, companyName: 'Kuwait City Dev', contactPerson: 'Sara', phone: '555-2022', email: 'sara@kuwaitdev.kw', city: isArabic ? 'مدينة الكويت' : 'Kuwait City', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000213, companyName: 'Muscat Hills', contactPerson: 'Said', phone: '555-2023', email: 'said@muscathills.om', city: isArabic ? 'مسقط' : 'Muscat', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000214, companyName: 'Tunis Gardens', contactPerson: 'Monia', phone: '555-2024', email: 'monia@tunisgardens.tn', city: isArabic ? 'تونس' : 'Tunis', status: isArabic ? 'متوقف' : 'Inactive' },
+        { id: 1700000215, companyName: 'Algiers Heights', contactPerson: 'Karim', phone: '555-2025', email: 'karim@algiersheights.dz', city: isArabic ? 'الجزائر' : 'Algiers', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000216, companyName: 'Baghdad Gates', contactPerson: 'Zainab', phone: '555-2026', email: 'zainab@baghdadgates.iq', city: isArabic ? 'بغداد' : 'Baghdad', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000217, companyName: 'Damascus Old City', contactPerson: 'Samer', phone: '555-2027', email: 'samer@damascusold.sy', city: isArabic ? 'دمشق' : 'Damascus', status: isArabic ? 'متوقف' : 'Inactive' },
+        { id: 1700000218, companyName: 'Tripoli Sea View', contactPerson: 'Libya', phone: '555-2028', email: 'info@tripoli.ly', city: isArabic ? 'طرابلس' : 'Tripoli', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000219, companyName: 'Sanaa Heritage', contactPerson: 'Ahmed', phone: '555-2029', email: 'ahmed@sanaa.ye', city: isArabic ? 'صنعاء' : 'Sanaa', status: isArabic ? 'نشط' : 'Active' },
+        { id: 1700000220, companyName: 'Khartoum North', contactPerson: 'Mona', phone: '555-2030', email: 'mona@khartoum.sd', city: isArabic ? 'الخرطوم' : 'Khartoum', status: isArabic ? 'نشط' : 'Active' }
+      ]
+      setDevelopers(sample)
+    } catch {} 
+  }, [])
+  useEffect(() => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(developers)) } catch {} }, [developers])
+
+  function onChange(e) { const { name, value } = e.target; setForm(prev => ({ ...prev, [name]: value })) }
+  
+  function handleLogoChange(e) {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setForm(prev => ({ ...prev, logo: reader.result }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  function onSubmit(e) {
+    e.preventDefault()
+    const companyName = form.companyName.trim()
+    if (!companyName) return
+    const rec = { id: Date.now(), ...form }
+    setDevelopers(prev => [rec, ...prev])
+    setForm({ companyName: '', contactPerson: '', phone: '', email: '', city: '', status: isArabic ? 'نشط' : 'Active', logo: '', projectType: '' })
+    try { setShowForm(false) } catch {}
+  }
+  function onDelete(id) { setDevelopers(prev => prev.filter(r => r.id !== id)) }
+  function onEdit(rec) { 
+    setForm({ companyName: rec.companyName||'', contactPerson: rec.contactPerson||'', phone: rec.phone||'', email: rec.email||'', city: rec.city||'', status: rec.status|| (isArabic?'نشط':'Active'), logo: rec.logo || '', projectType: rec.projectType || '' }) 
+    setShowForm(true)
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+  }
+
+  const statusOptions = useMemo(() => (isArabic ? ['نشط', 'متوقف'] : ['Active', 'Inactive']), [isArabic])
+  const companyOptions = useMemo(() => Array.from(new Set(developers.map(d => d.companyName).filter(Boolean))), [developers])
+  const contactOptions = useMemo(() => Array.from(new Set(developers.map(d => d.contactPerson).filter(Boolean))), [developers])
+  const cityOptions = useMemo(() => Array.from(new Set(developers.map(d => d.city).filter(Boolean))), [developers])
+
+  const filtered = useMemo(() => {
+    return developers.filter(d => {
+      if (filters.search) {
+        const q = filters.search.toLowerCase()
+        const pool = [d.companyName, d.contactPerson, d.phone, d.email].map(x => (x||'').toLowerCase())
+        if (!pool.some(v => v.includes(q))) return false
+      }
+      if (filters.companyName && d.companyName !== filters.companyName) return false
+      if (filters.contactPerson && !String(d.contactPerson||'').toLowerCase().includes(String(filters.contactPerson).toLowerCase())) return false
+      if (filters.city && d.city !== filters.city) return false
+      if (filters.status && d.status !== filters.status) return false
+      if (filters.phone && !(d.phone||'').includes(filters.phone)) return false
+      return true
+    })
+  }, [developers, filters])
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(6)
+
+  // Reset pagination when filters change
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      setDevelopers(JSON.parse(saved));
-    } else {
-      // Seed data
-      const seed = [
-        { id: 1, name: 'Emaar Misr', contactPerson: 'Ahmed Hassan', phone: '16116', email: 'info@emaar.com', address: 'Cairo, Egypt', status: 'Active' },
-        { id: 2, name: 'Palm Hills', contactPerson: 'Mohamed Ali', phone: '19743', email: 'sales@palmhills.com', address: '6th October, Egypt', status: 'Active' },
-      ];
-      setDevelopers(seed);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
-    }
-  }, []);
+    setCurrentPage(1)
+  }, [filters, itemsPerPage])
 
-  // Save Data
-  useEffect(() => {
-    if (developers.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(developers));
-    }
-  }, [developers]);
+  // Pagination Logic
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginatedDevelopers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return filtered.slice(start, start + itemsPerPage)
+  }, [filtered, currentPage, itemsPerPage])
+  
+  const shownFrom = (filtered.length === 0) ? 0 : (currentPage - 1) * itemsPerPage + 1
+  const shownTo = Math.min(currentPage * itemsPerPage, filtered.length)
 
-  // Form Handlers
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!form.name) return;
-
-    if (form.id) {
-      setDevelopers(prev => prev.map(d => d.id === form.id ? { ...form } : d));
-    } else {
-      setDevelopers(prev => [{ ...form, id: Date.now() }, ...prev]);
-    }
-    
-    setShowForm(false);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setForm({
-      id: null,
-      name: '',
-      contactPerson: '',
-      phone: '',
-      email: '',
-      address: '',
-      status: 'Active'
-    });
-  };
-
-  const handleEdit = (dev) => {
-    setForm(dev);
-    setShowForm(true);
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm(isArabic ? 'هل أنت متأكد من الحذف؟' : 'Are you sure you want to delete this developer?')) {
-      setDevelopers(prev => prev.filter(d => d.id !== id));
-    }
-  };
-
-  // Filtering
-  const filteredDevelopers = useMemo(() => {
-    return developers.filter(d => 
-      d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.contactPerson?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [developers, searchQuery]);
+  function clearFilters() { setFilters({ search: '', companyName: '', contactPerson: '', city: '', status: '', phone: '' }) }
 
   return (
-    <div className={`p-6 max-w-[1600px] mx-auto ${isArabic ? 'rtl' : 'ltr'}`}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Building className="text-blue-600" />
-            {isArabic ? 'المطورين العقاريين' : 'Real Estate Developers'}
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            {isArabic ? 'إدارة شركات التطوير العقاري وبيانات الاتصال' : 'Manage real estate development companies and contacts'}
-          </p>
-        </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-        >
-          <Plus size={18} />
-          <span>{isArabic ? 'إضافة مطور' : 'Add Developer'}</span>
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="mb-6 relative">
-        <Search className={`absolute ${isArabic ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-gray-400`} size={20} />
-        <input
-          type="text"
-          placeholder={isArabic ? 'بحث باسم المطور أو المسؤول...' : 'Search by developer name or contact person...'}
-          className={`w-full ${isArabic ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm`}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDevelopers.map(dev => (
-          <div key={dev.id} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <Building className="text-blue-600 dark:text-blue-400" size={24} />
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => handleEdit(dev)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
-                  <Edit2 size={16} />
-                </button>
-                <button onClick={() => handleDelete(dev.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{dev.name}</h3>
+      <div className="space-y-6 pt-4">
+        <div className="flex items-center justify-between">
+          <div className="relative inline-block">
+            <h1 className={`page-title text-2xl font-semibold ${isArabic ? 'text-right' : 'text-left'}`}>{labels.title}</h1>
+            <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowForm(true)} 
+              className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none flex items-center gap-2"
+            >
             
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-              {dev.contactPerson && (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 flex justify-center"><span className="text-gray-400">👤</span></div>
-                  <span>{dev.contactPerson}</span>
-                </div>
-              )}
-              {dev.phone && (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 flex justify-center"><Phone size={14} className="text-gray-400" /></div>
-                  <span dir="ltr">{dev.phone}</span>
-                </div>
-              )}
-              {dev.email && (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 flex justify-center"><Mail size={14} className="text-gray-400" /></div>
-                  <span>{dev.email}</span>
-                </div>
-              )}
-              {dev.address && (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 flex justify-center"><MapPin size={14} className="text-gray-400" /></div>
-                  <span>{dev.address}</span>
-                </div>
-              )}
-            </div>
+        <span className="inline-flex items-center gap-2">
+             <FaPlus /> {isArabic ? 'إضافة مطور' : 'Add Developer'}
+        </span>              
+            </button>
+          </div>
+        </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-              <span className={`px-2 py-1 text-xs rounded-full ${
-                dev.status === 'Active' 
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                  : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-              }`}>
-                {dev.status === 'Active' ? (isArabic ? 'نشط' : 'Active') : (isArabic ? 'غير نشط' : 'Inactive')}
-              </span>
+        <div className="glass-panel p-4 rounded-xl mb-6">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <Filter className="text-blue-500" size={16} /> {labels.filter}
+            </h2>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowAllFilters(prev => !prev)} className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+                {showAllFilters ? (isArabic ? 'إخفاء' : 'Hide') : (isArabic ? 'عرض الكل' : 'Show All')} 
+                <ChevronDown size={14} className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
+              </button>
+            <button onClick={clearFilters} className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+              {isArabic ? 'إعادة تعيين' : 'Reset'}
+            </button>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Modal */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                {form.id ? (isArabic ? 'تعديل مطور' : 'Edit Developer') : (isArabic ? 'إضافة مطور جديد' : 'Add New Developer')}
-              </h2>
-              <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                <X size={20} />
-              </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><Search className="text-blue-500" size={10} /> {labels.search}</label>
+              <input className="input w-full" value={filters.search} onChange={e=>setFilters(prev=>({...prev, search: e.target.value}))} placeholder={isArabic ? 'بحث...' : 'Search...'} />
             </div>
-            
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{isArabic ? 'اسم الشركة' : 'Company Name'}</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={form.name}
-                  onChange={e => setForm({...form, name: e.target.value})}
-                />
-              </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.companyName}</label>
+              <SearchableSelect options={companyOptions} value={filters.companyName} onChange={val=>setFilters(prev=>({...prev, companyName: val}))} isRTL={isArabic} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.contactPerson}</label>
+              <input className="input w-full" value={filters.contactPerson} onChange={e=>setFilters(prev=>({...prev, contactPerson: e.target.value}))} placeholder={labels.contactPerson} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.city}</label>
+              <SearchableSelect options={cityOptions} value={filters.city} onChange={val=>setFilters(prev=>({...prev, city: val}))} isRTL={isArabic} />
+            </div>
+          </div>
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 transition-all duration-300 overflow-hidden ${showAllFilters ? 'max-h-[300px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.status}</label>
+              <select className="input w-full" value={filters.status} onChange={e=>setFilters(prev=>({...prev, status: e.target.value}))}>
+                <option value="">{isArabic ? 'الكل' : 'All'}</option>
+                {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-[var(--muted-text)]">{labels.phone}</label>
+              <input className="input w-full" value={filters.phone} onChange={e=>setFilters(prev=>({...prev, phone: e.target.value}))} placeholder={labels.phone} />
+            </div>
+          </div>
+        </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{isArabic ? 'الشخص المسؤول' : 'Contact Person'}</label>
-                  <input
-                    type="text"
-                    className="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={form.contactPerson}
-                    onChange={e => setForm({...form, contactPerson: e.target.value})}
-                  />
+        {/* Grid */}
+        {filtered.length === 0 ? (
+          <div className="text-center py-10 text-[var(--muted-text)]">
+            <p>{labels.empty}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedDevelopers.map(r => (
+              <div key={r.id} className="glass-panel rounded-xl p-6 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg overflow-hidden flex items-center justify-center w-12 h-12">
+                    {r.logo ? (
+                      <img src={r.logo} alt={r.companyName} className="w-full h-full object-contain" />
+                    ) : (
+                      <Building2 className="text-blue-600 dark:text-blue-400" size={24} />
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" className="btn btn-sm btn-circle btn-ghost text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20" title={labels.edit} aria-label={labels.edit} onClick={() => onEdit(r)}>
+                      <Edit2 size={16} />
+                    </button>
+                    <button type="button" className="btn btn-sm btn-circle btn-ghost text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" title={labels.delete} aria-label={labels.delete} onClick={() => onDelete(r.id)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{isArabic ? 'الهاتف' : 'Phone'}</label>
-                  <input
-                    type="text"
-                    className="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={form.phone}
-                    onChange={e => setForm({...form, phone: e.target.value})}
-                  />
+
+                <h3 className="text-lg font-bold mb-2">{r.companyName}</h3>
+                
+                <div className="space-y-2 text-sm text-[var(--muted-text)]">
+                  {r.projectType && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 flex justify-center"><Briefcase size={14} className="opacity-70" /></div>
+                      <span>{r.projectType}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 flex justify-center"><Users size={14} className="opacity-70" /></div>
+                    <span className="capitalize">{r.contactPerson}</span>
+                  </div>
+                  {r.phone && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 flex justify-center"><Phone size={14} className="opacity-70" /></div>
+                      <span dir="ltr">{r.phone}</span>
+                    </div>
+                  )}
+                  {r.email && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 flex justify-center"><Mail size={14} className="opacity-70" /></div>
+                      <span>{r.email}</span>
+                    </div>
+                  )}
+                  {r.city && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 flex justify-center"><MapPin size={14} className="opacity-70" /></div>
+                      <span>{r.city}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-[var(--panel-border)] flex justify-between items-center">
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    r.status === 'Active' || r.status === 'نشط'
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                      : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                  }`}>
+                    {r.status}
+                  </span>
                 </div>
               </div>
+            ))}
+          </div>
+        )}
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{isArabic ? 'البريد الإلكتروني' : 'Email'}</label>
-                <input
-                  type="email"
-                  className="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={form.email}
-                  onChange={e => setForm({...form, email: e.target.value})}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{isArabic ? 'العنوان' : 'Address'}</label>
-                <textarea
-                  className="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
-                  rows="2"
-                  value={form.address}
-                  onChange={e => setForm({...form, address: e.target.value})}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{isArabic ? 'الحالة' : 'Status'}</label>
-                <select
-                  className="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={form.status}
-                  onChange={e => setForm({...form, status: e.target.value})}
+        {/* Pagination Footer */}
+        {filtered.length > 0 && (
+          <div className="mt-2 flex items-center justify-between rounded-xl p-2 glass-panel">
+            <div className="text-xs text-[var(--muted-text)]">
+              {isArabic 
+                ? `عرض ${shownFrom}–${shownTo} من ${filtered.length}`
+                : `Showing ${shownFrom}–${shownTo} of ${filtered.length}`
+              }
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  title={isArabic ? 'السابق' : 'Prev'}
                 >
-                  <option value="Active">{isArabic ? 'نشط' : 'Active'}</option>
-                  <option value="Inactive">{isArabic ? 'غير نشط' : 'Inactive'}</option>
+                  <ChevronLeft className={isArabic ? 'scale-x-[-1]' : ''} size={16} />
+                </button>
+                <span className="text-sm">{isArabic ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  title={isArabic ? 'التالي' : 'Next'}
+                >
+                  <ChevronRight className={isArabic ? 'scale-x-[-1]' : ''} size={16} />
+                </button>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-[var(--muted-text)]">{isArabic ? 'لكل صفحة:' : 'Per page:'}</span>
+                <select
+                  className="input w-24 text-sm h-8 min-h-0"
+                  value={itemsPerPage}
+                  onChange={e => setItemsPerPage(Number(e.target.value))}
+                >
+                  <option value={6}>6</option>
+                  <option value={12}>12</option>
+                  <option value={24}>24</option>
+                  <option value={48}>48</option>
                 </select>
               </div>
-
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  {isArabic ? 'إلغاء' : 'Cancel'}
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-                >
-                  {isArabic ? 'حفظ' : 'Save'}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+
+        {showForm && (
+          <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowForm(false)} />
+            <div className="absolute inset-0 flex items-center justify-center p-4 md:p-6">
+              <div className="card p-4 sm:p-6 w-[92vw] sm:w-[80vw] lg:w-[60vw] xl:max-w-3xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-medium">{labels.formTitle}</h2>
+                  <button 
+                    type="button" 
+                    className="w-8 h-8 rounded-full flex items-center justify-center bg-white text-red-600 hover:bg-red-50 shadow-md transition-colors"
+                    onClick={() => setShowForm(false)} 
+                    aria-label={labels.close}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm mb-1">{labels.logo}</label>
+                    <div className="flex items-center gap-4">
+                      {form.logo && (
+                        <img src={form.logo} alt="Logo Preview" className="w-16 h-16 object-contain rounded-lg border bg-white" />
+                      )}
+                      <input type="file" accept="image/*" onChange={handleLogoChange} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-300" />
+                    </div>
+                  </div>
+                  <div><label className="block text-sm mb-1">{labels.companyName}</label><input name="companyName" value={form.companyName} onChange={onChange} placeholder={labels.companyName} className="input w-full" required /></div>
+                  <div>
+                    <label className="block text-sm mb-1">{labels.projectType}</label>
+                    <select name="projectType" value={form.projectType} onChange={onChange} className="input w-full" required>
+                      <option value="">{labels.select}</option>
+                      <option value={labels.residential}>{labels.residential}</option>
+                      <option value={labels.commercial}>{labels.commercial}</option>
+                    </select>
+                  </div>
+                  <div><label className="block text-sm mb-1">{labels.contactPerson}</label><input name="contactPerson" value={form.contactPerson} onChange={onChange} placeholder={labels.contactPerson} className="input w-full" /></div>
+                  <div><label className="block text-sm mb-1">{labels.phone}</label><input name="phone" value={form.phone} onChange={onChange} placeholder={labels.phone} className="input w-full" /></div>
+                  <div><label className="block text-sm mb-1">{labels.email}</label><input type="email" name="email" value={form.email} onChange={onChange} placeholder={labels.email} className="input w-full" /></div>
+                  <div><label className="block text-sm mb-1">{labels.city}</label><input name="city" value={form.city} onChange={onChange} placeholder={labels.city} className="input w-full" /></div>
+                  <div>
+                    <label className="block text-sm mb-1">{labels.status}</label>
+                    <select name="status" value={form.status} onChange={onChange} className="input w-full">
+                      {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div className={`md:col-span-2 flex gap-2 ${isArabic ? 'justify-start' : 'justify-end'}`}>
+                    <button type="submit" className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors font-medium">
+                      {labels.save}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+  )
 }

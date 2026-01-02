@@ -662,3 +662,85 @@ app.post('/api/backups/schedule', requireAuth, (req, res) => {
     return fail(res, 500, 'server_error', { error: e.message })
   }
 })
+
+// ====== Projects (Bilingual fields) ======
+const PROJECTS_PATH = path.join(UPLOADS_DIR, 'projects.json')
+function readProjects() {
+  try {
+    if (!fs.existsSync(PROJECTS_PATH)) fs.writeFileSync(PROJECTS_PATH, JSON.stringify({ items: [] }, null, 2))
+    const raw = fs.readFileSync(PROJECTS_PATH, 'utf-8')
+    const j = JSON.parse(raw)
+    return Array.isArray(j.items) ? j.items : []
+  } catch (_) { return [] }
+}
+function writeProjects(items) {
+  try { fs.writeFileSync(PROJECTS_PATH, JSON.stringify({ items }, null, 2)) } catch (_) {}
+}
+
+// GET /api/projects
+app.get('/api/projects', requireAuth, (_req, res) => {
+  const items = readProjects()
+  return ok(res, { items })
+})
+
+// POST /api/projects
+app.post('/api/projects', requireAuth, (req, res) => {
+  try {
+    const p = req.body || {}
+    const now = new Date().toISOString()
+    const item = {
+      id: `prj-${Date.now()}`,
+      companyId: req.user.companyId,
+      createdBy: req.user.userId,
+      createdAt: now,
+      updatedAt: now,
+      name_en: String(p.name_en || ''),
+      name_ar: String(p.name_ar || ''),
+      description_en: String(p.description_en || ''),
+      description_ar: String(p.description_ar || ''),
+      address_en: String(p.address_en || ''),
+      address_ar: String(p.address_ar || ''),
+      developer: String(p.developer || ''),
+      category: String(p.category || ''),
+      status: String(p.status || ''),
+      delivery_date: String(p.delivery_date || ''),
+      city: String(p.city || ''),
+      location: p.location || null,
+      location_url: String(p.location_url || ''),
+      min_price: String(p.min_price || ''),
+      max_price: String(p.max_price || ''),
+      min_space: String(p.min_space || ''),
+      max_space: String(p.max_space || ''),
+      currency: String(p.currency || 'EGP'),
+      amenities: Array.isArray(p.amenities) ? p.amenities : [],
+      media: p.media || {},
+      cil: p.cil || {},
+      publish: p.publish || {},
+    }
+    const items = readProjects()
+    items.unshift(item)
+    writeProjects(items)
+    logAction({ userId: req.user.userId, companyId: req.user.companyId, entity: 'projects', entityId: item.id, action: 'create', changes: item })
+    return ok(res, { item })
+  } catch (e) {
+    return fail(res, 500, 'server_error', { error: e.message })
+  }
+})
+
+// PUT /api/projects/:id
+app.put('/api/projects/:id', requireAuth, (req, res) => {
+  try {
+    const { id } = req.params
+    const items = readProjects()
+    const idx = items.findIndex((x) => x.id === id)
+    if (idx === -1) return fail(res, 404, 'project_not_found')
+    const now = new Date().toISOString()
+    const next = { ...items[idx], ...req.body, updatedAt: now }
+    items[idx] = next
+    writeProjects(items)
+    logAction({ userId: req.user.userId, companyId: req.user.companyId, entity: 'projects', entityId: id, action: 'update', changes: next })
+    return ok(res, { item: next })
+  } catch (e) {
+    return fail(res, 500, 'server_error', { error: e.message })
+  }
+})

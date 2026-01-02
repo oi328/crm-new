@@ -16,7 +16,9 @@ export const useStages = () => {
       name: s.name || String(s),
       nameAr: s.nameAr || '',
       color: s.color || '#3b82f6',
-      icon: s.icon || '📊'
+      icon: s.icon || '📊',
+      type: s.type || '',
+      order: s.order
     }));
   };
 

@@ -450,7 +450,13 @@ const LeadDetailsModal = ({ isOpen, onClose, lead }) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                     <label className="block text-sm font-medium text-gray-500 mb-2">{isArabic ? 'مُعيَّن إلى' : 'Assigned To'}</label>
-                    <p className="text-gray-800 font-medium">{lead.assignedTo || (isArabic ? 'غير مُعيَّن' : 'Not assigned')}</p>
+                    <p className="text-gray-800 font-medium">
+                      {(() => {
+                        const s = String(lead.stage || '').toLowerCase();
+                        const isNew = s.includes('new') || s.includes('جديد') || s.includes('نيوليد');
+                        return isNew ? '-' : (lead.assignedTo || (isArabic ? 'غير مُعيَّن' : 'Not assigned'));
+                      })()}
+                    </p>
                   </div>
                   <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                     <label className="block text-sm font-medium text-gray-500 mb-2">{isArabic ? 'القيمة المقدرة' : 'Estimated Value'}</label>

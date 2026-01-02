@@ -1,5 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import { useTheme } from '@shared/context/ThemeProvider'
 import { FaDownload, FaFileExcel, FaTimes } from 'react-icons/fa'
 import * as XLSX from 'xlsx'
 
@@ -14,6 +15,8 @@ const ImportLeadsModal = ({
   onImport,
 }) => {
   const { t, i18n } = useTranslation()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
 
   // دالة توليد ملف Excel التيمبليت
   const generateTemplate = () => {
@@ -105,37 +108,43 @@ const ImportLeadsModal = ({
   if (!isOpen) return null
 
   return (
-    <div className={`fixed inset-0 z-[2000] ${i18n.language === 'ar' ? 'rtl' : 'ltr'} flex items-center justify-center`}>
+    <div className={`fixed inset-0 z-[2000] ${i18n.language === 'ar' ? 'rtl' : 'ltr'} flex items-start justify-center pt-20`}>
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative max-w-2xl w-full mx-4 rounded-2xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+<div 
+        className="relative max-w-2xl w-full mx-4 rounded-2xl shadow-2xl border flex flex-col max-h-[85vh] transition-colors duration-200"
+        style={{
+          backgroundColor: isDark ? '#172554' : 'white',
+          borderColor: isDark ? '#1e3a8a' : '#e5e7eb',
+          color: isDark ? 'white' : '#111827'
+        }}
+      >        {/* Header */}
+        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-[#1e3a8a]">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600 text-white shadow-md">
               <FaDownload className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('import.title')}</h3>
+            <h3 className="text-lg font-bold  dark:text-white">{t('import.title')}</h3>
           </div>
           <button
             onClick={onClose}
-            className="btn btn-sm btn-circle btn-ghost text-red-500"
+            className="btn btn-sm btn-circle btn-ghost text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
           >
             <FaTimes size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="px-6 py-6">
+        <div className="px-6 py-6 overflow-y-auto custom-scrollbar">
           {/* Template Download Section */}
-          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+          <div className="mb-6 p-4  dark:bg-[#1e3a8a]/40 rounded-xl border border-blue-200 dark:border-[#1e3a8a]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <FaFileExcel className="w-5 h-5 text-green-600" />
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <h4 className="text-sm font-semibold dark:text-white">
                     {t('template.downloadExcel')}
                   </h4>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="text-xs  dark:text-gray-400">
                     {t('template.downloadDescription')}
                   </p>
                 </div>
@@ -148,14 +157,14 @@ const ImportLeadsModal = ({
                 {t('template.downloadButton')}
               </button>
             </div>
-            <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-3 text-xs  dark:text-gray-400">
               <strong>{t('template.requiredFields')}</strong> LEAD, Email, Phone
             </div>
           </div>
 
           {/* Dropzone */}
           <div
-            className="group relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-dashed border-blue-300 dark:border-blue-600 bg-white/70 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-300"
+            className="group relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-dashed border-blue-300 dark:border-[#3b82f6]  dark:bg-[#1e3a8a]/20  dark:hover:bg-[#1e3a8a]/40 transition-colors duration-300"
             onDragOver={(e) => e.preventDefault()}
             onDrop={async (e) => {
               e.preventDefault()
@@ -168,7 +177,7 @@ const ImportLeadsModal = ({
             <svg className="w-10 h-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0l-3 3m3-3l3 3m7 4v12m0 0l-3-3m3 3l3-3" />
             </svg>
-            <p className="text-sm text-gray-700 dark:text-gray-300 text-center">
+            <p className="dark:text-gray-300 text-center">
               {t('import.dropzone')}
             </p>
             <input
@@ -206,7 +215,7 @@ const ImportLeadsModal = ({
             <button
               onClick={onImport}
               disabled={!excelFile || importing}
-              className={`btn btn-sm ${importing ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white border-none flex items-center gap-2`}
+              className={`btn btn-sm ${importing ? ' cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white border-none flex items-center gap-2`}
             >
               <FaDownload className="w-4 h-4" />
               {importing ? t('import.importing') : t('import.importButton')}
@@ -216,12 +225,12 @@ const ImportLeadsModal = ({
 
           {/* Feedback */}
           {importError && (
-            <div className="mt-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800">
+            <div className="mt-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/50 dark:text-red-200 dark:border-red-800">
               {t(importError)}
             </div>
           )}
           {importSummary && (
-            <div className="mt-4 px-4 py-3 rounded-lg bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800">
+            <div className="mt-4 px-4 py-3 rounded-lg bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/50 dark:text-green-200 dark:border-green-800">
               {t('import.summary', { count: importSummary.added })}
             </div>
           )}

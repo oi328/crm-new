@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { FaTimes, FaFilePdf, FaFileCsv, FaSave, FaBuilding } from 'react-icons/fa';
+import { FaTimes, FaSave, FaBuilding } from 'react-icons/fa';
 import { useTheme } from '../shared/context/ThemeProvider';
-import { PROJECT_PLANS } from '../data/projectPlans';
+import { projectsData } from '../data/projectsData';
+import { getUnitsForProject } from '../data/unitsData';
 
 const PaymentPlanModal = ({ isOpen, onClose, onSave, lead }) => {
   const { t, i18n } = useTranslation();
@@ -11,119 +12,119 @@ const PaymentPlanModal = ({ isOpen, onClose, onSave, lead }) => {
   const isLight = theme === 'light';
   const isRTL = i18n.dir() === 'rtl';
 
-  const [payment, setPayment] = useState({
-    basePrice: lead?.estimatedValue || lead?.budget || '',
-    downPct: '',
-    installments: '',
-    startDate: new Date().toISOString().slice(0, 10),
-    frequency: 'monthly',
-    graceMonths: '0',
-    interestPct: ''
+  const [formData, setFormData] = useState({
+    projectName: lead?.project || '',
+    unitNo: '',
+    totalAmount: '',
+    downPayment: '',
+    receiptAmount: '',
+    installmentAmount: '',
+    noOfMonths: '',
+    extraInstallments: '',
+    garageAmount: '',
+    maintenanceAmount: '',
+    netAmount: ''
   });
-  const [schedule, setSchedule] = useState([]);
-  const [selectedPlanId, setSelectedPlanId] = useState('');
 
-  // Determine project plans
-  const projectName = lead?.project || lead?.interestedProject || lead?.company; // Fallback strategy
-  const availablePlans = (projectName && PROJECT_PLANS[projectName]) ? PROJECT_PLANS[projectName] : PROJECT_PLANS['default'];
-  const displayProjectName = (projectName && PROJECT_PLANS[projectName]) ? projectName : (isRTL ? 'خطط عامة' : 'General Plans');
+  const [projectUnits, setProjectUnits] = useState([]);
 
-  const handlePlanSelect = (e) => {
-    const planId = e.target.value;
-    setSelectedPlanId(planId);
-    const plan = availablePlans.find(p => p.id === planId);
-    if (plan) {
-      setPayment(prev => ({
-        ...prev,
-        downPct: plan.downPct,
-        installments: plan.installments,
-        frequency: plan.frequency,
-        graceMonths: plan.graceMonths || 0
-      }));
+  // Update project name if lead changes
+  useEffect(() => {
+    if (lead?.project) {
+      setFormData(prev => ({ ...prev, projectName: lead.project }));
     }
-  };
+  }, [lead]);
 
-  const setPayVal = (key) => (e) => setPayment(v => ({ ...v, [key]: e.target.value }));
-  
-  const addMonths = (dateStr, months) => {
-    const d = new Date(dateStr || new Date());
-    d.setMonth(d.getMonth() + months);
-    return d.toISOString().slice(0, 10);
-  };
-
-  const generatePlan = () => {
-    const base = Number(payment.basePrice) || 0;
-    const dp = Math.max(0, Math.min(100, Number(payment.downPct) || 0));
-    const n = Math.max(0, Math.floor(Number(payment.installments) || 0));
-    const grace = Math.max(0, Math.floor(Number(payment.graceMonths) || 0));
-    const start = payment.startDate || new Date().toISOString().slice(0, 10);
-    const step = payment.frequency === 'quarterly' ? 3 : 1;
-    
-    const dpAmount = +(base * dp / 100).toFixed(2);
-    const remain = +(base - dpAmount).toFixed(2);
-    const each = n > 0 ? +(remain / n).toFixed(2) : 0;
-    
-    const rows = [];
-    if (dpAmount > 0) rows.push({ no: 0, label: isRTL ? 'مقدم' : 'Down Payment', dueDate: start, amount: dpAmount });
-    
-    let curDate = addMonths(start, grace);
-    for (let i = 1; i <= n; i++) {
-      rows.push({ no: i, label: isRTL ? 'قسط' : 'Installment', dueDate: curDate, amount: each });
-      curDate = addMonths(curDate, step);
+  // Update units list when project changes
+  useEffect(() => {
+    if (formData.projectName) {
+      const units = getUnitsForProject(formData.projectName);
+      setProjectUnits(units);
+    } else {
+      setProjectUnits([]);
     }
+  }, [formData.projectName]);
+
+  // Update total amount when unit changes
+  useEffect(() => {
+    if (formData.unitNo && projectUnits.length > 0) {
+      const selectedUnit = projectUnits.find(u => u.unitNo === formData.unitNo);
+      if (selectedUnit) {
+        setFormData(prev => ({ ...prev, totalAmount: selectedUnit.price }));
+      }
+    }
+  }, [formData.unitNo, projectUnits]);
+
+  // Calculate Net Amount: Total + Garage + Maintenance
+  useEffect(() => {
+    const total = parseFloat(formData.totalAmount) || 0;
+    const garage = parseFloat(formData.garageAmount) || 0;
+    const maintenance = parseFloat(formData.maintenanceAmount) || 0;
+    const net = total + garage + maintenance;
     
-    const sum = rows.reduce((a, b) => a + (b.amount || 0), 0);
-    const diff = +(base - sum).toFixed(2);
-    if (Math.abs(diff) >= 0.01 && rows.length) {
-      rows[rows.length - 1].amount = +(rows[rows.length - 1].amount + diff).toFixed(2);
-    }
-    setSchedule(rows);
-  };
+    // Only update if value changed to avoid infinite loops if we were formatting
+    setFormData(prev => {
+        if (prev.netAmount == net) return prev;
+        return { ...prev, netAmount: net };
+    });
+  }, [formData.totalAmount, formData.garageAmount, formData.maintenanceAmount]);
 
-  const exportCsv = () => {
-    const headers = ['No', 'Label', 'DueDate', 'Amount'];
-    const csv = headers.join(',') + '\n' + schedule.map(r => [r.no, r.label, r.dueDate, r.amount].join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'payment_plan.csv'; a.click(); URL.revokeObjectURL(url);
-  };
+  // Calculate Installment Amount: (Net - Down - Extra) / Months
+  useEffect(() => {
+    const net = parseFloat(formData.netAmount) || 0;
+    const down = parseFloat(formData.downPayment) || 0;
+    const extra = parseFloat(formData.extraInstallments) || 0;
+    const months = parseFloat(formData.noOfMonths) || 0;
 
-  const exportPdf = async () => {
-    try {
-      const jsPDF = (await import('jspdf')).default;
-      const autoTable = (await import('jspdf-autotable')).default;
-      const doc = new jsPDF();
-      const head = [['No', 'Label', 'DueDate', 'Amount']];
-      const body = schedule.map(r => [String(r.no), r.label, r.dueDate, String(r.amount)]);
-      autoTable(doc, { head, body });
-      doc.save('payment_plan.pdf');
-    } catch (e) {
-      console.error('PDF export failed', e);
-      alert(isRTL ? 'فشل تصدير PDF' : 'PDF export failed');
+    if (months > 0) {
+      const installment = (net - down - extra) / months;
+      // Round to 2 decimal places
+      const formattedInstallment = Math.round(installment * 100) / 100;
+      
+      setFormData(prev => {
+          if (prev.installmentAmount == formattedInstallment) return prev;
+          return { ...prev, installmentAmount: formattedInstallment };
+      });
     }
+  }, [formData.netAmount, formData.downPayment, formData.extraInstallments, formData.noOfMonths]);
+
+
+  const handleChange = (key) => (e) => {
+    setFormData(prev => ({ ...prev, [key]: e.target.value }));
   };
 
   const handleSave = () => {
-    if (onSave) onSave(schedule);
+    if (onSave) onSave(formData);
     onClose();
   };
 
-  const total = schedule.reduce((a, b) => a + (b.amount || 0), 0);
-
   if (!isOpen) return null;
 
+  const inputClass = `w-full p-3 rounded-lg border outline-none transition-all ${
+    isLight 
+      ? 'bg-white border-gray-300 focus:border-blue-500 text-gray-900' 
+      : 'bg-slate-800 border-slate-600 focus:border-blue-500 text-white'
+  }`;
+
+  const labelClass = `block text-sm font-medium mb-1 ${
+    isLight ? 'text-gray-700' : 'text-gray-300'
+  }`;
+
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6">
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
         onClick={onClose}
       />
-      <div className={`relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl transform transition-all ${isLight ? 'bg-white text-gray-900' : 'bg-slate-900 text-white border border-slate-700'}`}>
+      <div className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl transform transition-all ${isLight ? 'bg-white' : 'bg-slate-900 border border-slate-700'}`}>
         
         {/* Header */}
         <div className={`flex items-center justify-between p-6 border-b ${isLight ? 'border-gray-100' : 'border-slate-800'}`}>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            {isRTL ? 'خطة الدفع' : 'Payment Plan'}
+          <h2 className={`text-xl font-bold flex items-center gap-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
+            <FaBuilding className="text-blue-500" />
+            {isRTL 
+              ? (lead?.paymentPlan ? 'تعديل خطة الدفع' : 'إضافة خطة دفع') 
+              : (lead?.paymentPlan ? 'Edit Payment Plan' : 'Add Payment Plan')}
           </h2>
           <button 
             onClick={onClose}
@@ -136,111 +137,170 @@ const PaymentPlanModal = ({ isOpen, onClose, onSave, lead }) => {
         {/* Body */}
         <div className="p-6 space-y-6">
           
-          {/* Project Plans Selector */}
-          <div className={`p-4 rounded-xl border ${isLight ? 'bg-blue-50 border-blue-100' : 'bg-blue-900/20 border-blue-800'}`}>
-            <div className="flex items-center gap-2 mb-3">
-              <FaBuilding className="text-blue-500" />
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                {isRTL ? `خطط ${displayProjectName}` : `${displayProjectName} Plans`}
-              </h3>
-            </div>
-            <select 
-              value={selectedPlanId} 
-              onChange={handlePlanSelect}
-              className={`w-full p-3 rounded-lg border outline-none transition-all ${isLight ? 'bg-white border-blue-200 focus:border-blue-500' : 'bg-slate-800 border-slate-600 focus:border-blue-500'}`}
-            >
-              <option value="">{isRTL ? '-- اختر خطة الدفع --' : '-- Select Payment Plan --'}</option>
-              {availablePlans.map(plan => (
-                <option key={plan.id} value={plan.id}>
-                  {plan.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Project & Unit Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1 opacity-70">{isRTL ? 'السعر الإجمالي' : 'Base Price'}</label>
-              <input type="number" className="input w-full" value={payment.basePrice} onChange={setPayVal('basePrice')} placeholder={isRTL ? 'EGP' : 'EGP'} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 opacity-70">{isRTL ? 'المقدم (%)' : 'Down Payment (%)'}</label>
-              <input type="number" className="input w-full" value={payment.downPct} onChange={setPayVal('downPct')} placeholder="10" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 opacity-70">{isRTL ? 'عدد الأقساط' : 'Installments Count'}</label>
-              <input type="number" className="input w-full" value={payment.installments} onChange={setPayVal('installments')} placeholder="12" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 opacity-70">{isRTL ? 'تاريخ البداية' : 'Start Date'}</label>
-              <input type="date" className="input w-full" value={payment.startDate} onChange={setPayVal('startDate')} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 opacity-70">{isRTL ? 'التكرار' : 'Frequency'}</label>
-              <select className="input w-full" value={payment.frequency} onChange={setPayVal('frequency')}>
-                <option value="monthly">{isRTL ? 'شهري' : 'Monthly'}</option>
-                <option value="quarterly">{isRTL ? 'ربع سنوي' : 'Quarterly'}</option>
+              <label className={labelClass}>{isRTL ? 'اسم المشروع' : 'Project Name'}</label>
+              <select 
+                className={inputClass} 
+                value={formData.projectName} 
+                onChange={handleChange('projectName')}
+              >
+                <option value="">{isRTL ? 'اختر المشروع' : 'Select Project'}</option>
+                {projectsData.map((project, idx) => (
+                  <option key={idx} value={project.name}>
+                    {project.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1 opacity-70">{isRTL ? 'شهور سماح' : 'Grace Months'}</label>
-              <input type="number" className="input w-full" value={payment.graceMonths} onChange={setPayVal('graceMonths')} placeholder="0" />
+              <label className={labelClass}>{isRTL ? 'رقم الوحدة' : 'Unit No.'}</label>
+              <select 
+                className={inputClass} 
+                value={formData.unitNo} 
+                onChange={handleChange('unitNo')}
+                disabled={!formData.projectName}
+              >
+                <option value="">{isRTL ? 'اختر الوحدة' : 'Select Unit'}</option>
+                {projectUnits.map((unit, idx) => (
+                  <option key={idx} value={unit.unitNo}>
+                    {unit.unitNo} - {unit.type}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <button className="btn btn-primary px-6" onClick={generatePlan}>
-              {isRTL ? 'توليد الخطة' : 'Generate Plan'}
+          <div className={`h-px w-full ${isLight ? 'bg-gray-100' : 'bg-slate-800'}`}></div>
+
+          {/* Financials */}
+          <div className="space-y-4">
+            {/* Total Amount */}
+            <div>
+              <label className={labelClass}>{isRTL ? 'السعر الإجمالي' : 'Total Amount'}</label>
+              <input 
+                type="number" 
+                className={inputClass} 
+                value={formData.totalAmount} 
+                onChange={handleChange('totalAmount')}
+                placeholder="0.00"
+              />
+            </div>
+
+            {/* Down Payment & Receipt Amount */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>{isRTL ? 'المقدم' : 'Down Payment'}</label>
+                <input 
+                  type="number" 
+                  className={inputClass} 
+                  value={formData.downPayment} 
+                  onChange={handleChange('downPayment')}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{isRTL ? 'قيمة الإيصال' : 'Receipt Amount'}</label>
+                <input 
+                  type="number" 
+                  className={inputClass} 
+                  value={formData.receiptAmount} 
+                  onChange={handleChange('receiptAmount')}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            {/* Installments */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+              <div>
+                <label className={labelClass}>{isRTL ? 'قيمة القسط' : 'Installment Amount'}</label>
+                <input 
+                  type="number" 
+                  className={inputClass} 
+                  value={formData.installmentAmount} 
+                  onChange={handleChange('installmentAmount')}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{isRTL ? 'عدد الأشهر' : 'No. of Months'}</label>
+                <input 
+                  type="number" 
+                  className={inputClass} 
+                  value={formData.noOfMonths} 
+                  onChange={handleChange('noOfMonths')}
+                  placeholder="12"
+                />
+              </div>
+            </div>
+
+            {/* Extra Installments */}
+            <div>
+              <label className={labelClass}>{isRTL ? 'أقساط إضافية' : 'Extra Installments'}</label>
+              <input 
+                type="number" 
+                className={inputClass} 
+                value={formData.extraInstallments} 
+                onChange={handleChange('extraInstallments')}
+                placeholder="0.00"
+              />
+            </div>
+
+            {/* Garage & Maintenance */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>{isRTL ? 'قيمة الجراج' : 'Garage Amount'}</label>
+                <input 
+                  type="number" 
+                  className={inputClass} 
+                  value={formData.garageAmount} 
+                  onChange={handleChange('garageAmount')}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{isRTL ? 'قيمة الصيانة' : 'Maintenance Amount'}</label>
+                <input 
+                  type="number" 
+                  className={inputClass} 
+                  value={formData.maintenanceAmount} 
+                  onChange={handleChange('maintenanceAmount')}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            {/* Net Amount */}
+            <div>
+              <label className={labelClass}>{isRTL ? 'الصافي' : 'Net Amount'}</label>
+              <input 
+                type="number" 
+                className={inputClass} 
+                value={formData.netAmount} 
+                onChange={handleChange('netAmount')}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end pt-4 gap-3">
+            <button 
+              onClick={onClose}
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${isLight ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-slate-800 text-gray-300 hover:bg-slate-700'}`}
+            >
+              {isRTL ? 'إلغاء' : 'Cancel'}
+            </button>
+            <button 
+              onClick={handleSave}
+              className="px-6 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <FaSave />
+              {isRTL ? 'حفظ' : 'Save'}
             </button>
           </div>
-
-          {schedule.length > 0 && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <div className={`rounded-xl border p-4 mb-4 ${isLight ? 'bg-gray-50 border-gray-200' : 'bg-slate-800/50 border-slate-700'}`}>
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="text-lg font-semibold">
-                    {isRTL ? 'الإجمالي' : 'Total'}: <span className="text-emerald-500">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(total)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button className="btn btn-outline gap-2" onClick={exportCsv} title="Export CSV">
-                      <FaFileCsv /> CSV
-                    </button>
-                    <button className="btn btn-outline gap-2" onClick={exportPdf} title="Export PDF">
-                      <FaFilePdf /> PDF
-                    </button>
-                    <button className="btn btn-primary gap-2" onClick={handleSave}>
-                      <FaSave /> {isRTL ? 'حفظ الخطة' : 'Save Plan'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className={`rounded-xl border overflow-hidden ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className={isLight ? 'bg-gray-100' : 'bg-slate-800'}>
-                      <tr>
-                        <th className="text-start p-3">#</th>
-                        <th className="text-start p-3">{isRTL ? 'النوع' : 'Label'}</th>
-                        <th className="text-start p-3">{isRTL ? 'تاريخ الاستحقاق' : 'Due Date'}</th>
-                        <th className="text-start p-3">{isRTL ? 'القيمة' : 'Amount'}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                      {schedule.map((row, idx) => (
-                        <tr key={idx} className={isLight ? 'hover:bg-gray-50' : 'hover:bg-slate-800/50'}>
-                          <td className="p-3">{row.no === 0 ? '-' : row.no}</td>
-                          <td className="p-3 font-medium">{row.label}</td>
-                          <td className="p-3">{row.dueDate}</td>
-                          <td className="p-3 font-mono">{row.amount}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>,

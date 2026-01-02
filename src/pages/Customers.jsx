@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../utils/api'
 import SearchableSelect from '../components/SearchableSelect'
+import * as XLSX from 'xlsx'
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 
 const defaultForm = {
   name: '',
@@ -230,6 +232,50 @@ export const Customers = () => {
     })
   }
 
+  const exportExcel = () => {
+    const rows = items.map(c => ({
+      Name: c.name,
+      Phone: c.phone,
+      Email: c.email,
+      Type: c.type,
+      Country: c.country,
+      City: c.city,
+      Address: c.addressLine,
+      Company: c.companyName,
+      TaxNumber: c.taxNumber,
+      Tags: Array.isArray(c.tags) ? c.tags.join(', ') : c.tags,
+      SalesRep: c.assignedSalesRep || c.assignedTo,
+      Notes: c.notes,
+      Created: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Customers')
+    XLSX.writeFile(wb, 'customers.xlsx')
+  }
+
+  const exportCsv = () => {
+    const rows = items.map(c => ({
+      Name: c.name,
+      Phone: c.phone,
+      Email: c.email,
+      Type: c.type,
+      Country: c.country,
+      City: c.city,
+      Address: c.addressLine,
+      Company: c.companyName,
+      TaxNumber: c.taxNumber,
+      Tags: Array.isArray(c.tags) ? c.tags.join(', ') : c.tags,
+      SalesRep: c.assignedSalesRep || c.assignedTo,
+      Notes: c.notes,
+      Created: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Customers')
+    XLSX.writeFile(wb, 'customers.csv')
+  }
+
   return (
       <div className="space-y-4 bg-[var(--content-bg)] text-[var(--content-text)] overflow-x-hidden overflow-y-auto">
         {/* Page Title */}
@@ -416,7 +462,7 @@ export const Customers = () => {
                 {!loading && items.length === 0 && (
                   <tr><td className="py-3 px-3" colSpan={8}>No customers</td></tr>
                 )}
-                {!loading && items.map((c) => (
+                {!loading && paged.map((c) => (
                   <tr key={c.id} className="border-t border-[var(--table-row-border)] odd:bg-[var(--table-row-bg)]">
                     <td className="py-2 px-3">
                       <div className="font-medium">{c.name}</div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FaTimes, FaSearch, FaFilter, FaEdit, FaTrash } from 'react-icons/fa'
+import { FaTimes, FaSearch, FaFilter, FaEdit, FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import SearchableSelect from '../components/SearchableSelect'
 
 export default function Warehouse() {
@@ -107,6 +107,10 @@ export default function Warehouse() {
     contactNumber: ''
   })
 
+  // Pagination
+  const [page, setPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(5)
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -155,6 +159,20 @@ export default function Warehouse() {
       return true
     })
   }, [warehouses, filters])
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginated = useMemo(() => {
+    const start = (page - 1) * itemsPerPage
+    return filtered.slice(start, start + itemsPerPage)
+  }, [filtered, page, itemsPerPage])
+
+  useEffect(() => {
+    setPage(1)
+  }, [filtered, itemsPerPage])
+
+  const goPrevPage = () => setPage(p => Math.max(1, p - 1))
+  const goNextPage = () => setPage(p => Math.min(totalPages, p + 1))
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -335,7 +353,7 @@ export default function Warehouse() {
         {/* Warehouses List */}
         <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
           <h2 className="text-xl font-medium mb-4">{labels.listTitle}</h2>
-          {filtered.length === 0 ? (
+          {paginated.length === 0 ? (
             <p className="text-sm text-[var(--muted-text)]">{labels.empty}</p>
           ) : (
             <div className="overflow-x-auto">
@@ -350,7 +368,7 @@ export default function Warehouse() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(w => (
+                  {paginated.map(w => (
                     <tr key={w.id}>
                       <td>{w.warehouseName}</td>
                       <td>{w.warehouseCode}</td>
@@ -384,6 +402,48 @@ export default function Warehouse() {
               </table>
             </div>
           )}
+
+          {/* Pagination Footer */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-2 text-sm text-[var(--muted-text)]">
+            <div className="flex items-center gap-2">
+              <span>{isArabic ? 'عرض' : 'Showing'}</span>
+              <select 
+                value={itemsPerPage} 
+                onChange={(e) => setItemsPerPage(Number(e.target.value))} 
+                className="select select-bordered select-xs w-16"
+              >
+                <option>5</option>
+                <option>10</option>
+                <option>20</option>
+                <option>50</option>
+              </select>
+              <span>{isArabic ? 'من' : 'of'} {filtered.length} {isArabic ? 'عنصر' : 'entries'}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+               <span className="text-xs">
+                {isArabic ? 'صفحة' : 'Page'} {page} {isArabic ? 'من' : 'of'} {totalPages}
+              </span>
+              <div className="join">
+                <button 
+                  className="join-item btn btn-sm btn-ghost" 
+                  onClick={goPrevPage} 
+                  disabled={page <= 1}
+                  title={isArabic ? 'السابق' : 'Prev'}
+                >
+                  <FaChevronLeft className={isArabic ? 'scale-x-[-1]' : ''} />
+                </button>
+                <button 
+                  className="join-item btn btn-sm btn-ghost" 
+                  onClick={goNextPage} 
+                  disabled={page >= totalPages}
+                  title={isArabic ? 'التالي' : 'Next'}
+                >
+                  <FaChevronRight className={isArabic ? 'scale-x-[-1]' : ''} />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
 

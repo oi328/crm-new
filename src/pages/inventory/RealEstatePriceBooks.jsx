@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaFilter, FaTimes } from 'react-icons/fa';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function RealEstatePriceBooks() {
   const { i18n } = useTranslation()
@@ -85,6 +86,8 @@ export default function RealEstatePriceBooks() {
   const [filterDateFrom, setFilterDateFrom] = useState('')
   const [filterDateTo, setFilterDateTo] = useState('')
 
+
+
   const [selectedBookId, setSelectedBookId] = useState(books[0]?.id || null)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ id: null, name: '', currency: 'EGP', validFrom: '', validTo: '', description: '', status: 'Active' })
@@ -131,6 +134,25 @@ export default function RealEstatePriceBooks() {
       return matchesSearch && matchesStatus && matchesCurrency && matchesDate
     })
   }, [books, searchQuery, showInactive, filterCurrency, filterDateFrom, filterDateTo])
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(5)
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, showInactive, filterCurrency, filterDateFrom, filterDateTo, itemsPerPage])
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredBooks.length / itemsPerPage)
+  const paginatedBooks = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return filteredBooks.slice(start, start + itemsPerPage)
+  }, [filteredBooks, currentPage, itemsPerPage])
+  
+  const shownFrom = (filteredBooks.length === 0) ? 0 : (currentPage - 1) * itemsPerPage + 1
+  const shownTo = Math.min(currentPage * itemsPerPage, filteredBooks.length)
 
   const selectedBook = useMemo(() => books.find(b => b.id === selectedBookId), [books, selectedBookId])
 
@@ -185,7 +207,7 @@ export default function RealEstatePriceBooks() {
   }
 
   return (
-    <div className="space-y-6 pt-4 pb-10">
+    <div className="p-4 pb-20 space-y-4">
       
       {/* Header Section */}
       <div className="flex items-center justify-between">
@@ -298,7 +320,7 @@ export default function RealEstatePriceBooks() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {filteredBooks.map(book => {
+              {paginatedBooks.map(book => {
                 const isSelected = selectedBookId === book.id;
                 return (
                   <tr 
@@ -354,6 +376,52 @@ export default function RealEstatePriceBooks() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer */}
+        {filteredBooks.length > 0 && (
+          <div className="mt-2 flex items-center justify-between rounded-xl p-2 glass-panel">
+            <div className="text-xs text-[var(--muted-text)]">
+              {isArabic 
+                ? `عرض ${shownFrom}–${shownTo} من ${filteredBooks.length}`
+                : `Showing ${shownFrom}–${shownTo} of ${filteredBooks.length}`
+              }
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  title={isArabic ? 'السابق' : 'Prev'}
+                >
+                  <ChevronLeft className={isArabic ? 'scale-x-[-1]' : ''} size={16} />
+                </button>
+                <span className="text-sm">{isArabic ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  title={isArabic ? 'التالي' : 'Next'}
+                >
+                  <ChevronRight className={isArabic ? 'scale-x-[-1]' : ''} size={16} />
+                </button>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-[var(--muted-text)]">{isArabic ? 'لكل صفحة:' : 'Per page:'}</span>
+                <select
+                  className="input w-24 text-sm h-8 min-h-0"
+                  value={itemsPerPage}
+                  onChange={e => setItemsPerPage(Number(e.target.value))}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Units Detail View */}

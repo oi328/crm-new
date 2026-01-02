@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaSearch, FaFilter, FaTimes, FaCalendarAlt, FaFileExcel, FaFilePdf, FaEdit, FaCheck, FaTrash, FaPlus, FaDownload, FaUpload, FaUndoAlt, FaChevronDown, FaThList, FaThLarge } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaTimes, FaCalendarAlt, FaFileExcel, FaFilePdf, FaEdit, FaCheck, FaTrash, FaPlus, FaDownload, FaUpload, FaUndoAlt, FaChevronDown, FaThList, FaThLarge, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import SearchableSelect from '@shared/components/SearchableSelect';
 import ImportRequestsModal from '../components/ImportRequestsModal';
 import CreateRequestModal from '../components/CreateRequestModal';
@@ -676,24 +676,46 @@ export default function Requests() {
             </table>
           </div>
 
-          <div className="mt-2 text-sm flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span>{isRTL ? 'عرض' : 'Show'}</span>
-              <select
-                value={perPage}
-                onChange={(e)=> setPerPage(Number(e.target.value))}
-                className="border rounded px-2 py-1 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-              >
-                {[8,10,25,50,100].map(n => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-              <span>{t('entries')}</span>
+          <div className="mt-2 flex flex-wrap items-center justify-between rounded-xl p-2 glass-panel gap-4">
+            <div className="text-xs text-[var(--muted-text)]">
+              {isRTL 
+                ? `عرض ${(page - 1) * perPage + 1}–${Math.min(page * perPage, filtered.length)} من ${filtered.length}` 
+                : `Showing ${(page - 1) * perPage + 1}–${Math.min(page * perPage, filtered.length)} of ${filtered.length}`}
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} className="btn btn-sm btn-outline gap-2">{Label.prev}</button>
-              <span className="dark:text-gray-200">{Label.page} {page} / {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="btn btn-sm btn-outline gap-2">{Label.next}</button>
+              <div className="flex items-center gap-1">
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                  disabled={page === 1}
+                  title={isRTL ? 'السابق' : 'Prev'}
+                >
+                  <FaChevronLeft className={isRTL ? 'scale-x-[-1]' : ''} />
+                </button>
+                <span className="text-sm whitespace-nowrap">{isRTL ? `الصفحة ${page} من ${totalPages}` : `Page ${page} of ${totalPages}`}</span>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={page === totalPages}
+                  title={isRTL ? 'التالي' : 'Next'}
+                >
+                  <FaChevronRight className={isRTL ? 'scale-x-[-1]' : ''} />
+                </button>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-[var(--muted-text)] whitespace-nowrap">{isRTL ? 'لكل صفحة:' : 'Per page:'}</span>
+                <select
+                  className="input w-24 text-sm py-0 px-2 h-8"
+                  value={perPage}
+                  onChange={e => setPerPage(Number(e.target.value))}
+                >
+                  <option value={8}>8</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
             </div>
           </div>
         </>

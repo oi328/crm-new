@@ -1,113 +1,273 @@
 import React, { useState } from 'react'
-import { FaTimes, FaCloudUploadAlt, FaDownload } from 'react-icons/fa'
+import { useTranslation } from 'react-i18next'
+import { FaDownload, FaFileExcel, FaTimes, FaCloudUploadAlt } from 'react-icons/fa'
+import * as XLSX from 'xlsx'
+import { useTheme } from '../shared/context/ThemeProvider'
 
 export default function ImportPropertiesModal({ onClose, isRTL, onImported }) {
-  const [files, setFiles] = useState([])
-  const [logs, setLogs] = useState([])
-  const [preview, setPreview] = useState(null)
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  const { t, i18n } = useTranslation()
+  const [excelFile, setExcelFile] = useState(null)
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState(null)
+  const [importSummary, setImportSummary] = useState(null)
 
-  const handleFiles = (fileList) => {
-    const arr = Array.from(fileList || [])
-    setFiles(arr)
+  // دالة توليد ملف Excel التيمبليت
+  const generateTemplate = () => {
+    const templateData = [
+      {
+        'Project': 'Mountain View',
+        'Category': 'Residential',
+        'Property Type': 'Apartment',
+        'Unit Number': 'A-101',
+        'Total Price': '5000000',
+        'BUA': '150',
+        'Bedrooms': '3',
+        'Bathrooms': '2',
+        'Floor': '1',
+        'Finishing': 'Finished',
+        'View': 'Garden',
+        'Purpose': 'Resale',
+        'Status': 'Available',
+        'Description': 'Luxury apartment with garden view'
+      }
+    ]
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Properties Template')
+    
+    // تحميل الملف
+    XLSX.writeFile(workbook, 'properties_template.xlsx')
   }
 
-  const parseCSV = async (file) => {
-    const text = await file.text()
-    const lines = text.split(/\r?\n/).filter(Boolean)
-    const headers = lines[0].split(',')
-    const rows = lines.slice(1).map(line => {
-      const cols = line.split(',')
-      const obj = {}
-      headers.forEach((h, i) => obj[h.trim()] = (cols[i] || '').trim())
-      return obj
+  // دالة التحقق من وجود الحقول المطلوبة
+  const validateRequiredFields = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result)
+          const workbook = XLSX.read(data, { type: 'array' })
+          const firstSheetName = workbook.SheetNames[0]
+          const worksheet = workbook.Sheets[firstSheetName]
+          const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+          
+          if (rows.length === 0) {
+            reject(new Error('الملف فارغ'))
+            return
+          }
+
+          const headers = rows[0].map(h => h?.toString()?.toLowerCase()?.trim())
+          const requiredFields = ['project', 'unit number', 'total price']
+          const missingFields = []
+
+          requiredFields.forEach(field => {
+            const found = headers.some(header => 
+              header === field || 
+              header.includes(field) ||
+              (field === 'project' && (header.includes('المشروع') || header.includes('project'))) ||
+              (field === 'unit number' && (header.includes('رقم الوحدة') || header.includes('unit'))) ||
+              (field === 'total price' && (header.includes('السعر') || header.includes('price')))
+            )
+            if (!found) {
+              missingFields.push(field)
+            }
+          })
+
+          if (missingFields.length > 0) {
+            reject(new Error(`الحقول المطلوبة مفقودة: ${missingFields.join(', ')}`))
+          } else {
+            resolve(true)
+          }
+        } catch (error) {
+          reject(new Error('خطأ في قراءة الملف'))
+        }
+      }
+      reader.readAsArrayBuffer(file)
     })
-    return { headers, rows }
   }
 
-  const handlePreview = async () => {
-    if (!files.length) return
-    const f = files[0]
-    if (f.name.toLowerCase().endsWith('.csv')) {
-      const res = await parseCSV(f)
-      setPreview(res)
-    } else {
-      setPreview({ headers: ['File', 'Type', 'Size'], rows: [{ File: f.name, Type: f.type || 'xlsx', Size: `${f.size} bytes` }] })
+  // دالة معالجة رفع الملف مع التحقق
+  const handleFileUpload = async (file) => {
+    if (!file) return
+    
+    try {
+      setImportError(null)
+      setImportSummary(null)
+      await validateRequiredFields(file)
+      setExcelFile(file)
+    } catch (error) {
+      setImportError(error.message)
+      setExcelFile(null)
     }
   }
 
   const handleImport = async () => {
-    const user = 'Admin'
-    const ts = new Date().toISOString()
-    const log = { file: files.map(f=>f.name).join(', '), user, ts, status: 'Success' }
-    setLogs(l => [log, ...l])
-    if (preview?.rows?.length) onImported(preview.rows)
-    onClose()
-  }
-
-  const downloadTemplate = (ext='csv') => {
-    const headers = ['name','city','developer','status','units','area','price','documents','lastUpdated','description','progress']
-    const csv = headers.join(',') + '\n'
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `properties_template.${ext}`
-    a.click()
-    URL.revokeObjectURL(url)
+    if (!excelFile) return
+    setImporting(true)
+    
+    try {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const firstSheetName = workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[firstSheetName]
+        const jsonData = XLSX.utils.sheet_to_json(worksheet)
+        
+        // Simulating API call or processing
+        setTimeout(() => {
+          if (onImported) onImported(jsonData)
+          setImportSummary({ added: jsonData.length })
+          setImporting(false)
+          // Optional: close after success or let user see summary
+          // onClose() 
+        }, 1000)
+      }
+      reader.readAsArrayBuffer(excelFile)
+    } catch (error) {
+      setImportError('Import failed')
+      setImporting(false)
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-[210] glass-panel rounded-xl p-4 w-[800px] max-w-[90vw] max-h-[85vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">{isRTL ? 'استيراد العقارات' : 'Import Properties'}</h2>
-          <button className="btn btn-glass" onClick={onClose}>{isRTL ? 'إغلاق' : 'Close'}</button>
-        </div>
-
-        <div className={`border-2 border-dashed rounded-xl p-6 text-center ${isRTL ? 'dir-rtl' : ''}`}
-             onDragOver={(e)=>{e.preventDefault();}}
-             onDrop={(e)=>{e.preventDefault(); handleFiles(e.dataTransfer.files)}}>
-          <div className="flex flex-col items-center gap-2">
-            <FaCloudUploadAlt className="text-2xl" />
-            <div className="text-sm text-[var(--muted-text)]">{isRTL ? 'اسحب الملفات هنا أو اخترها' : 'Drag files here or choose files'}</div>
-            <input type="file" multiple accept=".csv,.xlsx" onChange={(e)=>handleFiles(e.target.files)} className="mt-2" />
+    <div className={`fixed inset-0 z-[2000] ${isRTL ? 'rtl' : 'ltr'} flex items-start justify-center pt-20`}>
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+<div 
+        className="relative max-w-2xl w-full mx-4 rounded-2xl shadow-2xl border flex flex-col max-h-[85vh] transition-colors duration-200"
+        style={{
+          backgroundColor: isDark ? '#172554' : 'white',
+          borderColor: isDark ? '#1e3a8a' : '#e5e7eb',
+          color: isDark ? 'white' : '#111827'
+        }}
+      >        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-[#1e3a8a]">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600 text-white shadow-md">
+              <FaDownload className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-bold  dark:text-white">
+              {isRTL ? 'استيراد العقارات' : 'Import Properties'}
+            </h3>
           </div>
+          <button
+            onClick={onClose}
+            className="btn btn-sm btn-circle btn-ghost text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          >
+            <FaTimes size={20} />
+          </button>
         </div>
 
-        <div className="mt-4 flex items-center gap-2">
-          <button className="btn btn-sm btn-ghost" onClick={()=>downloadTemplate('csv')}><FaDownload /> CSV {isRTL ? 'قالب' : 'Template'}</button>
-          <button className="btn btn-sm btn-ghost" onClick={()=>downloadTemplate('xlsx')}><FaDownload /> XLSX {isRTL ? 'قالب' : 'Template'}</button>
-          <div className="flex-1" />
-          <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none" onClick={handlePreview}>{isRTL ? 'معاينة' : 'Preview'}</button>
-          <button className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none" onClick={handleImport} disabled={!files.length}>{isRTL ? 'استيراد' : 'Import'}</button>
-        </div>
-
-        {preview && (
-          <div className="mt-4 overflow-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr>
-                  {preview.headers.map((h,i)=>(<th key={i} className="text-left p-2 border-b">{h}</th>))}
-                </tr>
-              </thead>
-              <tbody>
-                {preview.rows.slice(0,20).map((r,idx)=>(
-                  <tr key={idx}>
-                    {preview.headers.map((h,i)=>(<td key={i} className="p-2 border-b">{r[h]}</td>))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Body */}
+        <div className="px-6 py-6 overflow-y-auto custom-scrollbar">
+          {/* Template Download Section */}
+          <div className="mb-6 p-4 rounded-xl border  border-blue-200 dark:bg-[#1e3a8a]/40 dark:border-[#1e3a8a]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FaFileExcel className="w-5 h-5 text-green-600" />
+                <div>
+                  <h4 className="text-sm font-semibold  dark:text-white">
+                    {t('template.downloadExcel', 'Download Excel Template')}
+                  </h4>
+                  <p className="text-xs  dark:text-gray-400">
+                    {t('template.downloadDescription', 'Use this template to import data correctly')}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={generateTemplate}
+                className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none flex items-center gap-2"
+              >
+                <FaDownload className="w-3 h-3" />
+                {t('template.downloadButton', 'Download')}
+              </button>
+            </div>
+            <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              <strong>{t('template.requiredFields', 'Required Fields')}:</strong> Project, Unit Number, Total Price
+            </div>
           </div>
-        )}
 
-        <div className="mt-4">
-          <div className="text-sm font-semibold mb-2">{isRTL ? 'سجل الاستيراد' : 'Import Log'}</div>
-          <div className="space-y-2">
-            {logs.map((l,idx)=>(
-              <div key={idx} className="text-xs text-[var(--muted-text)]">{l.ts} • {l.user} • {l.file} • {l.status}</div>
-            ))}
+          {/* Dropzone */}
+          <div
+            className="group relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-dashed transition-colors duration-300 border-blue-300   dark:border-[#3b82f6] dark:bg-[#1e3a8a]/20 dark:hover:bg-[#1e3a8a]/40"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={async (e) => {
+              e.preventDefault()
+              const file = e.dataTransfer.files?.[0]
+              if (file && (/\.xlsx$|\.xls$/i).test(file.name)) {
+                await handleFileUpload(file)
+              }
+            }}
+          >
+            <FaCloudUploadAlt className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+            <p className="text-sm  dark:text-gray-300 text-center">
+              {t('import.dropzone', 'Drag and drop Excel file here')}
+            </p>
+            <input
+              id="modal-excel-file-input"
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={async (e) => {
+                const file = e.target.files?.[0] || null
+                if (file) {
+                  await handleFileUpload(file)
+                } else {
+                  setExcelFile(null)
+                }
+              }}
+              className="hidden"
+            />
+
+            <button
+              type="button"
+              onClick={() => document.getElementById('modal-excel-file-input')?.click()}
+              className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
+            >
+              {t('import.browseButton', 'Browse Files')}
+            </button>
+
+            {excelFile ? (
+              <div className="mt-2 text-xs dark:text-gray-400">
+                {t('import.selectedFile', { file: excelFile.name, defaultValue: `Selected: ${excelFile.name}` })}
+              </div>
+            ) : (
+              <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                {t('import.noFileSelected', 'No file selected')}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="mt-5 flex flex-col sm:flex-row gap-3 sm:items-center">
+            <button
+              onClick={handleImport}
+              disabled={!excelFile || importing}
+              className={`btn btn-sm ${importing ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white border-none flex items-center gap-2`}
+            >
+              <FaDownload className="w-4 h-4" />
+              {importing ? t('import.importing', 'Importing...') : t('import.importButton', 'Import Properties')}
+            </button>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {t('import.supportedFiles', 'Supported files: .xlsx, .xls')}
+            </span>
+          </div>
+
+          {/* Feedback */}
+          {importError && (
+            <div className="mt-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/50 dark:text-red-200 dark:border-red-800">
+              {t(importError) || importError}
+            </div>
+          )}
+          {importSummary && (
+            <div className="mt-4 px-4 py-3 rounded-lg bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/50 dark:text-green-200 dark:border-green-800">
+              {t('import.summary', { count: importSummary.added, defaultValue: `Successfully imported ${importSummary.added} properties` })}
+            </div>
+          )}
+
+          <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+            {t('import.supportedFields', 'Supported fields: Project, Unit Number, Total Price, ...')}
           </div>
         </div>
       </div>

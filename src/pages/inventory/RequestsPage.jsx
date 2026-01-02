@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FaFilter, FaSearch, FaTimes, FaEdit, FaTrash, FaCheck, FaBan, FaFileContract, FaShoppingCart, FaQuestionCircle, FaFileInvoice, FaSync, FaPlus } from 'react-icons/fa'
+import { FaFilter, FaSearch, FaTimes, FaEdit, FaTrash, FaCheck, FaBan, FaFileContract, FaShoppingCart, FaQuestionCircle, FaFileInvoice, FaSync, FaPlus, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 
 export default function RequestsPage() {
   const { t, i18n } = useTranslation()
@@ -8,7 +8,7 @@ export default function RequestsPage() {
   const isRTL = isArabic
 
   const labels = useMemo(() => ({
-    title: isArabic ? 'طلبات المخزون العام' : 'General Inventory Requests',
+    title: isArabic ? 'طلبات العام' : 'General  Requests',
     subtitle: isArabic ? 'إدارة طلبات المنتجات والخدمات والاشتراكات' : 'Manage requests for Products, Services, and Subscriptions',
     formTitle: isArabic ? 'بيانات الطلب' : 'Request Details',
     add: isArabic ? 'إضافة طلب' : 'Add Request',
@@ -39,29 +39,8 @@ export default function RequestsPage() {
 
   const STORAGE_KEY = 'inventoryRequests'
 
-  // Initial Seed Data
-  const SEED_DATA = [
-    { id: 'REQ-1001', type: 'Purchase Order', customer: 'John Doe', item: 'Dell XPS 15', date: '2024-03-15', status: 'Pending', amount: 1200, notes: 'Urgent request for new hire' },
-    { id: 'REQ-1002', type: 'Inquiry', customer: 'Jane Smith', item: 'CRM Subscription', date: '2024-03-14', status: 'Approved', amount: 0, notes: 'Client asking for pricing tiers' },
-    { id: 'REQ-1003', type: 'Quote', customer: 'Mike Johnson', item: 'Web Development Service', date: '2024-03-13', status: 'Rejected', amount: 2500, notes: 'Budget too high for client' },
-    { id: 'REQ-1004', type: 'Subscription', customer: 'Sarah Wilson', item: 'Monthly Maintenance', date: '2024-03-12', status: 'Pending', amount: 300, notes: 'Renewal discussion pending' },
-    { id: 'REQ-1005', type: 'Purchase Order', customer: 'Tom Brown', item: 'Office Chair', date: '2024-03-10', status: 'Approved', amount: 500, notes: 'Ergonomic chair for manager' },
-    { id: 'REQ-1006', type: 'Inquiry', customer: 'Emily Davis', item: 'Cloud Storage', date: '2024-03-09', status: 'Converted', amount: 0, notes: 'Interested in enterprise plan' },
-    { id: 'REQ-1007', type: 'Quote', customer: 'David Lee', item: 'Mobile App Design', date: '2024-03-08', status: 'Pending', amount: 4500, notes: 'Awaiting feedback on proposal' },
-    { id: 'REQ-1008', type: 'Purchase Order', customer: 'Lisa White', item: 'Monitor 27"', date: '2024-03-07', status: 'Approved', amount: 350, notes: 'Replacement for broken screen' },
-    { id: 'REQ-1009', type: 'Subscription', customer: 'Robert Green', item: 'SEO Optimization', date: '2024-03-06', status: 'Pending', amount: 800, notes: 'Quarterly review needed' },
-    { id: 'REQ-1010', type: 'Inquiry', customer: 'Karen Black', item: 'Security Audit', date: '2024-03-05', status: 'Rejected', amount: 0, notes: 'Not interested at this time' },
-    { id: 'REQ-1011', type: 'Quote', customer: 'James Wilson', item: 'Custom Software', date: '2024-03-04', status: 'Approved', amount: 15000, notes: 'Signed contract received' },
-    { id: 'REQ-1012', type: 'Purchase Order', customer: 'Patricia Moore', item: 'Keyboard & Mouse', date: '2024-03-03', status: 'Pending', amount: 120, notes: 'Standard office supplies' },
-    { id: 'REQ-1013', type: 'Subscription', customer: 'Jennifer Taylor', item: 'Email Marketing', date: '2024-03-02', status: 'Converted', amount: 200, notes: 'Upgraded to pro plan' },
-    { id: 'REQ-1014', type: 'Inquiry', customer: 'Charles Anderson', item: 'Data Analysis', date: '2024-03-01', status: 'Pending', amount: 0, notes: 'Checking feasibility' },
-    { id: 'REQ-1015', type: 'Quote', customer: 'Linda Martinez', item: 'Network Setup', date: '2024-02-29', status: 'Approved', amount: 3000, notes: 'Installation scheduled next week' },
-    { id: 'REQ-1016', type: 'Purchase Order', customer: 'Michael Thompson', item: 'Printer Toner', date: '2024-02-28', status: 'Pending', amount: 400, notes: 'Low stock alert' },
-    { id: 'REQ-1017', type: 'Subscription', customer: 'Barbara Hernandez', item: 'Video Conferencing', date: '2024-02-27', status: 'Rejected', amount: 150, notes: 'Switching to competitor' },
-    { id: 'REQ-1018', type: 'Inquiry', customer: 'William Clark', item: 'IT Support', date: '2024-02-26', status: 'Converted', amount: 0, notes: 'Signed annual agreement' },
-    { id: 'REQ-1019', type: 'Quote', customer: 'Elizabeth Rodriguez', item: 'Server Upgrade', date: '2024-02-25', status: 'Pending', amount: 5000, notes: 'Waiting for budget approval' },
-    { id: 'REQ-1020', type: 'Purchase Order', customer: 'Joseph Lewis', item: 'Tablet', date: '2024-02-24', status: 'Approved', amount: 800, notes: 'For field sales team' }
-  ]
+  // Initial Seed Data - Removed as per user request to clear temporary data
+  const SEED_DATA = [];
 
   const [form, setForm] = useState({
     id: null,
@@ -83,27 +62,31 @@ export default function RequestsPage() {
   })
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setRequests(parsed)
+    const loadData = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setRequests(parsed)
+          } else {
+            setRequests(SEED_DATA)
+          }
         } else {
           setRequests(SEED_DATA)
         }
-      } else {
-        setRequests(SEED_DATA)
+      } catch (e) { 
+          console.warn('Failed to load requests', e) 
+          setRequests(SEED_DATA)
       }
-    } catch (e) { 
-        console.warn('Failed to load requests', e) 
-        setRequests(SEED_DATA)
-    }
+    };
+
+    loadData();
+
+    window.addEventListener('inventory-requests-updated', loadData);
+    return () => window.removeEventListener('inventory-requests-updated', loadData);
   }, [])
 
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(requests)) } catch (e) { void e }
-  }, [requests])
 
   function onChange(e) {
     const { name, value } = e.target
@@ -114,9 +97,10 @@ export default function RequestsPage() {
     e.preventDefault()
     if (!form.customer || !form.item) return
 
+    let updatedRequests;
     if (form.id && !form.id.toString().startsWith('NEW-')) {
       // Edit existing
-      setRequests(prev => prev.map(r => r.id === form.id ? { ...form, amount: Number(form.amount) || 0 } : r))
+      updatedRequests = requests.map(r => r.id === form.id ? { ...form, amount: Number(form.amount) || 0 } : r);
     } else {
       // Add new
       const newRequest = {
@@ -124,8 +108,10 @@ export default function RequestsPage() {
         id: `REQ-${Math.floor(Math.random() * 10000)}`,
         amount: Number(form.amount) || 0
       }
-      setRequests(prev => [newRequest, ...prev])
+      updatedRequests = [newRequest, ...requests];
     }
+    setRequests(updatedRequests);
+    updateStorage(updatedRequests);
     setShowForm(false)
     resetForm()
   }
@@ -153,6 +139,17 @@ export default function RequestsPage() {
     setForm({ ...req })
     setShowForm(true)
   }
+
+  const handleStatusChange = (id, newStatus) => {
+    const updatedRequests = requests.map(r => r.id === id ? { ...r, status: newStatus } : r);
+    setRequests(updatedRequests);
+    updateStorage(updatedRequests);
+    
+    // Optional: Show toast or notification
+    if (isRTL) {
+       // alert(newStatus === 'Approved' ? 'تمت الموافقة على الطلب' : 'تم رفض الطلب');
+    }
+  };
 
   const handleConvertToDeal = (id) => {
     const request = requests.find(r => r.id === id);
@@ -250,6 +247,16 @@ export default function RequestsPage() {
     );
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const paginatedRequests = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(startIndex, startIndex + itemsPerPage);
+  }, [filtered, currentPage]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
   return (
     <div className="space-y-6 pt-4">
       <div className="flex items-center justify-between">
@@ -273,9 +280,9 @@ export default function RequestsPage() {
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <FaFilter className="text-blue-500" /> {labels.filter}
           </h2>
-          <button onClick={clearFilters} className="btn btn-glass btn-compact text-[var(--muted-text)] hover:text-red-500">
-              {labels.clearFilters}
-          </button>
+              <button onClick={clearFilters} className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                {isArabic ? 'إعادة تعيين' : 'Reset'}
+              </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="space-y-1">
@@ -325,7 +332,7 @@ export default function RequestsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(req => (
+                {paginatedRequests.map(req => (
                   <tr key={req.id}>
                     <td className="px-3 text-sm font-medium text-blue-600 dark:text-blue-400">{req.id}</td>
                     <td className="px-3">
@@ -337,7 +344,7 @@ export default function RequestsPage() {
                     <td className="px-3 text-sm font-medium">{req.customer}</td>
                     <td className="px-3 text-sm">{req.item}</td>
                     <td className="px-3 text-sm text-[var(--muted-text)]">{req.date}</td>
-                    <td className="px-3 text-sm font-mono font-semibold">{req.amount > 0 ? `$${req.amount}` : '-'}</td>
+                    <td className="px-3 text-sm font-mono font-semibold">{req.amount > 0 ? req.amount : '-'}</td>
                     <td className="px-3 text-center">
                       <StatusBadge status={req.status} />
                     </td>
@@ -371,13 +378,6 @@ export default function RequestsPage() {
                             </button>
                         )}
                         <button 
-                            onClick={() => onEdit(req)}
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                            title={labels.edit}
-                        >
-                            <FaEdit size={16} />
-                        </button>
-                        <button 
                             onClick={() => onDelete(req.id)}
                             className="w-8 h-8 rounded-full flex items-center justify-center text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                             title={labels.delete}
@@ -391,6 +391,51 @@ export default function RequestsPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {/* Pagination Controls */}
+        {filtered.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center justify-between rounded-xl p-2 glass-panel gap-4">
+              <div className="text-xs text-[var(--muted-text)]">
+                {isArabic 
+                  ? `عرض ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, filtered.length)} من ${filtered.length}` 
+                  : `Showing ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, filtered.length)} of ${filtered.length}`}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <button
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    title={isArabic ? 'السابق' : 'Prev'}
+                  >
+                    <FaChevronLeft className={isArabic ? 'scale-x-[-1]' : ''} />
+                  </button>
+                  <span className="text-sm whitespace-nowrap">{isArabic ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
+                  <button
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    title={isArabic ? 'التالي' : 'Next'}
+                  >
+                    <FaChevronRight className={isArabic ? 'scale-x-[-1]' : ''} />
+                  </button>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-[var(--muted-text)] whitespace-nowrap">{isArabic ? 'لكل صفحة:' : 'Per page:'}</span>
+                  <select
+                    className="input w-24 text-sm py-0 px-2 h-8"
+                    value={itemsPerPage}
+                    onChange={e => setItemsPerPage(Number(e.target.value))}
+                  >
+                    <option value={4}>4</option>
+                    <option value={6}>6</option>
+                    <option value={8}>8</option>
+                    <option value={12}>12</option>
+                  </select>
+                </div>
+              </div>
+            </div>
         )}
       </div>
 
