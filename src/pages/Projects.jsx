@@ -314,8 +314,8 @@ export default function Projects() {
     <div className="p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-x-hidden min-w-0">
         {/* Header */}
         <div className="glass-panel rounded-xl p-4 md:p-6 relative z-30">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="w-full md:w-auto flex items-center justify-between md:justify-start gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="w-full lg:w-auto flex items-center justify-between lg:justify-start gap-3">
               <div className="relative flex flex-col items-start gap-1">
                 <h1 className="page-title text-xl md:text-2xl font-bold text-start">{Label.title}</h1>
                 <span
@@ -324,30 +324,21 @@ export default function Projects() {
                bg-gradient-to-r from-blue-500 to-purple-600"
                 />
               </div>
-              {/* Mobile Pagination */}
-              <div className="md:hidden flex items-center gap-2 bg-white/50 dark:bg-black/20 rounded-lg px-2 py-1">
-                 <button onClick={goPrevPage} disabled={page <= 1} className="p-1 hover:text-blue-600 disabled:opacity-30">
-                   <FaChevronLeft size={12} className={isRTL ? 'scale-x-[-1]' : ''}/>
-                 </button>
-                 <span className="text-xs font-medium">{page} / {totalPages}</span>
-                 <button onClick={goNextPage} disabled={page >= totalPages} className="p-1 hover:text-blue-600 disabled:opacity-30">
-                   <FaChevronRight size={12} className={isRTL ? 'scale-x-[-1]' : ''}/>
-                 </button>
-              </div>
+           
             </div>
 
-            <div className="w-full md:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3">
-              <button className="btn btn-sm w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" onClick={()=>setShowImportModal(true)}>
+            <div className="w-full lg:w-auto flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+              <button className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" onClick={()=>setShowImportModal(true)}>
                 {Label.importProjects}
               </button>
 
-              <button className="btn btn-sm w-full sm:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2" onClick={()=>setShowCreateModal(true)}>
+              <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2" onClick={()=>setShowCreateModal(true)}>
                 <FaPlus /> {Label.createProject}
               </button>
               
-              <div className="relative w-full sm:w-auto">
+              <div className="relative w-full lg:w-auto">
                 <button 
-                  className="btn btn-sm w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" 
+                  className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" 
                   onClick={() => setShowExportMenu(!showExportMenu)}
                 >
                   {isRTL ? 'تصدير' : 'Export'}
