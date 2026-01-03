@@ -624,8 +624,9 @@ export default function Properties() {
 
   return (
     <div className="p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-x-hidden min-w-0">
-        <div className="glass-panel rounded-xl p-4 md:p-6 relative z-30">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="glass-panel rounded-xl p-4 md:p-6 relative z-30">
+
+           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="w-full lg:w-auto flex items-center justify-between lg:justify-start gap-3">
               <div className="relative flex flex-col items-start gap-1">
                 <h1 className="page-title text-xl md:text-2xl font-bold text-start">{Label.title}</h1>
@@ -652,7 +653,7 @@ export default function Properties() {
                 {Label.importProperties}
               </button>
 
-              <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2" onClick={()=>{ setIsEdit(false); setShowCreateModal(true) }}>
+              <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2" onClick={() => { setIsEdit(false); setShowCreateModal(true); }}>
                 <FaPlus /> {Label.createProperty}
               </button>
               
@@ -692,6 +693,7 @@ export default function Properties() {
                 )}
               </div>
             </div>
+          </div>
           </div>
 
           {/* Filter Panel */}

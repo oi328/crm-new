@@ -313,7 +313,8 @@ export default function Projects() {
   return (
     <div className="p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-x-hidden min-w-0">
         {/* Header */}
-        <div className="glass-panel rounded-xl p-4 md:p-6 relative z-30">
+<div className="glass-panel rounded-xl p-4 md:p-6 relative z-30">
+
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="w-full lg:w-auto flex items-center justify-between lg:justify-start gap-3">
               <div className="relative flex flex-col items-start gap-1">
@@ -324,7 +325,16 @@ export default function Projects() {
                bg-gradient-to-r from-blue-500 to-purple-600"
                 />
               </div>
-           
+              {/* Mobile Pagination */}
+              <div className="lg:hidden flex items-center gap-2 bg-white/50 dark:bg-black/20 rounded-lg px-2 py-1">
+                 <button onClick={goPrevPage} disabled={page <= 1} className="p-1 hover:text-blue-600 disabled:opacity-30">
+                   <FaChevronLeft size={12} className={isRTL ? 'scale-x-[-1]' : ''}/>
+                 </button>
+                 <span className="text-xs font-medium">{page} / {totalPages}</span>
+                 <button onClick={goNextPage} disabled={page >= totalPages} className="p-1 hover:text-blue-600 disabled:opacity-30">
+                   <FaChevronRight size={12} className={isRTL ? 'scale-x-[-1]' : ''}/>
+                 </button>
+              </div>
             </div>
 
             <div className="w-full lg:w-auto flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
@@ -374,146 +384,8 @@ export default function Projects() {
             </div>
           </div>
 
-          {/* Leads-style Filter Panel */}
-          <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-              <h2 className="text-sm font-semibold flex items-center gap-2">
-                <FaFilter className="text-blue-500" /> {Label.filter}
-              </h2>
-              <div className="w-full sm:w-auto flex items-center gap-2">
-                <button onClick={() => setShowAllFilters(prev => !prev)} className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
-                  {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')}
-                  <FaChevronDown size={10} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
-                </button>
-                <button onClick={clearFilters} className="flex-1 sm:flex-none px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-center">
-                  {Label.clearFilters}
-                </button>
-              </div>
-            </div>
+</div>
 
-            <div className="space-y-3">
-              {/* Top Row: Search, Category, Developer, Project */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                {/* Search */}
-                <div className="space-y-1">
-                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaSearch className="text-blue-500" size={10} /> {isRTL ? 'بحث' : 'Search'}</label>
-                   <input className="input w-full" value={filters.search} onChange={e=>setFilters({...filters, search: e.target.value})} placeholder={isRTL ? 'بحث...' : 'Search...'} />
-                </div>
-                {/* Category */}
-                 <div className="space-y-1">
-                    <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaTags className="text-blue-500" size={10} /> {isRTL ? 'التصنيف' : 'Category'}</label>
-                    <SearchableSelect 
-                      options={allCategories} 
-                      value={filters.category} 
-                      onChange={val => setFilters({...filters, category: val})} 
-                      isRTL={isRTL} 
-                    />
-                 </div>
-                 {/* Developer */}
-                 <div className="space-y-1">
-                    <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaBuilding className="text-blue-500" size={10} /> {isRTL ? 'المطور' : 'Developer'}</label>
-                    <SearchableSelect 
-                      options={allDevelopers} 
-                      value={filters.developer} 
-                      onChange={val => setFilters({...filters, developer: val})} 
-                      isRTL={isRTL} 
-                    />
-                 </div>
-                 {/* Project Name */}
-                 <div className="space-y-1">
-                    <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaCity className="text-blue-500" size={10} /> {isRTL ? 'مشروع' : 'Project'}</label>
-                    <SearchableSelect 
-                      options={allProjects} 
-                      value={filters.project} 
-                      onChange={val => setFilters({...filters, project: val})} 
-                      isRTL={isRTL} 
-                    />
-                 </div>
-              </div>
-
-              {/* Collapsible Row */}
-              <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 transition-all duration-300 overflow-hidden ${showAllFilters ? 'max-h-[500px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
-                {/* City */}
-                <div className="space-y-1">
-                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaMapMarkerAlt className="text-blue-500" size={10} /> {isRTL ? 'المدينة' : 'City'}</label>
-                   <SearchableSelect 
-                     options={allCities} 
-                     value={filters.city} 
-                     onChange={val => setFilters({...filters, city: val})} 
-                     isRTL={isRTL} 
-                   />
-                </div>
-                {/* Status */}
-                <div className="space-y-1">
-                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaFilter className="text-blue-500" size={10} /> {isRTL ? 'الحالة' : 'Status'}</label>
-                   <SearchableSelect 
-                     options={allStatuses} 
-                     value={filters.status} 
-                     onChange={val => setFilters({...filters, status: val})} 
-                     isRTL={isRTL} 
-                   />
-                </div>
-                {/* Country */}
-                <div className="space-y-1">
-                   <label className="text-xs font-medium text-[var(--muted-text)]">{isRTL ? 'الدولة' : 'Country'}</label>
-                   <input className="input w-full" value={filters.country} onChange={e=>setFilters({...filters, country: e.target.value})} placeholder={isRTL ? 'مصر' : 'Egypt'} />
-                </div>
-                {/* Payment Plan */}
-                <div className="space-y-1">
-                   <label className="text-xs font-medium text-[var(--muted-text)]">{isRTL ? 'خطة الدفع' : 'Payment Plan'}</label>
-                   <SearchableSelect 
-                     options={allPaymentPlans} 
-                     value={filters.paymentPlan} 
-                     onChange={val => setFilters({...filters, paymentPlan: val})} 
-                     isRTL={isRTL} 
-                   />
-                </div>
-                {/* Created By */}
-                <div className="space-y-1">
-                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaFilter className="text-blue-500" size={10} /> {Label.createdBy}</label>
-                   <SearchableSelect 
-                     options={allUsers} 
-                     value={filters.createdBy} 
-                     onChange={val => setFilters({...filters, createdBy: val})} 
-                     isRTL={isRTL} 
-                   />
-                </div>
-                {/* Created Date */}
-                <div className="space-y-1">
-                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaFilter className="text-blue-500" size={10} /> {Label.createdDate}</label>
-                   <input 
-                     type="date" 
-                     className="input w-full"
-                     value={filters.createdDate} 
-                     onChange={e=>setFilters({...filters, createdDate: e.target.value})} 
-                   />
-                </div>
-                {/* Price Range */}
-                <div className="lg:col-span-2 space-y-1">
-                   <RangeSlider 
-                     label={isRTL ? 'نطاق السعر' : 'Price Range'} 
-                     min={priceLimits.min} 
-                     max={priceLimits.max}
-                     value={[filters.minPrice === '' ? priceLimits.min : Number(filters.minPrice), filters.maxPrice === '' ? priceLimits.max : Number(filters.maxPrice)]}
-                     onChange={([min, max]) => setFilters({...filters, minPrice: min, maxPrice: max})}
-                     isRTL={isRTL}
-                   />
-                </div>
-                {/* Space Range */}
-                <div className="lg:col-span-2 space-y-1">
-                   <RangeSlider 
-                     label={isRTL ? 'نطاق المساحة' : 'Space Range'} 
-                     min={spaceLimits.min} 
-                     max={spaceLimits.max}
-                     value={[filters.minSpace === '' ? spaceLimits.min : Number(filters.minSpace), filters.maxSpace === '' ? spaceLimits.max : Number(filters.maxSpace)]}
-                     onChange={([min, max]) => setFilters({...filters, minSpace: min, maxSpace: max})}
-                     isRTL={isRTL}
-                   />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Summary row (full width) */}
         <div className="mt-4 relative z-10">
