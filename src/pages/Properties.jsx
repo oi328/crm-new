@@ -624,38 +624,41 @@ export default function Properties() {
 
   return (
     <div className="p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-x-hidden min-w-0">
-        <div className="glass-panel rounded-xl p-4 mb-4 relative z-20">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <div className="glass-panel rounded-xl p-4 md:p-6 relative z-30">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="w-full md:w-auto flex items-center justify-between md:justify-start gap-3">
               <div className="relative flex flex-col items-start gap-1">
-                <h1 className="page-title text-2xl font-bold text-start">{Label.title}</h1>
+                <h1 className="page-title text-xl md:text-2xl font-bold text-start">{Label.title}</h1>
                 <span
                   aria-hidden="true"
-                  className="inline-block h-[2px] w-full rounded bg-gradient-to-r from-blue-500 to-purple-600"
+                  className="inline-block h-[2px] w-full rounded
+               bg-gradient-to-r from-blue-500 to-purple-600"
                 />
               </div>
               {/* Mobile Pagination */}
-            
+              <div className="md:hidden flex items-center gap-2 bg-white/50 dark:bg-black/20 rounded-lg px-2 py-1">
+                 <button onClick={goPrevPage} disabled={page <= 1} className="p-1 hover:text-blue-600 disabled:opacity-30">
+                   <FaChevronLeft size={12} className={isRTL ? 'scale-x-[-1]' : ''}/>
+                 </button>
+                 <span className="text-xs font-medium">{page} / {totalPages}</span>
+                 <button onClick={goNextPage} disabled={page >= totalPages} className="p-1 hover:text-blue-600 disabled:opacity-30">
+                   <FaChevronRight size={12} className={isRTL ? 'scale-x-[-1]' : ''}/>
+                 </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Mobile Add Button */}
-              
-              
-              <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none" onClick={()=>setShowImportModal(true)}>
+            <div className="w-full md:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3">
+              <button className="btn btn-sm w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" onClick={()=>setShowImportModal(true)}>
                 {Label.importProperties}
               </button>
-              {/* Desktop Add Button */}
-              <button className="hidden md:inline-flex btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none" onClick={()=>{ setIsEdit(false); setShowCreateModal(true) }}>
-                <span className="inline-flex items-center gap-2">
+
+              <button className="btn btn-sm w-full sm:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2" onClick={()=>{ setIsEdit(false); setShowCreateModal(true) }}>
                 <FaPlus /> {Label.createProperty}
-                </span>
               </button>
               
-              <div className="relative">
+              <div className="relative w-full sm:w-auto">
                 <button 
-                  className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center gap-2" 
+                  className="btn btn-sm w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" 
                   onClick={() => setShowExportMenu(!showExportMenu)}
                 >
                   {isRTL ? 'تصدير' : 'Export'}
@@ -665,7 +668,7 @@ export default function Properties() {
                 {showExportMenu && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
-                    <div className="absolute top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20 w-32 overflow-hidden ltr:right-0 rtl:left-0">
+                    <div className="absolute top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20 w-full sm:w-32 overflow-hidden ltr:right-0 rtl:left-0">
                       <button 
                         className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                         onClick={() => {
@@ -692,17 +695,17 @@ export default function Properties() {
           </div>
 
           {/* Filter Panel */}
-          <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-            <div className="flex justify-between items-center mb-3">
+          <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
               <h2 className="text-sm font-semibold flex items-center gap-2">
                 <FaFilter className="text-blue-500" /> {Label.filter}
               </h2>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setShowAllFilters(prev => !prev)} className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+              <div className="w-full sm:w-auto flex items-center gap-2">
+                <button onClick={() => setShowAllFilters(prev => !prev)} className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
                   {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')}
                   <FaChevronDown size={10} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
                 </button>
-                <button onClick={clearFilters} className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                <button onClick={clearFilters} className="flex-1 sm:flex-none px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-center">
                   {Label.clearFilters}
                 </button>
               </div>
