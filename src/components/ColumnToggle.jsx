@@ -15,23 +15,49 @@ const ColumnToggle = ({ columns, visibleColumns, onColumnToggle, onResetColumns,
   const updatePosition = () => {
     if (buttonRef.current && isOpen) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setMenuStyle({
-        position: 'fixed',
-        top: `${rect.bottom + 8}px`, // 8px for mt-2
-        left: align === 'right' 
-          ? (isRtl ? `${rect.left}px` : `${rect.right - 288}px`) // 288px is w-72
-          : (isRtl ? `${rect.right - 288}px` : `${rect.left}px`),
-        zIndex: 9999,
-        width: '18rem' // w-72
-      });
+      const mobile = typeof window !== 'undefined' && window.innerWidth <= 480;
+      if (mobile) {
+        const style = {
+          position: 'absolute',
+          top: 'calc(100% + 8px)',
+          zIndex: 9999,
+        };
+        if (align === 'right') {
+          if (isRtl) style.left = '0px';
+          else style.right = '0px';
+        } else {
+          if (isRtl) style.right = '0px';
+          else style.left = '0px';
+        }
+        style.width = 'auto';
+        setMenuStyle(style);
+      } else {
+        setMenuStyle({
+          position: 'fixed',
+          top: `${rect.bottom + 8}px`,
+          left:
+            align === 'right'
+              ? isRtl
+                ? `${rect.left}px`
+                : `${rect.right - 288}px`
+              : isRtl
+              ? `${rect.right - 288}px`
+              : `${rect.left}px`,
+          zIndex: 9999,
+          width: '18rem',
+        });
+      }
     }
   };
 
   useEffect(() => {
     if (isOpen) {
       updatePosition();
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
+      const mobile = typeof window !== 'undefined' && window.innerWidth <= 480;
+      if (!mobile) {
+        window.addEventListener('scroll', updatePosition, true);
+        window.addEventListener('resize', updatePosition);
+      }
     }
     return () => {
       window.removeEventListener('scroll', updatePosition, true);
@@ -50,9 +76,9 @@ const ColumnToggle = ({ columns, visibleColumns, onColumnToggle, onResetColumns,
       setIsOpen(false);
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('pointerdown', handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('pointerdown', handleClickOutside);
     };
   }, []);
 
@@ -72,25 +98,41 @@ const ColumnToggle = ({ columns, visibleColumns, onColumnToggle, onResetColumns,
 
       {isOpen && (
         <div
+          ref={dropdownRef}
           style={menuStyle}
-          className={`rounded-lg shadow-xl bg-white dark:bg-slate-800/90 dark:backdrop-blur-md text-gray-900 dark:text-white ring-1 ring-gray-200 dark:ring-slate-700/50 z-[50] pointer-events-auto`}
+          className={`rounded-lg shadow-xl bg-white dark:bg-slate-800/90 dark:backdrop-blur-md text-gray-900 dark:text-white ring-1 ring-gray-200 dark:ring-slate-700/50 z-[50] pointer-events-auto max-[480px]:w-[calc(100vw-24px)] max-[480px]:mx-3`}
         >
           <div className="p-3 space-y-3" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold">
                 {t('Show/Hide Columns')}
               </div>
-              {onResetColumns && (
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={onResetColumns}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-gray-100 dark:bg-slate-700/50 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-white"
-                  title={t('Reset')}
+                  onClick={() => {
+                    Object.keys(columns).forEach((key) => {
+                      if (!visibleColumns[key]) onColumnToggle(key);
+                    });
+                  }}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/40 text-blue-700 dark:text-blue-200"
+                  title={t('Select All')}
                 >
-                  <FaUndoAlt className="h-3 w-3" />
-                  {t('Reset')}
+                  <span className="inline-block w-3 h-3 rounded-sm bg-blue-600 opacity-80"></span>
+                  {t('Select All')}
                 </button>
-              )}
+                {onResetColumns && (
+                  <button
+                    type="button"
+                    onClick={onResetColumns}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-gray-100 dark:bg-slate-700/50 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-white"
+                    title={t('Reset')}
+                  >
+                    <FaUndoAlt className="h-3 w-3" />
+                    {t('Reset')}
+                  </button>
+                )}
+              </div>
             </div>
 
             <input

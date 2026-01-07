@@ -318,6 +318,7 @@ export const Comments = ({ employee, dateFrom, dateTo, stageFilter }) => {
         lead={selectedLead}
         onClose={() => setIsLeadModalOpen(false)}
         isArabic={i18n.language === 'ar'}
+        theme={theme}
       />
     </>
   );

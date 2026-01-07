@@ -462,7 +462,7 @@ export const Customers = () => {
                 {!loading && items.length === 0 && (
                   <tr><td className="py-3 px-3" colSpan={8}>No customers</td></tr>
                 )}
-                {!loading && paged.map((c) => (
+                {!loading && items.map((c) => (
                   <tr key={c.id} className="border-t border-[var(--table-row-border)] odd:bg-[var(--table-row-bg)]">
                     <td className="py-2 px-3">
                       <div className="font-medium">{c.name}</div>

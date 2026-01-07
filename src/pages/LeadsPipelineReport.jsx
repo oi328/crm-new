@@ -235,7 +235,7 @@ export default function LeadsPipelineReport() {
 
         {/* Table */}
         <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="w-full overflow-x-auto">
+          <div className="hidden md:block w-full overflow-x-auto">
             <table className="min-w-max table-fixed text-sm whitespace-nowrap">
               <thead className="bg-gray-100 dark:bg-gray-900/95" style={{ backgroundColor: 'var(--table-header-bg)' }}>
                 <tr className="text-left border-b border-gray-200 dark:border-gray-700">
@@ -268,7 +268,7 @@ export default function LeadsPipelineReport() {
                       <td className="px-3 py-2 text-gray-800 dark:text-gray-100 whitespace-nowrap">{t(l.status)}</td>
                     </tr>
                     {idx !== filtered.length - 1 && (
-                      <tr>
+                      <tr className="hidden md:table-row">
                         <td colSpan={6} className="py-2"></td>
                       </tr>
                     )}
@@ -276,6 +276,49 @@ export default function LeadsPipelineReport() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-4">
+            {filtered.length === 0 && (
+              <div className="text-center py-6 text-[var(--muted-text)]">{t('No data')}</div>
+            )}
+            {filtered.map((l, idx) => (
+              <div key={`${l.name}-${idx}`} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
+                <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                  <h4 className="font-semibold text-sm">{l.name}</h4>
+                  <span className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700">{t(l.status)}</span>
+                </div>
+                <div className="grid grid-cols-1 gap-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Sales Stage')}</span>
+                    {(() => {
+                      const def = getStageDef(l.stage)
+                      const label = i18n.language === 'ar' ? (def?.nameAr || def?.name || l.stage) : (def?.name || l.stage)
+                      const color = def?.color || stageColor(l.stage)
+                      return (
+                        <span className="inline-flex items-center gap-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: color }}>
+                          {def?.icon && <span className="text-sm">{def.icon}</span>}
+                          <span>{label}</span>
+                        </span>
+                      )
+                    })()}
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Expected Value')}</span>
+                    <span className="font-medium text-xs">{`${l.expectedValue.toLocaleString()} EGP`}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Salesperson')}</span>
+                    <span className="text-xs">{l.salesperson}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Date Created')}</span>
+                    <span className="text-xs">{new Date(l.dateCreated).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

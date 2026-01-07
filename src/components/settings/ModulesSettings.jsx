@@ -26,7 +26,7 @@ const MODULE_CATEGORIES = [
       { key: 'marketing', label: 'Marketing', route: '/marketing', icon: '📣' },
       { key: 'campaigns', label: 'Campaigns', route: '/campaigns', icon: '🎯' },
       { key: 'landingPages', label: 'Landing Pages', route: '/landing-pages', icon: '🧩' },
-      { key: 'metaIntegration', label: 'Meta Integration', route: '/meta-integration', icon: '🧠' },
+      { key: 'metaIntegration', label: 'Integration', route: '/meta-integration', icon: '🧠' },
       { key: 'mktReports', label: 'Marketing Reports', route: '/marketing/reports', icon: '📈' },
     ],
   },

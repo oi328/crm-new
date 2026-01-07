@@ -1257,7 +1257,7 @@ body {
 /* Adjust top offset for very small screens where header is shorter */
 @media (max-width: 360px) {
   .content-container {
-    padding-top: 48px; /* عندما يقل ارتفاع الهيدر على الشاشات الصغيرة */
+    padding-right: 10px; /* عندما يقل ارتفاع الهيدر على الشاشات الصغيرة */
   }
 }
 
@@ -2183,6 +2183,16 @@ body {
 .dark .nova-table th + th,
 .dark .nova-table td + td {
   border-left-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Variant: no vertical column separators */
+.nova-table--no-cols th + th,
+.nova-table--no-cols td + td {
+  border-left: 0;
+}
+.dark .nova-table--no-cols th + th,
+.dark .nova-table--no-cols td + td {
+  border-left: 0;
 }
 
 /* Unified Theme Variables and Utilities */

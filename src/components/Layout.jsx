@@ -77,7 +77,7 @@ export default function Layout({ children }) {
             [isRtl ? 'marginRight' : 'marginLeft']: !isMobileView ? (sidebarCollapsed ? '0px' : '280px') : '0'
           }}
         >
-          <main className="main-pane flex-1 px-0 m-0 overflow-x-hidden min-w-0">
+          <main className="main-pane flex-1 px-0 m-0 overflow-x-clip min-w-0">
             <div className="w-full">
               {children ?? <Outlet />}
             </div>

@@ -41,6 +41,9 @@ const BarChartCard = ({ title, subtitle, data = [] }) => {
             <YAxis type="category" dataKey="name" width={120} tick={{ fill: '#94a3b8' }} />
             <Tooltip 
               cursor={{ fill: 'rgba(148,163,184,0.15)' }}
+              contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+              itemStyle={{ color: '#111827', fontSize: '12px', fontWeight: 'bold' }}
+              labelStyle={{ color: '#111827', fontWeight: 'bold', marginBottom: '0.25rem' }}
               formatter={(value, name) => {
                 const pct = Math.round((Number(value) / Math.max(total, 1)) * 100)
                 return [`${value} (${pct}%)`, name]

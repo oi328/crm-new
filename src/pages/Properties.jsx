@@ -1,13 +1,15 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import SearchableSelect from '../components/SearchableSelect'
-import { FaFilter, FaChevronDown, FaSearch, FaBuilding, FaMapMarkerAlt, FaPlus, FaTimes, FaImage, FaVideo, FaPaperclip, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaUser } from 'react-icons/fa'
+import { FaFilter,FaUser, FaShareAlt, FaEllipsisV, FaPlus, FaMapMarkerAlt, FaBuilding, FaTimes, FaEye, FaEdit, FaTrash, FaUpload, FaSearch, FaChevronDown, FaChevronUp, FaImage, FaFilePdf, FaVideo, FaPaperclip, FaTags, FaCity, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaDownload, FaFileExcel, FaFileImport, FaFileExport, FaFileCsv } from 'react-icons/fa'
 import PropertyCard from '../components/PropertyCard'
 import PropertiesSummaryPanel from '../components/PropertiesSummaryPanel'
 import ImportPropertiesModal from '../components/ImportPropertiesModal'
 import CreatePropertyModal from '../components/CreatePropertyModal'
 import { projectsData } from '../data/projectsData'
 import { useCompanySetup } from './settings/company-setup/store/CompanySetupContext.jsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 // Range Slider Component
 const RangeSlider = ({ min, max, value, onChange, label, isRTL, unit = '' }) => {
@@ -118,12 +120,77 @@ export default function Properties() {
   const { i18n } = useTranslation()
   const isRTL = String(i18n.language || '').startsWith('ar')
   const { companySetup } = useCompanySetup()
+  const [planPreview, setPlanPreview] = useState(null)
+  const [isPlanPreviewOpen, setIsPlanPreviewOpen] = useState(false)
+  const openPlanPreview = (plan) => { setPlanPreview(plan); setIsPlanPreviewOpen(true) }
+  const closePlanPreview = () => { setIsPlanPreviewOpen(false); setPlanPreview(null) }
+  const printPlan = (plan) => {
+    const w = window.open('', '_blank')
+    if (!w) return
+    const currencyFmt = (v) => new Intl.NumberFormat('en-EG', { maximumFractionDigits: 2 }).format(Number(v || 0))
+    w.document.write(`
+      <html><head><title>Payment Plan</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
+        th { background: #f3f4f6; }
+        .actions { margin-top: 16px; }
+      </style>
+      </head><body>
+      <h2>${isRTL ? 'معاينة خطة الدفع' : 'Payment Plan Preview'}</h2>
+      <table>
+        <tbody>
+          <tr><th>${isRTL ? 'المقدم' : 'Down Payment'}</th><td>${plan.downPayment || '-' } ${String(plan.downPaymentType||'amount')==='percentage' ? '%' : ''}</td></tr>
+          <tr><th>${isRTL ? 'نوع الحجز' : 'Reservation Type'}</th><td>${plan.reservationType || '-'}</td></tr>
+          <tr><th>${isRTL ? 'دفعة الاستلام' : 'Receipt Amount'}</th><td>${currencyFmt(plan.receiptAmount)}</td></tr>
+          <tr><th>${isRTL ? 'قيمة القسط' : 'Installment Amount'}</th><td>${currencyFmt(plan.installmentAmount)}</td></tr>
+          <tr><th>${isRTL ? 'تكرار القسط' : 'Installment Frequency'}</th><td>${plan.installmentFrequency || '-'}</td></tr>
+          <tr><th>${isRTL ? 'السنوات' : 'Years'}</th><td>${plan.years || '-'}</td></tr>
+          <tr><th>${isRTL ? 'دفعة إضافية' : 'Extra Payment'}</th><td>${currencyFmt(plan.extraPayment)}</td></tr>
+          <tr><th>${isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency'}</th><td>${plan.extraPaymentFrequency || '-'}</td></tr>
+          <tr><th>${isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count'}</th><td>${plan.extraPaymentCount || '0'}</td></tr>
+          <tr><th>${isRTL ? 'الاستلام' : 'Delivery'}</th><td>${plan.deliveryDate || '-'}</td></tr>
+        </tbody>
+      </table>
+      <div class="actions">
+        <button onclick="window.print()" style="padding:8px 12px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;">${isRTL ? 'طباعة' : 'Print'}</button>
+      </div>
+      </body></html>
+    `)
+    w.document.close()
+  }
+  const downloadPlanPdf = (plan, index, title='Property') => {
+    const doc = new jsPDF()
+    doc.setFontSize(14)
+    doc.text(`${isRTL ? 'خطة الدفع' : 'Payment Plan'} #${index+1} - ${title}`, 14, 18)
+    const rows = [
+      [isRTL ? 'المقدم' : 'Down Payment', `${plan.downPayment || '-'} ${String(plan.downPaymentType||'amount')==='percentage' ? '%' : ''}`],
+      [isRTL ? 'نوع الحجز' : 'Reservation Type', plan.reservationType || '-'],
+      [isRTL ? 'دفعة الاستلام' : 'Receipt Amount', String(plan.receiptAmount || '0')],
+      [isRTL ? 'قيمة القسط' : 'Installment Amount', String(plan.installmentAmount || '0')],
+      [isRTL ? 'تكرار القسط' : 'Installment Frequency', plan.installmentFrequency || '-'],
+      [isRTL ? 'السنوات' : 'Years', String(plan.years || '-')],
+      [isRTL ? 'دفعة إضافية' : 'Extra Payment', String(plan.extraPayment || '0')],
+      [isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency', plan.extraPaymentFrequency || '-'],
+      [isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count', String(plan.extraPaymentCount || '0')],
+      [isRTL ? 'الاستلام' : 'Delivery', plan.deliveryDate || '-'],
+    ]
+    autoTable(doc, {
+      head: [[isRTL ? 'الحقل' : 'Field', isRTL ? 'القيمة' : 'Value']],
+      body: rows,
+      startY: 24,
+      styles: { fontSize: 10 }
+    })
+    doc.save(`payment-plan-${index+1}.pdf`)
+  }
   useEffect(() => {
     try { document.documentElement.dir = isRTL ? 'rtl' : 'ltr' } catch {}
   }, [isRTL])
   // theme toggle removed on this page per request
 
-  const STORAGE_KEY = 'inventoryProperties'
+  const STORAGE_KEY = 'inventoryProperties_v2'
   const BUILDING_KEY = 'inventoryBuildings'
   const THIRD_PARTY_KEY = 'inventoryThirdParties'
 
@@ -168,6 +235,206 @@ export default function Properties() {
   }, [properties])
 
   const SAMPLE_PROPERTIES = useMemo(()=>[
+    {
+      id: 1000,
+      name: 'Modern Luxury Villa',
+      adTitle: 'Modern Luxury Villa in Palm Hills',
+      adTitleAr: 'فيلا فاخرة حديثة في بالم هيلز',
+      project: 'Palm Hills',
+      category: 'Residential',
+      propertyType: 'Villa',
+      unitNumber: 'V-1000',
+      unitCode: 'PH-V1000',
+      building: 'Zone B',
+      bua: 600,
+      hasExternalArea: true,
+      internalArea: 550,
+      externalArea: 50,
+      totalArea: 600,
+      area: 600,
+      areaUnit: 'm²',
+      internalMeterPrice: 25000,
+      externalMeterPrice: 12000,
+      meterPrice: 24000,
+      totalPrice: 15000000,
+      price: 15000000,
+      currency: 'EGP',
+      bedrooms: 6,
+      bathrooms: 7,
+      rooms: 6,
+      floor: 0,
+      finishing: 'Finished',
+      view: 'Golf',
+      purpose: 'Primary',
+      status: 'Available',
+      elevator: true,
+      ownerName: 'Alice Smith',
+      ownerMobile: '+201222222222',
+      rentCost: 0,
+      amenities: ['Private Pool', 'Smart Home', 'Golf View'],
+      description: 'A stunning modern villa with golf course views and smart home integration.',
+      descriptionAr: 'فيلا حديثة مذهلة تطل على ملعب الجولف ومزودة بنظام المنزل الذكي.',
+      images: [
+        'https://images.unsplash.com/photo-1600596542815-22b5c03295b6?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1200&auto=format&fit=crop'
+      ],
+      mainImage: 'https://images.unsplash.com/photo-1600596542815-22b5c03295b6?q=80&w=1200&auto=format&fit=crop',
+      logo: 'https://dummyimage.com/100x100/222/fff.png&text=MLV',
+      videoUrl: 'https://www.youtube.com/watch?v=example',
+      virtualTourUrl: 'https://matterport.com/example',
+      floorPlans: ['https://dummyimage.com/600x800/eee/000.png&text=Plan+A'],
+      documents: ['Brochure.pdf'],
+      address: '456 Golf Road',
+      addressAr: '٤٥٦ طريق الجولف',
+      city: 'Giza',
+      locationUrl: 'https://maps.google.com/?q=30.0,31.0',
+      nearby: ['Golf Club', 'International School'],
+      discount: 100000,
+      discountType: 'amount',
+      reservationAmount: 200000,
+      garageAmount: 150000,
+      maintenanceAmount: 600000,
+      netAmount: 14900000,
+      totalAfterDiscount: 14900000,
+      serviceCharges: 10000,
+      maintenanceDeposit: 20000,
+      receipt: 1500000,
+      installmentPlans: [
+        {
+          downPayment: 15,
+          downPaymentType: 'percentage',
+          years: 7,
+          deliveryDate: '2027',
+          installmentAmount: 120000,
+          installmentFrequency: 'Quarterly',
+          reservationAmount: 50000
+        },
+        {
+          downPayment: 1000000,
+          downPaymentType: 'amount',
+          years: 5,
+          deliveryDate: '2026',
+          installmentAmount: 200000,
+          installmentFrequency: 'Monthly',
+          reservationAmount: 75000
+        }
+      ],
+      cil: {
+        to: 'Sales Director',
+        toAr: 'مدير المبيعات',
+        subject: 'VIP Client',
+        subjectAr: 'عميل VIP',
+        content: 'Client looking for immediate move-in.',
+        contentAr: 'العميل يبحث عن استلام فوري.',
+        signature: 'Agent Y',
+        signatureAr: 'الوكيل ص'
+      },
+      contactName: 'Agent Y',
+      contactEmail: 'agenty@example.com',
+      contactPhone: '+20199999999',
+      marketingPackage: 'Gold',
+      createdDate: '2025-01-15',
+      createdBy: 'Sales Manager',
+      lastUpdated: '2025-01-16',
+      progress: 0,
+      units: 1,
+      developer: 'Palm Hills Dev'
+    },
+    {
+      id: 999,
+      name: 'Grand Luxury Palace',
+      adTitle: 'Grand Luxury Palace',
+      adTitleAr: 'قصر الفخامة الكبير',
+      project: 'Palm Hills',
+      category: 'Residential',
+      propertyType: 'Villa',
+      unitNumber: 'V-99',
+      unitCode: 'PH-V99',
+      building: 'Zone A',
+      bua: 500,
+      hasExternalArea: true,
+      internalArea: 450,
+      externalArea: 50,
+      totalArea: 500,
+      area: 500,
+      areaUnit: 'm²',
+      internalMeterPrice: 20000,
+      externalMeterPrice: 10000,
+      meterPrice: 19000,
+      totalPrice: 9500000,
+      price: 9500000,
+      currency: 'EGP',
+      bedrooms: 7,
+      bathrooms: 8,
+      rooms: 7,
+      floor: 0,
+      finishing: 'Core & Shell',
+      view: 'Garden',
+      purpose: 'Primary',
+      status: 'Available',
+      elevator: true,
+      ownerName: 'John Doe',
+      ownerMobile: '+201000000000',
+      rentCost: 0,
+      amenities: ['Private Pool', 'Private Garden', 'Security', 'Maid\'s Room'],
+      description: 'A magnificent villa with vast gardens and premium finishing.',
+      descriptionAr: 'فيلا رائعة مع حدائق واسعة وتشطيب مميز.',
+      images: [
+        'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=1200&auto=format&fit=crop'
+      ],
+      mainImage: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1200&auto=format&fit=crop',
+      logo: 'https://dummyimage.com/100x100/d4af37/fff.png&text=GLP',
+      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      virtualTourUrl: 'https://matterport.com/discover/space/1',
+      floorPlans: ['https://dummyimage.com/600x800/eee/000.png&text=Floor+Plan'],
+      documents: ['Contract Template.pdf'],
+      address: '123 Palm Hills Blvd',
+      addressAr: '١٢٣ شارع بالم هيلز',
+      city: 'Cairo',
+      locationUrl: 'https://maps.google.com/?q=30.0444,31.2357',
+      nearby: ['School', 'Club'],
+      discount: 50000,
+      discountType: 'amount',
+      reservationAmount: 100000,
+      garageAmount: 200000,
+      maintenanceAmount: 500000,
+      netAmount: 10150000,
+      totalAfterDiscount: 9450000,
+      serviceCharges: 5000,
+      maintenanceDeposit: 10000,
+      receipt: 1000000,
+      installmentPlans: [
+        {
+          downPayment: 10,
+          downPaymentType: 'percentage',
+          years: 5,
+          deliveryDate: '2026',
+          installmentAmount: 150000,
+          installmentFrequency: 'Monthly'
+        }
+      ],
+      cil: {
+        to: 'Sales Manager',
+        toAr: 'مدير المبيعات',
+        subject: 'Client Interest',
+        subjectAr: 'اهتمام عميل',
+        content: 'Client is interested in this property.',
+        contentAr: 'العميل مهتم بهذا العقار.',
+        signature: 'Agent X',
+        signatureAr: 'الوكيل س'
+      },
+      contactName: 'Agent X',
+      contactEmail: 'agent@example.com',
+      contactPhone: '+20123456789',
+      marketingPackage: 'Premium',
+      createdDate: '2025-01-01',
+      createdBy: 'System Admin',
+      lastUpdated: '2025-01-05',
+      progress: 100,
+      units: 1,
+      developer: 'Palm Hills Dev'
+    },
     {
       id: 1, name: 'Nile View Residences', city: 'Cairo', developer: 'Hima Dev', status: 'Available',
       units: 120, unit: 'NVR-101', area: 120, price: 2500000, documents: 12, lastUpdated: '2025-11-05',
@@ -641,7 +908,7 @@ export default function Properties() {
 
             <div className="w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
               <button className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" onClick={()=>setShowImportModal(true)}>
-                {Label.importProperties}
+                <FaFileImport />{Label.importProperties}
               </button>
 
               <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2" onClick={() => { setIsEdit(false); setShowCreateModal(true); }}>
@@ -653,6 +920,7 @@ export default function Properties() {
                   className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" 
                   onClick={() => setShowExportMenu(!showExportMenu)}
                 >
+                  <FaFileExport  />
                   {isRTL ? 'تصدير' : 'Export'}
                   <FaChevronDown className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} size={10} />
                 </button>
@@ -688,12 +956,12 @@ export default function Properties() {
 
           {/* Filter Panel */}
           <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
-            <div className="flex flex-wrap sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+            <div className="flex justify-between items-center mb-3">
               <h2 className="text-sm font-semibold flex items-center gap-2">
                 <FaFilter className="text-blue-500" /> {Label.filter}
               </h2>
-              <div className="w-full sm:w-auto flex  items-center gap-2">
-                <button onClick={() => setShowAllFilters(prev => !prev)} className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowAllFilters(prev => !prev)} className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
                   {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')}
                   <FaChevronDown size={10} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
                 </button>
@@ -1093,6 +1361,71 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
     }
     doc.save(`${(p.adTitle || p.name || 'property').replace(/[\\/:*?\"<>|]/g,'_')}_media.pdf`)
   }
+  const [planPreview, setPlanPreview] = useState(null)
+  const [isPlanPreviewOpen, setIsPlanPreviewOpen] = useState(false)
+  const openPlanPreview = (plan) => { setPlanPreview(plan); setIsPlanPreviewOpen(true) }
+  const closePlanPreview = () => { setIsPlanPreviewOpen(false); setPlanPreview(null) }
+  const printPlan = (plan) => {
+    const w = window.open('', '_blank')
+    if (!w) return
+    const currencyFmt = (v) => new Intl.NumberFormat('en-EG', { maximumFractionDigits: 2 }).format(Number(v || 0))
+    w.document.write(`
+      <html><head><title>Payment Plan</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
+        th { background: #f3f4f6; }
+        .actions { margin-top: 16px; }
+      </style>
+      </head><body>
+      <h2>${isRTL ? 'معاينة خطة الدفع' : 'Payment Plan Preview'}</h2>
+      <table>
+        <tbody>
+          <tr><th>${isRTL ? 'المقدم' : 'Down Payment'}</th><td>${plan.downPayment || '-' } ${String(plan.downPaymentType||'amount')==='percentage' ? '%' : ''}</td></tr>
+          <tr><th>${isRTL ? 'نوع الحجز' : 'Reservation Type'}</th><td>${plan.reservationType || '-'}</td></tr>
+          <tr><th>${isRTL ? 'دفعة الاستلام' : 'Receipt Amount'}</th><td>${currencyFmt(plan.receiptAmount)}</td></tr>
+          <tr><th>${isRTL ? 'قيمة القسط' : 'Installment Amount'}</th><td>${currencyFmt(plan.installmentAmount)}</td></tr>
+          <tr><th>${isRTL ? 'تكرار القسط' : 'Installment Frequency'}</th><td>${plan.installmentFrequency || '-'}</td></tr>
+          <tr><th>${isRTL ? 'السنوات' : 'Years'}</th><td>${plan.years || '-'}</td></tr>
+          <tr><th>${isRTL ? 'دفعة إضافية' : 'Extra Payment'}</th><td>${currencyFmt(plan.extraPayment)}</td></tr>
+          <tr><th>${isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency'}</th><td>${plan.extraPaymentFrequency || '-'}</td></tr>
+          <tr><th>${isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count'}</th><td>${plan.extraPaymentCount || '0'}</td></tr>
+          <tr><th>${isRTL ? 'الاستلام' : 'Delivery'}</th><td>${plan.deliveryDate || '-'}</td></tr>
+        </tbody>
+      </table>
+      <div class="actions">
+        <button onclick="window.print()" style="padding:8px 12px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;">${isRTL ? 'طباعة' : 'Print'}</button>
+      </div>
+      </body></html>
+    `)
+    w.document.close()
+  }
+  const downloadPlanPdf = (plan, index, title='Property') => {
+    const doc = new jsPDF()
+    doc.setFontSize(14)
+    doc.text(`${isRTL ? 'خطة الدفع' : 'Payment Plan'} #${index+1} - ${title}`, 14, 18)
+    const rows = [
+      [isRTL ? 'المقدم' : 'Down Payment', `${plan.downPayment || '-'} ${String(plan.downPaymentType||'amount')==='percentage' ? '%' : ''}`],
+      [isRTL ? 'نوع الحجز' : 'Reservation Type', plan.reservationType || '-'],
+      [isRTL ? 'دفعة الاستلام' : 'Receipt Amount', String(plan.receiptAmount || '0')],
+      [isRTL ? 'قيمة القسط' : 'Installment Amount', String(plan.installmentAmount || '0')],
+      [isRTL ? 'تكرار القسط' : 'Installment Frequency', plan.installmentFrequency || '-'],
+      [isRTL ? 'السنوات' : 'Years', String(plan.years || '-')],
+      [isRTL ? 'دفعة إضافية' : 'Extra Payment', String(plan.extraPayment || '0')],
+      [isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency', plan.extraPaymentFrequency || '-'],
+      [isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count', String(plan.extraPaymentCount || '0')],
+      [isRTL ? 'الاستلام' : 'Delivery', plan.deliveryDate || '-'],
+    ]
+    autoTable(doc, {
+      head: [[isRTL ? 'الحقل' : 'Field', isRTL ? 'القيمة' : 'Value']],
+      body: rows,
+      startY: 24,
+      styles: { fontSize: 10 }
+    })
+    doc.save(`payment-plan-${index+1}.pdf`)
+  }
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
@@ -1114,25 +1447,66 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
         <div className="p-4 min-h-[400px]">
           {activeTab === 'core' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
-                  <ReadOnlyField label={isRTL ? 'عنوان الإعلان' : 'Ad Title'} value={p.name} />
-                  <ReadOnlyField label={isRTL ? 'نوع العقار' : 'Property Type'} value={p.propertyType || p.type} />
-                  <ReadOnlyField label={isRTL ? 'الغرض' : 'Purpose'} value={p.purpose} />
+              <SectionTitle>{isRTL ? 'المعلومات الأساسية' : 'Basic Info'}</SectionTitle>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ReadOnlyField label={isRTL ? 'عنوان الإعلان' : 'Ad Title'} value={p.adTitle || p.name} />
+                  <ReadOnlyField label={isRTL ? 'عنوان الإعلان (عربي)' : 'Ad Title (Ar)'} value={p.adTitleAr} />
                   <ReadOnlyField label={isRTL ? 'المشروع' : 'Project'} value={p.project} />
-                  <ReadOnlyField label={isRTL ? 'عدد غرف النوم' : 'Bedrooms'} value={p.bedrooms} />
-                  <ReadOnlyField label={isRTL ? 'عدد الحمامات' : 'Bathrooms'} value={p.bathrooms} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <ReadOnlyField label={isRTL ? 'المساحة' : 'Area'} value={p.area} />
-                    <ReadOnlyField label={isRTL ? 'الوحدة' : 'Unit'} value={p.areaUnit || 'm²'} />
-                  </div>
-                  <ReadOnlyField label={isRTL ? 'الوصف التفصيلي' : 'Detailed Description'} value={p.description} />
-                </div>
+                  <ReadOnlyField label={isRTL ? 'التصنيف' : 'Category'} value={p.category} />
+                  <ReadOnlyField label={isRTL ? 'نوع العقار' : 'Property Type'} value={p.propertyType || p.type} />
+                  <ReadOnlyField label={isRTL ? 'رقم الوحدة' : 'Unit Number'} value={p.unitNumber} />
+                  <ReadOnlyField label={isRTL ? 'كود الوحدة' : 'Unit Code'} value={p.unitCode || p.unit} />
+                  <ReadOnlyField label={isRTL ? 'المبنى' : 'Building'} value={p.building} />
+                  <ReadOnlyField label={isRTL ? 'الغرض' : 'Purpose'} value={p.purpose} />
+                  <ReadOnlyField label={isRTL ? 'الحالة' : 'Status'} value={p.status} />
+                  <ReadOnlyField label={isRTL ? 'تاريخ الإنشاء' : 'Created Date'} value={p.createdDate} />
+                  <ReadOnlyField label={isRTL ? 'تم الإنشاء بواسطة' : 'Created By'} value={p.createdBy} />
+                  {p.purpose === 'Rent' && <ReadOnlyField label={isRTL ? 'قيمة الإيجار' : 'Rent Cost'} value={p.rentCost} />}
+                  <ReadOnlyField label={isRTL ? 'سعر المتر' : 'Meter Price'} value={p.meterPrice} />
+              </div>
+
+              <SectionTitle>{isRTL ? 'المساحات' : 'Areas'}</SectionTitle>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <ReadOnlyField label={isRTL ? 'المساحة الكلية' : 'Total Area'} value={`${p.totalArea || p.area || 0} ${p.areaUnit || 'm²'}`} />
+                  <ReadOnlyField label={isRTL ? 'مساحة المباني' : 'BUA'} value={p.bua} />
+                  {p.hasExternalArea && (
+                    <>
+                      <ReadOnlyField label={isRTL ? 'المساحة الداخلية' : 'Internal Area'} value={p.internalArea} />
+                      <ReadOnlyField label={isRTL ? 'المساحة الخارجية' : 'External Area'} value={p.externalArea} />
+                    </>
+                  )}
+                  <ReadOnlyField label={isRTL ? 'سعر المتر الداخلي' : 'Internal Meter Price'} value={p.internalMeterPrice} />
+                  <ReadOnlyField label={isRTL ? 'سعر المتر الخارجي' : 'External Meter Price'} value={p.externalMeterPrice} />
+              </div>
+
+              <SectionTitle>{isRTL ? 'تفاصيل الوحدة' : 'Unit Details'}</SectionTitle>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <ReadOnlyField label={isRTL ? 'غرف النوم' : 'Bedrooms'} value={p.bedrooms ?? p.rooms} />
+                  <ReadOnlyField label={isRTL ? 'الحمامات' : 'Bathrooms'} value={p.bathrooms} />
+                  <ReadOnlyField label={isRTL ? 'الدور' : 'Floor'} value={p.floor} />
+                  <ReadOnlyField label={isRTL ? 'التشطيب' : 'Finishing'} value={p.finishing} />
+                  <ReadOnlyField label={isRTL ? 'الإطلالة' : 'View'} value={p.view} />
+                  <ReadOnlyField label={isRTL ? 'مصعد' : 'Elevator'} value={p.elevator ? (isRTL ? 'نعم' : 'Yes') : (isRTL ? 'لا' : 'No')} />
+              </div>
+              
+              <SectionTitle>{isRTL ? 'بيانات المالك' : 'Owner Info'}</SectionTitle>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ReadOnlyField label={isRTL ? 'اسم المالك' : 'Owner Name'} value={p.ownerName} />
+                  <ReadOnlyField label={isRTL ? 'هاتف المالك' : 'Owner Mobile'} value={p.ownerMobile} />
               </div>
             </div>
           )}
           {activeTab === 'features' && (
             <div className="space-y-6">
+              <SectionTitle>{isRTL ? 'الوصف' : 'Description'}</SectionTitle>
+              <div className="text-sm text-[var(--content-text)] whitespace-pre-wrap p-3 rounded border border-gray-200 dark:border-gray-700">
+                {p.description}
+              </div>
+              {p.descriptionAr && (
+                 <div className="text-sm text-[var(--content-text)] whitespace-pre-wrap p-3 rounded border border-gray-200 dark:border-gray-700 mt-2" dir="rtl">
+                   {p.descriptionAr}
+                 </div>
+              )}
               <SectionTitle>{isRTL ? 'المواصفات' : 'Amenities'}</SectionTitle>
               {Array.isArray(p.amenities) && p.amenities.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -1256,46 +1630,88 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
             <div className="space-y-4">
               <SectionTitle>{isRTL ? 'العنوان' : 'Address'}</SectionTitle>
               <ReadOnlyField label={isRTL ? 'العنوان' : 'Address'} value={p.address} />
+              <ReadOnlyField label={isRTL ? 'العنوان (عربي)' : 'Address (Ar)'} value={p.addressAr} />
               <div className="grid grid-cols-2 gap-4">
                 <ReadOnlyField label={isRTL ? 'المدينة' : 'City'} value={p.city} />
                 <ReadOnlyField label={isRTL ? 'رابط الموقع' : 'Location URL'} value={p.locationUrl} />
+              </div>
+              <div className="space-y-2">
+                 <label className="text-xs text-[var(--muted-text)]">{isRTL ? 'الأماكن المجاورة' : 'Nearby'}</label>
+                 <div className="flex flex-wrap gap-2">
+                    {Array.isArray(p.nearby) && p.nearby.map((n, i) => (
+                        <span key={i} className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-xs">{n}</span>
+                    ))}
+                 </div>
               </div>
             </div>
           )}
           {activeTab === 'financial' && (
             <div className="space-y-6">
               <div className="space-y-4">
-                <SectionTitle>{isRTL ? 'السعر' : 'Price'}</SectionTitle>
-                <div className="grid grid-cols-2 gap-4">
-                  <ReadOnlyField label={isRTL ? 'القيمة' : 'Amount'} value={new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(p.price||0)} />
-                  <ReadOnlyField label={isRTL ? 'العملة' : 'Currency'} value={p.currency || 'EGP'} />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <SectionTitle>{isRTL ? 'خطط التقسيط' : 'Installment Plans'}</SectionTitle>
+                <SectionTitle>{isRTL ? 'خطط السداد' : 'Payment Plans'}</SectionTitle>
                 {Array.isArray(p.installmentPlans) && p.installmentPlans.length > 0 ? (
                   <div className="rounded-xl overflow-x-auto border border-gray-200 dark:border-gray-700">
                     <table className="w-full text-sm">
-                      <thead className="bg-transparent border-b border-gray-200 dark:border-gray-700">
+                      <thead className=" dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                         <tr>
-                          <th className="text-start p-3">{isRTL ? 'المقدم (%)' : 'Down (%)'}</th>
-                          <th className="text-start p-3">{isRTL ? 'السنوات' : 'Years'}</th>
-                          <th className="text-start p-3">{isRTL ? 'الاستلام' : 'Delivery'}</th>
+                          <th className="text-start p-3 min-w-[50px] font-medium text-[var(--muted-text)]">ID</th>
+                           <th className="text-start p-3 min-w-[100px] font-medium text-[var(--muted-text)]">{isRTL ? 'المقدم' : 'Down Payment'}</th>
+                           <th className="text-start p-3 min-w-[130px] font-medium text-[var(--muted-text)]">{isRTL ? 'مبلغ الحجز' : 'Reservation Amount'}</th>
+                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'دفعة الاستلام' : 'Receipt Amount'}</th>
+                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'قيمة القسط' : 'Installment Amount'}</th>
+                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'تكرار القسط' : 'Installment Frequency'}</th>
+                          <th className="text-start p-3 font-medium text-[var(--muted-text)]">{isRTL ? 'السنوات' : 'Years'}</th>
+                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'دفعة إضافية' : 'Extra Payment'}</th>
+                          <th className="text-start p-3 min-w-[160px] font-medium text-[var(--muted-text)]">{isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency'}</th>
+                          <th className="text-start p-3 min-w-[160px] font-medium text-[var(--muted-text)]">{isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count'}</th>
+                          <th className="text-start p-3 font-medium text-[var(--muted-text)]">{isRTL ? 'الاستلام' : 'Delivery'}</th>
+                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'إجراءات' : 'Actions'}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {p.installmentPlans.map((r, i) => (
-                          <tr key={i} className="border-t border-gray-100 dark:border-gray-700">
-                            <td className="p-3">{r.downPayment}</td>
+                          <tr key={i} className="border-t border-gray-100 dark:border-gray-700 transition-all duration-300 hover:bg-white/40 dark:hover:bg-white/5 hover:backdrop-blur-sm hover:shadow-sm">
+                            <td className="p-3 font-medium ">{i + 1}</td>
+                            <td className="p-3">
+                                <div className="font-semibold">
+                                  {r.downPaymentType === 'percentage'
+                                    ? `${r.downPayment}%`
+                                    : new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number(r.downPayment || 0))
+                                  }
+                                </div>
+                            </td>
+                            <td className="p-3">
+                              {new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number((r.reservationAmount ?? p.reservationAmount) || 0))}
+                            </td>
+                            <td className="p-3">
+                              {new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number(r.receiptAmount || 0))}
+                            </td>
+                            <td className="p-3">
+                                <div className="font-semibold">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number(r.installmentAmount || 0))}</div>
+                            </td>
+                            <td className="p-3">{r.installmentFrequency || '-'}</td>
                             <td className="p-3">{r.years}</td>
+                            <td className="p-3">
+                              {new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number(r.extraPayment || 0))}
+                            </td>
+                            <td className="p-3">{r.extraPaymentFrequency || '-'}</td>
+                            <td className="p-3">{r.extraPaymentCount || '0'}</td>
                             <td className="p-3">{r.deliveryDate}</td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <button onClick={() => openPlanPreview(r)} className="btn btn-xs bg-blue-600 hover:bg-blue-700 text-white border-none shadow-sm">{isRTL ? 'عرض' : 'View'}</button>
+                                <button onClick={() => downloadPlanPdf(r, i, p.name || 'Property') } className="btn btn-xs bg-green-600 hover:bg-green-700 text-white border-none shadow-sm">{isRTL ? 'تحميل' : 'Download'}</button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-[var(--muted-text)]">{isRTL ? 'لا توجد خطط' : 'No plans'}</div>
+                  <div className="text-center py-8 text-[var(--muted-text)] bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                    {isRTL ? 'لا توجد خطط سداد متاحة' : 'No payment plans available'}
+                  </div>
                 )}
               </div>
             </div>
@@ -1352,6 +1768,36 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
                 <button className="px-3 py-1.5 text-xs rounded-full bg-blue-600 text-white hover:bg-blue-700" onClick={closePreview}>
                   {isRTL ? 'إغلاق' : 'Close'}
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {isPlanPreviewOpen && planPreview && (
+          <div className="absolute inset-0 z-[220] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/70" onClick={closePlanPreview} />
+            <div className="relative z-[230] w-[90vw] max-w-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl p-4 bg-[var(--content-bg)]">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">{isRTL ? 'معاينة خطة الدفع' : 'Payment Plan Preview'}</h3>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => printPlan(planPreview)} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">{isRTL ? 'طباعة' : 'Print'}</button>
+                  <button onClick={closePlanPreview} className="btn btn-sm bg-gray-500 hover:bg-gray-600 text-white border-none">{isRTL ? 'إغلاق' : 'Close'}</button>
+                </div>
+              </div>
+              <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'المقدم' : 'Down Payment'}</td><td className="p-3">{planPreview.downPayment} {String(planPreview.downPaymentType||'amount')==='percentage' ? '%' : ''}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'نوع الحجز' : 'Reservation Type'}</td><td className="p-3">{planPreview.reservationType || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'دفعة الاستلام' : 'Receipt Amount'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.receiptAmount||0))}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'قيمة القسط' : 'Installment Amount'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.installmentAmount||0))}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'تكرار القسط' : 'Installment Frequency'}</td><td className="p-3">{planPreview.installmentFrequency || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'السنوات' : 'Years'}</td><td className="p-3">{planPreview.years || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'دفعة إضافية' : 'Extra Payment'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.extraPayment||0))}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency'}</td><td className="p-3">{planPreview.extraPaymentFrequency || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count'}</td><td className="p-3">{planPreview.extraPaymentCount || '0'}</td></tr>
+                    <tr><td className="p-3">{isRTL ? 'الاستلام' : 'Delivery'}</td><td className="p-3">{planPreview.deliveryDate || '-'}</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

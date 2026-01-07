@@ -443,7 +443,9 @@ export default function CustomersReport() {
       {/* Table */}
       <div className="glass-panel p-4">
         <div className="text-sm font-medium mb-3">{t('Customers')}</div>
-        <div className="overflow-x-auto">
+        
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm nova-table nova-table--glass">
             <thead>
               <tr className="text-left bg-[var(--table-header-bg)]">
@@ -482,6 +484,50 @@ export default function CustomersReport() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-4">
+          {filtered.length === 0 && (
+            <div className="text-center py-6 text-[var(--muted-text)]">{t('No data')}</div>
+          )}
+          {filtered.map(c => (
+            <div key={c.id} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
+              <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h4 className="font-semibold text-sm">{c.name}</h4>
+                {statusBadge(isActive(c))}
+              </div>
+              <div className="grid grid-cols-1 gap-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-text)] text-xs">{t('Type')}</span>
+                  <span className="text-xs">{c.type}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-text)] text-xs">{t('Contact')}</span>
+                  <div className="flex flex-col text-right">
+                    <span className="text-xs">{c.phone}</span>
+                    <span className="text-[var(--muted-text)] text-xs">{c.email}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-text)] text-xs">{t('Total Revenue')}</span>
+                  <span className="font-medium text-xs">{c.totalRevenue.toLocaleString()} EGP</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-text)] text-xs">{t('Orders')}</span>
+                  <span className="text-xs">{c.orders}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-text)] text-xs">{t('Last Activity')}</span>
+                  <span className="text-xs">{new Date(c.lastActivity).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-text)] text-xs">{t('Salesperson')}</span>
+                  <span className="text-xs">{c.salesperson}</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

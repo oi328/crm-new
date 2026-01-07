@@ -1,7 +1,40 @@
 import React from 'react'
-import { FaEye, FaEdit, FaShareAlt, FaTrash, FaMapMarkerAlt, FaHome } from 'react-icons/fa'
+import { FaEye, FaEdit, FaShareAlt, FaTrash, FaMapMarkerAlt, FaHome, FaFilePdf } from 'react-icons/fa'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export default function PropertyCard({ p, isRTL, onView, onEdit, onShare, onDelete }) {
+  const downloadPaymentPlanPdf = () => {
+    const plans = Array.isArray(p.installmentPlans) ? p.installmentPlans : []
+    if (plans.length === 0) return
+    const doc = new jsPDF()
+    doc.setFontSize(14)
+    doc.text(`${isRTL ? 'خطط التقسيط' : 'Installment Plans'} - ${p.adTitle || p.name || 'Property'}`, 14, 18)
+    const head = [
+      isRTL ? 'المقدم (%)' : 'Down (%)',
+      isRTL ? 'السنوات' : 'Years',
+      isRTL ? 'الاستلام' : 'Delivery',
+      isRTL ? 'قيمة القسط' : 'Installment',
+      isRTL ? 'تكرار القسط' : 'Frequency',
+      isRTL ? 'دفعة الاستلام' : 'Receipt',
+      isRTL ? 'دفعة إضافية' : 'Extra',
+      isRTL ? 'تكرار الإضافية' : 'Extra Freq',
+      isRTL ? 'عدد الإضافية' : 'Extra Count',
+    ]
+    const body = plans.map(pl => [
+      String(pl.downPayment ?? ''),
+      String(pl.years ?? ''),
+      String(pl.deliveryDate ?? ''),
+      String(pl.installmentAmount ?? ''),
+      String(pl.installmentFrequency ?? ''),
+      String(pl.receiptAmount ?? ''),
+      String(pl.extraPayment ?? ''),
+      String(pl.extraPaymentFrequency ?? ''),
+      String(pl.extraPaymentCount ?? ''),
+    ])
+    autoTable(doc, { head: [head], body, startY: 24, styles: { fontSize: 10 } })
+    doc.save(`${(p.adTitle || p.name || 'property').replace(/[\\/:*?"<>|]/g,'_')}_payment_plans.pdf`)
+  }
   return (
     <div className="glass-panel rounded-xl overflow-hidden">
       <div className="p-2 sm:p-3">
@@ -33,10 +66,10 @@ export default function PropertyCard({ p, isRTL, onView, onEdit, onShare, onDele
             </button>
             <button
               className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg shadow-sm transition focus:outline-none"
-              title={isRTL ? 'مشاركة' : 'Share'} aria-label={isRTL ? 'مشاركة' : 'Share'} onClick={()=>onShare && onShare(p)}
+              title={isRTL ? 'خطة الدفع' : 'Payment Plan'} aria-label={isRTL ? 'خطة الدفع' : 'Payment Plan'} onClick={downloadPaymentPlanPdf}
               style={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
             >
-              <FaShareAlt className="w-3 h-3 text-[var(--nova-accent)] dark:text-white" />
+              <FaFilePdf className="w-3 h-3 text-[var(--nova-accent)] dark:text-white" />
             </button>
           </div>
         </div>
@@ -97,6 +130,16 @@ export default function PropertyCard({ p, isRTL, onView, onEdit, onShare, onDele
           </div>
         </div>
 
+        {/* Share (match Project card placement) */}
+        <div className="mt-2 flex items-center justify-end">
+          <button
+            className="inline-flex items-center gap-2 text-primary hover:underline"
+            title={isRTL ? 'مشاركة' : 'Share'}
+            onClick={()=>onShare && onShare(p)}
+          >
+            <FaShareAlt className={isRTL ? 'scale-x-[-1]' : ''} /> {isRTL ? 'مشاركة' : 'Share'}
+          </button>
+        </div>
 
       </div>
     </div>

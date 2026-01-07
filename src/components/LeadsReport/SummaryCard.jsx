@@ -38,7 +38,11 @@ const SummaryCard = ({ title, subtitle, data = [] }) => {
             <LineChart data={lastSix} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
               <XAxis dataKey="name" tick={{ fill: '#94a3b8' }} />
               <YAxis tick={{ fill: '#94a3b8' }} />
-              <Tooltip />
+              <Tooltip 
+                contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                itemStyle={{ color: '#111827', fontSize: '12px', fontWeight: 'bold' }}
+                labelStyle={{ color: '#111827', fontWeight: 'bold', marginBottom: '0.25rem' }}
+              />
               <Line type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>

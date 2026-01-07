@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -196,14 +196,17 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
     price: '',
     currency: 'EGP',
     discount: '',
+    discountType: 'amount',
     reservationAmount: '',
     garageAmount: '',
     maintenanceAmount: '',
     netAmount: '',
+    totalAfterDiscount: '',
     installmentPlans: [],
     serviceCharges: '',
     maintenanceDeposit: '',
     documents: [],
+    receipt: '',
     // Step 6 (CIL)
     cilTo: '',
     cilToAr: '',
@@ -224,6 +227,16 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
 
   const [errors, setErrors] = useState({})
   const [channels, setChannels] = useState([
+    {
+      id: 'company-site',
+      name: 'Company Website',
+      type: 'website',
+      active: true,
+      selectedPackage: null,
+      packages: [],
+      status: 'Live',
+      lastSyncAt: 'Just now',
+    },
     {
       id: 'property-finder',
       name: 'Property Finder',
@@ -263,16 +276,6 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
       ],
       status: 'Not Published',
       lastSyncAt: '—',
-    },
-    {
-      id: 'company-site',
-      name: 'Company Website',
-      type: 'website',
-      active: true,
-      selectedPackage: null,
-      packages: [],
-      status: 'Live',
-      lastSyncAt: 'Just now',
     },
   ])
   const [actionMessage, setActionMessage] = useState('')
@@ -347,13 +350,19 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
   // Auto-calculate Net Amount
   useEffect(() => {
     const price = parseFloat(formData.price) || 0
-    const discount = parseFloat(formData.discount) || 0
+    const rawDiscount = parseFloat(formData.discount) || 0
+    const discount = formData.discountType === 'percentage' ? (price * rawDiscount / 100) : rawDiscount
     const garage = parseFloat(formData.garageAmount) || 0
     const maintenance = parseFloat(formData.maintenanceAmount) || 0
     
-    const net = price - discount + garage + maintenance
-    setFormData(prev => ({ ...prev, netAmount: net > 0 ? net.toString() : '' }))
-  }, [formData.price, formData.discount, formData.garageAmount, formData.maintenanceAmount])
+    const afterDiscount = price - discount
+    const net = afterDiscount + garage + maintenance
+    setFormData(prev => ({ 
+      ...prev, 
+      totalAfterDiscount: afterDiscount > 0 ? afterDiscount.toString() : '',
+      netAmount: net > 0 ? net.toString() : '' 
+    }))
+  }, [formData.price, formData.discount, formData.discountType, formData.garageAmount, formData.maintenanceAmount])
 
   useEffect(() => {
     if (isRTL) {
@@ -384,7 +393,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
       if (!formData.totalPrice || formData.totalPrice === '0') newErrors.totalPrice = 'Total Price is required'
     }
     if (step === 5) {
-      if (!formData.price) newErrors.price = 'Price is required'
+      if (formData.installmentPlans.length > 0 && !formData.price) newErrors.price = 'Price is required'
     }
     if (step === 6) {
       if (!formData.cilTo.trim() && !formData.cilToAr.trim()) newErrors.cilTo = 'To is required'
@@ -426,14 +435,16 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
       installmentPlans: [...prev.installmentPlans, { 
         downPayment: '', 
         downPaymentType: 'amount',
+        downPaymentSource: 'custom',
+        reservationType: 'amount',
         installmentAmount: '',
         installmentFrequency: 'Monthly',
         years: '', 
         deliveryDate: '', 
         receiptAmount: '',
         extraPayment: '', 
-        extraPaymentFrequency: 'Annual',
-        extraPaymentCount: '4' 
+        extraPaymentFrequency: 'Monthly',
+        extraPaymentCount: '0' 
       }]
     }))
   }
@@ -447,9 +458,84 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
 
   const updateInstallmentPlan = (index, field, value) => {
     const newPlans = [...formData.installmentPlans]
+    const prevPlan = newPlans[index]
+    if (field === 'downPaymentType') {
+      const net = parseFloat(formData.netAmount) || 0
+      const oldType = prevPlan.downPaymentType || 'amount'
+      const dpVal = parseFloat(prevPlan.downPayment) || 0
+      if (prevPlan.downPaymentSource === 'custom' && net > 0 && dpVal > 0) {
+        if (value === 'percentage' && oldType === 'amount') {
+          newPlans[index].downPayment = ((dpVal / net) * 100).toFixed(2)
+        } else if (value === 'amount' && oldType === 'percentage') {
+          newPlans[index].downPayment = ((dpVal / 100) * net).toFixed(2)
+        }
+      }
+    }
     newPlans[index][field] = value
     setFormData(prev => ({ ...prev, installmentPlans: newPlans }))
   }
+
+  const handleDiscountTypeChange = (newType) => {
+    const price = parseFloat(formData.price) || 0
+    const oldType = formData.discountType || 'amount'
+    const val = parseFloat(formData.discount) || 0
+    let nextVal = formData.discount
+    if (price > 0 && val > 0) {
+      if (newType === 'percentage' && oldType === 'amount') {
+        nextVal = ((val / price) * 100).toFixed(2)
+      } else if (newType === 'amount' && oldType === 'percentage') {
+        nextVal = ((val / 100) * price).toFixed(2)
+      }
+    }
+    setFormData(prev => ({ ...prev, discountType: newType, discount: String(nextVal) }))
+  }
+
+  const handleReservationTypeChange = (index, newType) => {
+    const net = parseFloat(formData.netAmount) || 0
+    const plan = formData.installmentPlans[index] || {}
+    const oldType = plan.reservationType || 'amount'
+    const val = parseFloat(formData.reservationAmount) || 0
+    let nextVal = formData.reservationAmount
+    if (net > 0 && val > 0) {
+      if (newType === 'percentage' && oldType === 'amount') {
+        nextVal = ((val / net) * 100).toFixed(2)
+      } else if (newType === 'amount' && oldType === 'percentage') {
+        nextVal = ((val / 100) * net).toFixed(2)
+      }
+    }
+    const newPlans = [...formData.installmentPlans]
+    if (newPlans[index]) newPlans[index].reservationType = newType
+    setFormData(prev => ({ ...prev, reservationAmount: String(nextVal), installmentPlans: newPlans }))
+  }
+
+  const stepperRef = useRef(null)
+  const stepRefs = useRef([])
+  const [progressWidth, setProgressWidth] = useState(0)
+  useEffect(() => {
+    const container = stepperRef.current
+    const idx = Math.max(0, (currentStep - 1))
+    const node = stepRefs.current[idx]
+    if (!container || !node) return
+    const cRect = container.getBoundingClientRect()
+    const nRect = node.getBoundingClientRect()
+    const center = nRect.left + nRect.width / 2
+    const leftWidth = Math.max(0, Math.min(cRect.width, center - cRect.left))
+    const rightWidth = Math.max(0, Math.min(cRect.width, cRect.right - center))
+    setProgressWidth(inputLanguage === 'ar' ? rightWidth : leftWidth)
+  }, [currentStep, inputLanguage])
+
+  const formatWithCommas = (v) => {
+    const s = String(v ?? '')
+    if (!s) return ''
+    const raw = s.replace(/,/g, '')
+    if (!raw) return ''
+    const parts = raw.split('.')
+    let int = parts[0]
+    const dec = parts[1] ?? ''
+    int = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    return dec ? `${int}.${dec}` : int
+  }
+  const unformatNumber = (v) => String(v ?? '').replace(/,/g, '')
 
   const availablePlans = React.useMemo(() => {
     const key = formData.project || 'default'
@@ -470,14 +556,16 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
         { 
           downPayment: String(plan.downPct || ''), 
           downPaymentType: 'percentage',
+          downPaymentSource: 'custom',
+          reservationType: 'amount',
           installmentAmount: '',
           installmentFrequency: 'Monthly',
           years: String(years || ''), 
           deliveryDate: delivery, 
           receiptAmount: '',
           extraPayment: '', 
-          extraPaymentFrequency: 'Annual',
-          extraPaymentCount: '4'
+          extraPaymentFrequency: 'Monthly',
+          extraPaymentCount: '0'
         }
       ]
     }))
@@ -488,6 +576,43 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
     applyPlanTemplate(plan)
   }
 
+  useEffect(() => {
+    const net = parseFloat(formData.netAmount) || 0
+    let changed = false
+    const newPlans = formData.installmentPlans.map((plan) => {
+      const years = parseFloat(plan.years) || 0
+      const perYearInst = String(plan.installmentFrequency) === 'Quarterly' ? 4
+        : String(plan.installmentFrequency) === 'Semi-Annual' ? 2
+        : String(plan.installmentFrequency) === 'Annual' ? 1
+        : 12
+      const installmentsCount = Math.max(0, Math.round(years * perYearInst))
+      const instAmt = parseFloat(plan.installmentAmount) || 0
+      const receipt = parseFloat(plan.receiptAmount) || 0
+      const rawRes = parseFloat(formData.reservationAmount) || 0
+      const resDp = plan.reservationType === 'percentage' ? (net * rawRes / 100) : rawRes
+      const rawDP = parseFloat(plan.downPayment) || 0
+      const customDp = plan.downPaymentType === 'percentage' ? (net * rawDP / 100) : rawDP
+      const dp = (plan.downPaymentSource === 'custom') ? customDp : resDp
+      const base = net - dp - receipt
+      const paidByInstallments = instAmt * installmentsCount
+      const leftover = base - paidByInstallments
+      const freq = String(plan.extraPaymentFrequency || 'Monthly')
+      const perYear = freq === 'Monthly' ? 12 : freq === 'Quarterly' ? 4 : freq === 'Semi-Annual' ? 2 : freq === 'Annual' ? 1 : 12
+      const count = years > 0 ? Math.max(0, Math.round(years * perYear)) : 0
+      const extraAmt = (count > 0 && leftover > 0) ? Math.round((leftover / count) * 100) / 100 : 0
+      const next = {
+        ...plan,
+        extraPayment: extraAmt ? String(extraAmt) : '',
+        extraPaymentCount: count ? String(count) : '0'
+      }
+      if (
+        next.extraPayment !== plan.extraPayment ||
+        next.extraPaymentCount !== plan.extraPaymentCount
+      ) changed = true
+      return next
+    })
+    if (changed) setFormData(prev => ({ ...prev, installmentPlans: newPlans }))
+  }, [formData.netAmount, formData.reservationAmount, formData.installmentPlans])
   // --- Step Renderers ---
 
   const renderStep1 = () => (
@@ -1166,54 +1291,6 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
 
   const renderStep5 = () => (
     <div className="space-y-6 animate-fadeIn">
-      {/* Price Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Price */}
-        <div className="space-y-2">
-          <label className="label flex items-center gap-2">
-            <FaTag className="text-gray-400" />
-            {inputLanguage === 'ar' ? 'السعر' : 'Price'}
-            <span className="text-red-500">*</span>
-          </label>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <input 
-                type="number"
-                className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.price ? 'border-red-500' : ''}`}
-                value={formData.price}
-                onChange={e => setFormData({...formData, price: e.target.value})}
-                placeholder="0.00"
-              />
-            </div>
-            <select 
-              className="input dark:bg-gray-800 w-24 border border-black dark:border-gray-700"
-              value={formData.currency}
-              onChange={e => setFormData({...formData, currency: e.target.value})}
-            >
-              <option value="EGP">EGP</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-            </select>
-          </div>
-          {errors.price && <p className="text-red-500 text-xs">{errors.price}</p>}
-        </div>
-
-        {/* Discount */}
-        <div className="space-y-2">
-           <label className="label flex items-center gap-2">
-            <FaPercentage className="text-gray-400" />
-            {inputLanguage === 'ar' ? 'الخصم' : 'Discount'}
-          </label>
-          <input 
-            type="number"
-            className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-            value={formData.discount}
-            onChange={e => setFormData({...formData, discount: e.target.value})}
-            placeholder="0.00"
-          />
-        </div>
-      </div>
-
       {/* Payment Plans */}
       <div className="space-y-4">
         <h3 className="font-semibold text-lg flex items-center justify-between">
@@ -1233,158 +1310,318 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
             </div>
           )}
         </h3>
-
-        {/* Reservation Amount */}
-        <div className="space-y-2">
-          <label className="label text-sm">
-            {inputLanguage === 'ar' ? 'مبلغ الحجز' : 'Reservation Amount'}
-          </label>
-          <input 
-            type="number"
-            className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-            value={formData.reservationAmount}
-            onChange={e => setFormData({...formData, reservationAmount: e.target.value})}
-            placeholder="0.00"
-          />
-        </div>
         
         {/* Installment Plans List */}
         <div className="space-y-3">
           {formData.installmentPlans.map((plan, index) => (
             <div key={index} className="p-4 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 relative group animate-fadeIn space-y-4">
-               {/* Row 1: Down Payment & Receipt Amount */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Down Payment */}
-                  <div className="space-y-1">
-                    <label className="text-xs text-[var(--muted-text)]">
-                      {inputLanguage === 'ar' ? 'المقدم' : 'Down Payment'}
-                    </label>
-                    <div className="flex gap-2">
+               <table className="w-full text-sm">
+                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <div className="flex items-center gap-2">
+                         <FaTag className="text-gray-400" />
+                         <span className="label m-0">
+                           {inputLanguage === 'ar' ? 'السعر' : 'Price'} <span className="text-red-500">*</span>
+                         </span>
+                       </div>
+                     </td>
+                     <td className="py-2">
+                       <div className="flex gap-2">
+                        <input
+                          type="text"
+                          className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.price ? 'border-red-500' : ''}`}
+                          value={formatWithCommas(formData.price)}
+                          onChange={e => setFormData({...formData, price: unformatNumber(e.target.value)})}
+                          placeholder="0.00"
+                        />
                          <select
-                             className="input dark:bg-gray-800 w-24 text-sm border border-black dark:border-gray-700"
-                             value={plan.downPaymentType || 'amount'}
-                             onChange={e => updateInstallmentPlan(index, 'downPaymentType', e.target.value)}
+                           className="input dark:bg-gray-800 w-24 border border-black dark:border-gray-700"
+                           value={formData.currency}
+                           onChange={e => setFormData({...formData, currency: e.target.value})}
                          >
-                             <option value="amount">{inputLanguage === 'ar' ? 'مبلغ' : 'Amount'}</option>
-                             <option value="percentage">{inputLanguage === 'ar' ? 'نسبة %' : 'Percentage %'}</option>
+                           <option value="EGP">EGP</option>
+                           <option value="USD">USD</option>
+                           <option value="EUR">EUR</option>
                          </select>
-                         <input 
-                             type="number"
+                       </div>
+                       {errors.price && <p className="text-red-500 text-xs">{errors.price}</p>}
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <div className="flex items-center gap-2">
+                         <FaPercentage className="text-gray-400" />
+                         <span className="label m-0">{inputLanguage === 'ar' ? 'الخصم' : 'Discount'}</span>
+                       </div>
+                     </td>
+                     <td className="py-2">
+                       <div className="flex gap-2">
+                        <input
+                          type="text"
+                          className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+                          value={formData.discountType === 'amount' ? formatWithCommas(formData.discount) : formData.discount}
+                          onChange={e => setFormData({...formData, discount: unformatNumber(e.target.value)})}
+                          placeholder="0.00"
+                        />
+                         <select
+                           className="input dark:bg-gray-800 w-32 border border-black dark:border-gray-700"
+                           value={formData.discountType}
+                           onChange={e => handleDiscountTypeChange(e.target.value)}
+                         >
+                           <option value="amount">{inputLanguage === 'ar' ? 'قيمة' : 'Amount'}</option>
+                           <option value="percentage">{inputLanguage === 'ar' ? 'نسبة %' : 'Percentage %'}</option>
+                         </select>
+                       </div>
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'الإجمالي بعد الخصم' : 'Total After Discount'}</span>
+                     </td>
+                     <td className="py-2">
+                      <input
+                        type="text"
+                        readOnly
+                        className="input bg-gray-100 dark:bg-gray-700 w-full border border-gray-600 font-bold"
+                        value={formatWithCommas(formData.totalAfterDiscount)}
+                      />
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'سعر الجراج' : 'Garage Amount'}</span>
+                     </td>
+                     <td className="py-2">
+                      <input 
+                        type="text"
+                        className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+                        value={formatWithCommas(formData.garageAmount)}
+                        onChange={e => setFormData({...formData, garageAmount: unformatNumber(e.target.value)})}
+                        placeholder="0.00"
+                      />
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'وديعة الصيانة' : 'Maintenance Amount'}</span>
+                     </td>
+                     <td className="py-2">
+                      <div className="flex gap-2">
+                       <input 
+                        type="text"
+                        className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+                        value={formatWithCommas(formData.maintenanceAmount)}
+                        onChange={e => setFormData({...formData, maintenanceAmount: unformatNumber(e.target.value)})}
+                        placeholder="0.00"
+                      />
+                     <select
+                           className="input dark:bg-gray-800 w-32 border border-black dark:border-gray-700"
+                           value={formData.discountType}
+                           onChange={e => handleDiscountTypeChange(e.target.value)}
+                         >
+                           <option value="amount">{inputLanguage === 'ar' ? 'قيمة' : 'Amount'}</option>
+                           <option value="percentage">{inputLanguage === 'ar' ? 'نسبة %' : 'Percentage %'}</option>
+                      </select>
+                      </div>
+                          
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'صافي المبلغ' : 'Net Amount'}</span>
+                     </td>
+                     <td className="py-2">
+                      <input 
+                        type="text"
+                        readOnly
+                        className="input bg-gray-100 dark:bg-gray-700 w-full border border-transparent font-bold"
+                        value={formatWithCommas(formData.netAmount)}
+                      />
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'مبلغ الحجز' : 'Reservation Amount'}</span>
+                     </td>
+                     <td className="py-2">
+                      <div className="flex gap-2">
+                       <input
+                         type="text"
+                         className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
+                         value={(plan.reservationType || 'amount') === 'amount' ? formatWithCommas(formData.reservationAmount) : formData.reservationAmount}
+                         onChange={e => setFormData({...formData, reservationAmount: unformatNumber(e.target.value)})}
+                         placeholder="0.00"
+                       />
+                       <select
+                           className="input dark:bg-gray-800 w-28 text-sm border border-black dark:border-gray-700"
+                           value={plan.reservationType || 'amount'}
+                           onChange={e => handleReservationTypeChange(index, e.target.value)}
+                         >
+                           <option value="amount">{inputLanguage === 'ar' ? 'مبلغ' : 'Amount'}</option>
+                           <option value="percentage">{inputLanguage === 'ar' ? 'نسبة %' : 'Percentage %'}</option>
+                         </select>
+                         </div>
+                     </td>
+                   </tr>
+                  
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'المقدم' : 'Down Payment'}</span>
+                     </td>
+                     <td className="py-2">
+                       <div className="flex gap-2">
+                        <select
+                          className="input dark:bg-gray-800 w-36 text-sm border border-black dark:border-gray-700"
+                          value={plan.downPaymentSource || 'reservation'}
+                          onChange={e => updateInstallmentPlan(index, 'downPaymentSource', e.target.value)}
+                        >
+                          <option value="reservation">{inputLanguage === 'ar' ? 'من الحجز' : 'From Reservation'}</option>
+                          <option value="custom">{inputLanguage === 'ar' ? 'مخصص' : 'Custom'}</option>
+                        </select>
+                        {plan.downPaymentSource === 'custom' ? (
+                          <>
+                           <input 
+                             type="text"
                              className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
-                             value={plan.downPayment}
-                             onChange={e => updateInstallmentPlan(index, 'downPayment', e.target.value)}
-                             placeholder={plan.downPaymentType === 'percentage' ? 'e.g. 10' : '0.00'}
-                         />
-                    </div>
-                  </div>
-                  
-                  {/* Receipt Amount */}
-                  <div className="space-y-1">
-                     <label className="text-xs text-[var(--muted-text)]">
-                       {inputLanguage === 'ar' ? 'دفعة استلام' : 'Receipt Amount'}
-                     </label>
-                     <input 
-                       type="number"
-                       className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
-                       value={plan.receiptAmount}
-                       onChange={e => updateInstallmentPlan(index, 'receiptAmount', e.target.value)}
-                       placeholder="0.00"
-                     />
-                  </div>
-               </div>
-
-               {/* Row 2: Installment & Years */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Installment */}
-                  <div className="space-y-1">
-                     <label className="text-xs text-[var(--muted-text)]">
-                      {inputLanguage === 'ar' ? 'قيمة القسط' : 'Installment Amount'}
-                    </label>
-                    <div className="flex gap-2">
-                      <input 
-                        type="number"
-                        className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
-                        value={plan.installmentAmount}
-                        onChange={e => updateInstallmentPlan(index, 'installmentAmount', e.target.value)}
-                        placeholder="0.00"
-                      />
+                             value={(plan.downPaymentType || 'amount') === 'amount' ? formatWithCommas(plan.downPayment) : plan.downPayment}
+                             onChange={e => updateInstallmentPlan(index, 'downPayment', unformatNumber(e.target.value))}
+                             placeholder={plan.downPaymentType === 'percentage' ? '10' : '0.00'}
+                           />
+                            <select
+                              className="input dark:bg-gray-800 w-28 text-sm border border-black dark:border-gray-700"
+                              value={plan.downPaymentType || 'amount'}
+                              onChange={e => updateInstallmentPlan(index, 'downPaymentType', e.target.value)}
+                            >
+                              <option value="amount">{inputLanguage === 'ar' ? 'مبلغ' : 'Amount'}</option>
+                              <option value="percentage">{inputLanguage === 'ar' ? 'نسبة %' : 'Percentage %'}</option>
+                            </select>
+                          </>
+                        ) : (
+                          <input
+                            type="text"
+                            readOnly
+                            className="input bg-gray-100 dark:bg-gray-700 w-full text-sm border border-gray-600"
+                            value={
+                              (plan.reservationType === 'percentage'
+                                ? ((parseFloat(formData.netAmount)||0) * (parseFloat(formData.reservationAmount)||0) / 100)
+                                : (parseFloat(formData.reservationAmount)||0)
+                              ).toString()
+                            }
+                          />
+                        )}
+                       </div>
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'دفعة استلام' : 'Receipt Amount'}</span>
+                     </td>
+                     <td className="py-2">
+                       <div className="flex gap-2">
+                         <input 
+                         type="text"
+                         className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
+                         value={formatWithCommas(plan.receiptAmount)}
+                         onChange={e => updateInstallmentPlan(index, 'receiptAmount', unformatNumber(e.target.value))}
+                         placeholder="0.00"
+                       />
                       <select
-                         className="input dark:bg-gray-800 w-32 text-sm border border-black dark:border-gray-700"
-                         value={plan.installmentFrequency}
-                         onChange={e => updateInstallmentPlan(index, 'installmentFrequency', e.target.value)}
+                        className="input dark:bg-gray-800 w-32 text-sm border border-black dark:border-gray-700"
+                        value={plan.receiptAmountType || 'amount'}
+                        onChange={e => updateInstallmentPlan(index, 'receiptAmountType', e.target.value)}
                       >
-                        <option value="Monthly">{inputLanguage === 'ar' ? 'شهري' : 'Monthly'}</option>
-                        <option value="Quarterly">{inputLanguage === 'ar' ? 'ربع سنوي' : 'Quarterly'}</option>
-                        <option value="Semi-Annual">{inputLanguage === 'ar' ? 'نصف سنوي' : 'Semi-Annual'}</option>
-                        <option value="Annual">{inputLanguage === 'ar' ? 'سنوي' : 'Annual'}</option>
+                        <option value="amount">{inputLanguage === 'ar' ? 'مبلغ' : 'Amount'}</option>
+                        <option value="percentage">{inputLanguage === 'ar' ? 'نسبة %' : 'Percentage %'}</option>
                       </select>
-                    </div>
-                  </div>
-                  
-                  {/* Years */}
-                  <div className="space-y-1">
-                     <label className="text-xs text-[var(--muted-text)]">
-                       {inputLanguage === 'ar' ? 'المدة (سنوات)' : 'Years'}
-                     </label>
-                     <input 
-                       type="number"
-                       className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
-                       value={plan.years}
-                       onChange={e => updateInstallmentPlan(index, 'years', e.target.value)}
-                     />
-                  </div>
-               </div>
-
-               {/* Row 3: Extra Payment & Delivery */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Extra Payment */}
-                  <div className="space-y-1">
-                     <label className="text-xs text-[var(--muted-text)]">
-                      {inputLanguage === 'ar' ? 'دفعة إضافية' : 'Extra Payment'}
-                    </label>
-                    <div className="flex gap-2">
+                      </div>
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'قيمة القسط' : 'Installment Amount'}</span>
+                     </td>
+                     <td className="py-2">
+                       <div className="flex gap-2">
+                         <input 
+                           type="text"
+                           className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
+                           value={formatWithCommas(plan.installmentAmount)}
+                           onChange={e => updateInstallmentPlan(index, 'installmentAmount', unformatNumber(e.target.value))}
+                           placeholder="0.00"
+                         />
+                         <select
+                           className="input dark:bg-gray-800 w-32 text-sm border border-black dark:border-gray-700"
+                           value={plan.installmentFrequency}
+                           onChange={e => updateInstallmentPlan(index, 'installmentFrequency', e.target.value)}
+                         >
+                           <option value="Monthly">{inputLanguage === 'ar' ? 'شهري' : 'Monthly'}</option>
+                           <option value="Quarterly">{inputLanguage === 'ar' ? 'ربع سنوي' : 'Quarterly'}</option>
+                           <option value="Semi-Annual">{inputLanguage === 'ar' ? 'نصف سنوي' : 'Semi-Annual'}</option>
+                           <option value="Annual">{inputLanguage === 'ar' ? 'سنوي' : 'Annual'}</option>
+                         </select>
+                       </div>
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'المدة (سنوات)' : 'Years'}</span>
+                     </td>
+                     <td className="py-2">
+                       <input 
+                         type="number"
+                         className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
+                         value={plan.years}
+                         onChange={e => updateInstallmentPlan(index, 'years', e.target.value)}
+                       />
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'دفعة إضافية' : 'Extra Payment'}</span>
+                     </td>
+                     <td className="py-2">
+                       <div className="flex gap-2">
                       <input 
-                        type="number"
-                        className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
-                        value={plan.extraPayment}
-                        onChange={e => updateInstallmentPlan(index, 'extraPayment', e.target.value)}
-                        placeholder="0.00"
+                        type="text"
+                        readOnly
+                        className="input bg-gray-100 dark:bg-gray-700 w-full text-sm border border-gray-600"
+                        value={formatWithCommas(plan.extraPayment)}
                       />
-                       <select
-                         className="input dark:bg-gray-800 w-32 text-sm border border-black dark:border-gray-700"
-                         value={plan.extraPaymentFrequency}
-                         onChange={e => updateInstallmentPlan(index, 'extraPaymentFrequency', e.target.value)}
-                      >
-                        <option value="Quarterly">{inputLanguage === 'ar' ? 'ربع سنوي' : 'Quarterly'}</option>
-                        <option value="Semi-Annual">{inputLanguage === 'ar' ? 'نصف سنوي' : 'Semi-Annual'}</option>
-                        <option value="Annual">{inputLanguage === 'ar' ? 'سنوي' : 'Annual'}</option>
-                      </select>
-                       <select
-                         className="input dark:bg-gray-800 w-20 text-sm border border-black dark:border-gray-700"
-                         value={plan.extraPaymentCount}
-                         onChange={e => updateInstallmentPlan(index, 'extraPaymentCount', e.target.value)}
-                      >
-                        {[3,4,5,6,7,8].map(n => (
-                           <option key={n} value={n}>{n}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  
-                  {/* Delivery Date */}
-                  <div className="space-y-1">
-                     <label className="text-xs text-[var(--muted-text)]">
-                       {inputLanguage === 'ar' ? 'الاستلام' : 'Delivery'}
-                     </label>
-                     <input 
-                       type="text"
-                       className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
-                       value={plan.deliveryDate}
-                       onChange={e => updateInstallmentPlan(index, 'deliveryDate', e.target.value)}
-                     />
-                  </div>
-               </div>
-               
+                         <select
+                           className="input dark:bg-gray-800 w-32 text-sm border border-black dark:border-gray-700"
+                           value={plan.extraPaymentFrequency}
+                           onChange={e => updateInstallmentPlan(index, 'extraPaymentFrequency', e.target.value)}
+                         >
+                           <option value="Monthly">{inputLanguage === 'ar' ? 'شهري' : 'Monthly'}</option>
+                           <option value="Quarterly">{inputLanguage === 'ar' ? 'ربع سنوي' : 'Quarterly'}</option>
+                           <option value="Semi-Annual">{inputLanguage === 'ar' ? 'نصف سنوي' : 'Semi-Annual'}</option>
+                           <option value="Annual">{inputLanguage === 'ar' ? 'سنوي' : 'Annual'}</option>
+                         </select>
+                         <input
+                           type="text"
+                           readOnly
+                           className="input bg-gray-100 dark:bg-gray-700 w-20 text-sm border border-gray-600"
+                           value={plan.extraPaymentCount}
+                         />
+                       </div>
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'الاستلام' : 'Delivery'}</span>
+                     </td>
+                     <td className="py-2">
+                       <input 
+                         type="date"
+                         className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
+                         value={plan.deliveryDate}
+                         onChange={e => updateInstallmentPlan(index, 'deliveryDate', e.target.value)}
+                       />
+                     </td>
+                   </tr>
+                 </tbody>
+               </table>
                <button 
                   onClick={() => removeInstallmentPlan(index)}
                   className="absolute top-2 right-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1 rounded"
@@ -1404,49 +1641,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
         </div>
       </div>
 
-      {/* Additional Fees & Net Amount */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-         <div className="space-y-2">
-            <label className="label">
-              {inputLanguage === 'ar' ? 'سعر الجراج' : 'Garage Amount'}
-            </label>
-            <input 
-              type="number"
-              className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-              value={formData.garageAmount}
-              onChange={e => setFormData({...formData, garageAmount: e.target.value})}
-              placeholder="0.00"
-            />
-         </div>
-         <div className="space-y-2">
-            <label className="label">
-              {inputLanguage === 'ar' ? 'وديعة الصيانة' : 'Maintenance Amount'}
-            </label>
-            <input 
-              type="number"
-              className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-              value={formData.maintenanceAmount}
-              onChange={e => setFormData({...formData, maintenanceAmount: e.target.value})}
-              placeholder="0.00"
-            />
-         </div>
-          
-          <div className="space-y-2 md:col-span-2">
-             <label className="label flex items-center gap-2 text-lg font-bold text-blue-600">
-               <FaHandHoldingUsd />
-               {inputLanguage === 'ar' ? 'صافي المبلغ' : 'Net Amount'}
-             </label>
-             <input 
-               type="text"
-               readOnly
-               className="input bg-gray-100 dark:bg-gray-700 w-full border border-transparent font-bold text-lg"
-               value={formData.netAmount}
-             />
-             <p className="text-xs text-[var(--muted-text)]">
-                {inputLanguage === 'ar' ? '(السعر - الخصم + الجراج + الصيانة)' : '(Price - Discount + Garage + Maintenance)'}
-             </p>
-          </div>
-      </div>
+      
        
        {/* Legal Documents */}
       <div className="space-y-2 pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -1470,7 +1665,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
       <div className="p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl mb-4">
          <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
             <FaAddressCard />
-            {inputLanguage === 'ar' ? 'خطاب اهتمام العميل (CIL)' : 'Client Interest Letter (CIL)'}
+            {inputLanguage === 'ar' ? 'خطاب معلومات  العميل (CIL)' : 'Client Information Letter (CIL)'}
          </h3>
          <p className="text-xs text-blue-600 dark:text-blue-300">
             {inputLanguage === 'ar' ? 'قم بتعبئة بيانات الخطاب لإرساله.' : 'Fill in the letter details to send it.'}
@@ -1772,14 +1967,14 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
                       className={`
                         relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent 
                         transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2
-                        ${channel.active ? 'bg-blue-600' : ' dark:bg-gray-700'}
+                        ${channel.active ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'}
                       `}
                     >
                       <span className="sr-only">Use setting</span>
                       <span
                         aria-hidden="true"
                         className={`
-                          pointer-events-none inline-block h-5 w-5 transform rounded-full  shadow ring-0 
+                          pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 
                           transition duration-200 ease-in-out
                           ${channel.active ? 'translate-x-5' : 'translate-x-0'}
                         `}
@@ -1970,18 +2165,18 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
           </div>
 
           {/* Stepper */}
-          <div className="flex items-center justify-between relative px-2 md:px-8">
+          <div ref={stepperRef} className="flex items-center justify-between relative px-2 md:px-8">
             <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 dark:bg-gray-700 -translate-y-1/2 rounded-full" />
             <div 
               className={`absolute top-1/2 ${inputLanguage === 'ar' ? 'right-0' : 'left-0'} h-0.5 bg-blue-500 -translate-y-1/2 rounded-full transition-all duration-500 ease-in-out`}
-              style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
+              style={{ width: `${progressWidth}px` }}
             />
             
             {STEPS.map((step) => {
               const isActive = step.id === currentStep
               const isCompleted = step.id < currentStep
               return (
-                <div key={step.id} className="flex flex-col items-center gap-1 relative group cursor-pointer" onClick={() => setCurrentStep(step.id)}>
+                <div ref={el => { stepRefs.current[step.id - 1] = el }} key={step.id} className="flex flex-col items-center gap-1 relative group cursor-pointer" onClick={() => setCurrentStep(step.id)}>
                   <div 
                     className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all duration-300 z-10 ${
                       isActive 

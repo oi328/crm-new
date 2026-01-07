@@ -30,7 +30,7 @@ export default function EmployeesReportingStats({ list }) {
         </button>
       </div>
 
-      <div className="w-full overflow-x-auto">
+      <div className="w-full hidden md:block overflow-x-auto">
         <table className="min-w-[520px] w-full text-sm">
           <thead>
             <tr className="text-gray-600 dark:text-gray-300">
@@ -71,6 +71,38 @@ export default function EmployeesReportingStats({ list }) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {shown.map((d, idx) => (
+          <div key={idx} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+              <h4 className="font-semibold text-sm">{d.name}</h4>
+              <span className="text-xs text-[var(--muted-text)]">{d.last}</span>
+            </div>
+            <div className="grid grid-cols-1 gap-y-3 text-sm">
+              <div className="space-y-1">
+                <div className="flex justify-between items-center text-xs">
+                   <span className="text-[var(--muted-text)]">{t('Reports')}</span>
+                   <span>{d.reports}</span>
+                </div>
+                <div className="h-1.5 rounded bg-gray-200 dark:bg-blue-800 overflow-hidden w-full">
+                   <div className="h-full bg-blue-500" style={{ width: `${Math.round((d.reports / maxReports) * 100)}%` }} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between items-center text-xs">
+                   <span className="text-[var(--muted-text)]">{t('Success Rate')}</span>
+                   <span>{d.successRate}%</span>
+                </div>
+                <div className="h-1.5 rounded bg-gray-200 dark:bg-blue-800 overflow-hidden w-full">
+                   <div className="h-full bg-emerald-500" style={{ width: `${Math.min(d.successRate, 100)}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

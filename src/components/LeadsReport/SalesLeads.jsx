@@ -112,7 +112,7 @@ const SalesLeads = ({ leads = [] }) => {
       </div>
 
       {/* Leads Table */}
-      <div className="rounded-lg border border-gray-800 bg-[#0b1220] overflow-auto">
+      <div className="rounded-lg border border-gray-800 bg-[#0b1220] overflow-auto hidden md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-900">
@@ -142,6 +142,38 @@ const SalesLeads = ({ leads = [] }) => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {filtered.map((l, idx) => (
+          <div key={idx} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+              <h4 className="font-semibold text-sm">{l.name||'-'}</h4>
+              <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
+                {l.stage||'-'}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-y-3 text-sm">
+              <div className="flex justify-between items-center">
+                 <span className="text-[var(--muted-text)] text-xs">{t('Phone')}</span>
+                 <span className="text-xs">{l.phone||'-'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                 <span className="text-[var(--muted-text)] text-xs">{t('Source')}</span>
+                 <span className="text-xs">{l.source||'-'}</span>
+              </div>
+            </div>
+            <div className="pt-2">
+               <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md border border-gray-700 bg-gray-800 hover:bg-gray-700 transition text-xs" onClick={() => openLead(l)}>
+                 {t('View Lead Details')}
+               </button>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div className="text-center text-[var(--muted-text)] py-4">{t('No leads')}</div>
+        )}
       </div>
 
       {/* Top Source */}

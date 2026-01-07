@@ -1,6 +1,8 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { FaMapMarkerAlt, FaHome, FaBed, FaBath, FaRulerCombined, FaPhone } from 'react-icons/fa'
 import { useCompanySetup } from './settings/company-setup/store/CompanySetupContext.jsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export default function PropertyLanding() {
   const searchStr = (() => {
@@ -23,6 +25,8 @@ export default function PropertyLanding() {
   }, [params])
   const brandName = params.get('company') || (companySetup && companySetup.companyInfo && companySetup.companyInfo.companyName) || ''
   const brandLogo = (companySetup && companySetup.companyInfo && companySetup.companyInfo.logoUrl) || ''
+  const [previewPlan, setPreviewPlan] = useState(null)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
   if (!payload) {
     return (
@@ -55,6 +59,76 @@ export default function PropertyLanding() {
   const address = payload.address || ''
   const locationUrl = payload.locationUrl || ''
   const installmentPlans = Array.isArray(payload.installmentPlans) ? payload.installmentPlans : []
+
+  const openPreview = (plan) => {
+    setPreviewPlan(plan)
+    setIsPreviewOpen(true)
+  }
+  const closePreview = () => {
+    setIsPreviewOpen(false)
+    setPreviewPlan(null)
+  }
+  const printPlan = (plan) => {
+    const w = window.open('', '_blank')
+    if (!w) return
+    const currencyFmt = (v) => new Intl.NumberFormat('en-EG', { maximumFractionDigits: 2 }).format(Number(v || 0))
+    w.document.write(`
+      <html><head><title>Payment Plan</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
+        th { background: #f3f4f6; }
+        .actions { margin-top: 16px; }
+      </style>
+      </head><body>
+      <h2>Payment Plan Preview</h2>
+      <table>
+        <tbody>
+          <tr><th>Down Payment</th><td>${plan.downPayment || '-' } ${String(plan.downPaymentType||'amount')==='percentage' ? '%' : ''}</td></tr>
+          <tr><th>Reservation Type</th><td>${plan.reservationType || '-'}</td></tr>
+          <tr><th>Receipt Amount</th><td>${currencyFmt(plan.receiptAmount)}</td></tr>
+          <tr><th>Installment Amount</th><td>${currencyFmt(plan.installmentAmount)}</td></tr>
+          <tr><th>Installment Frequency</th><td>${plan.installmentFrequency || '-'}</td></tr>
+          <tr><th>Years</th><td>${plan.years || '-'}</td></tr>
+          <tr><th>Extra Payment</th><td>${currencyFmt(plan.extraPayment)}</td></tr>
+          <tr><th>Extra Payment Frequency</th><td>${plan.extraPaymentFrequency || '-'}</td></tr>
+          <tr><th>Extra Payment Count</th><td>${plan.extraPaymentCount || '0'}</td></tr>
+          <tr><th>Delivery</th><td>${plan.deliveryDate || '-'}</td></tr>
+        </tbody>
+      </table>
+      <div class="actions">
+        <button onclick="window.print()" style="padding:8px 12px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;">Print</button>
+      </div>
+      </body></html>
+    `)
+    w.document.close()
+  }
+  const downloadPlanPdf = (plan, index) => {
+    const doc = new jsPDF()
+    doc.setFontSize(14)
+    doc.text(`Payment Plan #${index+1} - ${title}`, 14, 18)
+    const rows = [
+      ['Down Payment', `${plan.downPayment || '-'} ${String(plan.downPaymentType||'amount')==='percentage' ? '%' : ''}`],
+      ['Reservation Type', plan.reservationType || '-'],
+      ['Receipt Amount', String(plan.receiptAmount || '0')],
+      ['Installment Amount', String(plan.installmentAmount || '0')],
+      ['Installment Frequency', plan.installmentFrequency || '-'],
+      ['Years', String(plan.years || '-')],
+      ['Extra Payment', String(plan.extraPayment || '0')],
+      ['Extra Payment Frequency', plan.extraPaymentFrequency || '-'],
+      ['Extra Payment Count', String(plan.extraPaymentCount || '0')],
+      ['Delivery', plan.deliveryDate || '-'],
+    ]
+    autoTable(doc, {
+      head: [['Field', 'Value']],
+      body: rows,
+      startY: 24,
+      styles: { fontSize: 10 }
+    })
+    doc.save(`payment-plan-${index+1}.pdf`)
+  }
 
   return (
     <div className="min-h-screen bg-[var(--content-bg)] text-[var(--content-text)]">
@@ -205,6 +279,7 @@ export default function PropertyLanding() {
                     <th className="text-start p-3">المقدم (%)</th>
                     <th className="text-start p-3">السنوات</th>
                     <th className="text-start p-3">الاستلام</th>
+                    <th className="text-start p-3">إجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -213,10 +288,47 @@ export default function PropertyLanding() {
                       <td className="p-3">{r.downPayment}</td>
                       <td className="p-3">{r.years}</td>
                       <td className="p-3">{r.deliveryDate}</td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openPreview(r)} className="btn btn-xs bg-blue-600 hover:bg-blue-700 text-white border-none">بريفيو</button>
+                          <button onClick={() => downloadPlanPdf(r, i)} className="btn btn-xs bg-green-600 hover:bg-green-700 text-white border-none">تحميل</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {isPreviewOpen && previewPlan && (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50" onClick={closePreview} />
+            <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl p-4 bg-[var(--content-bg)]">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">معاينة خطة الدفع</h3>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => printPlan(previewPlan)} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">طباعة</button>
+                  <button onClick={closePreview} className="btn btn-sm bg-gray-500 hover:bg-gray-600 text-white border-none">إغلاق</button>
+                </div>
+              </div>
+              <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">المقدم</td><td className="p-3">{previewPlan.downPayment} {String(previewPlan.downPaymentType||'amount')==='percentage' ? '%' : ''}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">نوع الحجز</td><td className="p-3">{previewPlan.reservationType || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">دفعة الاستلام</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(previewPlan.receiptAmount||0))}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">قيمة القسط</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(previewPlan.installmentAmount||0))}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">تكرار القسط</td><td className="p-3">{previewPlan.installmentFrequency || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">السنوات</td><td className="p-3">{previewPlan.years || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">دفعة إضافية</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(previewPlan.extraPayment||0))}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">تكرار الدفعة الإضافية</td><td className="p-3">{previewPlan.extraPaymentFrequency || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">عدد الدفعات الإضافية</td><td className="p-3">{previewPlan.extraPaymentCount || '0'}</td></tr>
+                    <tr><td className="p-3">الاستلام</td><td className="p-3">{previewPlan.deliveryDate || '-'}</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import * as XLSX from 'xlsx'
 import { useTranslation } from 'react-i18next'
 import SearchableSelect from '../../components/SearchableSelect'
-import { FaFilter, FaSearch, FaChevronDown, FaTimes, FaEdit, FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
+import { FaFilter, FaSearch, FaChevronDown, FaTimes, FaEdit, FaTrash, FaChevronLeft, FaChevronRight, FaFileExport, FaFileImport, FaFileCsv, FaFilePdf } from 'react-icons/fa'
 import { FaPlus } from 'react-icons/fa'
+import ItemsImportModal from './ItemsImportModal'
 
 const MOCK_ITEMS = [
   { id: 1, name: 'iPhone 13 Pro', family: 'Electronics', category: 'Mobiles', group: 'Smartphones', type: 'Product', sku: 'MOB-IPH-13P', price: 999, stock: 50, minStock: 10, unit: 'pcs', status: 'Active', description: 'Apple iPhone 13 Pro 128GB' },
@@ -73,6 +75,10 @@ export default function ItemsPage() {
     allowDiscount: isArabic ? 'السماح بالخصم' : 'Allow Discount',
     maxDiscount: isArabic ? 'أقصى نسبة خصم (%)' : 'Max Discount %',
     isActive: isArabic ? 'نشط' : 'Is Active',
+    import: isArabic ? 'استيراد' : 'Import',
+    export: isArabic ? 'تصدير' : 'Export',
+    exportCsv: isArabic ? 'تصدير CSV' : 'Export CSV',
+    exportPdf: isArabic ? 'تصدير PDF' : 'Export PDF',
   }), [isArabic])
 
   const STORAGE_KEY = 'inventoryItems'
@@ -107,6 +113,8 @@ export default function ItemsPage() {
   const [brands, setBrands] = useState([])
   const [thirdParties, setThirdParties] = useState([])
   const [showForm, setShowForm] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   
   const [filters, setFilters] = useState({ 
     search: '', 
@@ -292,19 +300,147 @@ export default function ItemsPage() {
   const formBrandOptions = useMemo(() => brands.map(b => b.name), [brands])
   const formSupplierOptions = useMemo(() => thirdParties.filter(t => t.type === 'Supplier').map(t => t.name), [thirdParties])
 
+  const exportItemsCsv = () => {
+    const headers = ['Name', 'SKU', 'Family', 'Category', 'Group', 'Type', 'Status', 'Price', 'Stock']
+    const csvContent = [
+      headers.join(','),
+      ...filtered.map(item => [
+        `"${item.name}"`,
+        `"${item.sku || ''}"`,
+        `"${item.family || ''}"`,
+        `"${item.category || ''}"`,
+        `"${item.group || ''}"`,
+        `"${item.type}"`,
+        `"${item.status}"`,
+        `"${item.price || 0}"`,
+        `"${item.stock || 0}"`
+      ].join(','))
+    ].join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'items.csv'
+    a.click(); URL.revokeObjectURL(url)
+    setShowExportMenu(false)
+  }
+
+  const exportItemsPdf = async (items) => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const autoTable = await import('jspdf-autotable')
+      const doc = new jsPDF()
+      
+      const tableColumn = ["Name", "SKU", "Family", "Category", "Status", "Price", "Stock"]
+      const tableRows = []
+
+      items.forEach(item => {
+        const rowData = [
+          item.name,
+          item.sku || '',
+          item.family || '',
+          item.category || '',
+          item.status,
+          item.price || 0,
+          item.stock || 0
+        ]
+        tableRows.push(rowData)
+      })
+
+      doc.text("Items List", 14, 15)
+      autoTable.default(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { font: 'helvetica', fontSize: 8 },
+        headStyles: { fillColor: [66, 139, 202] }
+      })
+      doc.save("items_list.pdf")
+      setShowExportMenu(false)
+    } catch (error) {
+      console.error("Export PDF Error:", error)
+    }
+  }
+
+  const handleImport = (importedData) => {
+    const newItems = importedData.map((item, index) => ({
+      ...item,
+      id: Date.now() + index,
+      stock: Number(item.stock) || 0,
+      price: Number(item.price) || 0,
+      minStock: Number(item.minStock) || 0
+    }))
+    
+    const updatedItems = [...newItems, ...items]
+    setItems(updatedItems)
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedItems)) } catch (e) { void e }
+    setShowImportModal(false)
+  }
+
   return (
     <div className="space-y-6 pt-4 px-4 sm:px-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap lg:flex-row lg:items-center justify-between gap-4">
         <div className="relative inline-block">
           <h1 className="page-title text-2xl font-semibold  dark:text-white">{labels.title}</h1>
           <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
         </div>
-        <button className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none" onClick={() => {
-            setForm({ id: null, name: '', family: '', category: '', group: '', type: 'Product', sku: '', price: '', stock: 0, minStock: 0, unit: 'pcs', status: 'Active', description: '' })
-            setShowForm(true)
-        }}> <span><FaPlus /></span> {labels.add}
-        </button>
+        
+        <div className="w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+           <button 
+              className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
+              onClick={() => setShowImportModal(true)}
+           >
+              <FaFileImport />
+              {labels.import}
+           </button>
+
+
+
+           <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => {
+              setForm({ id: null, name: '', family: '', category: '', group: '', type: 'Product', sku: '', price: '', stock: 0, minStock: 0, unit: 'pcs', status: 'Active', description: '' })
+              setShowForm(true)
+          }}> <span><FaPlus /></span> {labels.add}
+          </button>
+           <div className="relative dropdown-container w-full lg:w-auto">
+              <button 
+                  className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+              >
+                  <span className="flex items-center gap-2">
+                    <FaFileExport  />
+                    {labels.export}
+                  </span>
+                  <FaChevronDown className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} size={12} />
+              </button>
+              
+              {showExportMenu && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50">
+                      <button 
+                          className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                          onClick={exportItemsCsv}
+                      >
+                          <FaFileCsv className="text-green-500" /> {labels.exportCsv}
+                      </button>
+                      <button 
+                          className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                          onClick={() => exportItemsPdf(filtered)}
+                      >
+                          <FaFilePdf className="text-red-500" /> {labels.exportPdf}
+                      </button>
+                  </div>
+              )}
+           </div>
+        </div>
       </div>
+
+      {showImportModal && (
+        <ItemsImportModal 
+          onClose={() => setShowImportModal(false)} 
+          onImport={handleImport}
+          isRTL={isArabic}
+        />
+      )}
 
       <div className="card p-4 sm:p-6 bg-transparent rounded-2xl filters-compact" style={{ backgroundColor: 'transparent' }}>
         <div className="flex justify-between items-center mb-3">
@@ -498,6 +634,29 @@ export default function ItemsPage() {
             </div>
           )}
       </div>
+
+      {/* Modal */}
+      {showImportModal && (
+        <ItemsImportModal 
+          onClose={() => setShowImportModal(false)}
+          onImport={(data) => {
+            const newItems = data.map(item => ({
+              id: Date.now() + Math.random(),
+              name: item.name || 'New Item',
+              sku: item.sku || '',
+              category: item.category || '',
+              price: item.price || 0,
+              stock: item.stock || 0,
+              status: item.status || 'Active',
+              type: 'Product',
+              unit: 'pcs'
+            }))
+            setItems(prev => [...newItems, ...prev])
+            setShowImportModal(false)
+          }}
+          isRTL={isArabic}
+        />
+      )}
 
       {showForm && (
         <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true">

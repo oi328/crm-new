@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import SearchableSelect from '../../components/SearchableSelect'
+import DevelopersImportModal from './DevelopersImportModal'
 import { Plus, Search, Edit2, Trash2, X, Users, Phone, Mail, MapPin, Building2, Filter, ChevronDown, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react'
-import { FaFilter, FaShareAlt, FaEllipsisV, FaPlus, FaMapMarkerAlt, FaBuilding, FaTimes, FaEye, FaEdit, FaTrash, FaUpload, FaSearch, FaChevronDown, FaChevronUp, FaImage, FaFilePdf, FaVideo, FaPaperclip, FaTags, FaCity, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaDownload, FaFileExcel } from 'react-icons/fa'
+import { FaFilter, FaShareAlt, FaEllipsisV, FaPlus, FaMapMarkerAlt, FaBuilding, FaTimes, FaEye, FaEdit, FaTrash, FaUpload, FaSearch, FaChevronDown, FaChevronUp, FaImage, FaFilePdf, FaVideo, FaPaperclip, FaTags, FaCity, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaDownload, FaFileExcel, FaFileImport, FaFileExport, FaFileCsv } from 'react-icons/fa'
 
 export default function Developers() {
   const { i18n } = useTranslation()
@@ -35,14 +36,18 @@ export default function Developers() {
     projectType: isArabic ? 'نوع المشروع' : 'Project Type',
     residential: isArabic ? 'سكنى' : 'Residential',
     commercial: isArabic ? 'تجارى' : 'Commercial',
+    administrative: isArabic ? 'إداري' : 'Administrative',
+    medical: isArabic ? 'طبي' : 'Medical',
     select: isArabic ? 'اختر' : 'Select',
   }), [isArabic])
 
   const STORAGE_KEY = 'inventoryDevelopers'
 
-  const [form, setForm] = useState({ companyName: '', contactPerson: '', phone: '', email: '', city: '', status: isArabic ? 'نشط' : 'Active', logo: '', projectType: '' })
+  const [form, setForm] = useState({ companyName: '', contactPerson: '', phone: '', email: '', city: '', status: isArabic ? 'نشط' : 'Active', logo: '', projectTypes: [] })
   const [developers, setDevelopers] = useState([])
   const [showForm, setShowForm] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [showAllFilters, setShowAllFilters] = useState(false)
   const [filters, setFilters] = useState({
     search: '',
@@ -104,14 +109,15 @@ export default function Developers() {
     e.preventDefault()
     const companyName = form.companyName.trim()
     if (!companyName) return
+    if (!Array.isArray(form.projectTypes) || form.projectTypes.length === 0) return
     const rec = { id: Date.now(), ...form }
     setDevelopers(prev => [rec, ...prev])
-    setForm({ companyName: '', contactPerson: '', phone: '', email: '', city: '', status: isArabic ? 'نشط' : 'Active', logo: '', projectType: '' })
+    setForm({ companyName: '', contactPerson: '', phone: '', email: '', city: '', status: isArabic ? 'نشط' : 'Active', logo: '', projectTypes: [] })
     try { setShowForm(false) } catch {}
   }
   function onDelete(id) { setDevelopers(prev => prev.filter(r => r.id !== id)) }
   function onEdit(rec) { 
-    setForm({ companyName: rec.companyName||'', contactPerson: rec.contactPerson||'', phone: rec.phone||'', email: rec.email||'', city: rec.city||'', status: rec.status|| (isArabic?'نشط':'Active'), logo: rec.logo || '', projectType: rec.projectType || '' }) 
+    setForm({ companyName: rec.companyName||'', contactPerson: rec.contactPerson||'', phone: rec.phone||'', email: rec.email||'', city: rec.city||'', status: rec.status|| (isArabic?'نشط':'Active'), logo: rec.logo || '', projectTypes: Array.isArray(rec.projectTypes) ? rec.projectTypes : (rec.projectType ? [rec.projectType] : []) }) 
     setShowForm(true)
     try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
   }
@@ -158,25 +164,145 @@ export default function Developers() {
 
   function clearFilters() { setFilters({ search: '', companyName: '', contactPerson: '', city: '', status: '', phone: '' }) }
 
+  const exportDevelopersCsv = () => {
+    const headers = ['Company Name', 'Contact Person', 'Phone', 'Email', 'City', 'Status', 'Project Types']
+    const csvContent = [
+      headers.join(','),
+      ...filtered.map(d => [
+        `"${d.companyName}"`,
+        `"${d.contactPerson || ''}"`,
+        `"${d.phone || ''}"`,
+        `"${d.email || ''}"`,
+        `"${d.city || ''}"`,
+        `"${d.status}"`,
+        `"${Array.isArray(d.projectTypes) ? d.projectTypes.join(' | ') : (d.projectType || '')}"`
+      ].join(','))
+    ].join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'developers.csv'
+    a.click(); URL.revokeObjectURL(url)
+  }
+
+  const exportDevelopersPdf = async (items) => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const autoTable = await import('jspdf-autotable')
+      const doc = new jsPDF()
+      
+      const tableColumn = ["Company", "Contact", "Phone", "Email", "City", "Status"]
+      const tableRows = []
+
+      items.forEach(item => {
+        const rowData = [
+          item.companyName,
+          item.contactPerson || '',
+          item.phone || '',
+          item.email || '',
+          item.city || '',
+          item.status
+        ]
+        tableRows.push(rowData)
+      })
+
+      doc.text("Developers List", 14, 15)
+      autoTable.default(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { font: 'helvetica', fontSize: 8 },
+        headStyles: { fillColor: [66, 139, 202] }
+      })
+      doc.save("developers_list.pdf")
+    } catch (error) {
+      console.error("Export PDF Error:", error)
+    }
+  }
+
   return (
       <div className="space-y-6 pt-4">
-        <div className="flex items-center justify-between">
-          <div className="relative inline-block">
-            <h1 className={`page-title text-2xl font-semibold ${isArabic ? 'text-right' : 'text-left'}`}>{labels.title}</h1>
-            <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setShowForm(true)} 
-              className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none flex items-center gap-2"
-            >
-            
-        <span className="inline-flex items-center gap-2">
-             <FaPlus /> {isArabic ? 'إضافة مطور' : 'Add Developer'}
-        </span>              
-            </button>
+        {/* Header */}
+        <div className="glass-panel rounded-xl p-4 md:p-6 relative z-30 mb-6">
+          <div className="flex flex-wrap lg:flex-row lg:items-center justify-between gap-4">
+            <div className="w-full lg:w-auto flex items-center justify-between lg:justify-start gap-3">
+              <div className="relative flex flex-col items-start gap-1">
+                <h1 className="page-title text-xl md:text-2xl font-bold text-start">{labels.title}</h1>
+                <span aria-hidden="true" className="inline-block h-[2px] w-full rounded bg-gradient-to-r from-blue-500 to-purple-600" />
+              </div>
+            </div>
+
+            <div className="w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+              <button 
+                className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" 
+                onClick={()=>setShowImportModal(true)}
+              >
+                <FaFileImport  />
+                {isArabic ? 'استيراد' : 'Import'}
+              </button>
+
+
+
+              <button 
+                className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2" 
+                onClick={() => setShowForm(true)}
+              >
+                <FaPlus /> {labels.add}
+              </button>
+                            <div className="relative w-full lg:w-auto">
+                <button 
+                  className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" 
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                >
+                  <span className="flex items-center gap-2">
+                    <FaFileExport  />
+                    {isArabic ? 'تصدير' : 'Export'}
+                  </span>
+                  <FaChevronDown className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} size={12} />
+                </button>
+                
+                {showExportMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
+                    <div className="absolute top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20 w-full sm:w-32 overflow-hidden ltr:right-0 rtl:left-0">
+                      <button 
+                        className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center gap-2"
+                        onClick={() => {
+                          exportDevelopersCsv()
+                          setShowExportMenu(false)
+                        }}
+                      >
+                        <FaFileCsv className="text-green-500" /> CSV
+                      </button>
+                      <button 
+                        className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center gap-2"
+                        onClick={() => {
+                          exportDevelopersPdf(filtered)
+                          setShowExportMenu(false)
+                        }}
+                      >
+                        <FaFilePdf className="text-red-500" /> PDF
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
+
+        {showImportModal && (
+          <DevelopersImportModal 
+            onClose={() => setShowImportModal(false)} 
+            isRTL={isRTL} 
+            onImport={(data) => {
+              setDevelopers(prev => [...data.map(d => ({ ...d, id: Date.now() + Math.random() })), ...prev])
+              setShowImportModal(false)
+            }}
+          />
+        )}
 
         <div className="glass-panel p-4 rounded-xl mb-6">
           <div className="flex justify-between items-center mb-3">
@@ -256,7 +382,17 @@ export default function Developers() {
                 <h3 className="text-lg font-bold mb-2">{r.companyName}</h3>
                 
                 <div className="space-y-2 text-sm text-[var(--muted-text)]">
-                  {r.projectType && (
+                  {(Array.isArray(r.projectTypes) && r.projectTypes.length > 0) && (
+                    <div className="flex items-start gap-2">
+                      <div className="w-4 flex justify-center"><Briefcase size={14} className="opacity-70" /></div>
+                      <div className="flex flex-wrap gap-1">
+                        {r.projectTypes.map((pt, idx) => (
+                          <span key={idx} className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-xs">{pt}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {!Array.isArray(r.projectTypes) && r.projectType && (
                     <div className="flex items-center gap-2">
                       <div className="w-4 flex justify-center"><Briefcase size={14} className="opacity-70" /></div>
                       <span>{r.projectType}</span>
@@ -372,14 +508,22 @@ export default function Developers() {
                       <input type="file" accept="image/*" onChange={handleLogoChange} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-300" />
                     </div>
                   </div>
-                  <div><label className="block text-sm mb-1">{labels.companyName}</label><input name="companyName" value={form.companyName} onChange={onChange} placeholder={labels.companyName} className="input w-full" required /></div>
+                  <div>
+                    <label className="block text-sm mb-1">
+                      {labels.companyName}
+                      <span className="text-red-600 ltr:ml-1 rtl:mr-1">*</span>
+                    </label>
+                    <input name="companyName" value={form.companyName} onChange={onChange} placeholder={labels.companyName} className="input w-full" required />
+                  </div>
                   <div>
                     <label className="block text-sm mb-1">{labels.projectType}</label>
-                    <select name="projectType" value={form.projectType} onChange={onChange} className="input w-full" required>
-                      <option value="">{labels.select}</option>
-                      <option value={labels.residential}>{labels.residential}</option>
-                      <option value={labels.commercial}>{labels.commercial}</option>
-                    </select>
+                    <SearchableSelect
+                      options={[labels.residential, labels.commercial, labels.administrative, labels.medical]}
+                      value={form.projectTypes}
+                      onChange={(vals)=>setForm(prev=>({...prev, projectTypes: vals}))}
+                      isRTL={isArabic}
+                      multiple
+                    />
                   </div>
                   <div><label className="block text-sm mb-1">{labels.contactPerson}</label><input name="contactPerson" value={form.contactPerson} onChange={onChange} placeholder={labels.contactPerson} className="input w-full" /></div>
                   <div><label className="block text-sm mb-1">{labels.phone}</label><input name="phone" value={form.phone} onChange={onChange} placeholder={labels.phone} className="input w-full" /></div>

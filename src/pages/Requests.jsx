@@ -620,14 +620,6 @@ export default function Requests() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[300px]">
                         <div className="flex items-center gap-2">
                           <button 
-                            onClick={() => { setEditingRequest(r); setOpenCreate(true); }}
-                            className="btn btn-sm btn-circle bg-blue-600 hover:bg-blue-700 text-white border-none"
-                            title={isRTL ? 'تعديل' : 'Edit'}
-                          >
-                            <FaEdit />
-                          </button>
-
-                          <button 
                             onClick={() => { setAssignTargetRequest(r); setOpenAssign(true); }}
                             className="btn btn-sm btn-circle bg-purple-600 hover:bg-purple-700 text-white border-none"
                             title={isRTL ? 'تعيين' : 'Assign'}

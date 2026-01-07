@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import { useTranslation } from 'react-i18next';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaFilter, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaFilter, FaTimes, FaFileExport, FaFileImport, FaFileCsv, FaFilePdf, FaChevronDown } from 'react-icons/fa';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import PriceBooksImportModal from './PriceBooksImportModal';
 
 export default function PriceBooks() {
   const { i18n } = useTranslation()
@@ -45,6 +47,10 @@ export default function PriceBooks() {
     dateFrom: isArabic ? 'من تاريخ' : 'Date From',
     dateTo: isArabic ? 'إلى تاريخ' : 'Date To',
     restoreData: isArabic ? 'استعادة البيانات التجريبية' : 'Restore Demo Data',
+    import: isArabic ? 'استيراد' : 'Import',
+    export: isArabic ? 'تصدير' : 'Export',
+    exportCsv: isArabic ? 'تصدير CSV' : 'Export CSV',
+    exportPdf: isArabic ? 'تصدير PDF' : 'Export PDF',
   }), [isArabic])
 
   const BOOKS_KEY = 'inventoryPriceBooks'
@@ -113,7 +119,67 @@ export default function PriceBooks() {
 
   const [selectedBookId, setSelectedBookId] = useState(books[0]?.id || null)
   const [showForm, setShowForm] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
   const [form, setForm] = useState({ id: null, name: '', currency: 'EGP', validFrom: '', validTo: '', description: '', status: 'Active' })
+
+  const exportPriceBooksCsv = () => {
+    const headers = ['Name', 'Currency', 'Valid From', 'Valid To', 'Status', 'Description']
+    const csvContent = [
+      headers.join(','),
+      ...filteredBooks.map(book => [
+        `"${book.name}"`,
+        `"${book.currency}"`,
+        `"${book.validFrom || ''}"`,
+        `"${book.validTo || ''}"`,
+        `"${book.status}"`,
+        `"${book.description || ''}"`
+      ].join(','))
+    ].join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'price_books.csv'
+    a.click(); URL.revokeObjectURL(url)
+    setShowExportMenu(false)
+  }
+
+  const exportPriceBooksPdf = async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const autoTable = (await import('jspdf-autotable')).default
+      const doc = new jsPDF()
+      
+      const tableColumn = ["Name", "Currency", "Valid From", "Valid To", "Status"]
+      const tableRows = []
+
+      filteredBooks.forEach(book => {
+        const rowData = [
+          book.name,
+          book.currency,
+          book.validFrom || '',
+          book.validTo || '',
+          book.status
+        ]
+        tableRows.push(rowData)
+      })
+
+      doc.text("Price Books List", 14, 15)
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { font: 'helvetica', fontSize: 9 },
+        headStyles: { fillColor: [66, 139, 202] }
+      })
+      doc.save("price_books_list.pdf")
+      setShowExportMenu(false)
+    } catch (error) {
+      console.error("Export PDF Error:", error)
+    }
+  }
 
   // Load Items and Prices
   useEffect(() => {
@@ -252,6 +318,45 @@ export default function PriceBooks() {
           >
              {labels.restoreData}
           </button>
+
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="btn btn-sm btn-ghost border border-gray-300 dark:border-gray-600 text-[var(--muted-text)] hover:text-blue-500 px-3 rounded-lg flex items-center gap-2"
+           >
+             <FaFileImport size={14} />
+             <span className="hidden sm:inline">{labels.import}</span>
+           </button>
+
+           <div className="relative">
+             <button
+               onClick={() => setShowExportMenu(!showExportMenu)}
+               className="btn btn-sm btn-ghost border border-gray-300 dark:border-gray-600 text-[var(--muted-text)] hover:text-blue-500 px-3 rounded-lg flex items-center gap-2"
+             >
+               <FaFileExport size={14} />
+               <span className="hidden sm:inline">{labels.export}</span>
+               <FaChevronDown size={10} />
+             </button>
+
+             {showExportMenu && (
+               <div className="absolute top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden right-0">
+                 <button
+                   onClick={exportPriceBooksCsv}
+                   className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 transition-colors"
+                 >
+                   <FaFileCsv className="text-green-500" size={16} />
+                   {labels.exportCsv}
+                 </button>
+                 <button
+                   onClick={exportPriceBooksPdf}
+                   className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 transition-colors"
+                 >
+                   <FaFilePdf className="text-red-500" size={16} />
+                   {labels.exportPdf}
+                 </button>
+               </div>
+             )}
+           </div>
+
           <button 
             onClick={() => { setForm({ id: null, name: '', currency: 'EGP', validFrom: '', validTo: '', description: '', status: 'Active' }); setShowForm(true); }}
             className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none gap-2 px-4 py-2.5 rounded-lg font-medium flex items-center"
@@ -558,9 +663,30 @@ export default function PriceBooks() {
         </div>
       )}
 
+      {/* Modal */}
+      {showImportModal && (
+        <PriceBooksImportModal 
+          onClose={() => setShowImportModal(false)}
+          onImport={(data) => {
+            const newItems = data.map(item => ({
+              id: Date.now() + Math.random(),
+              name: item.name || 'New Price Book',
+              currency: item.currency || 'EGP',
+              validFrom: item.validFrom || '',
+              validTo: item.validTo || '',
+              description: item.description || '',
+              status: item.status || 'Active'
+            }))
+            setBooks(prev => [...newItems, ...prev])
+            setShowImportModal(false)
+          }}
+          isRTL={isArabic}
+        />
+      )}
+
       {/* Add/Edit Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-[200] overflow-y-auto">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowForm(false)} />
           <div className="absolute inset-0 flex items-start justify-center p-6 md:p-6">
             <div className="card p-4 sm:p-6 mt-4 w-[92vw] sm:w-[80vw] lg:w-[60vw] xl:max-w-3xl">

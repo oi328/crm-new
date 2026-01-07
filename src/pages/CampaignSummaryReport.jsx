@@ -156,7 +156,61 @@ export default function CampaignSummaryReport() {
         {/* Main summary table */}
         <section className="glass-panel p-4">
           <h3 className="text-lg font-semibold mb-3">{t('Overview by Campaign')}</h3>
-          <div className="overflow-auto -mx-4">
+          
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {filtered.map((c) => (
+              <div key={c.name} className="card glass-card p-4 space-y-3 bg-white/5">
+                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                  <h4 className="font-semibold text-sm">{c.name}</h4>
+                  <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
+                    {c.platform}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">💰 {t('Spend')}</span>
+                    <span className="text-xs font-medium">${c.spend.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">👀 {t('Impressions')}</span>
+                    <span className="text-xs">{c.impressions.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Clicks')}</span>
+                    <span className="text-xs">{c.clicks.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('CTR')}</span>
+                    <span className="text-xs">{c.ctr}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('CPC')}</span>
+                    <span className="text-xs">${c.cpc}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Leads')}</span>
+                    <span className="text-xs font-medium">{c.leads}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('CPL')}</span>
+                    <span className="text-xs">${c.cpl}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Qualified')}</span>
+                    <span className="text-xs">{c.qualifiedPct}%</span>
+                  </div>
+                  <div className="flex justify-between items-center col-span-2 border-t border-gray-100 dark:border-gray-800 pt-2 mt-1">
+                    <span className="text-[var(--muted-text)] text-xs font-medium">{t('ROI')}</span>
+                    <span className="text-sm font-bold text-green-400">{c.roi}x</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-auto -mx-4">
             <table className="w-full text-sm min-w-[1000px]">
               <thead>
                 <tr className="text-left opacity-70">

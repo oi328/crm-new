@@ -177,28 +177,65 @@ export default function LeadsPerformance() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Table */}
           <div className="card glass-card p-4 md:col-span-2">
-            <table className="nova-table w-full text-sm min-w-[520px]">
-              <thead>
-                <tr className="text-left text-gray-600 dark:text-gray-300">
-                  <th className="py-2 pr-4">{t('Source')}</th>
-                  <th className="py-2 pr-4">{t('Leads')}</th>
-                  <th className="py-2 pr-4">{t('Converted')}</th>
-                  <th className="py-2 pr-4">{t('Conversion Rate')}</th>
-                  <th className="py-2 pr-4">{t('Revenue')}</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-800 dark:text-gray-100">
-                {displaySources.map((row) => (
-                  <tr key={row.source} className="border-t border-gray-200 dark:border-gray-800">
-                    <td className="py-2 pr-4">{row.source}</td>
-                    <td className="py-2 pr-4">{row.leads.toLocaleString()}</td>
-                    <td className="py-2 pr-4">{row.converted.toLocaleString()}</td>
-                    <td className="py-2 pr-4">{(((Math.min(row.converted, row.leads) / (row.leads || 1)) * 100)).toFixed(1)}%</td>
-                    <td className="py-2 pr-4">${row.revenue.toLocaleString()}</td>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="nova-table w-full text-sm min-w-[520px]">
+                <thead>
+                  <tr className="text-left text-gray-600 dark:text-gray-300">
+                    <th className="py-2 pr-4">{t('Source')}</th>
+                    <th className="py-2 pr-4">{t('Leads')}</th>
+                    <th className="py-2 pr-4">{t('Converted')}</th>
+                    <th className="py-2 pr-4">{t('Conversion Rate')}</th>
+                    <th className="py-2 pr-4">{t('Revenue')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="text-gray-800 dark:text-gray-100">
+                  {displaySources.map((row) => (
+                    <tr key={row.source} className="border-t border-gray-200 dark:border-gray-800">
+                      <td className="py-2 pr-4">{row.source}</td>
+                      <td className="py-2 pr-4">{row.leads.toLocaleString()}</td>
+                      <td className="py-2 pr-4">{row.converted.toLocaleString()}</td>
+                      <td className="py-2 pr-4">{(((Math.min(row.converted, row.leads) / (row.leads || 1)) * 100)).toFixed(1)}%</td>
+                      <td className="py-2 pr-4">${row.revenue.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              {displaySources.map((row) => (
+                <div key={row.source} className="card glass-card p-4 space-y-3 bg-white/5">
+                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                    <h4 className="font-semibold text-sm">{row.source}</h4>
+                    <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
+                      {t('Source')}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">{t('Leads')}</span>
+                      <span className="text-xs font-medium">{row.leads.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">{t('Converted')}</span>
+                      <span className="text-xs">{row.converted.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">{t('Conv. Rate')}</span>
+                      <span className="text-xs font-medium text-green-400">
+                        {(((Math.min(row.converted, row.leads) / (row.leads || 1)) * 100)).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">{t('Revenue')}</span>
+                      <span className="text-xs font-medium">${row.revenue.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Total Leads metric */}

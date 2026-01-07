@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import SearchableSelect from '../components/SearchableSelect'
-import { FaFilter,FaPlus, FaSearch, FaChevronDown, FaTimes, FaEdit, FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
+import { FaFilter,FaPlus, FaSearch, FaChevronDown, FaTimes, FaEdit, FaTrash, FaChevronLeft, FaChevronRight, FaFileCsv, FaFilePdf, FaFileImport, FaFileExport } from 'react-icons/fa'
+import CategoriesImportModal from './inventory/CategoriesImportModal'
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 
 export default function Categories() {
   const { i18n } = useTranslation()
@@ -68,6 +72,8 @@ export default function Categories() {
   const [suppliers, setSuppliers] = useState([])
 
   const [showForm, setShowForm] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [activeTab, setActiveTab] = useState('basic')
   
   // Pagination State
@@ -209,14 +215,91 @@ export default function Categories() {
     return filtered.slice(start, start + itemsPerPage)
   }, [filtered, currentPage])
 
+  const handleImport = (importedData) => {
+    const newCategories = importedData.map(item => ({
+      ...item,
+      id: Date.now() + Math.random(),
+      name: item.name || 'Unknown',
+      code: item.code || '',
+      appliesTo: item.appliesTo || 'Product',
+      status: item.status || 'Active',
+      description: item.description || ''
+    }))
+    setCategories(prev => [...prev, ...newCategories])
+    setShowImportModal(false)
+  }
+
+  const exportCategoriesCsv = () => {
+    const data = filtered.map(c => ({
+      ID: c.id,
+      Name: c.name,
+      Code: c.code,
+      AppliesTo: c.appliesTo,
+      Status: c.status,
+      Description: c.description
+    }))
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Categories")
+    XLSX.writeFile(wb, "categories.xlsx")
+    setShowExportMenu(false)
+  }
+
+  const exportCategoriesPdf = () => {
+    const doc = new jsPDF()
+    doc.text("Categories List", 14, 10)
+    doc.autoTable({
+      head: [['ID', 'Name', 'Code', 'Applies To', 'Status', 'Description']],
+      body: filtered.map(c => [c.id, c.name, c.code, c.appliesTo, c.status, c.description]),
+      startY: 20
+    })
+    doc.save("categories.pdf")
+    setShowExportMenu(false)
+  }
+
   return (
       <div className="space-y-6 pt-4 px-4 sm:px-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap lg:flex-row lg:items-center justify-between gap-4">
           <div className="relative inline-block">
             <h1 className={`page-title text-2xl font-semibold ${isArabic ? 'text-right' : 'text-left'}`}>{labels.title}</h1>
             <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
           </div>
-          <button className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none" onClick={() => { setShowForm(true); setActiveTab('basic'); }}><FaPlus />{labels.add}</button>
+          <div className=" w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+
+            <button 
+              className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
+              onClick={() => setShowImportModal(true)}
+            >
+              <FaFileImport /> {isArabic ? 'استيراد' : 'Import'}
+            </button>
+            <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => { setShowForm(true); setActiveTab('basic'); }}><FaPlus />{labels.add}</button>
+            <div className="relative  dropdown-container w-full lg:w-auto">
+              <button 
+                className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
+                onClick={() => setShowExportMenu(!showExportMenu)}
+              >
+                <FaFileExport /> {isArabic ? 'تصدير' : 'Export'}
+              </button>
+              {showExportMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 ring-1 ring-black ring-opacity-5">
+                  <div className="py-1">
+                    <button
+                      onClick={exportCategoriesCsv}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                    >
+                      <FaFileCsv className="mr-3 text-green-600" /> CSV
+                    </button>
+                    <button
+                      onClick={exportCategoriesPdf}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                    >
+                      <FaFilePdf className="mr-3 text-red-600" /> PDF
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="card p-4 sm:p-6 bg-transparent rounded-2xl filters-compact" style={{ backgroundColor: 'transparent' }}>
@@ -224,6 +307,7 @@ export default function Categories() {
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <FaFilter className="text-blue-500" /> {labels.filter}
             </h2>
+
             <div className="flex items-center gap-2">
               <button onClick={clearFilters} className="px-3 py-1.5 text-sm  dark:text-white hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                 {isArabic ? 'إعادة تعيين' : 'Reset'}
@@ -499,6 +583,13 @@ export default function Categories() {
               </div>
             </div>
           </div>
+        )}
+        {showImportModal && (
+          <CategoriesImportModal
+            onClose={() => setShowImportModal(false)}
+            onImport={handleImport}
+            isRTL={isArabic}
+          />
         )}
       </div>
   )

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaUserTie, FaTruck, FaFilter, FaThList, FaThLarge, FaTimes, FaPhone, FaMapMarkerAlt, FaGlobe, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import * as XLSX from 'xlsx';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaUserTie, FaTruck, FaFilter, FaThList, FaThLarge, FaTimes, FaPhone, FaMapMarkerAlt, FaGlobe, FaChevronLeft, FaChevronRight, FaCloudDownloadAlt, FaChevronDown, FaFileExport, FaFileImport, FaFileCsv, FaFilePdf } from 'react-icons/fa';
+import ThirdPartiesImportModal from './ThirdPartiesImportModal';
 import { useTranslation } from 'react-i18next';
 
 const STORAGE_KEY = 'inventoryThirdParties';
@@ -40,6 +42,10 @@ export default function ThirdParties() {
     clearFilters: isRTL ? 'مسح المرشحات' : 'Clear Filters',
     listTitle: isRTL ? 'قائمة الكيانات' : 'Entities List',
     close: isRTL ? 'إغلاق' : 'Close',
+    import: isRTL ? 'استيراد' : 'Import',
+    export: isRTL ? 'تصدير' : 'Export',
+    exportCsv: isRTL ? 'تصدير CSV' : 'Export CSV',
+    exportPdf: isRTL ? 'تصدير PDF' : 'Export PDF',
   }), [isRTL]);
 
   const [parties, setParties] = useState(() => {
@@ -74,6 +80,8 @@ export default function ThirdParties() {
   });
 
   const [showForm, setShowForm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [form, setForm] = useState({
     id: null,
     name: '',
@@ -172,39 +180,137 @@ export default function ThirdParties() {
     setFilters({ search: '', type: 'All' });
   };
 
+  const exportThirdPartiesCsv = () => {
+    const headers = ['Name', 'Type', 'Contact Info', 'Description']
+    const csvContent = [
+      headers.join(','),
+      ...filteredParties.map(p => [
+        `"${p.name}"`,
+        `"${p.type}"`,
+        `"${p.contact_info || ''}"`,
+        `"${p.description || ''}"`
+      ].join(','))
+    ].join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'third_parties.csv'
+    a.click(); URL.revokeObjectURL(url)
+    setShowExportMenu(false)
+  }
+
+  const exportThirdPartiesPdf = async (items) => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const autoTable = await import('jspdf-autotable')
+      const doc = new jsPDF()
+      
+      const tableColumn = ["Name", "Type", "Contact Info", "Description"]
+      const tableRows = []
+
+      items.forEach(item => {
+        const rowData = [
+          item.name,
+          item.type,
+          item.contact_info || '',
+          item.description || ''
+        ]
+        tableRows.push(rowData)
+      })
+
+      doc.text("Third Parties List", 14, 15)
+      autoTable.default(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { font: 'helvetica', fontSize: 8 },
+        headStyles: { fillColor: [66, 139, 202] }
+      })
+      doc.save("third_parties_list.pdf")
+      setShowExportMenu(false)
+    } catch (error) {
+      console.error("Export PDF Error:", error)
+    }
+  }
+
   return (
     <div className="space-y-6 pt-4">
       
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="relative inline-block">
           <h1 className="page-title text-2xl font-semibold">{labels.title}</h1>
           <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isRTL ? 'auto' : '-4px', right: isRTL ? '-4px' : 'auto', bottom: '-4px' }}></span>
         </div>
-        <div className="flex items-center gap-2">
-           <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mx-2">
+        
+        <div className="w-full lg:w-auto flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+           <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                 <button 
                     onClick={() => setViewMode('list')}
-                    className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    className={`flex-1 lg:flex-none p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                     title={labels.viewList}
                 >
-                    <FaThList size={16} />
+                    <FaThList size={16} className="mx-auto" />
                 </button>
                 <button 
                     onClick={() => setViewMode('grid')}
-                    className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    className={`flex-1 lg:flex-none p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                     title={labels.viewGrid}
                 >
-                    <FaThLarge size={16} />
+                    <FaThLarge size={16} className="mx-auto" />
                 </button>
            </div>
-           <button className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => {
-              resetForm();
-              setShowForm(true);
-          }}>
+
+           <button 
+              className="btn btn-sm w-full lg:w-auto bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 gap-2"
+              onClick={() => setShowImportModal(true)}
+           >
+              <FaFileImport className="text-blue-600" />
+              {labels.import}
+           </button>
+
+           <div className="relative dropdown-container w-full lg:w-auto">
+              <button 
+                  className="btn btn-sm w-full lg:w-auto bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 gap-2 justify-between lg:justify-center"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+              >
+                  <span className="flex items-center gap-2">
+                    <FaFileExport className="text-green-600" />
+                    {labels.export}
+                  </span>
+                  <FaChevronDown className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} size={12} />
+              </button>
+              
+              {showExportMenu && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50">
+                      <button 
+                          className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                          onClick={exportThirdPartiesCsv}
+                      >
+                          <FaFileCsv className="text-green-500" /> {labels.exportCsv}
+                      </button>
+                      <button 
+                          className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                          onClick={() => exportThirdPartiesPdf(filteredParties)}
+                      >
+                          <FaFilePdf className="text-red-500" /> {labels.exportPdf}
+                      </button>
+                  </div>
+              )}
+           </div>
+
+           <button 
+              className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none gap-2" 
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+           >
               <FaPlus />
               {labels.add}
-          </button>
+           </button>
         </div>
       </div>
 
@@ -467,3 +573,5 @@ export default function ThirdParties() {
     </div>
   );
 }
+
+

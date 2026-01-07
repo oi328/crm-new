@@ -165,43 +165,96 @@ export default function MonthlyMarketingOverview() {
             <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold`}>{t('Monthly Summary')}</h3>
           </div>
           <div>
-            <table className="w-full table-fixed text-sm">
-              <thead>
-                <tr className="text-left opacity-70">
-                  <th className="px-4 py-2">{t('Month')}</th>
-                  <th className="px-4 py-2">💰 {t('Total Spend')}</th>
-                  <th className="px-4 py-2">👀 {t('Impressions')}</th>
-                  <th className="px-4 py-2">{t('Clicks')} / {t('CTR')}</th>
-                  <th className="px-4 py-2">{t('Avg. CPC')}</th>
-                  <th className="px-4 py-2">{t('Leads')}</th>
-                  <th className="px-4 py-2">{t('Avg. CPL')}</th>
-                  <th className="px-4 py-2">{t('Qualified Leads %')}</th>
-                  <th className="px-4 py-2">💵 {t('Revenue')}</th>
-                  <th className="px-4 py-2">{t('ROI')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t">
-                  <td className="px-4 py-2 font-medium">{monthLabel}</td>
-                  <td className="px-4 py-2">{monthMetrics.spend.toLocaleString()} EGP</td>
-                  <td className="px-4 py-2">{monthMetrics.impressions.toLocaleString()}</td>
-                  <td className="px-4 py-2">{monthMetrics.clicks.toLocaleString()} / {ctr.toFixed(1)}%</td>
-                  <td className="px-4 py-2">{cpc.toFixed(2)} EGP</td>
-                  <td className="px-4 py-2">{monthMetrics.leads.toLocaleString()}</td>
-                  <td className="px-4 py-2">{cpl.toFixed(2)} EGP</td>
-                  <td className="px-4 py-2">{monthMetrics.qualifiedPct}%</td>
-                  <td className="px-4 py-2">{monthMetrics.revenue.toLocaleString()} EGP</td>
-                  <td className="px-4 py-2">{roi.toFixed(1)}x</td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr className="border-t text-xs text-[var(--muted-text)]">
-                  <td className="px-4 py-2" colSpan={10}>
-                    {t('Month-over-Month')}: {t('Spend')} {monthMetrics.spend >= prevMonth.spend ? '↑' : '↓'} {Math.abs(monthMetrics.spend - prevMonth.spend)} EGP, {t('Revenue')} {monthMetrics.revenue >= prevMonth.revenue ? '↑' : '↓'} {Math.abs(monthMetrics.revenue - prevMonth.revenue)} EGP, {t('Leads')} {monthMetrics.leads >= prevMonth.leads ? '↑' : '↓'} {Math.abs(monthMetrics.leads - prevMonth.leads)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              <div className="card glass-card p-4 space-y-3 bg-white/5">
+                <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                  <h4 className="font-semibold text-sm">{monthLabel}</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">💰 {t('Total Spend')}</span>
+                    <span className="text-xs font-medium">{monthMetrics.spend.toLocaleString()} EGP</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">👀 {t('Impressions')}</span>
+                    <span className="text-xs">{monthMetrics.impressions.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Clicks')} / {t('CTR')}</span>
+                    <span className="text-xs">{monthMetrics.clicks.toLocaleString()} / {ctr.toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Avg. CPC')}</span>
+                    <span className="text-xs">{cpc.toFixed(2)} EGP</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Leads')}</span>
+                    <span className="text-xs font-medium">{monthMetrics.leads.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Avg. CPL')}</span>
+                    <span className="text-xs">{cpl.toFixed(2)} EGP</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Qualified Leads %')}</span>
+                    <span className="text-xs">{monthMetrics.qualifiedPct}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">💵 {t('Revenue')}</span>
+                    <span className="text-xs font-medium">{monthMetrics.revenue.toLocaleString()} EGP</span>
+                  </div>
+                  <div className="flex justify-between items-center col-span-2 border-t border-gray-100 dark:border-gray-800 pt-2 mt-1">
+                    <span className="text-[var(--muted-text)] text-xs font-medium">{t('ROI')}</span>
+                    <span className="text-sm font-bold text-green-400">{roi.toFixed(1)}x</span>
+                  </div>
+                </div>
+                <div className="text-xs text-[var(--muted-text)] mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                  {t('Month-over-Month')}: {t('Spend')} {monthMetrics.spend >= prevMonth.spend ? '↑' : '↓'} {Math.abs(monthMetrics.spend - prevMonth.spend)} EGP, {t('Revenue')} {monthMetrics.revenue >= prevMonth.revenue ? '↑' : '↓'} {Math.abs(monthMetrics.revenue - prevMonth.revenue)} EGP, {t('Leads')} {monthMetrics.leads >= prevMonth.leads ? '↑' : '↓'} {Math.abs(monthMetrics.leads - prevMonth.leads)}
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+              <table className="w-full table-fixed text-sm">
+                <thead>
+                  <tr className="text-left opacity-70">
+                    <th className="px-4 py-2">{t('Month')}</th>
+                    <th className="px-4 py-2">💰 {t('Total Spend')}</th>
+                    <th className="px-4 py-2">👀 {t('Impressions')}</th>
+                    <th className="px-4 py-2">{t('Clicks')} / {t('CTR')}</th>
+                    <th className="px-4 py-2">{t('Avg. CPC')}</th>
+                    <th className="px-4 py-2">{t('Leads')}</th>
+                    <th className="px-4 py-2">{t('Avg. CPL')}</th>
+                    <th className="px-4 py-2">{t('Qualified Leads %')}</th>
+                    <th className="px-4 py-2">💵 {t('Revenue')}</th>
+                    <th className="px-4 py-2">{t('ROI')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t">
+                    <td className="px-4 py-2 font-medium">{monthLabel}</td>
+                    <td className="px-4 py-2">{monthMetrics.spend.toLocaleString()} EGP</td>
+                    <td className="px-4 py-2">{monthMetrics.impressions.toLocaleString()}</td>
+                    <td className="px-4 py-2">{monthMetrics.clicks.toLocaleString()} / {ctr.toFixed(1)}%</td>
+                    <td className="px-4 py-2">{cpc.toFixed(2)} EGP</td>
+                    <td className="px-4 py-2">{monthMetrics.leads.toLocaleString()}</td>
+                    <td className="px-4 py-2">{cpl.toFixed(2)} EGP</td>
+                    <td className="px-4 py-2">{monthMetrics.qualifiedPct}%</td>
+                    <td className="px-4 py-2">{monthMetrics.revenue.toLocaleString()} EGP</td>
+                    <td className="px-4 py-2">{roi.toFixed(1)}x</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr className="border-t text-xs text-[var(--muted-text)]">
+                    <td className="px-4 py-2" colSpan={10}>
+                      {t('Month-over-Month')}: {t('Spend')} {monthMetrics.spend >= prevMonth.spend ? '↑' : '↓'} {Math.abs(monthMetrics.spend - prevMonth.spend)} EGP, {t('Revenue')} {monthMetrics.revenue >= prevMonth.revenue ? '↑' : '↓'} {Math.abs(monthMetrics.revenue - prevMonth.revenue)} EGP, {t('Leads')} {monthMetrics.leads >= prevMonth.leads ? '↑' : '↓'} {Math.abs(monthMetrics.leads - prevMonth.leads)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
         </section>
 

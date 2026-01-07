@@ -331,7 +331,8 @@ export default function CheckInReport() {
         <div aria-hidden="true" className="h-6" />
         {/* Table */}
         <div className="glass-panel rounded-xl p-4">
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm nova-table nova-table--glass">
               <thead>
                 <tr className="text-left bg-[var(--table-header-bg)]">
@@ -361,6 +362,39 @@ export default function CheckInReport() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-4">
+            {filteredRows.length === 0 && (
+              <div className="text-center py-6 text-[var(--muted-text)]">{t('No data')}</div>
+            )}
+            {filteredRows.map(r => (
+              <div key={r.id} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
+                <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                  <h4 className="font-semibold text-sm">{r.name}</h4>
+                  <StatusBadge status={r.status} />
+                </div>
+                <div className="grid grid-cols-1 gap-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Check-in Date')}</span>
+                    <span className="text-xs">{formatDateTime(r.checkIn)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Check-out Date')}</span>
+                    <span className="text-xs">{formatDateTime(r.checkOut)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Department / Reservation')}</span>
+                    <span className="text-xs">{r.type}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Handled By')}</span>
+                    <span className="text-xs">{r.handledBy}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
         {/* Spacer below table */}

@@ -256,7 +256,11 @@ export default function MeetingsReport() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="day" />
                       <YAxis allowDecimals={false} />
-                      <Tooltip />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                        itemStyle={{ color: '#111827', fontSize: '12px', fontWeight: 'bold' }}
+                        labelStyle={{ color: '#111827', fontWeight: 'bold', marginBottom: '0.25rem' }}
+                      />
                       <Line type="monotone" dataKey="meetings" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -317,7 +321,7 @@ export default function MeetingsReport() {
               <div className="text-sm text-[var(--muted-text)] mb-3">{isRTL ? 'أدِر أعضاء فريقك وصلاحيات حساباتهم هنا.' : 'Manage your team members and their account permissions here.'}</div>
 
               {/* Table */}
-              <div className="overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr>
@@ -359,13 +363,58 @@ export default function MeetingsReport() {
                         </tr>
                         {idx !== paginatedRows.length - 1 && (
                           <tr>
-                            <td colSpan={6} className="py-2" />
+                            <td colSpan={6}><div className="h-2"></div></td>
                           </tr>
                         )}
                       </React.Fragment>
                     ))}
+                    {paginatedRows.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-3 py-6 text-center text-[var(--muted-text)]">{isRTL ? 'لا توجد بيانات' : 'No data found'}</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden space-y-4">
+                {paginatedRows.length === 0 && (
+                  <div className="text-center py-6 text-[var(--muted-text)]">{isRTL ? 'لا توجد بيانات' : 'No data found'}</div>
+                )}
+                {paginatedRows.map((row, idx) => (
+                  <div key={idx} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
+                    <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          aria-label="select row"
+                          checked={selectedKeys.includes(rowKey(row))}
+                          onChange={(e) => {
+                            const k = rowKey(row)
+                            setSelectedKeys(prev => e.target.checked ? Array.from(new Set([...prev, k])) : prev.filter(x => x !== k))
+                          }}
+                        />
+                        <h4 className="font-semibold text-sm">{row.name}</h4>
+                      </div>
+                      <span className="text-xs text-[var(--muted-text)]">{row.mobile}</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'عدد الاجتماعات' : 'Number Of Meetings'}</span>
+                        <span className="text-xs">{row.meetings}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'المشروع' : 'Project'}</span>
+                        <span className="text-xs">{row.project}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'المبيعات' : 'Sales Person'}</span>
+                        <span className="text-xs">{row.salesman}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Pagination footer */}

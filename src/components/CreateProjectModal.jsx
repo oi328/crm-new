@@ -48,7 +48,7 @@ const STEPS = [
   { id: 4, label: 'Location', labelAr: 'الموقع', icon: FaMapMarkedAlt },
   { id: 5, label: 'Financial', labelAr: 'المالية', icon: FaFileContract },
   { id: 6, label: 'CIL', labelAr: 'بيانات العميل', icon: FaAddressCard },
-  { id: 7, label: 'Publish', labelAr: 'النشر', icon: FaExternalLinkAlt },
+  { id: 7, label: 'Publish & Marketing', labelAr: 'النشر والتوزيع', icon: FaExternalLinkAlt },
 ]
 
 const PROJECT_CATEGORIES = ['Residential', 'Commercial', 'Administrative', 'Medical', 'Coastal', 'Mixed Use']
@@ -167,8 +167,65 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
     
     // Step 7: Publish
     contactName: 'Current User',
-    marketingPackage: 'standard'
+    contactEmail: 'user@example.com',
+    contactPhone: '+20 123 456 7890',
+    marketingPackage: 'standard',
+    publishStatus: 'Draft'
   })
+
+  const [channels, setChannels] = useState([
+    {
+      id: 'company-site',
+      name: 'Company Website',
+      type: 'website',
+      active: true,
+      selectedPackage: null,
+      packages: [],
+      status: 'Live',
+      lastSyncAt: 'Just now',
+    },
+    {
+      id: 'property-finder',
+      name: 'Property Finder',
+      type: 'portal',
+      active: false,
+      selectedPackage: 'standard',
+      packages: [
+        { id: 'standard', name: 'Standard Listing', remaining: 80 },
+        { id: 'featured', name: 'Featured Listing', remaining: 3 },
+        { id: 'premium', name: 'Premium Listing', remaining: 1 },
+      ],
+      status: 'Not Published',
+      lastSyncAt: '—',
+    },
+    {
+      id: 'bayut',
+      name: 'Bayut',
+      type: 'portal',
+      active: false,
+      selectedPackage: 'standard',
+      packages: [
+        { id: 'standard', name: 'Standard Listing', remaining: 40 },
+        { id: 'featured', name: 'Featured Listing', remaining: 5 },
+      ],
+      status: 'Not Published',
+      lastSyncAt: '—',
+    },
+    {
+      id: 'zillow',
+      name: 'Zillow',
+      type: 'portal',
+      active: false,
+      selectedPackage: 'standard',
+      packages: [
+        { id: 'standard', name: 'Standard Listing', remaining: 120 },
+        { id: 'premium', name: 'Premium Listing', remaining: 2 },
+      ],
+      status: 'Not Published',
+      lastSyncAt: '—',
+    },
+  ])
+  const [actionMessage, setActionMessage] = useState('')
 
   useEffect(() => {
     if (initialValues) {
@@ -985,39 +1042,265 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
 
   const renderStep7 = () => (
     <div className="space-y-6 animate-fadeIn">
-      <div className="flex flex-col items-center justify-center py-10 text-center space-y-4">
-        <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center mb-4">
-          <FaCheck size={40} />
+      {/* Contact Info Preview */}
+      <div className="dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+        <h3 className="font-semibold mb-3 flex items-center gap-2">
+          <FaBullhorn className="text-blue-500" />
+          {inputLanguage === 'ar' ? 'معلومات التواصل' : 'Contact Information'}
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="space-y-1">
+            <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider flex items-center gap-1">
+              <FaUser className="text-gray-400" />
+              {inputLanguage === 'ar' ? 'الاسم' : 'Name'}
+            </span>
+            <div>
+              <input 
+                className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 `}
+                value={formData.contactName}
+                onChange={e => setFormData({...formData, contactName: e.target.value})}
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider flex items-center gap-1">
+              <FaEnvelope className="text-gray-400" />
+              {inputLanguage === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+            </span>
+            <div>
+              <input 
+                className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 `}
+                value={formData.contactEmail}
+                onChange={e => setFormData({...formData, contactEmail: e.target.value})}
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider flex items-center gap-1">
+              <FaPhone className="text-gray-400" />
+              {inputLanguage === 'ar' ? 'الهاتف' : 'Phone'}
+            </span>
+            <div>
+              <input 
+                className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 `}
+                value={formData.contactPhone}
+                onChange={e => setFormData({...formData, contactPhone: e.target.value})}
+              />
+            </div>
+          </div>
         </div>
-        <h3 className="text-2xl font-bold">{inputLanguage === 'ar' ? 'المشروع جاهز للنشر!' : 'Project Ready to Publish!'}</h3>
-        <p className="text-[var(--muted-text)] max-w-md">
-          {inputLanguage === 'ar' ? 'تم إدخال جميع البيانات المطلوبة. يمكنك الآن نشر المشروع ليكون متاحاً للعملاء.' : 'All required details have been entered. You can now publish the project to make it available to clients.'}
-        </p>
       </div>
 
-      <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-        <h4 className="font-semibold mb-4">{inputLanguage === 'ar' ? 'ملخص المشروع' : 'Project Summary'}</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-             <span className="block text-[var(--muted-text)] text-xs">{inputLanguage === 'ar' ? 'الاسم' : 'Name'}</span>
-             <span className="font-medium">{formData.name || formData.nameAr || '—'}</span>
+      {/* Channel Management */}
+      <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FaExternalLinkAlt className="text-blue-500" />
+            <h3 className="font-semibold">
+              {inputLanguage === 'ar' ? 'القنوات التسويقية' : 'Channel Management'}
+            </h3>
           </div>
-          <div>
-             <span className="block text-[var(--muted-text)] text-xs">{inputLanguage === 'ar' ? 'المطور' : 'Developer'}</span>
-             <span className="font-medium">{formData.developer || '—'}</span>
-          </div>
-          <div>
-             <span className="block text-[var(--muted-text)] text-xs">{inputLanguage === 'ar' ? 'الحالة' : 'Status'}</span>
-             <span className="font-medium">{formData.status || '—'}</span>
-          </div>
-          <div>
-             <span className="block text-[var(--muted-text)] text-xs">{inputLanguage === 'ar' ? 'السعر يبدأ من' : 'Min Price'}</span>
-             <span className="font-medium">{formData.minPrice || '—'}</span>
-          </div>
+          <span className="text-xs text-[var(--muted-text)]">
+            {inputLanguage === 'ar' ? 'اختر القنوات وخطة الترقية لكل بوابة' : 'Select channels and package per portal'}
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {channels.map((channel) => (
+            <div
+              key={channel.id}
+              className="rounded-xl border border-gray-200 dark:border-slate-700 dark:!bg-slate-800 p-4 flex flex-col gap-3 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  {channel.type === 'website' ? (
+                    <FaGlobe className="text-emerald-500" />
+                  ) : (
+                    <FaExternalLinkAlt className="text-blue-500" />
+                  )}
+                  <div>
+                    <div className="font-semibold">{channel.name}</div>
+                    <div className="text-xs text-[var(--muted-text)]">
+                      {channel.type === 'website'
+                        ? inputLanguage === 'ar' ? 'موقع الشركة' : 'Company website'
+                        : inputLanguage === 'ar' ? 'بوابة خارجية' : 'External portal'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Re-implemented Toggle Button with fixed width container to prevent layout shifts */}
+                  <div className="flex items-center gap-2" dir="ltr">
+                    <span className={`text-xs font-medium ${channel.active ? 'text-blue-600' : 'text-gray-400'} w-[60px] text-right`}>
+                      {channel.active 
+                        ? (inputLanguage === 'ar' ? 'مفعل' : 'Active') 
+                        : (inputLanguage === 'ar' ? 'معطل' : 'Disabled')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleChannelToggle(channel.id, !channel.active)}
+                      className={`
+                        relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent 
+                        transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2
+                        ${channel.active ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'}
+                      `}
+                    >
+                      <span className="sr-only">Use setting</span>
+                      <span
+                        aria-hidden="true"
+                        className={`
+                          pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 
+                          transition duration-200 ease-in-out
+                          ${channel.active ? 'translate-x-5' : 'translate-x-0'}
+                        `}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {channel.type === 'portal' && channel.active && (
+                <div className="flex flex-col md:flex-row gap-3 md:items-center">
+                  <div className="text-sm text-[var(--muted-text)]">
+                    {inputLanguage === 'ar' ? 'باقة التسويق' : 'Marketing package'}
+                  </div>
+                  <select
+                    className="input dark:bg-gray-800 w-full md:w-80 border border-black dark:border-gray-700"
+                    value={channel.selectedPackage}
+                    onChange={(e) => handlePackageChange(channel.id, e.target.value)}
+                  >
+                    {channel.packages.map((pkg) => (
+                      <option key={pkg.id} value={pkg.id}>
+                        {pkg.name} ({pkg.remaining} {inputLanguage === 'ar' ? 'متبقي' : 'remaining'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-4 text-xs text-[var(--muted-text)]">
+                <div className={statusBadge(channel.status)}>
+                  {inputLanguage === 'ar' ? 'الحالة:' : 'Status:'}{' '}{channel.status}
+                </div>
+                <div className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  {inputLanguage === 'ar' ? 'آخر مزامنة:' : 'Last synced:'}{' '}
+                  <span className="font-semibold">{channel.lastSyncAt}</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
+
+      {/* Marketing Materials */}
+      <div className="rounded-xl border border-gray-200 dark:border-slate-700  dark:!bg-slate-800 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <FaCloudDownloadAlt className="text-purple-500" />
+          <h3 className="font-semibold">
+            {inputLanguage === 'ar' ? 'إنشاء مواد تسويقية' : 'Marketing Materials'}
+          </h3>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
+            onClick={handleGenerateBrochure}
+          >
+            {inputLanguage === 'ar' ? 'توليد كتيب PDF' : 'Generate PDF Brochure'}
+          </button>
+          <button
+            className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none"
+            onClick={handleEmailTemplate}
+          >
+            {inputLanguage === 'ar' ? 'إنشاء حملة بريدية' : 'Create Email Campaign'}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Actions */}
+      <div className="rounded-xl border border-gray-200 dark:border-slate-700  dark:!bg-slate-800 p-4 flex flex-wrap justify-between gap-3 items-center">
+        <div className="text-sm text-[var(--muted-text)]">
+          {inputLanguage === 'ar' ? 'احفظ كمسودة أو انشر للقنوات المحددة' : 'Save as draft or publish to selected channels'}
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            className="btn btn-sm bg-gray-500 hover:bg-gray-600 text-white border-none"
+            onClick={handleSaveDraft}
+          >
+            {inputLanguage === 'ar' ? 'حفظ كمسودة' : 'Save as Draft'}
+          </button>
+          <button
+            className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
+            onClick={markPublish}
+          >
+            {inputLanguage === 'ar' ? 'نشر للقنوات المحددة' : 'Publish to Selected Channels'}
+          </button>
+        </div>
+      </div>
+
+      {actionMessage && (
+        <div className="text-sm text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2">
+          {actionMessage}
+        </div>
+      )}
     </div>
   )
+
+  const handleChannelToggle = (id, active) => {
+    // Re-implemented function to handle channel toggling safely
+    setChannels((prevChannels) => {
+      return prevChannels.map((channel) => {
+        if (channel.id === id) {
+          // Update status based on active state
+          const newStatus = active ? 'Pending Sync' : 'Not Published'
+          return { ...channel, active, status: newStatus }
+        }
+        return channel
+      })
+    })
+  }
+
+  const handlePackageChange = (id, pkgId) => {
+    setChannels((prev) =>
+      prev.map((ch) => (ch.id === id ? { ...ch, selectedPackage: pkgId } : ch))
+    )
+  }
+
+  const markPublish = () => {
+    setChannels((prev) =>
+      prev.map((ch) =>
+        ch.active
+          ? {
+              ...ch,
+              status: 'Pending Sync',
+              lastSyncAt: new Date().toLocaleString(),
+            }
+          : ch
+      )
+    )
+    setActionMessage(inputLanguage === 'ar' ? 'تم تجهيز النشر وسيتم التوزيع في الخلفية.' : 'Publish queued; background syndication will start shortly.')
+    if (onSave) onSave({ ...formData, publishStatus: 'Published' })
+  }
+
+  const handleSaveDraft = () => {
+    setActionMessage(inputLanguage === 'ar' ? 'تم الحفظ كمسودة دون نشر.' : 'Saved as draft without publishing.')
+    if (onSave) onSave({ ...formData, publishStatus: 'Draft' })
+  }
+
+  const handleGenerateBrochure = () => {
+    setActionMessage(inputLanguage === 'ar' ? 'سيتم توليد كتيب PDF عبر الخدمة الخلفية.' : 'PDF brochure generation will be handled by backend.')
+  }
+
+  const handleEmailTemplate = () => {
+    setActionMessage(inputLanguage === 'ar' ? 'سيتم تجهيز قالب بريد للتصدير من لوحة الحملات.' : 'Email template will be prepared for campaigns.')
+  }
+
+  const statusBadge = (status) => {
+    const base = 'px-2 py-1 rounded font-semibold text-xs'
+    if (status === 'Live') return `${base} bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200`
+    if (status === 'Pending Sync') return `${base} bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200`
+    if (status === 'Error') return `${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200`
+    return `${base} bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200`
+  }
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6">
@@ -1061,9 +1344,13 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
                   {/* Stepper */}
                   <div className="flex items-center justify-between relative px-2 md:px-8">
                     <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 dark:bg-gray-700 -translate-y-1/2 rounded-full" />
-                    <div 
-                      className="absolute top-1/2 left-0 h-0.5 bg-blue-500 -translate-y-1/2 rounded-full transition-all duration-500 ease-in-out"
-                      style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
+                    <div
+                      className="absolute top-1/2 h-0.5 bg-blue-500 -translate-y-1/2 rounded-full transition-all duration-500 ease-in-out"
+                      style={{
+                        [inputLanguage === 'ar' ? 'right' : 'left']: 0,
+                        width: `calc(${((currentStep - 1) / (STEPS.length - 1)) * 100}% + 14px)`,
+                        maxWidth: '100%',
+                      }}
                     />
                     
                     {STEPS.map((step) => {

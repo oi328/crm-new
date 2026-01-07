@@ -1,35 +1,129 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { FaFilter, FaSearch, FaChartLine, FaUsers, FaMousePointer, FaLayerGroup, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
+import AddLandingPage from './AddLandingPage'
+
+function Sparkline({ data = [], color = 'emerald', width = 120, height = 36, padding = 6 }) {
+  const w = width
+  const h = height
+  const p = padding
+  if (!Array.isArray(data) || data.length < 2) {
+    return <svg width={w} height={h} />
+  }
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+  const stepX = (w - p * 2) / (data.length - 1)
+  const points = data.map((v, i) => {
+    const x = p + i * stepX
+    const y = h - p - ((v - min) / range) * (h - p * 2)
+    return `${x},${y}`
+  }).join(' ')
+  const stroke =
+    color === 'emerald' ? '#10b981' :
+    color === 'rose' ? '#ef4444' :
+    color === 'blue' ? '#3b82f6' : '#94a3b8'
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="opacity-80">
+      <polyline fill="none" stroke={stroke} strokeWidth="2" points={points} />
+    </svg>
+  )
+}
+
+function CountUp({ value = 0, duration = 600 }) {
+  const [display, setDisplay] = useState(value)
+  const prev = useRef(value)
+  useEffect(() => {
+    const from = prev.current
+    const to = value
+    prev.current = to
+    const start = performance.now()
+    const step = (ts) => {
+      const p = Math.min(1, (ts - start) / duration)
+      const v = Math.round(from + (to - from) * p)
+      setDisplay(v)
+      if (p < 1) requestAnimationFrame(step)
+    }
+    requestAnimationFrame(step)
+  }, [value, duration])
+  return <span>{display}</span>
+}
 
 export default function LandingPages() {
   const { t, i18n } = useTranslation()
   const isRTL = i18n.language === 'ar'
-  const navigate = useNavigate()
+
+  const [isAddModalOpen, setAddModalOpen] = useState(false)
 
   const initialRows = [
-    { name: 'Landing Page', url: 'https://example.co', source: 'Meta', campaign: 'Conevecal', visitors: 140, leads: 120, conversion: '30.6%' },
-    { name: 'Product Demo Page', url: 'https://google', source: 'Google', campaign: 'Spring Sale', visitors: 30, leads: 45, conversion: '14.5%' },
-    { name: 'Real Estate Lead', url: 'https://man.ru', source: 'Manual', campaign: 'Somouse', visitors: 20, leads: 30, conversion: '12.5%' },
-    { name: 'Webinar Signup', url: 'https://manuee', source: 'Manual', campaign: 'Summer Offer', visitors: 20, leads: 50, conversion: '13.0%' },
-    { name: 'Product Pela mcre', url: 'https://example.c', source: 'Meta', campaign: 'Forris', visitors: 10, leads: 30, conversion: 'Paused' },
-    { name: 'Running Ages', url: 'https://example.co', source: 'Maca', campaign: 'Google', visitors: 30, leads: 10, conversion: 'Active' },
+    { name: 'Landing Page', url: 'https://example.co', source: 'Meta', campaign: 'Conevecal', email: 'test@example.com', phone: '123456789', theme: 'theme1', visitors: 1245, leads: 324 },
+    { name: 'Product Demo Page', url: 'https://google', source: 'Google', campaign: 'Spring Sale', email: 'demo@google.com', phone: '987654321', theme: 'theme2', visitors: 856, leads: 142 },
   ]
 
-  const [rows, setRows] = useState(initialRows)
-  const [isFiltersOpen, setFiltersOpen] = useState(false)
-  const [syncing, setSyncing] = useState(false)
-  const [syncMsg, setSyncMsg] = useState('')
-
-  // Filters state
+  const [rows, setRows] = useState(() => {
+    try {
+      const saved = localStorage.getItem('landing_pages_list')
+      return saved ? JSON.parse(saved) : initialRows
+    } catch {
+      return initialRows
+    }
+  })
   const [q, setQ] = useState('')
   const [fSource, setFSource] = useState('All')
   const [fCampaign, setFCampaign] = useState('All')
-  const [fStatus, setFStatus] = useState('All')
+  const [fTheme, setFTheme] = useState('All')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(6)
 
-  const sourceOptions = useMemo(() => ['All', ...Array.from(new Set(rows.map(r => r.source)))], [rows])
-  const campaignOptions = useMemo(() => ['All', ...Array.from(new Set(rows.map(r => r.campaign)))], [rows])
-  const statusOptions = ['All', 'Active', 'Paused', 'Percentage']
+  const sourceOptions = useMemo(() => ['All', ...Array.from(new Set(rows.map(r => r.source))).filter(Boolean)], [rows])
+  const campaignOptions = useMemo(() => ['All', ...Array.from(new Set(rows.map(r => r.campaign))).filter(Boolean)], [rows])
+  const themeOptions = ['All', 'theme1', 'theme2']
+
+  const stats = useMemo(() => {
+    const totalPages = rows.length
+    const totalVisitors = rows.reduce((sum, r) => sum + (r.visitors || 0), 0)
+    const totalLeads = rows.reduce((sum, r) => sum + (r.leads || 0), 0)
+    const conversionRate = totalVisitors > 0 ? ((totalLeads / totalVisitors) * 100).toFixed(1) : '0.0'
+    const visitorsSeries = rows.map(r => Number(r.visitors || 0))
+    const leadsSeries = rows.map(r => Number(r.leads || 0))
+    const convSeries = rows.map(r => {
+      const v = Number(r.visitors || 0)
+      const l = Number(r.leads || 0)
+      return v > 0 ? (l / v) * 100 : 0
+    })
+    return { totalPages, totalVisitors, totalLeads, conversionRate, visitorsSeries, leadsSeries, convSeries }
+  }, [rows])
+
+  const [prevStats, setPrevStats] = useState(() => {
+    try {
+      const saved = localStorage.getItem('landing_pages_prev_stats')
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('landing_pages_prev_stats', JSON.stringify({
+        totalPages: stats.totalPages,
+        totalVisitors: stats.totalVisitors,
+        totalLeads: stats.totalLeads,
+        conversionRate: Number(stats.conversionRate)
+      }))
+      setPrevStats({
+        totalPages: stats.totalPages,
+        totalVisitors: stats.totalVisitors,
+        totalLeads: stats.totalLeads,
+        conversionRate: Number(stats.conversionRate)
+      })
+    } catch {}
+  }, [stats.totalPages, stats.totalVisitors, stats.totalLeads, stats.conversionRate])
+
+  const pctDelta = (current, prev) => {
+    if (typeof prev !== 'number' || prev === 0) return 0
+    return Number((((current - prev) / prev) * 100).toFixed(1))
+  }
 
   const visibleRows = useMemo(() => {
     const ql = q.trim().toLowerCase()
@@ -37,212 +131,250 @@ export default function LandingPages() {
       const matchesQuery = !ql || r.name.toLowerCase().includes(ql) || r.url.toLowerCase().includes(ql)
       const matchesSource = fSource === 'All' || r.source === fSource
       const matchesCampaign = fCampaign === 'All' || r.campaign === fCampaign
-      const convStr = String(r.conversion || '').toLowerCase()
-      const status = convStr.includes('%') ? 'Percentage' : (convStr === 'active' ? 'Active' : (convStr === 'paused' ? 'Paused' : 'Percentage'))
-      const matchesStatus = fStatus === 'All' || status === fStatus
-      return matchesQuery && matchesSource && matchesCampaign && matchesStatus
+      const matchesTheme = fTheme === 'All' || r.theme === fTheme
+      return matchesQuery && matchesSource && matchesCampaign && matchesTheme
     })
-  }, [rows, q, fSource, fCampaign, fStatus])
+  }, [rows, q, fSource, fCampaign, fTheme])
 
-  // Stats from visible rows
-  const totalVisitors = useMemo(() => visibleRows.reduce((sum, r) => sum + (Number(r.visitors) || 0), 0), [visibleRows])
-  const totalLeads = useMemo(() => visibleRows.reduce((sum, r) => sum + (Number(r.leads) || 0), 0), [visibleRows])
-  const avgConversion = useMemo(() => {
-    const pct = totalVisitors > 0 ? (totalLeads / totalVisitors) * 100 : 0
-    return `${pct.toFixed(1)}%`
-  }, [totalVisitors, totalLeads])
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [q, fSource, fCampaign, fTheme])
 
-  const handleSync = () => {
-    if (syncing) return
-    setSyncing(true)
-    setSyncMsg('')
-    setTimeout(() => {
-      setRows(prev => prev.map(r => {
-        const vDelta = Math.floor(Math.random() * 20) + 5
-        const lDelta = Math.floor(Math.random() * 10) - 2
-        const visitors = (Number(r.visitors) || 0) + vDelta
-        let leads = (Number(r.leads) || 0) + Math.max(0, lDelta)
-        if (leads > visitors) leads = Math.floor(visitors * 0.8)
-        let conversion = `${visitors > 0 ? ((leads / visitors) * 100).toFixed(1) : '0.0'}%`
-        if (r.conversion === 'Paused' || r.conversion === 'Active') conversion = r.conversion
-        return { ...r, visitors, leads, conversion }
-      }))
-      setSyncing(false)
-      setSyncMsg(t('Sync complete'))
-      setTimeout(() => setSyncMsg(''), 2500)
-    }, 1400)
-  }
+  const totalPages = Math.ceil(visibleRows.length / itemsPerPage)
+  const paginatedRows = visibleRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const resetFilters = () => {
     setQ('')
     setFSource('All')
     setFCampaign('All')
-    setFStatus('All')
+    setFTheme('All')
+  }
+
+  const handleAddPage = (newData) => {
+    console.log('New Landing Page Data:', newData)
+    const newRow = {
+      name: newData.title || 'New Landing Page',
+      url: newData.url || '#',
+      source: newData.source || 'Manual',
+      campaign: newData.linkedCampaign || 'New Campaign',
+      email: newData.email || '',
+      phone: newData.phone || '',
+      theme: newData.theme || 'theme1',
+      visitors: 0,
+      leads: 0
+    }
+    
+    const updatedRows = [newRow, ...rows]
+    setRows(updatedRows)
+    localStorage.setItem('landing_pages_list', JSON.stringify(updatedRows))
+
+    // Save full data for viewer
+    if (newData.url) {
+      const parts = newData.url.split('/#/')
+      if (parts.length > 1) {
+        const slug = parts[1]
+        try {
+            const storedPages = JSON.parse(localStorage.getItem('landing_pages_data') || '{}')
+            // Data is already processed to Base64/Strings in AddLandingPage, so we can save it directly
+            storedPages[slug] = newData
+            localStorage.setItem('landing_pages_data', JSON.stringify(storedPages))
+          } catch (e) {
+          console.error('Failed to save landing page data', e)
+        }
+      }
+    }
   }
 
   return (
-      <div className="space-y-4 bg-transparent text-[var(--content-text)] overflow-y-auto">
-        {/* Page Title */}
-        <h1 className="page-title text-2xl font-bold">{t('Landing Pages')}</h1>
+      <div className="space-y-6 pt-4 px-4 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Page Title */}
+          <h1 className="page-title text-2xl font-bold">{isRTL ? 'صفحات الهبوط' : 'Landing Pages'}</h1>
 
-        {/* Actions */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <button className={`btn btn-primary inline-flex items-center gap-2`} onClick={() => navigate('/marketing/landing-pages/add')}>
+          {/* Actions */}
+          <button 
+            className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" 
+            onClick={() => setAddModalOpen(true)}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
               <path d="M12 5v14M5 12h14" />
             </svg>
-            <span>{t('Add Landing Page')}</span>
+            <span>{isRTL ? 'إنشاء صفحة هبوط' : 'Create Landing Page'}</span>
           </button>
-          <button className={`btn inline-flex items-center gap-2`} onClick={handleSync} disabled={syncing}>
-            {syncing ? (
-              <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                <path d="M21 12a9 9 0 10-3.28 6.92" />
-                <path d="M21 12h-4" />
-              </svg>
-            )}
-            <span>{syncing ? t('Syncing...') : t('Sync Data')}</span>
-          </button>
-          <button className={`btn inline-flex items-center gap-2`} onClick={() => setFiltersOpen(v => !v)}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-              <path d="M3 4h18l-7 8v6l-4 2v-8z" />
-            </svg>
-            <span>{t('Filters')}</span>
-          </button>
-        </div>
-        {/* Spacer row under actions */}
-        <div className="spacer-row w-full">
-          <div className="h-2"></div>
+        </div> 
+
+        {/* Overview */}
+        <div className="mb-2">
+          <h2 className="text-lg font-semibold">{isRTL ? 'نظرة عامة' : 'Overview'}</h2>
         </div>
 
-        {/* Sync banner */}
-        {syncMsg && (
-          <div className={`card glass-card p-3 text-sm ${isRTL ? 'text-right' : 'text-left'}`}>{syncMsg}</div>
-        )}
-        {/* Spacer under sync banner */}
-        {syncMsg && (
-          <div className="spacer-row w-full">
-            <div className="h-2"></div>
+        {/* Stats Cards (enhanced) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="card p-4 space-y-2 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 border-blue-100 dark:border-blue-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                <FaLayerGroup size={20} />
+              </div>
+              <div className="text-xs font-medium text-blue-700 dark:text-blue-300">{isRTL ? 'إجمالي الصفحات' : 'Total Pages'}</div>
+            </div>
+            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100"><CountUp value={stats.totalPages} /></div>
+            <div className={`text-xs ${pctDelta(stats.totalPages, prevStats?.totalPages) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {pctDelta(stats.totalPages, prevStats?.totalPages) >= 0 ? '▲' : '▼'} {Math.abs(pctDelta(stats.totalPages, prevStats?.totalPages))}% {isRTL ? 'مقارنة بآخر تحديث' : 'vs Last Update'}
+            </div>
           </div>
-        )}
+
+          <div className="card p-4 space-y-2 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10 border-purple-100 dark:border-purple-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600">
+                <FaUsers size={20} />
+              </div>
+              <div className="text-xs font-medium text-purple-700 dark:text-purple-300">{isRTL ? 'الزوار' : 'Total Visitors'}</div>
+            </div>
+            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100"><CountUp value={stats.totalVisitors} /></div>
+            <Sparkline data={stats.visitorsSeries} color="blue" />
+            <div className={`text-xs ${pctDelta(stats.totalVisitors, prevStats?.totalVisitors) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {pctDelta(stats.totalVisitors, prevStats?.totalVisitors) >= 0 ? '▲' : '▼'} {Math.abs(pctDelta(stats.totalVisitors, prevStats?.totalVisitors))}% {isRTL ? 'مقارنة بآخر تحديث' : 'vs Last Update'}
+            </div>
+          </div>
+
+          <div className="card p-4 space-y-2 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 border-green-100 dark:border-green-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600">
+                <FaMousePointer size={20} />
+              </div>
+              <div className="text-xs font-medium text-green-700 dark:text-green-300">{isRTL ? 'العملاء المحتملين' : 'Total Leads'}</div>
+            </div>
+            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100"><CountUp value={stats.totalLeads} /></div>
+            <Sparkline data={stats.leadsSeries} color="emerald" />
+            <div className={`text-xs ${pctDelta(stats.totalLeads, prevStats?.totalLeads) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {pctDelta(stats.totalLeads, prevStats?.totalLeads) >= 0 ? '▲' : '▼'} {Math.abs(pctDelta(stats.totalLeads, prevStats?.totalLeads))}% {isRTL ? 'مقارنة بآخر تحديث' : 'vs Last Update'}
+            </div>
+          </div>
+
+          <div className="card p-4 space-y-2 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/10 border-orange-100 dark:border-orange-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
+                <FaChartLine size={20} />
+              </div>
+              <div className="text-xs font-medium text-orange-700 dark:text-orange-300">{isRTL ? 'معدل التحويل' : 'Conversion Rate'}</div>
+            </div>
+            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">{stats.conversionRate}%</div>
+            <Sparkline data={stats.convSeries} color="rose" />
+            <div className={`text-xs ${pctDelta(Number(stats.conversionRate), prevStats?.conversionRate) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {pctDelta(Number(stats.conversionRate), prevStats?.conversionRate) >= 0 ? '▲' : '▼'} {Math.abs(pctDelta(Number(stats.conversionRate), prevStats?.conversionRate))}% {isRTL ? 'مقارنة بآخر تحديث' : 'vs Last Update'}
+            </div>
+          </div>
+        </div>
 
         {/* Filters Panel */}
-        {isFiltersOpen && (
-          <section className="card glass-card p-4">
-            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 ${isRTL ? 'text-right' : ''}`}>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-[var(--muted-text)]">{t('Search')}</label>
-                <input value={q} onChange={e => setQ(e.target.value)} placeholder={t('Type to filter...')} className="input" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-[var(--muted-text)]">{t('Source')}</label>
-                <select value={fSource} onChange={e => setFSource(e.target.value)} className="select">
-                  {sourceOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-[var(--muted-text)]">{t('Campaign')}</label>
-                <select value={fCampaign} onChange={e => setFCampaign(e.target.value)} className="select">
-                  {campaignOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-[var(--muted-text)]">{t('Status')}</label>
-                <select value={fStatus} onChange={e => setFStatus(e.target.value)} className="select">
-                  {statusOptions.map(opt => <option key={opt} value={opt}>{t(opt)}</option>)}
-                </select>
-              </div>
+        <div className="card p-4 sm:p-6 bg-transparent rounded-2xl filters-compact" style={{ backgroundColor: 'transparent' }}>
+            <div className="flex justify-between items-center mb-3">
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+                <FaFilter className="text-blue-500" /> {t('Filters')}
+            </h2>
+            <div className="flex items-center gap-2">
+                <button onClick={resetFilters} className="px-3 py-1.5 text-sm  dark:text-white hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                {isRTL ? 'إعادة تعيين' : 'Reset'}
+                </button>
             </div>
-            <div className={`mt-4 flex items-center gap-2 ${isRTL ? 'justify-start' : 'justify-end'}`}>
-              <button className="btn" onClick={() => setFiltersOpen(false)}>{t('Apply')}</button>
-              <button className="btn" onClick={resetFilters}>{t('Reset')}</button>
-              <button className="btn" onClick={() => setFiltersOpen(false)}>{t('Close')}</button>
             </div>
-          </section>
-        )}
-        {/* Spacer under filters */}
-        {isFiltersOpen && (
-          <div className="spacer-row w-full">
-            <div className="h-2"></div>
-          </div>
-        )}
 
-        {/* Stats Card */}
-        <section className="card glass-card p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="card glass-card p-4">
-              <div className="text-sm text-[var(--muted-text)] inline-flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-              <circle cx="8" cy="9" r="2.5" />
-              <circle cx="16" cy="9" r="2.5" />
-              <path d="M3 20v-1a5 5 0 015-5h8a5 5 0 015 5v1" />
-              </svg>
-              <span>{t('Total Visitors')}</span>
-              </div>
-              <div className="text-3xl font-semibold">{totalVisitors.toLocaleString()}</div>
+            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="space-y-1">
+                <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaSearch className="text-blue-500" size={10} /> {t('Search')}</label>
+                <input className="input w-full" value={q} onChange={e => setQ(e.target.value)} placeholder={t('Search by name or URL...')} />
+                </div>
+                <div className="space-y-1">
+                <label className="text-xs font-medium text-[var(--muted-text)]">{t('Source')}</label>
+                <select className="input w-full" value={fSource} onChange={e => setFSource(e.target.value)}>
+                    {sourceOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+                </div>
+                <div className="space-y-1">
+                <label className="text-xs font-medium text-[var(--muted-text)]">{t('Campaign')}</label>
+                <select className="input w-full" value={fCampaign} onChange={e => setFCampaign(e.target.value)}>
+                    {campaignOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+                </div>
+                <div className="space-y-1">
+                <label className="text-xs font-medium text-[var(--muted-text)]">{t('Theme')}</label>
+                <select className="input w-full" value={fTheme} onChange={e => setFTheme(e.target.value)}>
+                    {themeOptions.map(opt => <option key={opt} value={opt}>{opt === 'theme1' ? 'LIGHT' : (opt === 'theme2' ? 'DARK' : opt)}</option>)}
+                </select>
+                </div>
             </div>
-            <div className="card glass-card p-4">
-              <div className="text-sm text-[var(--muted-text)] inline-flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-              <rect x="6" y="4" width="12" height="16" rx="2" />
-              <path d="M9 12l2 2 4-4" />
-              </svg>
-              <span>{t('Total Leads')}</span>
-              </div>
-              <div className="text-3xl font-semibold">{totalLeads.toLocaleString()}</div>
             </div>
-            <div className="card glass-card p-4">
-              <div className="text-sm text-[var(--muted-text)] inline-flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-              <path d="M3 17l6-6 4 4 8-8" />
-              <path d="M3 17h18" />
-              </svg>
-              <span>{t('Avg. Conversion %')}</span>
-              </div>
-              <div className="text-3xl font-semibold">{avgConversion}</div>
-            </div>
-            <div className="card glass-card p-3 flex items-center justify-center">
-              <svg viewBox="0 0 120 60" className="w-full h-20">
-                <path d="M0 45 L10 40 L20 42 L30 36 L40 38 L50 34 L60 35 L70 30 L80 35 L90 32 L100 28 L110 30 L120 27 L120 60 L0 60 Z" fill="rgba(16,185,129,0.35)" stroke="rgba(16,185,129,0.6)" strokeWidth="1" />
-                <path d="M0 50 L10 48 L20 46 L30 47 L40 44 L50 43 L60 44 L70 41 L80 39 L90 38 L100 35 L110 36 L120 37" fill="none" stroke="rgba(59,130,246,0.8)" strokeWidth="2" />
-              </svg>
-            </div>
-          </div>
-        </section>
-        {/* Spacer under stats */}
-        <div className="spacer-row w-full">
-          <div className="h-2"></div>
         </div>
 
         {/* Table */}
         <section className="card glass-card p-4 max-[550px]:p-3">
           <div className="max-[550px]:-mx-3">
-            <table className="nova-table w-full table-fixed text-sm">
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4 mb-4 px-3">
+               {paginatedRows.map((r, idx) => (
+                 <div key={idx} className="card glass-card p-4 space-y-3 bg-white/5">
+                   <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                     <div>
+                       <h4 className="font-semibold text-sm">{r.name}</h4>
+                       <a href={r.url} className="text-xs text-blue-500 truncate block max-w-[200px]" target="_blank" rel="noreferrer">{r.url}</a>
+                     </div>
+                     <span className={`px-2 py-1 rounded text-xs font-medium ${r.theme === 'theme2' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                        {r.theme === 'theme1' ? 'LIGHT' : (r.theme === 'theme2' ? 'DARK' : r.theme)}
+                     </span>
+                   </div>
+                   <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--muted-text)] text-xs">{t('Source')}</span>
+                        <span className="text-xs font-medium">{r.source}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--muted-text)] text-xs">{t('Linked Campaign')}</span>
+                        <span className="text-xs font-medium">{r.campaign}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--muted-text)] text-xs">{t('Email')}</span>
+                        <span className="text-xs">{r.email || '-'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--muted-text)] text-xs">{t('Phone')}</span>
+                        <span className="text-xs">{r.phone || '-'}</span>
+                      </div>
+                   </div>
+                 </div>
+               ))}
+            </div>
+
+            <table className="hidden md:table nova-table w-full table-fixed text-sm">
               <thead>
                 <tr className="glass-row text-left text-gray-600 dark:text-gray-300">
-                  <th className="py-2 px-4">{t('Page Name')}</th>
-                  <th className="py-2 px-4">URL</th>
+                  <th className="py-2 px-4">{t('Title')}</th>
                   <th className="py-2 px-4">{t('Source')}</th>
                   <th className="py-2 px-4">{t('Linked Campaign')}</th>
-                  <th className="py-2 px-4">{t('Visitors')}</th>
-                  <th className="py-2 px-4">{t('Leads')}</th>
-                  <th className="py-2 px-4">{t('Conversion %')}</th>
+                  <th className="py-2 px-4">{t('Email')}</th>
+                  <th className="py-2 px-4">{t('Phone')}</th>
+                  <th className="py-2 px-4">URL</th>
+                  <th className="py-2 px-4">{t('Theme')}</th>
                 </tr>
               </thead>
               <tbody className="text-gray-800 dark:text-gray-100">
-                {visibleRows.map((r, idx) => (
+                {paginatedRows.map((r, idx) => (
                   <React.Fragment key={idx}>
                     <tr className="glass-row border-t border-gray-200 dark:border-gray-800">
-                      <td className="py-2 px-4">{r.name}</td>
-                      <td className="py-2 px-4"><a href={r.url} className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">{r.url}</a></td>
+                      <td className="py-2 px-4 font-medium">{r.name}</td>
                       <td className="py-2 px-4">{r.source}</td>
                       <td className="py-2 px-4">{r.campaign}</td>
-                      <td className="py-2 px-4">{r.visitors}</td>
-                      <td className="py-2 px-4">{r.leads}</td>
-                      <td className="py-2 px-4">{r.conversion}</td>
+                      <td className="py-2 px-4">{r.email}</td>
+                      <td className="py-2 px-4">{r.phone}</td>
+                      <td className="py-2 px-4"><a href={r.url} className="text-blue-600 hover:underline truncate block" target="_blank" rel="noreferrer">{r.url}</a></td>
+                      <td className="py-2 px-4">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${r.theme === 'theme2' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                          {r.theme === 'theme1' ? 'LIGHT' : (r.theme === 'theme2' ? 'DARK' : r.theme)}
+                        </span>
+                      </td>
                     </tr>
-                    {idx < visibleRows.length - 1 && (
+                    {idx < paginatedRows.length - 1 && (
                       <tr className="spacer-row">
                         <td colSpan={7}>
                           <div className="h-2"></div>
@@ -254,7 +386,59 @@ export default function LandingPages() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Footer */}
+          {visibleRows.length > 0 && (
+            <div className="mt-2 flex items-center justify-between rounded-xl p-1.5 sm:p-2 glass-panel">
+              <div className="text-[10px] sm:text-xs text-[var(--muted-text)]">
+                {isRTL 
+                  ? `عرض ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, visibleRows.length)} من ${visibleRows.length}` 
+                  : `Showing ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, visibleRows.length)} of ${visibleRows.length}`}
+              </div>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-1">
+                  <button
+                    className="btn btn-ghost p-1 h-7 w-7 sm:btn-sm sm:h-8 sm:w-8"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    title={isRTL ? 'السابق' : 'Prev'}
+                  >
+                    <FaChevronLeft className={isRTL ? 'scale-x-[-1]' : ''} size={12} />
+                  </button>
+                  <span className="text-xs sm:text-sm">{isRTL ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
+                  <button
+                    className="btn btn-ghost p-1 h-7 w-7 sm:btn-sm sm:h-8 sm:w-8"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    title={isRTL ? 'التالي' : 'Next'}
+                  >
+                    <FaChevronRight className={isRTL ? 'scale-x-[-1]' : ''} size={12} />
+                  </button>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] sm:text-xs text-[var(--muted-text)]">{isRTL ? 'لكل صفحة:' : 'Per page:'}</span>
+                  <select
+                    className="input w-20 sm:w-24 text-xs sm:text-sm h-7 sm:h-8 min-h-0"
+                    value={itemsPerPage}
+                    onChange={e => setItemsPerPage(Number(e.target.value))}
+                  >
+                    <option value={6}>6</option>
+                    <option value={12}>12</option>
+                    <option value={24}>24</option>
+                    <option value={48}>48</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
+
+        {/* Add Modal */}
+        <AddLandingPage 
+          isOpen={isAddModalOpen} 
+          onClose={() => setAddModalOpen(false)} 
+          onAdd={handleAddPage}
+        />
       </div>
   )
 }

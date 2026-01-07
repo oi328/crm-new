@@ -159,7 +159,7 @@ export default function CostVsRevenueReport() {
             <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
             <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold`}>{t('Platform Performance')}</h3>
           </div>
-          <div className="overflow-auto -mx-4">
+          <div className="overflow-auto -mx-4 hidden md:block">
             <table className="w-full text-sm min-w-[860px]">
               <thead>
                 <tr className="text-left opacity-70">
@@ -203,6 +203,75 @@ export default function CostVsRevenueReport() {
                 </tr>
               </tfoot>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {filtered.map((p) => {
+              const roi = p.cost ? (p.revenue / p.cost) : 0
+              const profit = p.revenue - p.cost
+              const costPct = totals.totalCost ? ((p.cost / totals.totalCost) * 100) : 0
+              const revenuePct = totals.totalRevenue ? ((p.revenue / totals.totalRevenue) * 100) : 0
+              return (
+                <div key={p.platform} className="card glass-card p-4 space-y-3 bg-white/5">
+                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                    <h4 className="font-semibold text-sm">{p.platform}</h4>
+                    <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
+                      {roi.toFixed(1)}x ROI
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">💰 {t('Spend')}</span>
+                      <span className="text-xs font-medium">{p.cost.toLocaleString()} EGP</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">💵 {t('Revenue')}</span>
+                      <span className="text-xs font-medium">{p.revenue.toLocaleString()} EGP</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">{t('Profit')}</span>
+                      <span className={`text-xs font-medium ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {profit >= 0 ? '+' : ''}{profit.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">{t('Share')}</span>
+                      <span className="text-xs text-[var(--muted-text)]">
+                        {costPct.toFixed(0)}% / {revenuePct.toFixed(0)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+            
+            {/* Totals Card */}
+            <div className="card glass-card p-4 space-y-3 bg-blue-500/5 border border-blue-500/20">
+              <div className="flex items-center justify-between border-b border-blue-500/20 pb-3">
+                <h4 className="font-semibold text-sm">{t('Total')}</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--muted-text)] text-xs">💰 {t('Spend')}</span>
+                  <span className="text-xs font-medium">{totals.totalCost.toLocaleString()} EGP</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--muted-text)] text-xs">💵 {t('Revenue')}</span>
+                  <span className="text-xs font-medium">{totals.totalRevenue.toLocaleString()} EGP</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--muted-text)] text-xs">{t('ROI')}</span>
+                  <span className="text-xs font-medium">{(totals.totalCost ? (totals.totalRevenue / totals.totalCost) : 0).toFixed(1)}x</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--muted-text)] text-xs">{t('Profit')}</span>
+                  <span className={`text-xs font-medium ${(totals.totalRevenue - totals.totalCost) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {(totals.totalRevenue - totals.totalCost >= 0 ? '+' : '')}{(totals.totalRevenue - totals.totalCost).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

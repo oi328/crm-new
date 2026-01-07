@@ -721,11 +721,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                           : (paymentPlan ? 'Edit Payment Plan' : 'Add Payment Plan')}
                       </span>
                     </button>
-                    <button onClick={() => { setShowHeaderMenu(false); setActionType('call'); setShowAddActionModal(true); }}
-                            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
-                      <FaPhone className="text-indigo-500" />
-                      <span className="text-sm font-medium">{isArabic ? 'إضافة مكالمة' : 'Add Call'}</span>
-                    </button>
+
                     <button onClick={() => {
                                 setShowHeaderMenu(false);
                                 const ok = window.confirm(isArabic ? 'هل تريد تحويل العميل إلى عميل فعلي؟' : 'Convert this lead to a customer?');

@@ -79,6 +79,7 @@ import Warehouse from '../pages/Warehouse'
 import Campaigns from '../pages/Campaigns'
 import LandingPages from '../pages/LandingPages'
 import MetaIntegration from '../pages/MetaIntegration'
+import MarketingReports from '../pages/MarketingReports'
 import CampaignSummaryReport from '../pages/CampaignSummaryReport'
 import LeadSourcePerformanceReport from '../pages/LeadSourcePerformanceReport'
 import CostVsRevenueReport from '../pages/CostVsRevenueReport'
@@ -118,6 +119,8 @@ import UserManagementActivityLogs from '../pages/UserManagementActivityLogs'
 import UserManagementAccessLogs from '../pages/UserManagementAccessLogs'
 import UserManagementRoles from '../pages/UserManagementRoles'
 import UserManagementRoleEdit from '../pages/UserManagementRoleEdit'
+import LandingPagePreview from '../pages/landing-themes/LandingPagePreview'
+import LandingPageViewer from '../pages/landing-themes/LandingPageViewer'
 
 function ProtectedModuleRoute() { return <Outlet /> }
 function SubscriptionGuard() { return <Outlet /> }
@@ -137,6 +140,7 @@ export default function AppRouter() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/welcome/contact" element={<WelcomeContact />} />
+        <Route path="/landing-preview" element={<LandingPagePreview />} />
 
         <Route element={<SubscriptionGuard />}>        
           <Route element={<Layout />}>        
@@ -189,7 +193,7 @@ export default function AppRouter() {
               <Route path="/marketing/landing-pages" element={<LandingPages />} />
               <Route path="/marketing/landing-pages/add" element={<AddLandingPage />} />
               <Route path="/marketing/meta-integration" element={<MetaIntegration />} />
-              <Route path="/marketing/reports" element={<CampaignSummaryReport />} />
+              <Route path="/marketing/reports" element={<MarketingReports />} />
               <Route path="/marketing/reports/campaign-summary" element={<CampaignSummaryReport />} />
               <Route path="/marketing/reports/lead-source-performance" element={<LeadSourcePerformanceReport />} />
               <Route path="/marketing/reports/cost-vs-revenue" element={<CostVsRevenueReport />} />
@@ -275,6 +279,9 @@ export default function AppRouter() {
             <Route path="/notifications" element={<Notifications />} />
           </Route>
         </Route>
+
+        {/* Public Landing Pages - Must be last to avoid conflicts */}
+        <Route path="/:slug" element={<LandingPageViewer />} />
       </Routes>
     </div>
   )

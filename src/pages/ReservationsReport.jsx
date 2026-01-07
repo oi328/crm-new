@@ -278,7 +278,9 @@ export default function ReservationsReport() {
         <div className="h-3" aria-hidden="true"></div>
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
           <div className="text-sm font-semibold mb-3">{t('Reservations')}</div>
-          <div className="overflow-x-auto">
+          
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-left border-b border-gray-200 dark:border-gray-700">
@@ -293,8 +295,8 @@ export default function ReservationsReport() {
               </thead>
               <tbody>
                 {filtered.map(r => (
-                  <>
-                    <tr key={r.id} className="border-b border-gray-100 dark:border-gray-700">
+                  <React.Fragment key={r.id}>
+                    <tr className="border-b border-gray-100 dark:border-gray-700">
                       <td className="py-2 px-3">
                         <div className="font-medium">{r.customer}</div>
                         <div className="text-xs text-gray-500">{r.contact}</div>
@@ -313,7 +315,7 @@ export default function ReservationsReport() {
                         <div className="h-3"></div>
                       </td>
                     </tr>
-                  </>
+                  </React.Fragment>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
@@ -322,6 +324,42 @@ export default function ReservationsReport() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-4">
+            {filtered.length === 0 && (
+              <div className="text-center py-6 text-gray-500">{t('No reservations found for selected filters')}</div>
+            )}
+            {filtered.map(r => (
+              <div key={r.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3 border border-gray-100 dark:border-gray-700">
+                <div className="flex justify-between items-start border-b border-gray-200 dark:border-gray-600 pb-3">
+                  <div>
+                    <h4 className="font-semibold text-sm">{r.customer}</h4>
+                    <span className="text-xs text-gray-500">{r.contact}</span>
+                  </div>
+                  <span className={`px-2 py-1 rounded-md text-xs ${statusClass(r.status)}`}>{t(r.status.charAt(0).toUpperCase() + r.status.slice(1))}</span>
+                </div>
+                <div className="grid grid-cols-1 gap-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 text-xs">{t('Date')}</span>
+                    <span className="text-xs">{new Date(r.reservationDateTime).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 text-xs">{t('Type')}</span>
+                    <span className="text-xs">{r.type}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 text-xs">{t('Value')}</span>
+                    <span className="font-medium text-xs">{r.value ? `${r.value.toLocaleString()} EGP` : '-'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 text-xs">{t('Handled By')}</span>
+                    <span className="text-xs">{r.handledBy}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
         <div className="h-3" aria-hidden="true"></div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@shared/context/ThemeProvider'
-import { FaPlus, FaSearch, FaFilter, FaDownload, FaEye, FaEdit, FaTrash, FaPhone, FaEnvelope, FaWhatsapp, FaVideo, FaChevronDown } from 'react-icons/fa'
+import { FaPlus, FaSearch, FaFilter, FaDownload, FaEye, FaEdit, FaTrash, FaPhone, FaEnvelope, FaWhatsapp, FaVideo, FaChevronDown, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 // import { api } from '../utils/api'
 import LeadModal from '../components/LeadModal'
 import AddActionModal from '../components/AddActionModal'
@@ -12,6 +12,7 @@ import LeadHoverTooltip from '../components/LeadHoverTooltip'
 import { useStages } from '../hooks/useStages'
 import { useNavigate, useLocation } from 'react-router-dom'
  // Import the custom checkbox
+import SearchableSelect from '../components/SearchableSelect'
 import * as XLSX from 'xlsx'
 
 export const Leads = () => {
@@ -446,7 +447,7 @@ export const Leads = () => {
   }, [isMobile])
 
   // Sample leads data
-  const sampleLeads = Array.from({ length: 30 }, (_, idx) => {
+  const sampleLeads = useMemo(() => Array.from({ length: 30 }, (_, idx) => {
     const id = idx + 1
     const statuses = ['new', 'in-progress', 'qualified', 'converted', 'lost']
     const priorities = ['high', 'medium', 'low']
@@ -485,7 +486,7 @@ export const Leads = () => {
       estimatedValue,
       probability
     }
-  })
+  }), [])
 
   useEffect(() => {
     try {
@@ -507,7 +508,7 @@ export const Leads = () => {
       setFilteredLeads(sampleLeads)
       setTimeout(() => window.dispatchEvent(new CustomEvent('leadsDataUpdated')), 0)
     }
-  }, [])
+  }, [sampleLeads])
 
   // Sync leads when localStorage is updated (avoid loops)
   useEffect(() => {
@@ -691,17 +692,17 @@ export const Leads = () => {
   }, [leads])
 
   const handleAssignLead = (leadId, newAssignee) => {
-    const updatedLeads = leads.map(l => l.id === leadId ? { ...l, assignedTo: newAssignee, stage: 'Follow Up' } : l)
+    const updatedLeads = leads.map(l => l.id === leadId ? { ...l, assignedTo: newAssignee, stage: 'Pending' } : l)
     setLeads(updatedLeads)
-    setFilteredLeads(prev => prev.map(l => l.id === leadId ? { ...l, assignedTo: newAssignee, stage: 'Follow Up' } : l))
+    setFilteredLeads(prev => prev.map(l => l.id === leadId ? { ...l, assignedTo: newAssignee, stage: 'Pending' } : l))
     localStorage.setItem('leadsData', JSON.stringify(updatedLeads))
 
     // Also update selectedLead if it matches, so the modal reflects the change immediately
     if (selectedLead && selectedLead.id === leadId) {
-      setSelectedLead(prev => ({ ...prev, assignedTo: newAssignee, stage: 'Follow Up' }))
+      setSelectedLead(prev => ({ ...prev, assignedTo: newAssignee, stage: 'Pending' }))
     }
     if (hoveredLead && hoveredLead.id === leadId) {
-      setHoveredLead(prev => ({ ...prev, assignedTo: newAssignee, stage: 'Follow Up' }))
+      setHoveredLead(prev => ({ ...prev, assignedTo: newAssignee, stage: 'Pending' }))
     }
     window.dispatchEvent(new CustomEvent('leadsDataUpdated'))
   }
@@ -975,16 +976,16 @@ export const Leads = () => {
             style={{ width: 'calc(100% + 8px)', left: isRtl ? 'auto' : '-4px', right: isRtl ? '-4px' : 'auto', bottom: '-4px' }}
           ></span>
         </div>
-        <div className={`flex items-center gap-2 flex-nowrap ${isRtl ? 'mr-auto' : 'ml-auto'}`}>
+        <div className={`flex items-center gap-2 max-[480px]:gap-1 flex-nowrap ${isRtl ? 'mr-auto' : 'ml-auto'}`}>
           <button
             onClick={() => navigate('/leads/new')}
-            className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none gap-2"
+            className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none gap-2 max-[480px]:px-2 max-[480px]:py-1.5 max-[480px]:h-8 max-[480px]:gap-1 max-[480px]:text-xs whitespace-nowrap"
           >
-            <FaPlus className="w-4 h-4" />
+            <FaPlus className="w-3 h-3" />
             <span>{t('Add New Lead')}</span>
           </button>
-          <button onClick={() => setShowImportModal(true)} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none gap-2" >
-            <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button onClick={() => setShowImportModal(true)} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none gap-2 max-[480px]:px-2 max-[480px]:py-1.5 max-[480px]:h-8 max-[480px]:gap-1 max-[480px]:text-xs whitespace-nowrap" >
+            <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 3v12" />
               <path d="M8 11l4 4 4-4" />
               <path d="M4 20h16" />
@@ -1065,21 +1066,16 @@ export const Leads = () => {
                 </svg>
                 {t('Source')}
               </label>
-              <div className="relative">
-                <select
-                  value={sourceFilter}
-                  onChange={(e) => setSourceFilter(e.target.value)}
-                  className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                >
-                  <option value="all">{t('All Sources')}</option>
-                  {Array.from(new Set(leads.map(l => l.source).filter(Boolean))).map(source => (
-                    <option key={source} value={source}>{t(source)}</option>
-                  ))}
-                </select>
-                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                  <FaChevronDown size={12} />
-                </button>
-              </div>
+              <SearchableSelect
+                value={sourceFilter}
+                onChange={setSourceFilter}
+                options={[
+                  { value: 'all', label: t('All Sources') },
+                  ...Array.from(new Set(leads.map(l => l.source).filter(Boolean))).map(source => ({ value: source, label: t(source) }))
+                ]}
+                placeholder={t('All Sources')}
+                isRTL={isRtl}
+              />
             </div>
 
             {/* Priority Filter */}
@@ -1090,21 +1086,18 @@ export const Leads = () => {
                 </svg>
                 {t('Priority')}
               </label>
-              <div className="relative">
-                <select
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                >
-                  <option value="all">{t('All Priority')}</option>
-                  <option value="high">{t('High')}</option>
-                  <option value="medium">{t('Medium')}</option>
-                  <option value="low">{t('Low')}</option>
-                </select>
-                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2  dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                  <FaChevronDown size={12} />
-                </button>
-              </div>
+              <SearchableSelect
+                value={priorityFilter}
+                onChange={setPriorityFilter}
+                options={[
+                  { value: 'all', label: t('All Priority') },
+                  { value: 'high', label: t('High') },
+                  { value: 'medium', label: t('Medium') },
+                  { value: 'low', label: t('Low') }
+                ]}
+                placeholder={t('All Priority')}
+                isRTL={isRtl}
+              />
             </div>
 
             {/* Project Filter */}
@@ -1115,22 +1108,16 @@ export const Leads = () => {
                 </svg>
                 {t('Project')}
               </label>
-              <div className="relative">
-                <select
-                  value={projectFilter}
-                  onChange={(e) => setProjectFilter(e.target.value)}
-                  className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                >
-                  <option value="all">{t('All Projects')}</option>
-                  {/* Assuming projects list exists in leads data or separate state */}
-                  {Array.from(new Set(leads.map(l => l.project).filter(Boolean))).map(project => (
-                    <option key={project} value={project}>{t(project)}</option>
-                  ))}
-                </select>
-                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                  <FaChevronDown size={12} />
-                </button>
-              </div>
+              <SearchableSelect
+                value={projectFilter}
+                onChange={setProjectFilter}
+                options={[
+                  { value: 'all', label: t('All Projects') },
+                  ...Array.from(new Set(leads.map(l => l.project).filter(Boolean))).map(project => ({ value: project, label: t(project) }))
+                ]}
+                placeholder={t('All Projects')}
+                isRTL={isRtl}
+              />
             </div>
           </div>
 
@@ -1146,24 +1133,20 @@ export const Leads = () => {
                   </svg>
                   {t('Stage')}
                 </label>
-                <div className="relative">
-                  <select
-                    value={stageFilter}
-                    onChange={(e) => setStageFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Stages')}</option>
-                    <option value="new">🆕 {t('New Lead')}</option>
-                    <option value="duplicate">🔄 {t('Duplicate')}</option>
-                    <option value="pending">⏳ {t('Pending')}</option>
-                    <option value="cold-call">📞 {t('Cold Calls')}</option>
-                    <option value="follow-up">🔁 {t('follow up')}</option>
-                  </select
-                  >
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
+                <SearchableSelect
+                  value={stageFilter}
+                  onChange={setStageFilter}
+                  options={[
+                    { value: 'all', label: t('All Stages') },
+                    { value: 'new', label: `🆕 ${t('New Lead')}` },
+                    { value: 'duplicate', label: `🔄 ${t('Duplicate')}` },
+                    { value: 'pending', label: `⏳ ${t('Pending')}` },
+                    { value: 'cold-call', label: `📞 ${t('Cold Calls')}` },
+                    { value: 'follow-up', label: `🔁 ${t('follow up')}` }
+                  ]}
+                  placeholder={t('All Stages')}
+                  isRTL={isRtl}
+                />
               </div>
 
               {/* Manager Filter */}
@@ -1174,21 +1157,16 @@ export const Leads = () => {
                   </svg>
                   {t('Manager')}
                 </label>
-                <div className="relative">
-                  <select
-                    value={managerFilter}
-                    onChange={(e) => setManagerFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Managers')}</option>
-                    {Array.from(new Set(leads.map(l => l.manager).filter(Boolean))).map(manager => (
-                      <option key={manager} value={manager}>{t(manager)}</option>
-                    ))}
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
+                <SearchableSelect
+                  value={managerFilter}
+                  onChange={setManagerFilter}
+                  options={[
+                    { value: 'all', label: t('All Managers') },
+                    ...Array.from(new Set(leads.map(l => l.manager).filter(Boolean))).map(manager => ({ value: manager, label: t(manager) }))
+                  ]}
+                  placeholder={t('All Managers')}
+                  isRTL={isRtl}
+                />
               </div>
 
               {/* Sales Person Filter */}
@@ -1199,21 +1177,16 @@ export const Leads = () => {
                   </svg>
                   {t('Sales Person')}
                 </label>
-                <div className="relative">
-                  <select
-                    value={salesPersonFilter}
-                    onChange={(e) => setSalesPersonFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Sales Persons')}</option>
-                    {Array.from(new Set(leads.map(l => l.assignedTo).filter(Boolean))).map(salesPerson => (
-                      <option key={salesPerson} value={salesPerson}>{t(salesPerson)}</option>
-                    ))}
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
+                <SearchableSelect
+                  value={salesPersonFilter}
+                  onChange={setSalesPersonFilter}
+                  options={[
+                    { value: 'all', label: t('All Sales Persons') },
+                    ...Array.from(new Set(leads.map(l => l.assignedTo).filter(Boolean))).map(salesPerson => ({ value: salesPerson, label: t(salesPerson) }))
+                  ]}
+                  placeholder={t('All Sales Persons')}
+                  isRTL={isRtl}
+                />
               </div>
 
               {/* Created By Filter */}
@@ -1224,21 +1197,16 @@ export const Leads = () => {
                   </svg>
                   {t('Created By')}
                 </label>
-                <div className="relative">
-                  <select
-                    value={createdByFilter}
-                    onChange={(e) => setCreatedByFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Creators')}</option>
-                    {Array.from(new Set(leads.map(l => l.createdBy).filter(Boolean))).map(creator => (
-                      <option key={creator} value={creator}>{t(creator)}</option>
-                    ))}
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
+                <SearchableSelect
+                  value={createdByFilter}
+                  onChange={setCreatedByFilter}
+                  options={[
+                    { value: 'all', label: t('All Creators') },
+                    ...Array.from(new Set(leads.map(l => l.createdBy).filter(Boolean))).map(creator => ({ value: creator, label: t(creator) }))
+                  ]}
+                  placeholder={t('All Creators')}
+                  isRTL={isRtl}
+                />
               </div>
 
               {/* Old Stage Filter */}
@@ -1249,22 +1217,16 @@ export const Leads = () => {
                   </svg>
                   {t('Old Stage')}
                 </label>
-                <div className="relative">
-                  <select
-                    value={oldStageFilter}
-                    onChange={(e) => setOldStageFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Old Stages')}</option>
-                    {/* Assuming oldStage list exists in leads data or separate state */}
-                    {Array.from(new Set(leads.map(l => l.oldStage).filter(Boolean))).map(oldStage => (
-                      <option key={oldStage} value={oldStage}>{t(oldStage)}</option>
-                    ))}
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2  dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
+                <SearchableSelect
+                  value={oldStageFilter}
+                  onChange={setOldStageFilter}
+                  options={[
+                    { value: 'all', label: t('All Old Stages') },
+                    ...Array.from(new Set(leads.map(l => l.oldStage).filter(Boolean))).map(oldStage => ({ value: oldStage, label: t(oldStage) }))
+                  ]}
+                  placeholder={t('All Old Stages')}
+                  isRTL={isRtl}
+                />
               </div>
 
               {/* Campaign Filter */}
@@ -1275,22 +1237,16 @@ export const Leads = () => {
                   </svg>
                   {t('Campaign')}
                 </label>
-                <div className="relative">
-                  <select
-                    value={campaignFilter}
-                    onChange={(e) => setCampaignFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Campaigns')}</option>
-                    {/* Assuming campaign list exists in leads data or separate state */}
-                    {Array.from(new Set(leads.map(l => l.campaign).filter(Boolean))).map(campaign => (
-                      <option key={campaign} value={campaign}>{t(campaign)}</option>
-                    ))}
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
+                <SearchableSelect
+                  value={campaignFilter}
+                  onChange={setCampaignFilter}
+                  options={[
+                    { value: 'all', label: t('All Campaigns') },
+                    ...Array.from(new Set(leads.map(l => l.campaign).filter(Boolean))).map(campaign => ({ value: campaign, label: t(campaign) }))
+                  ]}
+                  placeholder={t('All Campaigns')}
+                  isRTL={isRtl}
+                />
               </div>
 
               {/* Country Filter */}
@@ -1301,22 +1257,16 @@ export const Leads = () => {
                   </svg>
                   {t('Country')}
                 </label>
-                <div className="relative">
-                  <select
-                    value={countryFilter}
-                    onChange={(e) => setCountryFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Countries')}</option>
-                    {/* Assuming country list exists in leads data or separate state */}
-                    {Array.from(new Set(leads.map(l => l.country).filter(Boolean))).map(country => (
-                      <option key={country} value={country}>{t(country)}</option>
-                    ))}
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
+                <SearchableSelect
+                  value={countryFilter}
+                  onChange={setCountryFilter}
+                  options={[
+                    { value: 'all', label: t('All Countries') },
+                    ...Array.from(new Set(leads.map(l => l.country).filter(Boolean))).map(country => ({ value: country, label: t(country) }))
+                  ]}
+                  placeholder={t('All Countries')}
+                  isRTL={isRtl}
+                />
               </div>
 
               {/* Expected Revenue Filter (Text/Number Input) */}
@@ -1358,21 +1308,18 @@ export const Leads = () => {
                   <FaWhatsapp size={12} className="text-blue-500 dark:text-blue-400" />
                   {t('WhatsApp Intents')}
                 </label>
-                <div className="relative">
-                  <select
-                    value={whatsappIntentsFilter}
-                    onChange={(e) => setWhatsappIntentsFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Intents')}</option>
-                    <option value="purchase">{t('Purchase')}</option>
-                    <option value="inquiry">{t('Inquiry')}</option>
-                    <option value="support">{t('Support')}</option>
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2  dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
+                <SearchableSelect
+                  value={whatsappIntentsFilter}
+                  onChange={setWhatsappIntentsFilter}
+                  options={[
+                    { value: 'all', label: t('All Intents') },
+                    { value: 'purchase', label: t('Purchase') },
+                    { value: 'inquiry', label: t('Inquiry') },
+                    { value: 'support', label: t('Support') }
+                  ]}
+                  placeholder={t('All Intents')}
+                  isRTL={isRtl}
+                />
               </div>
 
               {/* Call Type Filter */}
@@ -1383,21 +1330,18 @@ export const Leads = () => {
                   </svg>
                   {t('Call Type')}
                 </label>
-                <div className="relative">
-                  <select
-                    value={callTypeFilter}
-                    onChange={(e) => setCallTypeFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Call Types')}</option>
-                    <option value="inbound">{t('Inbound')}</option>
-                    <option value="outbound">{t('Outbound')}</option>
-                    <option value="follow-up">{t('Follow-up')}</option>
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
+                <SearchableSelect
+                  value={callTypeFilter}
+                  onChange={setCallTypeFilter}
+                  options={[
+                    { value: 'all', label: t('All Call Types') },
+                    { value: 'inbound', label: t('Inbound') },
+                    { value: 'outbound', label: t('Outbound') },
+                    { value: 'follow-up', label: t('Follow-up') }
+                  ]}
+                  placeholder={t('All Call Types')}
+                  isRTL={isRtl}
+                />
               </div>
 
               {/* Duplicate Status Filter */}
@@ -1408,20 +1352,17 @@ export const Leads = () => {
                   </svg>
                   {t('Duplicate Status')}
                 </label>
-                <div className="relative">
-                  <select
-                    value={duplicateStatusFilter}
-                    onChange={(e) => setDuplicateStatusFilter(e.target.value)}
-                    className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700 dark:text-white text-xs font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200 hover:border-blue-400 appearance-none"
-                  >
-                    <option value="all">{t('All Duplicates')}</option>
-                    <option value="duplicate">{t('Duplicate')}</option>
-                    <option value="unique">{t('Unique')}</option>
-                  </select>
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300" onClick={(e)=>{ const sel = e.currentTarget.parentElement.querySelector('select'); if (sel) sel.focus(); }}>
-                    <FaChevronDown size={12} />
-                  </button>
-                </div>
+                <SearchableSelect
+                  value={duplicateStatusFilter}
+                  onChange={setDuplicateStatusFilter}
+                  options={[
+                    { value: 'all', label: t('All Duplicates') },
+                    { value: 'duplicate', label: t('Duplicate') },
+                    { value: 'unique', label: t('Unique') }
+                  ]}
+                  placeholder={t('All Duplicates')}
+                  isRTL={isRtl}
+                />
               </div>
 
               {/* Assign Date Filter */}
@@ -1537,32 +1478,34 @@ export const Leads = () => {
               </span>
 
               <div className="flex items-center gap-2">
-                <select
+                <SearchableSelect
                   value={bulkStatus}
-                  onChange={(e) => setBulkStatus(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm text-gray-900 dark:text-white text-sm"
-                >
-                  <option value="">{t('Change Status to')}</option>
-                  {statuses.map((s) => (
-                    <option key={s} value={s}>{t(s)}</option>
-                  ))}
-                </select>
+                  onChange={setBulkStatus}
+                  options={[
+                    { value: '', label: t('Change Status to') },
+                    ...statuses.map(s => ({ value: s, label: t(s) }))
+                  ]}
+                  placeholder={t('Change Status to')}
+                  isRTL={isRtl}
+                  className="py-1.5 dark:bg-transparent backdrop-blur-sm text-sm dark:border-gray-600 min-w-[150px]"
+                />
                 <button onClick={applyBulkStatus} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">
                   {t('Apply Status')}
                 </button>
               </div>
 
               <div className="flex items-center gap-2">
-                <select
+                <SearchableSelect
                   value={bulkAssignTo}
-                  onChange={(e) => setBulkAssignTo(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-transparent backdrop-blur-sm  dark:text-white text-sm"
-                >
-                  <option value="">{t('Bulk Assign to')}</option>
-                  {Array.from(new Set(leads.map(l => l.assignedTo).filter(Boolean))).map(owner => (
-                    <option key={owner} value={owner}>{owner}</option>
-                  ))}
-                </select>
+                  onChange={setBulkAssignTo}
+                  options={[
+                    { value: '', label: t('Bulk Assign to') },
+                    ...Array.from(new Set(leads.map(l => l.assignedTo).filter(Boolean))).map(owner => ({ value: owner, label: owner }))
+                  ]}
+                  placeholder={t('Bulk Assign to')}
+                  isRTL={isRtl}
+                  className="py-1.5 bg-white dark:bg-transparent backdrop-blur-sm text-sm dark:border-gray-600 min-w-[150px]"
+                />
                 <button onClick={applyBulkAssign} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">
                   {t('Assign')}
                 </button>
@@ -1726,16 +1669,16 @@ export const Leads = () => {
                         <button
                           title={t('Preview')}
                           onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowLeadModal(true); }}
-                          className="inline-flex items-center justify-center text-gray-500 dark:text-white hover:text-blue-500"
+                          className={`inline-flex items-center justify-center ${theme === 'light' ? 'text-gray-700 hover:text-blue-500' : 'text-indigo-300 hover:text-indigo-400'}`}
                         >
-                          <FaEye size={16} />
+                          <FaEye size={16} className={`${theme === 'light' ? 'text-gray-700' : 'text-indigo-300'}`} />
                         </button>
                         <button
                           title={t('Add Action')}
                           onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowAddActionModal(true) }}
-                          className="inline-flex items-center justify-center text-gray-500 dark:text-white hover:text-emerald-500"
+                          className={`inline-flex items-center justify-center ${theme === 'light' ? 'text-gray-700 hover:text-blue-500' : 'text-emerald-300 hover:text-emerald-400'}`}
                         >
-                          <FaPlus size={16} />
+                          <FaPlus size={16} className={`${theme === 'light' ? 'text-gray-700' : 'text-emerald-300'}`} />
                         </button>
                         <button
                           title={t('Call')}
@@ -1898,8 +1841,8 @@ export const Leads = () => {
         </div>
 
         {/* Row 2: Export Controls */}
-        <div className="flex justify-end items-center">
-          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700 justify-center lg:justify-start">
+        <div className="flex justify-center items-center">
+          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700 justify-center">
             <span className="text-xs font-semibold text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>{t('Export Pages')}</span>
             <input
               type="number"

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { FaChevronDown, FaSearch, FaTimes } from 'react-icons/fa'
 
-export default function SearchableSelect({ options, value, onChange, placeholder, label, isRTL, icon: Icon, multiple = false }) {
+export default function SearchableSelect({ options, value, onChange, placeholder, label, isRTL, icon: Icon, multiple = false, className = '' }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 })
@@ -51,12 +51,32 @@ export default function SearchableSelect({ options, value, onChange, placeholder
     setIsOpen(!isOpen)
   }
 
-  const filteredOptions = options.filter(opt =>
-    String(opt).toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredOptions = options.filter(opt => {
+    const label = typeof opt === 'object' && opt !== null && 'label' in opt ? opt.label : String(opt)
+    return String(label).toLowerCase().includes(search.toLowerCase())
+  })
 
-  const isSelected = (opt) => multiple ? Array.isArray(value) && value.includes(opt) : value === opt
+  const isSelected = (opt) => {
+    const val = typeof opt === 'object' && opt !== null && 'value' in opt ? opt.value : opt
+    return multiple ? Array.isArray(value) && value.includes(val) : value === val
+  }
+  
   const clearValue = () => multiple ? onChange([]) : onChange('')
+
+  const getDisplayValue = () => {
+    if (multiple) {
+      if (Array.isArray(value) && value.length > 0) {
+        return value.map(v => {
+          const opt = options.find(o => (typeof o === 'object' && o !== null && 'value' in o ? o.value : o) === v)
+          return opt ? (typeof opt === 'object' && 'label' in opt ? opt.label : opt) : v
+        }).join(', ')
+      }
+      return placeholder || (isRTL ? 'الكل' : 'All')
+    }
+    if (!value) return placeholder || (isRTL ? 'الكل' : 'All')
+    const opt = options.find(o => (typeof o === 'object' && o !== null && 'value' in o ? o.value : o) === value)
+    return opt ? (typeof opt === 'object' && 'label' in opt ? opt.label : opt) : value
+  }
 
   const dropdownContent = (
     <div 
@@ -97,26 +117,30 @@ export default function SearchableSelect({ options, value, onChange, placeholder
             {isRTL ? 'الكل' : 'All'}
           </div>
         {filteredOptions.length > 0 ? (
-          filteredOptions.map((opt, idx) => (
-            <div
-              key={idx}
-              className={`px-3 py-2 cursor-pointer hover:shadow-md hover:backdrop-blur-sm hover:bg-gray-500/10 text-sm text-[var(--text-primary)] ${isSelected(opt) ? 'bg-blue-500/10 text-blue-500' : ''}`}
-              onClick={() => {
-                if (multiple) {
-                  const cur = Array.isArray(value) ? value : []
-                  const exists = cur.includes(opt)
-                  const next = exists ? cur.filter(v => v !== opt) : [...cur, opt]
-                  onChange(next)
-                } else {
-                  onChange(opt)
-                  setIsOpen(false)
-                }
-                setSearch('')
-              }}
-            >
-              {opt}
-            </div>
-          ))
+          filteredOptions.map((opt, idx) => {
+            const label = typeof opt === 'object' && opt !== null && 'label' in opt ? opt.label : opt
+            const val = typeof opt === 'object' && opt !== null && 'value' in opt ? opt.value : opt
+            return (
+              <div
+                key={idx}
+                className={`px-3 py-2 cursor-pointer hover:shadow-md hover:backdrop-blur-sm hover:bg-gray-500/10 text-sm text-[var(--text-primary)] ${isSelected(opt) ? 'bg-blue-500/10 text-blue-500' : ''}`}
+                onClick={() => {
+                  if (multiple) {
+                    const cur = Array.isArray(value) ? value : []
+                    const exists = cur.includes(val)
+                    const next = exists ? cur.filter(v => v !== val) : [...cur, val]
+                    onChange(next)
+                  } else {
+                    onChange(val)
+                    setIsOpen(false)
+                  }
+                  setSearch('')
+                }}
+              >
+                {label}
+              </div>
+            )
+          })
         ) : (
           <div className="px-3 py-4 text-center text-sm text-[var(--muted-text)]">
             {isRTL ? 'لا توجد نتائج' : 'No results found'}
@@ -129,13 +153,11 @@ export default function SearchableSelect({ options, value, onChange, placeholder
   return (
     <div className={`relative ${isOpen ? 'z-50' : ''}`} ref={wrapperRef}>
       <div
-        className="input dark:bg-gray-800 w-full flex items-center justify-between cursor-pointer bg-[var(--panel-bg)] border border-black dark:border-gray-700 rounded-lg px-3 py-2"
+        className={`input dark:bg-gray-800 w-full flex items-center justify-between cursor-pointer bg-[var(--panel-bg)] border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 ${className}`}
         onClick={toggleOpen}
       >
         <span className={`text-sm ${(!multiple && !value) || (multiple && Array.isArray(value) && value.length === 0) ? "text-[var(--muted-text)]" : "text-[var(--text-primary)]"}`}>
-          {multiple
-            ? ((Array.isArray(value) && value.length > 0) ? value.join(', ') : (placeholder || (isRTL ? 'الكل' : 'All')))
-            : (value || placeholder || (isRTL ? 'الكل' : 'All'))}
+          {getDisplayValue()}
         </span>
         <div className="flex items-center gap-2">
            {(!multiple && value && value !== 'All' && value !== 'الكل') || (multiple && Array.isArray(value) && value.length > 0) ? (

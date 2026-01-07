@@ -113,7 +113,7 @@ const AssignedReport = ({ leads = [], onExport, filters = {}, setFilters }) => {
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold">{t('Team Distribution')}</h3>
           </div>
-          <div className="overflow-auto">
+          <div className="hidden md:block overflow-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left border-b border-gray-800">
@@ -159,6 +159,47 @@ const AssignedReport = ({ leads = [], onExport, filters = {}, setFilters }) => {
                 )}
               </tbody>
             </table>
+          </div>
+          
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {rows.map((r, idx) => (
+              <div key={idx} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
+                <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                  <h4 className="font-semibold text-sm">{r.name}</h4>
+                  <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
+                    {r.dept}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Total Assigned')}</span>
+                    <span className="text-xs font-medium">{r.total}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('In Progress')}</span>
+                    <span className="text-xs">{r.inProgress}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Closed')}</span>
+                    <span className="text-xs font-medium text-green-400">{r.closed}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--muted-text)] text-xs">{t('Conversion')}</span>
+                    <span className="text-xs">{r.conversion}%</span>
+                  </div>
+                </div>
+                <div className="pt-2 flex justify-end">
+                  <button className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-700 bg-gray-800 hover:bg-gray-700 transition text-xs w-full justify-center">
+                    <LuEye className="text-gray-200" />
+                    {t('View Details')}
+                  </button>
+                </div>
+              </div>
+            ))}
+            {rows.length === 0 && (
+              <div className="text-center text-[var(--muted-text)] py-4">{t('No data')}</div>
+            )}
           </div>
         </div>
         <div className="p-4 md:p-6 rounded-xl border border-gray-800 bg-[#0b1220]">

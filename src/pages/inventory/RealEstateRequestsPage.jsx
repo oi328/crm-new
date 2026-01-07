@@ -2,10 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
     FaSearch, FaFilter, FaPlus, FaCheck, FaTimes, FaFileContract, 
-    FaBuilding, FaUser, FaClipboardList, FaEllipsisV, FaChevronDown, FaEdit, FaTrash, FaChevronLeft, FaChevronRight 
+    FaBuilding, FaUser, FaClipboardList, FaEllipsisV, FaChevronDown, FaEdit, FaTrash, FaChevronLeft, FaChevronRight, FaFileExport, FaFileImport 
 } from 'react-icons/fa';
 import SearchableSelect from '../../components/SearchableSelect';
 import { getRequests, saveRequest, deleteRequest } from '../../data/realEstateRequests';
+import RealEstateRequestsImportModal from './RealEstateRequestsImportModal'
 
 export default function RealEstateRequestsPage() {
     const { t, i18n } = useTranslation();
@@ -31,6 +32,88 @@ export default function RealEstateRequestsPage() {
         type: 'Booking',
         notes: ''
     });
+
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [showExportMenu, setShowExportMenu] = useState(false);
+
+    const exportRealEstateRequestsCsv = () => {
+        const headers = ['ID', 'Customer', 'Project', 'Unit', 'Type', 'Status', 'Date', 'Notes']
+        const csvContent = [
+            headers.join(','),
+            ...filteredRequests.map(req => [
+                `"${req.id}"`,
+                `"${req.customer}"`,
+                `"${req.project || ''}"`,
+                `"${req.unit || ''}"`,
+                `"${req.type}"`,
+                `"${req.status}"`,
+                `"${req.date}"`,
+                `"${req.notes || ''}"`
+            ].join(','))
+        ].join('\n')
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'real_estate_requests.csv'
+        a.click(); URL.revokeObjectURL(url)
+        setShowExportMenu(false)
+    }
+
+    const exportRealEstateRequestsPdf = async () => {
+        try {
+            const jsPDF = (await import('jspdf')).default
+            const autoTable = (await import('jspdf-autotable')).default
+            const doc = new jsPDF()
+            
+            const tableColumn = ["ID", "Customer", "Project", "Unit", "Type", "Status", "Date"]
+            const tableRows = []
+
+            filteredRequests.forEach(req => {
+                const rowData = [
+                    req.id,
+                    req.customer,
+                    req.project || '',
+                    req.unit || '',
+                    req.type,
+                    req.status,
+                    req.date
+                ]
+                tableRows.push(rowData)
+            })
+
+            doc.text("Real Estate Requests List", 14, 15)
+            autoTable(doc, {
+                head: [tableColumn],
+                body: tableRows,
+                startY: 20,
+                styles: { font: 'helvetica', fontSize: 9 },
+                headStyles: { fillColor: [66, 139, 202] }
+            })
+            doc.save("real_estate_requests_list.pdf")
+            setShowExportMenu(false)
+        } catch (error) {
+            console.error("Export PDF Error:", error)
+        }
+    }
+
+    const handleImport = (importedData) => {
+        const newRequests = importedData.map((item, index) => ({
+            ...item,
+            id: Date.now() + index,
+            status: item.status || 'Pending',
+            date: item.date || new Date().toISOString().split('T')[0]
+        }))
+        
+        const stored = localStorage.getItem('real_estate_requests');
+        const existingRequests = stored ? JSON.parse(stored) : [];
+        const updatedRequests = [...newRequests, ...existingRequests];
+        
+        localStorage.setItem('real_estate_requests', JSON.stringify(updatedRequests));
+        window.dispatchEvent(new Event('real-estate-requests-updated'));
+        setShowImportModal(false)
+    }
 
     // Load data from localStorage and listen for updates
     useEffect(() => {
@@ -165,24 +248,53 @@ export default function RealEstateRequestsPage() {
     return (
         <div className="space-y-6 pt-4">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex  flex-wrap items-center justify-between">
                 <div className="relative inline-block">
                     <h1 className="text-2xl font-bold  dark:text-white flex items-center gap-2">
                         {isRTL ? 'طلبات العقارات' : 'Real Estate Requests'}
                     </h1>
                     <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isRTL ? 'auto' : '-4px', right: isRTL ? '-4px' : 'auto', bottom: '-4px' }}></span>
                 </div>
-                <button 
-                    onClick={() => {
-                        setEditingId(null);
-                        setNewRequest({ customer: '', project: '', unit: '', type: 'Booking', notes: '' });
-                        setShowAddModal(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors shadow-sm"
-                >
-                    <FaPlus size={14} />
-                    {isRTL ? 'إضافة طلب' : 'Add Request'}
-                </button>
+                <div className="w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+
+                     <button 
+                       className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
+                       onClick={() => setShowImportModal(true)}
+                     >
+                       <FaFileImport />
+                       {isRTL ? 'استيراد' : 'Import'}
+                     </button>
+                    <button 
+                        onClick={() => {
+                            setEditingId(null);
+                            setNewRequest({ customer: '', project: '', unit: '', type: 'Booking', notes: '' });
+                            setShowAddModal(true);
+                        }}
+                        className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2"
+                    >
+                        <FaPlus size={14} />
+                        {isRTL ? 'إضافة طلب' : 'Add Request'}
+                    </button>
+                    <div className="relative w-full lg:w-auto">
+                       <button 
+                         className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
+                         onClick={() => setShowExportMenu(!showExportMenu)}
+                       >
+                         <FaFileExport />
+                         {isRTL ? 'تصدير' : 'Export'}
+                       </button>
+                       {showExportMenu && (
+                         <div className="absolute w-full right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+                           <button onClick={exportRealEstateRequestsCsv} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2">
+                             <span className="text-green-600 font-bold">CSV</span> Export as CSV
+                           </button>
+                           <button onClick={exportRealEstateRequestsPdf} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2">
+                             <span className="text-red-600 font-bold">PDF</span> Export as PDF
+                           </button>
+                         </div>
+                       )}
+                     </div>
+                </div>
             </div>
 
             {/* Filters */}
@@ -347,13 +459,7 @@ export default function RealEstateRequestsPage() {
                                                     <FaFileContract size={16} />
                                                 </button>
                                             )}
-                                            <button 
-                                                onClick={() => handleEdit(request)}
-                                                className="w-8 h-8 rounded-full flex items-center justify-center text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                                                title={isRTL ? 'تعديل' : 'Edit'}
-                                            >
-                                                <FaEdit size={16} />
-                                            </button>
+                                            
                                             <button 
                                                 onClick={() => handleDelete(request.id)}
                                                 className="w-8 h-8 rounded-full flex items-center justify-center text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
@@ -512,6 +618,14 @@ export default function RealEstateRequestsPage() {
                     </div>
                 )}
             </div>
+
+            {showImportModal && (
+                <RealEstateRequestsImportModal
+                    onClose={() => setShowImportModal(false)}
+                    onImport={handleImport}
+                    isRTL={isRTL}
+                />
+            )}
 
             {/* Add Request Modal */}
             {showAddModal && (

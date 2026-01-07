@@ -361,11 +361,21 @@ const getMarketingItemIcon = (key) => {
           <path d="M8 13h8" />
         </svg>
       )
-    case 'Meta Integration':
+    case 'Integration':
       return (
         <svg {...common} aria-hidden="true">
           <path d="M6 12c0-3 2-5 5-5s5 2 5 5-2 5-5 5-5-2-5-5z" />
           <path d="M7 12c1-3 3-5 4-5 2 0 4 4 6 5" />
+        </svg>
+      )
+    case 'Reports':
+      return (
+        <svg {...common} aria-hidden="true">
+          <path d="M2 20h20" />
+          <path d="M5 20v-4" />
+          <path d="M9 20v-8" />
+          <path d="M13 20v-6" />
+          <path d="M17 20v-10" />
         </svg>
       )
     case 'Leads Performance':
@@ -376,15 +386,6 @@ const getMarketingItemIcon = (key) => {
           <path d="M12 18V8" />
           <path d="M16 18V13" />
           <path d="M20 18V5" />
-        </svg>
-      )
-    case 'Reports':
-      return (
-        <svg {...common} aria-hidden="true">
-          <path d="M5 20V10" />
-          <path d="M10 20V6" />
-          <path d="M15 20V13" />
-          <path d="M20 20V4" />
         </svg>
       )
     default:
@@ -404,10 +405,6 @@ export const Sidebar = ({ isOpen, onClose = () => {}, className, collapsed, setC
   // Handle Collapsed State (Prop or Local)
   const [localCollapsed, setLocalCollapsed] = useState(false)
   const isCollapsed = collapsed !== undefined ? collapsed : localCollapsed
-  const toggleCollapsed = () => {
-    if (setCollapsed) setCollapsed(!isCollapsed)
-    else setLocalCollapsed(!localCollapsed)
-  }
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -811,7 +808,8 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
     { to: '/marketing', key: 'Dashboard' },
     { to: '/marketing/campaigns', key: 'Campaigns' },
     { to: '/marketing/landing-pages', key: 'Landing Pages' },
-    { to: '/marketing/meta-integration', key: 'Meta Integration' },
+    { to: '/marketing/meta-integration', key: 'Integration' },
+    { to: '/marketing/reports', key: 'Reports' },
   ]
 
   const [integrationOpen, setIntegrationOpen] = useState(false)
@@ -1117,6 +1115,9 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 onClick={() => {
                   setMarketingOpen(false);
                   try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('marketingOpen', 'false') } } catch {}
+                  try {
+                    navigate('/dashboard')
+                  } catch {}
                 }}
                 className={`close-btn text-sm font-semibold ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
               >

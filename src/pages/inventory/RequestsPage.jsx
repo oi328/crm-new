@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FaFilter, FaSearch, FaTimes, FaEdit, FaTrash, FaCheck, FaBan, FaFileContract, FaShoppingCart, FaQuestionCircle, FaFileInvoice, FaSync, FaPlus, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
+import { FaFilter, FaSearch, FaTimes, FaEdit, FaTrash, FaCheck, FaBan, FaFileContract, FaShoppingCart, FaQuestionCircle, FaFileInvoice, FaSync, FaPlus, FaChevronLeft, FaChevronRight, FaFileExport, FaFileImport } from 'react-icons/fa'
+import RequestsImportModal from './RequestsImportModal'
 
 export default function RequestsPage() {
   const { t, i18n } = useTranslation()
@@ -60,6 +61,89 @@ export default function RequestsPage() {
     status: 'all',
     type: 'all'
   })
+
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+
+  const updateStorage = (data) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    window.dispatchEvent(new Event('inventory-requests-updated'));
+  };
+
+  const exportRequestsCsv = () => {
+    const headers = ['ID', 'Type', 'Customer', 'Item', 'Date', 'Amount', 'Status', 'Notes']
+    const csvContent = [
+      headers.join(','),
+      ...filtered.map(req => [
+        `"${req.id}"`,
+        `"${req.type}"`,
+        `"${req.customer}"`,
+        `"${req.item}"`,
+        `"${req.date}"`,
+        `"${req.amount}"`,
+        `"${req.status}"`,
+        `"${req.notes || ''}"`
+      ].join(','))
+    ].join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'requests.csv'
+    a.click(); URL.revokeObjectURL(url)
+    setShowExportMenu(false)
+  }
+
+  const exportRequestsPdf = async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const autoTable = (await import('jspdf-autotable')).default
+      const doc = new jsPDF()
+      
+      const tableColumn = ["ID", "Type", "Customer", "Item", "Date", "Amount", "Status"]
+      const tableRows = []
+
+      filtered.forEach(req => {
+        const rowData = [
+          req.id,
+          req.type,
+          req.customer,
+          req.item,
+          req.date,
+          req.amount,
+          req.status
+        ]
+        tableRows.push(rowData)
+      })
+
+      doc.text("Requests List", 14, 15)
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { font: 'helvetica', fontSize: 9 },
+        headStyles: { fillColor: [66, 139, 202] }
+      })
+      doc.save("requests_list.pdf")
+      setShowExportMenu(false)
+    } catch (error) {
+      console.error("Export PDF Error:", error)
+    }
+  }
+
+  const handleImport = (importedData) => {
+    const newRequests = importedData.map((item, index) => ({
+      ...item,
+      id: `REQ-${Date.now()}-${index}`,
+      amount: Number(item.amount) || 0
+    }))
+    
+    const updatedRequests = [...newRequests, ...requests]
+    setRequests(updatedRequests)
+    updateStorage(updatedRequests)
+    setShowImportModal(false)
+  }
 
   useEffect(() => {
     const loadData = () => {
@@ -259,19 +343,46 @@ export default function RequestsPage() {
 
   return (
     <div className="space-y-6 pt-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap lg:flex-row lg:items-center justify-between gap-4">
         <div className="relative inline-block">
           <h1 className="page-title text-2xl font-semibold">{labels.title}</h1>
           <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
         </div>
-        <div className="flex items-center gap-2">
-           <button className="btn btn-sm bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => {
+        <div className="w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+
+            <button 
+              className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
+              onClick={() => setShowImportModal(true)}
+            >
+              <FaFileImport />
+              {isArabic ? 'استيراد' : 'Import'}
+            </button>
+           <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => {
               resetForm();
               setShowForm(true);
           }}>
               <FaPlus />
               {labels.add}
           </button>
+          <div className="relative dropdown-container w-full lg:w-auto">
+              <button 
+                className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
+                onClick={() => setShowExportMenu(!showExportMenu)}
+              >
+                <FaFileExport />
+                {isArabic ? 'تصدير' : 'Export'}
+              </button>
+              {showExportMenu && (
+                <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+                  <button onClick={exportRequestsCsv} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2">
+                    <span className="text-green-600 font-bold">CSV</span> Export as CSV
+                  </button>
+                  <button onClick={exportRequestsPdf} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2">
+                    <span className="text-red-600 font-bold">PDF</span> Export as PDF
+                  </button>
+                </div>
+              )}
+            </div>
         </div>
       </div>
 
@@ -438,6 +549,14 @@ export default function RequestsPage() {
             </div>
         )}
       </div>
+
+      {showImportModal && (
+        <RequestsImportModal
+          onClose={() => setShowImportModal(false)}
+          onImport={handleImport}
+          isRTL={isRTL}
+        />
+      )}
 
       {showForm && (
         <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true">

@@ -107,7 +107,7 @@ export default function ActiveCampaignsCard({ segments, employee, dateFrom, date
   `
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
       <div dir={i18n.dir() === 'rtl' ? 'rtl' : 'ltr'} className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <div className={`flex items-center w-full ${i18n.dir() === 'rtl' ? 'flex-row-reverse' : ''} gap-2`}>
           <h3 className={`flex-1 ${isLight ? 'text-black' : 'dark:text-gray-100'} text-lg md:text-xl font-bold ${i18n.dir() === 'rtl' ? 'text-right' : 'text-left'}`}>{t('Active Campaigns')}</h3>
@@ -116,7 +116,7 @@ export default function ActiveCampaignsCard({ segments, employee, dateFrom, date
       </div>
 
       {/* Performance metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 shrink-0">
         <div className={`${isLight ? 'p-4 rounded-xl bg-[var(--lm-muted-surface)] border border-[var(--lm-border)] shadow-md' : 'p-3 rounded-lg dark:bg-blue-900'}`}>
           <div className={isLight ? 'text-sm font-medium text-black' : 'text-xs text-gray-600 dark:text-gray-300'}>{t('Avg. Open Rate')}</div>
           <div className={isLight ? 'text-2xl font-bold text-black' : 'text-lg font-semibold dark:text-gray-100'}>{avgOpenRate}%</div>
@@ -131,7 +131,7 @@ export default function ActiveCampaignsCard({ segments, employee, dateFrom, date
         </div>
       </div>
 
-      <div className="flex flex-col items-start gap-3 md:gap-4">
+      <div className="flex flex-col items-start gap-3 md:gap-4 shrink-0">
         <div className={`flex ${isRTL ? 'flex-row-reverse' : 'flex-row'} items-start gap-3 md:gap-4 w-full`}>
           <div className="shrink-0 self-start">
             <PieChart
@@ -164,10 +164,10 @@ export default function ActiveCampaignsCard({ segments, employee, dateFrom, date
           </div>
         </div>
 
-        <div className="w-full">
+        <div className="w-full flex-1 min-h-0">
           <h4 className={`${isLight ? 'text-black' : 'dark:text-gray-100'} text-sm font-semibold mt-3`}>{t('Top Campaigns')}</h4>
           <style>{SCROLLBAR_CSS}</style>
-          <div className="flex flex-row flex-nowrap gap-3 w-full items-stretch overflow-x-auto overflow-y-hidden pr-1 snap-x snap-mandatory scrollbar-thin-blue">
+          <div className="flex flex-row flex-nowrap gap-3 w-full h-full items-stretch overflow-x-auto overflow-y-hidden pr-1 snap-x snap-mandatory scrollbar-thin-blue">
             {filteredCampaigns.map((c, idx) => (
               <div key={idx} className={`${isLight ? 'flex flex-col p-3 rounded-xl bg-white border border-[var(--lm-border)] shadow-sm hover:shadow-md' : 'flex flex-col p-3 rounded-xl border dark:border-blue-700 bg-transparent dark:bg-transparent shadow-sm hover:shadow-md'} transition-shadow duration-200 h-full min-h-[120px] flex-shrink-0 w-fit max-w-[200px] md:max-w-[220px] snap-start`}>
                 <div className="flex flex-col items-start gap-1 min-w-0">

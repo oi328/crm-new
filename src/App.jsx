@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react'; // 1. استورد useEffect
 import './App.css';
 import AppRouter from '@router/index';
-import DarkModeToggle from './components/DarkModeToggle';
 
 function App() {
   const { i18n } = useTranslation();
@@ -23,7 +22,6 @@ function App() {
   // 3. أزل كلاسات الخلفية من هنا لتجنب التكرار
   return (
     <div className={`${directionClass} min-h-screen text-gray-900 dark:text-gray-100`}>
-      <DarkModeToggle />
       <AppRouter />
     </div>
   );

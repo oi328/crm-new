@@ -60,7 +60,14 @@ export const ThemeProvider = ({ children }) => {
   }, [])
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, palette, fonts }}>
+    <ThemeContext.Provider value={{ 
+      theme, 
+      setTheme, 
+      palette, 
+      fonts,
+      isDark: theme === 'dark',
+      isDarkMode: theme === 'dark'
+    }}>
       {children}
     </ThemeContext.Provider>
   )
