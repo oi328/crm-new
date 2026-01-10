@@ -1002,7 +1002,7 @@ export const Leads = () => {
             <FaFilter size={16} className="text-blue-500 dark:text-blue-400" /> {t('Filters')}
           </h2>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowAllFilters(prev => !prev)} className={`flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 rounded-lg transition-all duration-200 border-0 ${showAllFilters ? 'ring-2 ring-blue-200 dark:ring-blue-800' : ''} px-2 py-1`}>
+            <button onClick={() => setShowAllFilters(prev => !prev)} className={`flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors`}>
               {showAllFilters ? t('Hide ') : t('Show ')}
               <FaChevronDown size={12} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
             </button>

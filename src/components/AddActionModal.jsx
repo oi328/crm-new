@@ -29,6 +29,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
     proposalDiscount: '',
     proposalValidityDays: '',
     proposalAttachmentUrl: '',
+    proposalAttachment: null,
     reservationType: 'project',
     reservationCategory: '',
     reservationItem: '',
@@ -39,8 +40,23 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
     rentUnit: '',
     rentStart: '',
     rentEnd: '',
-    rentAmount: ''
+    rentAmount: '',
+    rentAttachment: null,
+    closingRevenue: '',
+    cancelReason: ''
   });
+
+  const [cancelReasons, setCancelReasons] = useState([]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem('crmCancelReasons');
+      const parsed = raw ? JSON.parse(raw) : [];
+      setCancelReasons(Array.isArray(parsed) ? parsed : []);
+    } catch (e) {
+      console.error('Failed to load cancel reasons', e);
+    }
+  }, []);
 
   // عدم الإرجاع قبل الهوكس لضمان استدعائها دومًا
 
@@ -119,10 +135,20 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
   }, [actionData.reservationItem, actionData.reservationType]);
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked, files } = e.target;
+    
+    if (name === 'cancelReason') {
+         setActionData(prev => ({
+            ...prev,
+            cancelReason: value,
+            notes: value // Auto-populate comment
+         }));
+         return;
+    }
+
     setActionData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === 'checkbox' ? checked : (type === 'file' ? files[0] : value),
       ...(name === 'actionType' ? { type: value } : {})
     }));
   };
@@ -162,7 +188,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Clean up data based on reservation type to avoid confusion
@@ -177,6 +203,38 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
         cleanedData.reservationCategory = '';
         cleanedData.reservationItem = '';
         cleanedData.reservationType = 'project'; // Ensure type is explicit
+      }
+    }
+
+    // Helper to convert file to base64
+    const fileToBase64 = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: reader.result
+        });
+        reader.onerror = error => reject(error);
+      });
+    };
+
+    // Handle file uploads
+    if (cleanedData.proposalAttachment instanceof File) {
+      try {
+        cleanedData.proposalAttachment = await fileToBase64(cleanedData.proposalAttachment);
+      } catch (err) {
+        console.error('Error converting proposal attachment', err);
+      }
+    }
+
+    if (cleanedData.rentAttachment instanceof File) {
+      try {
+        cleanedData.rentAttachment = await fileToBase64(cleanedData.rentAttachment);
+      } catch (err) {
+        console.error('Error converting rent attachment', err);
       }
     }
 
@@ -424,8 +482,8 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                 <input name="proposalValidityDays" type="number" value={actionData.proposalValidityDays} onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'رابط المرفق' : 'Attachment URL'}</label>
-                <input name="proposalAttachmentUrl" type="url" value={actionData.proposalAttachmentUrl} onChange={handleInputChange} placeholder="https://..." className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
+                <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'مرفق' : 'Attachment'}</label>
+                <input name="proposalAttachment" type="file" onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
               </div>
             </div>
           )}
@@ -547,6 +605,16 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
             </div>
           )}
 
+          {/* Closing Deals fields */}
+          {actionData.nextAction === 'closing_deals' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'الإيرادات' : 'Revenue'}</label>
+                <input name="closingRevenue" type="number" value={actionData.closingRevenue} onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
+              </div>
+            </div>
+          )}
+
           {/* Rent fields */}
           {actionData.nextAction === 'rent' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -578,7 +646,34 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                 <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'قيمة الإيجار' : 'Rent Amount'}</label>
                 <input name="rentAmount" type="number" value={actionData.rentAmount} onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'مرفق' : 'Attachment'}</label>
+                <input name="rentAttachment" type="file" onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
+              </div>
             </div>
+          )}
+
+          {/* Cancel fields */}
+          {actionData.nextAction === 'cancel' && (
+             <div className="mb-4">
+                <label className={`block text-sm font-medium mb-2 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>{isArabic ? 'سبب الإلغاء' : 'Cancel Reason'}</label>
+                <div className="relative">
+                  <select
+                    name="cancelReason"
+                    value={actionData.cancelReason}
+                    onChange={handleInputChange}
+                    className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                  >
+                    <option value="">{isArabic ? 'اختر السبب' : 'Select Reason'}</option>
+                    {cancelReasons.map((r, idx) => (
+                      <option key={idx} value={isArabic && r.titleAr ? r.titleAr : r.title}>
+                        {isArabic && r.titleAr ? r.titleAr : r.title}
+                      </option>
+                    ))}
+                  </select>
+                  <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                </div>
+             </div>
           )}
 
           {/* Schedule Date - مخفي لحالات الإغلاق والإلغاء */}

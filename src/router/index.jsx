@@ -84,6 +84,9 @@ import CampaignSummaryReport from '../pages/CampaignSummaryReport'
 import LeadSourcePerformanceReport from '../pages/LeadSourcePerformanceReport'
 import CostVsRevenueReport from '../pages/CostVsRevenueReport'
 import MonthlyMarketingOverview from '../pages/MonthlyMarketingOverview'
+import CampaignDurationReport from '../pages/CampaignDurationReport'
+import ABCampaignComparison from '../pages/ABCampaignComparison'
+import ResponseTimeReport from '../pages/ResponseTimeReport'
 import Reports from '../pages/Reports'
 import ReportPlaceholder from '../pages/ReportPlaceholder'
 import ContactUs from '../pages/ContactUs'
@@ -221,6 +224,11 @@ export default function AppRouter() {
             <Route path="/reports/calls" element={<ReportPlaceholder titleKey="Calls Report" descKey="reports.calls.desc" />} />
             <Route path="/reports/performance" element={<TeamPerformanceReport />} />
             <Route path="/team-performance" element={<TeamPerformanceReport />} />
+            {/* Marketing Reports under core Reports */}
+            <Route path="/reports/marketing/analysis/duration" element={<CampaignDurationReport />} />
+            <Route path="/reports/marketing/analysis/ab" element={<ABCampaignComparison />} />
+            <Route path="/reports/marketing/operational/response-time" element={<ResponseTimeReport />} />
+
 
             <Route element={<ProtectedModuleRoute moduleKey="settings" />}> 
               <Route path="/settings" element={<Navigate to="/settings/profile" replace />} />

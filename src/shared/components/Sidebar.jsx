@@ -441,8 +441,8 @@ export const Sidebar = ({ isOpen, onClose = () => {}, className, collapsed, setC
     }
   }, [isLeadMgmtActive])
   const [stagesOpen, setStagesOpen] = useState(true)
-  const isMarketingActive = location.pathname.startsWith('/marketing')
-  const isMarketingReportsActive = location.pathname.startsWith('/marketing/reports')
+  const isMarketingActive = location.pathname.startsWith('/marketing') || location.pathname.startsWith('/reports/marketing')
+  const isMarketingReportsActive = location.pathname.startsWith('/reports/marketing')
 const isRecycleActive = location.pathname.startsWith('/recycle')
 
 // Sidebar expandable sections: open states
@@ -510,7 +510,7 @@ const isCustomersActive = location.pathname.startsWith('/customers') || location
 const _isReportsActive = location.pathname.startsWith('/reports') || location.pathname.startsWith('/marketing/reports')
 const isUsersActive = location.pathname.startsWith('/user-management')
   const isSupportActive = location.pathname.startsWith('/support')
-  const isCoreReportsActive = location.pathname.startsWith('/reports')
+  const isCoreReportsActive = location.pathname.startsWith('/reports') && !location.pathname.startsWith('/reports/marketing')
   const isSalesReportsActive = location.pathname.startsWith('/reports/sales')
   
     // Restore missing Marketing submenu state with persistence and route-aware default
@@ -809,7 +809,6 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
     { to: '/marketing/campaigns', key: 'Campaigns' },
     { to: '/marketing/landing-pages', key: 'Landing Pages' },
     { to: '/marketing/meta-integration', key: 'Integration' },
-    { to: '/marketing/reports', key: 'Reports' },
   ]
 
   const [integrationOpen, setIntegrationOpen] = useState(false)
@@ -1157,7 +1156,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
 
           <div
             className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
-            style={{ maxHeight: marketingOpen ? '360px' : '0', overflow: 'hidden', opacity: marketingOpen ? 1 : 0 }}
+            style={{ maxHeight: marketingOpen ? '1500px' : '0', overflow: 'hidden', opacity: marketingOpen ? 1 : 0 }}
           >
             {marketingChildren.map(child => (
               <NavLink
@@ -1174,6 +1173,45 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 </span>
               </NavLink>
             ))}
+            
+            {/* Marketing Reports (Nested) */}
+            <div className="w-full">
+              <button
+                type="button"
+                onClick={() => setMarketingReportsOpen(v => !v)}
+                className={`${baseLink} w-full justify-between ${isRTL ? '!pr-10' : '!pl-10'}`}
+                aria-expanded={marketingReportsOpen}
+              >
+                <span className="nova-icon-label">
+                  <span className={`${iconContainer} ${iconTone}`}>📣</span>
+                  <span className="text-[15px] link-label">{t('Marketing Reports')}</span>
+                </span>
+                <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{transform: marketingReportsOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </span>
+              </button>
+              <div
+                className={`${isRTL ? '!pr-0' : '!pl-0'} space-y-0.5 transition-all`}
+                style={{ maxHeight: marketingReportsOpen ? '900px' : '0', overflow: 'hidden', opacity: marketingReportsOpen ? 1 : 0 }}
+              >
+                 <div className="mt-1 space-y-0.5">
+                  <NavLink to="/marketing/reports" end className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-12' : '!pl-12'} ${isActive ? activeLink : ''}`}>
+                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📈</span><span className="text-[15px] link-label">{t('Marketing Pulse')}</span></span>
+                  </NavLink>
+                  <NavLink to="/reports/marketing/analysis/duration" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-12' : '!pl-12'} ${isActive ? activeLink : ''}`}>
+                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🧠</span><span className="text-[15px] link-label">{t('Campaign Duration')}</span></span>
+                  </NavLink>
+                  <NavLink to="/reports/marketing/analysis/ab" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-12' : '!pl-12'} ${isActive ? activeLink : ''}`}>
+                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🧪</span><span className="text-[15px] link-label">{t('A/B Campaign Comparison')}</span></span>
+                  </NavLink>
+                  <NavLink to="/reports/marketing/operational/response-time" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-12' : '!pl-12'} ${isActive ? activeLink : ''}`}>
+                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>⏱️</span><span className="text-[15px] link-label">{t('Response Time')}</span></span>
+                  </NavLink>
+                 </div>
+              </div>
+            </div>
           </div>
         </div>
         )}
@@ -1412,6 +1450,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
               >
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🎯</span><span className="text-[15px] link-label">{t('Lead Report')}</span></span>
               </NavLink>
+
               
               
               <NavLink

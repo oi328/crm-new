@@ -1,7 +1,7 @@
 import React from 'react'
 
 const Tabs = ({ activeTab, setActiveTab }) => {
-  const tabs = ['Sales Actions', 'Sales Leads', 'Assigned Report']
+  const tabs = ['Sales Actions', 'Sales Leads']
   return (
     <div className="flex gap-2 border-b border-gray-800">
       {tabs.map(t => (

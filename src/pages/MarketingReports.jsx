@@ -8,7 +8,7 @@ import {
 } from 'recharts'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { 
-  FaSearch, FaFileExport, FaFacebook, FaGoogle, FaTiktok, FaGlobe, FaFilter, FaArrowUp, FaArrowDown 
+  FaSearch, FaFileExport, FaFacebook, FaGoogle, FaTiktok, FaGlobe, FaFilter, FaArrowUp, FaArrowDown, FaTable, FaChartBar 
 } from 'react-icons/fa'
 import { SiMeta } from 'react-icons/si'
 
@@ -104,9 +104,39 @@ export default function MarketingReports() {
   const { t, i18n } = useTranslation()
   const isArabic = i18n.language === 'ar'
   const [startDate, setStartDate] = useState('')
+
+  const kpiData = useMemo(() => [
+    { 
+      title: t('Total Revenue'), 
+      value: '$124,500', 
+      change: 15.2, 
+      trend: [4000, 3000, 2000, 2780, 1890, 2390, 3490, 4000, 4500, 5000, 6000, 7000] 
+    },
+    { 
+      title: t('Total Ad Spend'), 
+      value: '$32,400', 
+      change: -5.4, 
+      trend: [3000, 3500, 3200, 3100, 2900, 2800, 2700, 2600, 2500, 2400, 2300, 2200] 
+    },
+    { 
+      title: t('ROAS'), 
+      value: '3.84', 
+      change: 8.1, 
+      trend: [2.1, 2.5, 2.8, 3.0, 3.2, 3.5, 3.6, 3.8, 3.9, 4.0, 4.1, 3.8] 
+    },
+    { 
+      title: t('CPA'), 
+      value: '$12.50', 
+      change: -12.3, // Improvement (lower cost)
+      isInverse: true,
+      trend: [18, 17, 16, 15, 14, 13, 12, 12, 11, 12, 12, 12] 
+    }
+  ], [t])
+
   const [endDate, setEndDate] = useState('')
   const [activeTab, setActiveTab] = useState('monthly')
   const [searchQuery, setSearchQuery] = useState('')
+  const [costRevenueView, setCostRevenueView] = useState('chart')
   const reportRef = useRef(null)
   
   // Pagination State
@@ -144,21 +174,21 @@ export default function MarketingReports() {
         <div className="flex items-center gap-1.5 sm:gap-2">
           <div className="flex items-center gap-1">
             <button
-              className="btn btn-ghost p-1 h-7 w-7 sm:btn-sm sm:h-8 sm:w-8"
+              className="btn btn-ghost p-1 h-7 w-7 sm:btn-sm sm:h-8 sm:w-8 dark:text-white"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage <= 1}
               title={isArabic ? 'السابق' : 'Prev'}
             >
-              <ChevronLeft className={isArabic ? 'scale-x-[-1]' : ''} size={12} />
+              <ChevronLeft className={`${isArabic ? 'scale-x-[-1]' : ''} dark:text-white`} size={12} />
             </button>
             <span className="text-xs sm:text-sm">{isArabic ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
             <button
-              className="btn btn-ghost p-1 h-7 w-7 sm:btn-sm sm:h-8 sm:w-8"
+              className="btn btn-ghost p-1 h-7 w-7 sm:btn-sm sm:h-8 sm:w-8 dark:text-white"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage >= totalPages}
               title={isArabic ? 'التالي' : 'Next'}
             >
-              <ChevronRight className={isArabic ? 'scale-x-[-1]' : ''} size={12} />
+              <ChevronRight className={`${isArabic ? 'scale-x-[-1]' : ''} dark:text-white`} size={12} />
             </button>
           </div>
           <div className="flex items-center gap-1">
@@ -213,10 +243,10 @@ export default function MarketingReports() {
   // Derive Source Data from Filtered Campaigns
   const filteredSources = useMemo(() => {
     const stats = {
-      meta: { name: 'Meta Ads', leads: 0, spend: 0, clicks: 0, fill: '#3B82F6' },
-      google: { name: 'Google Ads', leads: 0, spend: 0, clicks: 0, fill: '#FACC15' },
-      tiktok: { name: 'TikTok Ads', leads: 0, spend: 0, clicks: 0, fill: '#FE2C55' }, // Updated Color
-      web: { name: 'Organic Search', leads: 0, spend: 0, clicks: 0, fill: '#10B981' }
+      meta: { name: t('Meta Ads'), leads: 0, spend: 0, clicks: 0, revenue: 0, fill: '#3B82F6' },
+      google: { name: t('Google Ads'), leads: 0, spend: 0, clicks: 0, revenue: 0, fill: '#FACC15' },
+      tiktok: { name: t('TikTok Ads'), leads: 0, spend: 0, clicks: 0, revenue: 0, fill: '#FE2C55' }, // Updated Color
+      web: { name: t('Organic Search'), leads: 0, spend: 0, clicks: 0, revenue: 0, fill: '#10B981' }
     }
 
     filteredCampaigns.forEach(c => {
@@ -225,17 +255,55 @@ export default function MarketingReports() {
         stats[p].leads += c.leads
         stats[p].spend += c.spend
         stats[p].clicks += c.clicks
+        stats[p].revenue += c.revenue
       }
     })
 
     return Object.values(stats)
-      .filter(s => s.leads > 0 || s.spend > 0) // Only show active sources
+      .filter(s => s.leads > 0 || s.spend > 0 || s.revenue > 0) // Only show active sources
       .map(s => ({
         ...s,
         cpa: s.leads ? (s.spend / s.leads) : 0,
         conversionRate: s.clicks ? ((s.leads / s.clicks) * 100) : 0
       }))
   }, [filteredCampaigns])
+
+  // Platform Performance Table Data
+  const platformTableData = useMemo(() => {
+    const totalSpend = filteredSources.reduce((sum, s) => sum + s.spend, 0)
+    const totalRevenue = filteredSources.reduce((sum, s) => sum + s.revenue, 0)
+    
+    const rows = filteredSources.map(s => {
+      const profit = s.revenue - s.spend
+      const roi = s.spend > 0 ? (s.revenue / s.spend) : 0
+      const costPct = totalSpend > 0 ? (s.spend / totalSpend) * 100 : 0
+      const revenuePct = totalRevenue > 0 ? (s.revenue / totalRevenue) * 100 : 0
+      
+      return {
+        ...s,
+        profit,
+        roi,
+        costPct,
+        revenuePct
+      }
+    })
+
+    // Sort by Spend desc by default for this table
+    rows.sort((a, b) => b.spend - a.spend)
+
+    const totalRow = {
+      name: 'Total',
+      spend: totalSpend,
+      revenue: totalRevenue,
+      profit: totalRevenue - totalSpend,
+      roi: totalSpend > 0 ? (totalRevenue / totalSpend) : 0,
+      costPct: 100,
+      revenuePct: 100,
+      isTotal: true
+    }
+
+    return [...rows, totalRow]
+  }, [filteredSources])
 
   const sourceMetricLabel = (k) => {
     if (k === 'leads') return t('Leads')
@@ -338,23 +406,37 @@ export default function MarketingReports() {
     if (!reportRef.current) return
     
     try {
+      // Temporarily hide the export button for the screenshot
+      const exportBtn = reportRef.current.querySelector('.export-btn-container')
+      if (exportBtn) exportBtn.style.display = 'none'
+
       const canvas = await html2canvas(reportRef.current, {
         scale: 2, // Higher quality
         useCORS: true,
-        logging: false
+        logging: false,
+        windowWidth: reportRef.current.scrollWidth,
+        windowHeight: reportRef.current.scrollHeight
       })
       
+      // Restore the button
+      if (exportBtn) exportBtn.style.display = ''
+
       const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
-      const imgX = (pdfWidth - imgWidth * ratio) / 2
-      const imgY = 30
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, (imgHeight * pdfWidth) / imgWidth)
+      // Calculate dimensions to fit width but keep aspect ratio for height
+      // A4 width in mm is 210
+      const pdfWidth = 210
+      const pxToMm = 25.4 / 96 // approx conversion, but better to rely on aspect ratio
+      
+      const imgWidthPx = canvas.width
+      const imgHeightPx = canvas.height
+      
+      const pdfHeight = (imgHeightPx * pdfWidth) / imgWidthPx
+      
+      // Create PDF with custom height
+      const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight])
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
       pdf.save('marketing-report.pdf')
     } catch (err) {
       console.error('Error exporting PDF:', err)
@@ -375,10 +457,10 @@ export default function MarketingReports() {
       {/* 1. Header */}
       <div className="flex items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
         <div>
-          <h1 className="text-2xl font-bold">{t('Marketing Reports')}</h1>
+          <h1 className="text-2xl font-bold">{t('Marketing Pulse')}</h1>
           <p className="text-sm ">{t('Overview of your marketing performance across all channels')}</p>
         </div>
-      <div className="flex justify-end gap-2 mb-4">
+      <div className="flex justify-end gap-2 mb-4 export-btn-container">
         <button onClick={handleExport} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
                   <span className="flex items-center gap-2">
                     <FaFileExport  />
@@ -396,7 +478,7 @@ export default function MarketingReports() {
           </h2>
           <button 
             onClick={() => { setSearchQuery(''); setStartDate(''); setEndDate('') }} 
-            className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            className="px-3 py-1.5 text-sm  dark:text-white hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
           >
             {t('Reset')}
           </button>
@@ -449,7 +531,35 @@ export default function MarketingReports() {
 
       {/* 3. Cost vs Revenue by Platform (Dual Axis) */}
       <div className="card glass-card p-6">
-        <h3 className="text-lg font-bold mb-6">{t('Cost vs. Revenue by Platform')}</h3>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-bold">{t('Cost vs. Revenue by Platform')}</h3>
+          <div className="flex  p-1 rounded-lg">
+            <button
+              onClick={() => setCostRevenueView('chart')}
+              className={`p-2 rounded-md transition-all ${
+                costRevenueView === 'chart' 
+                  ? 'shadow text-blue-600' 
+                  : ' hover:text-gray-700 dark:text-white'
+              }`}
+              title={t('Chart View')}
+            >
+              <FaChartBar />
+            </button>
+            <button
+              onClick={() => setCostRevenueView('table')}
+              className={`p-2 rounded-md transition-all ${
+                costRevenueView === 'table' 
+                  ? ' shadow text-blue-600' 
+                  : ' hover:text-gray-700 dark:text-white'
+              }`}
+              title={t('Table View')}
+            >
+              <FaTable />
+            </button>
+          </div>
+        </div>
+
+        {costRevenueView === 'chart' ? (
         <div className="w-full overflow-x-auto min-w-0 min-h-0">
           <div className="min-w-0 min-h-0" style={{ width: costRevenueChartWidth, height: 320 }}>
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
@@ -464,10 +574,10 @@ export default function MarketingReports() {
                 <XAxis dataKey="date" tick={{fontSize: 12}} tickLine={false} axisLine={false} />
                 
                 {/* Left Y Axis: Cost */}
-                <YAxis yAxisId="left" tick={{fontSize: 12}} tickLine={false} axisLine={false} label={{ value: 'Cost ($)', angle: -90, position: 'insideLeft', offset: 0, style: { fill: '#6B7280' } }} />
+                <YAxis yAxisId="left" tick={{fontSize: 12}} tickLine={false} axisLine={false} label={{ value: t('Cost ($)'), angle: -90, position: 'insideLeft', offset: 0, style: { fill: '#6B7280' } }} />
                 
                 {/* Right Y Axis: Revenue */}
-                <YAxis yAxisId="right" orientation="right" tick={{fontSize: 12}} tickLine={false} axisLine={false} label={{ value: 'Revenue ($)', angle: 90, position: 'insideRight', offset: 0, style: { fill: '#10B981' } }} />
+                <YAxis yAxisId="right" orientation="right" tick={{fontSize: 12}} tickLine={false} axisLine={false} label={{ value: t('Revenue ($)'), angle: 90, position: 'insideRight', offset: 0, style: { fill: '#10B981' } }} />
                 
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
@@ -487,6 +597,84 @@ export default function MarketingReports() {
             </ResponsiveContainer>
           </div>
         </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="table w-full text-sm text-left">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700 ">
+                  <th className="p-3 font-semibold">{t('Platform')}</th>
+                  <th className="p-3 font-semibold text-right">💰 {t('Spend (EGP)')}</th>
+                  <th className="p-3 font-semibold text-right">💵 {t('Revenue (EGP)')}</th>
+                  <th className="p-3 font-semibold text-center">{t('ROI')}</th>
+                  <th className="p-3 font-semibold text-right">{t('Profit / Loss')}</th>
+                  <th className="p-3 font-semibold text-center">{t('Cost %')}</th>
+                  <th className="p-3 font-semibold text-center">{t('Revenue %')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {platformTableData.map((row, i) => (
+                  <tr 
+                    key={i} 
+                    className={`border-b border-gray-100 dark:border-gray-800 transition-colors ${
+                      row.isTotal 
+                        ? ' font-bold border-t-2 border-gray-300 dark:border-gray-600  dark:text-white' 
+                        : 'hover:bg-black/5 dark:hover:bg-white/5 dark:text-white'
+                    }`}
+                  >
+                    <td className="p-3 flex items-center gap-2">
+                      {!row.isTotal && (
+                        <span 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: row.fill }}
+                        />
+                      )}
+                      <span className={row.isTotal ? 'text-base' : ''}>
+                        {row.isTotal ? t('Total') : row.name}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right">{Number(row.spend).toLocaleString()} EGP</td>
+                    <td className="p-3 text-right">{Number(row.revenue).toLocaleString()} EGP</td>
+                    <td className="p-3 text-center">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                        row.roi >= 2 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                        row.roi >= 1 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                      }`}>
+                        {row.roi.toFixed(1)}x
+                      </span>
+                    </td>
+                    <td className={`p-3 text-right font-medium ${row.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                      {row.profit >= 0 ? '+' : ''}{Number(row.profit).toLocaleString()} EGP
+                    </td>
+                    <td className="p-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-xs">{row.costPct.toFixed(0)}%</span>
+                        <div className="w-12 h-1.5  rounded-full overflow-hidden">
+                          <div className="h-full " style={{ width: `${row.costPct}%` }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-xs">{row.revenuePct.toFixed(0)}%</span>
+                        <div className="w-12 h-1.5 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500" style={{ width: `${row.revenuePct}%` }} />
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {platformTableData.length === 1 && ( // Only Total row exists means no data
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center dark:text-white">
+                      {t('No data available')}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* 4. Campaign & Source Performance (Tabs) */}
@@ -614,7 +802,7 @@ export default function MarketingReports() {
                         {/* Header */}
                         <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-full shrink-0 bg-gray-50 dark:bg-gray-800">
+                            <div className="p-2 rounded-full shrink-0  dark:text-white">
                               <PlatformIcon platform={campaign.platform} />
                             </div>
                             <div>
@@ -665,7 +853,7 @@ export default function MarketingReports() {
                               <span className="text-[var(--muted-text)] text-xs">{t('Qual. Leads %')}</span>
                               <span className="text-xs font-medium">{campaign.qualifiedLeadsPct}%</span>
                             </div>
-                            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                            <div className="w-full  rounded-full h-1.5 overflow-hidden">
                               <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${campaign.qualifiedLeadsPct}%` }}></div>
                             </div>
                           </div>

@@ -351,9 +351,9 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
   useEffect(() => {
     const price = parseFloat(formData.price) || 0
     const rawDiscount = parseFloat(formData.discount) || 0
-    const discount = formData.discountType === 'percentage' ? (price * rawDiscount / 100) : rawDiscount
     const garage = parseFloat(formData.garageAmount) || 0
     const maintenance = parseFloat(formData.maintenanceAmount) || 0
+    const discount = formData.discountType === 'percentage' ? (price * rawDiscount / 100) : rawDiscount
     
     const afterDiscount = price - discount
     const net = afterDiscount + garage + maintenance
@@ -460,7 +460,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
     const newPlans = [...formData.installmentPlans]
     const prevPlan = newPlans[index]
     if (field === 'downPaymentType') {
-      const net = parseFloat(formData.netAmount) || 0
+      const net = parseFloat(formData.totalAfterDiscount) || 0
       const oldType = prevPlan.downPaymentType || 'amount'
       const dpVal = parseFloat(prevPlan.downPayment) || 0
       if (prevPlan.downPaymentSource === 'custom' && net > 0 && dpVal > 0) {
@@ -491,7 +491,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
   }
 
   const handleReservationTypeChange = (index, newType) => {
-    const net = parseFloat(formData.netAmount) || 0
+    const net = parseFloat(formData.totalAfterDiscount) || 0
     const plan = formData.installmentPlans[index] || {}
     const oldType = plan.reservationType || 'amount'
     const val = parseFloat(formData.reservationAmount) || 0
@@ -577,7 +577,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
   }
 
   useEffect(() => {
-    const net = parseFloat(formData.netAmount) || 0
+    const net = parseFloat(formData.totalAfterDiscount) || 0
     let changed = false
     const newPlans = formData.installmentPlans.map((plan) => {
       const years = parseFloat(plan.years) || 0
@@ -612,7 +612,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
       return next
     })
     if (changed) setFormData(prev => ({ ...prev, installmentPlans: newPlans }))
-  }, [formData.netAmount, formData.reservationAmount, formData.installmentPlans])
+  }, [formData.totalAfterDiscount, formData.reservationAmount, formData.installmentPlans])
   // --- Step Renderers ---
 
   const renderStep1 = () => (
@@ -1388,58 +1388,8 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
                       />
                      </td>
                    </tr>
-                   <tr>
-                     <td className="w-1/3 py-2 align-middle">
-                       <span className="label m-0">{inputLanguage === 'ar' ? 'سعر الجراج' : 'Garage Amount'}</span>
-                     </td>
-                     <td className="py-2">
-                      <input 
-                        type="text"
-                        className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-                        value={formatWithCommas(formData.garageAmount)}
-                        onChange={e => setFormData({...formData, garageAmount: unformatNumber(e.target.value)})}
-                        placeholder="0.00"
-                      />
-                     </td>
-                   </tr>
-                   <tr>
-                     <td className="w-1/3 py-2 align-middle">
-                       <span className="label m-0">{inputLanguage === 'ar' ? 'وديعة الصيانة' : 'Maintenance Amount'}</span>
-                     </td>
-                     <td className="py-2">
-                      <div className="flex gap-2">
-                       <input 
-                        type="text"
-                        className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-                        value={formatWithCommas(formData.maintenanceAmount)}
-                        onChange={e => setFormData({...formData, maintenanceAmount: unformatNumber(e.target.value)})}
-                        placeholder="0.00"
-                      />
-                     <select
-                           className="input dark:bg-gray-800 w-32 border border-black dark:border-gray-700"
-                           value={formData.discountType}
-                           onChange={e => handleDiscountTypeChange(e.target.value)}
-                         >
-                           <option value="amount">{inputLanguage === 'ar' ? 'قيمة' : 'Amount'}</option>
-                           <option value="percentage">{inputLanguage === 'ar' ? 'نسبة %' : 'Percentage %'}</option>
-                      </select>
-                      </div>
-                          
-                     </td>
-                   </tr>
-                   <tr>
-                     <td className="w-1/3 py-2 align-middle">
-                       <span className="label m-0">{inputLanguage === 'ar' ? 'صافي المبلغ' : 'Net Amount'}</span>
-                     </td>
-                     <td className="py-2">
-                      <input 
-                        type="text"
-                        readOnly
-                        className="input bg-gray-100 dark:bg-gray-700 w-full border border-transparent font-bold"
-                        value={formatWithCommas(formData.netAmount)}
-                      />
-                     </td>
-                   </tr>
+
+
                    <tr>
                      <td className="w-1/3 py-2 align-middle">
                        <span className="label m-0">{inputLanguage === 'ar' ? 'مبلغ الحجز' : 'Reservation Amount'}</span>
@@ -1504,7 +1454,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
                             className="input bg-gray-100 dark:bg-gray-700 w-full text-sm border border-gray-600"
                             value={
                               (plan.reservationType === 'percentage'
-                                ? ((parseFloat(formData.netAmount)||0) * (parseFloat(formData.reservationAmount)||0) / 100)
+                                ? ((parseFloat(formData.totalAfterDiscount)||0) * (parseFloat(formData.reservationAmount)||0) / 100)
                                 : (parseFloat(formData.reservationAmount)||0)
                               ).toString()
                             }
@@ -1618,6 +1568,58 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
                          value={plan.deliveryDate}
                          onChange={e => updateInstallmentPlan(index, 'deliveryDate', e.target.value)}
                        />
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'سعر الجراج' : 'Garage Amount'}</span>
+                     </td>
+                     <td className="py-2">
+                      <input 
+                        type="text"
+                        className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+                        value={formatWithCommas(formData.garageAmount)}
+                        onChange={e => setFormData({...formData, garageAmount: unformatNumber(e.target.value)})}
+                        placeholder="0.00"
+                      />
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'وديعة الصيانة' : 'Maintenance Amount'}</span>
+                     </td>
+                     <td className="py-2">
+                      <div className="flex gap-2">
+                       <input 
+                        type="text"
+                        className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+                        value={formatWithCommas(formData.maintenanceAmount)}
+                        onChange={e => setFormData({...formData, maintenanceAmount: unformatNumber(e.target.value)})}
+                        placeholder="0.00"
+                      />
+                     <select
+                           className="input dark:bg-gray-800 w-32 border border-black dark:border-gray-700"
+                           value={formData.discountType}
+                           onChange={e => handleDiscountTypeChange(e.target.value)}
+                         >
+                           <option value="amount">{inputLanguage === 'ar' ? 'قيمة' : 'Amount'}</option>
+                           <option value="percentage">{inputLanguage === 'ar' ? 'نسبة %' : 'Percentage %'}</option>
+                      </select>
+                      </div>
+                          
+                     </td>
+                   </tr>
+                   <tr>
+                     <td className="w-1/3 py-2 align-middle">
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'صافي المبلغ' : 'Net Amount'}</span>
+                     </td>
+                     <td className="py-2">
+                      <input 
+                        type="text"
+                        readOnly
+                        className="input bg-gray-100 dark:bg-gray-700 w-full border border-transparent font-bold"
+                        value={formatWithCommas(formData.netAmount)}
+                      />
                      </td>
                    </tr>
                  </tbody>

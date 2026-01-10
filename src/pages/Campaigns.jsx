@@ -583,6 +583,10 @@ export default function Campaigns() {
                       return (
                         <>
                           <div className="flex justify-between items-center">
+                            <span className="text-[var(--muted-text)] text-xs">CPD</span>
+                            <span className="font-mono font-medium">{cpd ? `$${cpd.toFixed(2)}` : '-'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
                             <span className="text-[var(--muted-text)] text-xs">{isArabic ? 'CPL' : 'CPL'}</span>
                             <span className="font-mono font-medium">{cpl ? `$${cpl.toFixed(2)}` : '-'}</span>
                           </div>
@@ -592,11 +596,7 @@ export default function Campaigns() {
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-[var(--muted-text)] text-xs">{isArabic ? 'معدل التحويل' : 'Conv. Rate'}</span>
-                            <span className="font-medium">{conv ? `${conv.toFixed(1)}%` : '-'}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-[var(--muted-text)] text-xs">{isArabic ? 'التكلفة اليومية' : 'Cost/Day'}</span>
-                            <span className="font-mono font-medium">{cpd ? `$${cpd.toFixed(2)}` : '-'}</span>
+                            <span className="font-mono font-medium">{conv ? `${conv.toFixed(1)}%` : '-'}</span>
                           </div>
                         </>
                       )
@@ -614,10 +614,10 @@ export default function Campaigns() {
                   <th className="px-4 py-3">{isArabic ? 'تاريخ البداية' : 'Start Date'}</th>
                   <th className="px-4 py-3">{isArabic ? 'تاريخ الانتهاء' : 'End Date'}</th>
                   <th className="px-4 py-3">{isArabic ? 'الميزانية' : 'Budget'}</th>
+                  <th className="px-4 py-3">CPD</th>
                   <th className="px-4 py-3">{isArabic ? 'CPL' : 'CPL'}</th>
                   <th className="px-4 py-3">{isArabic ? 'CPA' : 'CPA'}</th>
                   <th className="px-4 py-3">{isArabic ? 'معدل التحويل' : 'Conversion Rate'}</th>
-                  <th className="px-4 py-3">{isArabic ? 'التكلفة اليومية' : 'Cost per Day'}</th>
                   <th className="px-4 py-3">{isArabic ? 'الحالة' : 'Status'}</th>
                   <th className="px-4 py-3 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
                 </tr>
@@ -644,10 +644,10 @@ export default function Campaigns() {
                       const cpd = getCostPerDay(campaign)
                       return (
                         <>
+                          <td className="px-4 py-3 text-xs font-semibold">{cpd ? `$${cpd.toFixed(2)}` : '-'}</td>
                           <td className="px-4 py-3 text-xs font-semibold">{cpl ? `$${cpl.toFixed(2)}` : '-'}</td>
                           <td className="px-4 py-3 text-xs font-semibold">{cpa ? `$${cpa.toFixed(2)}` : '-'}</td>
                           <td className="px-4 py-3 text-xs">{conv ? `${conv.toFixed(1)}%` : '-'}</td>
-                          <td className="px-4 py-3 text-xs font-semibold">{cpd ? `$${cpd.toFixed(2)}` : '-'}</td>
                           <td className="px-4 py-3">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${
                               campaign.status === 'Active' ? 'bg-green-500/20 text-green-400' :

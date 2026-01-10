@@ -186,7 +186,7 @@ export default function Marketing() {
           </section>
 
           <section className="card glass-card p-4 lg:col-span-2">
-            <h3 className="text-lg font-semibold mb-3">{t('Top Active Campaigns ')}</h3>
+            <h3 className="text-lg font-semibold mb-3">{t('Top Active Campaigns')}</h3>
             <ChannelPerformanceChart height={180} />
           </section>
 

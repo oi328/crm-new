@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { FaUser, FaTimes, FaCog, FaPlus, FaEdit, FaCheckCircle, FaClock, FaSearch, FaFilter, FaSortAmountDown, FaList, FaCalendarAlt, FaPhone, FaEnvelope, FaTrash, FaEye, FaEllipsisV, FaWhatsapp, FaVideo, FaComments, FaMapMarkerAlt, FaDollarSign, FaUserCheck, FaChevronDown } from 'react-icons/fa';
+import { FaUser, FaTimes, FaCog, FaPlus, FaEdit, FaCheckCircle, FaClock, FaSearch, FaFilter, FaSortAmountDown, FaList, FaCalendarAlt, FaPhone, FaEnvelope, FaTrash, FaEye, FaEllipsisV, FaWhatsapp, FaVideo, FaComments, FaMapMarkerAlt, FaDollarSign, FaUserCheck, FaChevronDown, FaFileAlt, FaDownload, FaPaperclip } from 'react-icons/fa';
 import AddActionModal from '@components/AddActionModal';
 import EditLeadModal from '@components/EditLeadModal';
 import PaymentPlanModal from '@components/PaymentPlanModal';
@@ -19,6 +19,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
   const [viewMode, setViewMode] = useState('timeline');
   const [selectedActions, setSelectedActions] = useState([]);
   const [showAddActionModal, setShowAddActionModal] = useState(false);
+  const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
   const [showEditLeadModal, setShowEditLeadModal] = useState(false);
   const [showPaymentPlanModal, setShowPaymentPlanModal] = useState(false);
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
@@ -873,15 +874,24 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                   {/* Quick Actions */}
                   <div className="space-y-4 mt-6">
                     <h4 className={`${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'} font-semibold mb-3 border-b pb-2`}>Quick Actions</h4>
-                    <div className="flex items-center justify-between gap-4 rtl:flex-row-reverse">
+                    <div className="flex flex-wrap items-center gap-3 rtl:flex-row-reverse">
                       <button 
                         onClick={() => setShowAddActionModal(true)}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2"
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 flex-grow sm:flex-grow-0"
                       >
                         <span className="w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center">
                           <FaPlus className="text-xs" />
                         </span>
-                        <span className="text-sm">+ Add New Action</span>
+                        <span className="text-sm whitespace-nowrap">+ Add New Action</span>
+                      </button>
+                      <button 
+                        onClick={() => setShowAttachmentsModal(true)}
+                        className={`${isLight ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'} text-white py-2 px-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 flex-grow sm:flex-grow-0`}
+                      >
+                        <span className="w-5 h-5 rounded-full bg-blue-400 flex items-center justify-center">
+                          <FaPaperclip className="text-xs" />
+                        </span>
+                        <span className="text-sm whitespace-nowrap">{isArabic ? 'المرفقات' : 'Attachments'}</span>
                       </button>
                       <button 
                         onClick={() => {
@@ -890,12 +900,12 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                             console.log(isArabic ? 'تم التحويل إلى عميل' : 'Converted to customer');
                           }
                         }}
-                        className={`${isLight ? 'bg-white text-slate-700 border border-gray-300 hover:bg-slate-100' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600'} py-2 px-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2`}
+                        className={`${isLight ? 'bg-white text-slate-700 border border-gray-300 hover:bg-slate-100' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600'} py-2 px-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 flex-grow sm:flex-grow-0`}
                       >
                         <span className="w-5 h-5 rounded-full bg-yellow-600 flex items-center justify-center">
                           <FaUserCheck className="text-xs text-white" />
                         </span>
-                        <span className="text-sm">{isArabic ? 'تحويل إلى عميل' : 'Convert to Customer'}</span>
+                        <span className="text-sm whitespace-nowrap">{isArabic ? 'تحويل لعميل' : 'To Customer'}</span>
                       </button>
                     </div>
                   </div>
@@ -1484,6 +1494,104 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
           />
         </div>
       )}
+
+      {/* Attachments Modal */}
+      {showAttachmentsModal && createPortal(
+        <div className="fixed inset-0 bg-black/50 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className={`${isLight ? 'bg-white text-slate-900' : 'bg-slate-800 text-white'} rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in duration-200`}>
+            <div className={`flex items-center justify-between p-4 border-b ${isLight ? 'border-gray-200' : 'border-slate-700'}`}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <FaFileAlt className="text-lg" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">{isArabic ? 'مرفقات العميل' : 'Client Attachments'}</h3>
+                  <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{isArabic ? 'عرض وتحميل المستندات' : 'View and download documents'}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowAttachmentsModal(false)} className={`p-2 rounded-full transition-colors ${isLight ? 'hover:bg-gray-100 text-gray-500' : 'hover:bg-slate-700 text-slate-400'}`}>
+                <FaTimes size={20} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+              {actions.filter(a => a.proposalAttachment || a.rentAttachment).length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className={`w-20 h-20 rounded-full mb-4 flex items-center justify-center ${isLight ? 'bg-slate-100' : 'bg-slate-700'}`}>
+                    <FaFileAlt className={`text-4xl ${isLight ? 'text-slate-300' : 'text-slate-500'}`} />
+                  </div>
+                  <h4 className={`text-lg font-medium mb-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>{isArabic ? 'لا توجد مرفقات' : 'No attachments found'}</h4>
+                  <p className={`text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{isArabic ? 'لم يتم تحميل أي ملفات لهذا العميل بعد' : 'No files have been uploaded for this lead yet'}</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {actions.filter(a => a.proposalAttachment || a.rentAttachment).map((action, idx) => {
+                     const att = action.proposalAttachment || action.rentAttachment;
+                     // Handle both File objects (legacy/unsaved) and stored objects
+                     const name = att.name || 'Attachment';
+                     const date = new Date(action.date).toLocaleDateString();
+                     const type = action.type;
+                     const size = att.size ? `${(att.size / 1024).toFixed(1)} KB` : '';
+                     
+                     return (
+                       <div key={idx} className={`flex items-center justify-between p-4 rounded-xl border transition-all hover:shadow-md ${isLight ? 'bg-white border-gray-200 hover:border-blue-300' : 'bg-slate-700/30 border-slate-600 hover:border-blue-500/50'}`}>
+                         <div className="flex items-center gap-4">
+                           <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isLight ? 'bg-slate-100 text-slate-500' : 'bg-slate-600 text-slate-300'}`}>
+                             {/* Icon based on extension could go here */}
+                             <FaFileAlt className="text-xl" />
+                           </div>
+                           <div>
+                             <p className={`font-semibold text-sm mb-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>{name}</p>
+                             <div className="flex items-center gap-2 text-xs text-gray-500">
+                               <span className={`px-2 py-0.5 rounded-full ${isLight ? 'bg-gray-100' : 'bg-slate-600'}`}>{type}</span>
+                               <span>• {date}</span>
+                               {size && <span>• {size}</span>}
+                             </div>
+                           </div>
+                         </div>
+                         <div className="flex items-center gap-2">
+                            {att.data && (
+                                <>
+                                  <button 
+                                    onClick={() => {
+                                      const win = window.open();
+                                      if (win) {
+                                        win.document.write('<iframe src="' + att.data + '" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100%;" allowfullscreen></iframe>');
+                                      }
+                                    }}
+                                    className="px-4 py-2 text-sm font-medium bg-slate-500 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2 shadow-sm hover:shadow-slate-500/20"
+                                  >
+                                    <FaEye className="text-xs" /> 
+                                    <span className="hidden sm:inline">{isArabic ? 'عرض' : 'View'}</span>
+                                  </button>
+                                  <a 
+                                    href={att.data} 
+                                    download={name}
+                                    className="px-4 py-2 text-sm font-medium bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2 shadow-sm hover:shadow-blue-500/20"
+                                  >
+                                    <FaDownload className="text-xs" /> 
+                                    <span className="hidden sm:inline">{isArabic ? 'تحميل' : 'Download'}</span>
+                                  </a>
+                                </>
+                            )}
+                         </div>
+                       </div>
+                     );
+                  })}
+                </div>
+              )}
+            </div>
+            
+            <div className={`p-4 border-t ${isLight ? 'bg-gray-50 border-gray-200 rounded-b-xl' : 'bg-slate-800 border-slate-700 rounded-b-xl'}`}>
+                <p className={`text-xs text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {isArabic ? 'يمكنك إضافة مرفقات جديدة عبر "إضافة أكشن جديد"' : 'You can add new attachments via "Add New Action"'}
+                </p>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>,
     document.body
   );

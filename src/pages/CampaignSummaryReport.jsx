@@ -111,14 +111,30 @@ export default function CampaignSummaryReport() {
 
   const recommendations = useMemo(() => {
     const recs = []
-    if (platformStats.best) recs.push(`📈 Boost budget on ${platformStats.best.platform} — avg ROI ${platformStats.best.avgRoi}`)
-    for (const c of needingImprovement) {
-      if (c.roi < 1) recs.push(`⚠️ Optimize ${c.name} (${c.platform}): ROI ${c.roi} < 1`)
-      if (c.cpl > 30) recs.push(`⚠️ Reduce CPL for ${c.name}: CPL ${c.cpl}`)
+    if (platformStats.best) {
+      recs.push(t('Boost budget on {{platform}} — avg ROI {{roi}}', { 
+        platform: platformStats.best.platform, 
+        roi: platformStats.best.avgRoi 
+      }))
     }
-    if (recs.length === 0) recs.push('✅ All campaigns performing within targets')
+    for (const c of needingImprovement) {
+      if (c.roi < 1) {
+        recs.push(t('Optimize {{campaign}} ({{platform}}): ROI {{roi}} < 1', {
+          campaign: c.name,
+          platform: c.platform,
+          roi: c.roi
+        }))
+      }
+      if (c.cpl > 30) {
+        recs.push(t('Reduce CPL for {{campaign}}: CPL {{cpl}}', {
+          campaign: c.name,
+          cpl: c.cpl
+        }))
+      }
+    }
+    if (recs.length === 0) recs.push(t('All campaigns performing within targets'))
     return recs
-  }, [platformStats, needingImprovement])
+  }, [platformStats, needingImprovement, t])
 
   return (
       <div id="report-root" className="space-y-6">

@@ -4,8 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { mockReservationData, mockCallsData, mockTeamsData, mockTotalAccounts } from '../data/mockData';
 import Tabs from '../components/LeadsReport/Tabs';
 import SalesActions from '../components/LeadsReport/SalesActions';
-import AssignedReport from '../components/LeadsReport/AssignedReport';
-import * as XLSX from 'xlsx';
 import SalesLeads from '../components/LeadsReport/SalesLeads';
 import { LuRefreshCw, LuLoader } from 'react-icons/lu';
 
@@ -137,14 +135,6 @@ const LeadsReport = () => {
             />
           }
           {activeTab === 'Sales Leads' && <SalesLeads leads={data.leads} />}
-          {activeTab === 'Assigned Report' && 
-            <AssignedReport 
-              leads={data.leads} 
-              onExport={handleExport} 
-              filters={filters} 
-              setFilters={setFilters} 
-            />
-          }
         </div>
       </div>
     </>

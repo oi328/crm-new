@@ -44,6 +44,8 @@ try {
 
 const queryClient = new QueryClient()
 
+console.log('CRM App Initialized - Version: ' + new Date().toISOString())
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <I18nextProvider i18n={i18n}>

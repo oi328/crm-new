@@ -6,14 +6,92 @@ import { useTheme } from '../shared/context/ThemeProvider';
 import { projectsData } from '../data/projectsData';
 import { getUnitsForProject } from '../data/unitsData';
 
+const SmartAmountInput = ({ 
+  label, 
+  value, 
+  baseAmount, 
+  onChange, 
+  showToggle = true, 
+  placeholder, 
+  isRTL, 
+  isLight,
+  inputClass, 
+  labelClass 
+}) => {
+  const [mode, setMode] = useState('amount'); // 'amount' or 'percent'
+
+  const handleAmountChange = (e) => {
+    onChange(e.target.value);
+  };
+
+  const handlePercentChange = (e) => {
+    const percent = parseFloat(e.target.value);
+    if (!isNaN(percent) && baseAmount) {
+      const calculated = (parseFloat(baseAmount) * percent) / 100;
+      onChange(calculated.toFixed(2));
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-1">
+        <label className={labelClass}>{label}</label>
+        {showToggle && (
+          <select 
+            value={mode}
+            onChange={(e) => setMode(e.target.value)}
+            className={`text-xs border rounded px-2 py-0.5 outline-none transition-colors cursor-pointer ${
+              isLight 
+                ? 'bg-white border-gray-300 text-gray-700 focus:border-blue-500' 
+                : 'bg-slate-800 border-slate-600 text-gray-300 focus:border-blue-500'
+            }`}
+          >
+            <option value="amount">{isRTL ? 'قيمة' : 'Amount'}</option>
+            <option value="percent">{isRTL ? 'نسبة' : 'Percentage'}</option>
+          </select>
+        )}
+      </div>
+      {mode === 'amount' ? (
+        <input
+          type="number"
+          className={inputClass}
+          value={value}
+          onChange={handleAmountChange}
+          placeholder={placeholder}
+        />
+      ) : (
+        <div className="relative">
+          <input
+            type="number"
+            className={inputClass}
+            placeholder={isRTL ? "النسبة المئوية" : "Percentage"}
+            onChange={handlePercentChange}
+          />
+          <span className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} text-gray-400 pointer-events-none`}>%</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const PaymentPlanModal = ({ isOpen, onClose, onSave, lead }) => {
   const { t, i18n } = useTranslation();
   const { theme } = useTheme();
   const isLight = theme === 'light';
   const isRTL = i18n.dir() === 'rtl';
 
+  const inputClass = `w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${
+    isLight 
+      ? 'bg-white border-gray-300 text-gray-900 focus:border-blue-500' 
+      : 'bg-slate-800 border-slate-600 text-white focus:border-blue-500'
+  }`;
+  
+  const labelClass = `block text-sm font-medium mb-1 ${
+    isLight ? 'text-gray-700' : 'text-gray-300'
+  }`;
+
   const [formData, setFormData] = useState({
-    projectName: lead?.project || '',
+    projectName: '',
     unitNo: '',
     totalAmount: '',
     downPayment: '',
@@ -28,87 +106,36 @@ const PaymentPlanModal = ({ isOpen, onClose, onSave, lead }) => {
 
   const [projectUnits, setProjectUnits] = useState([]);
 
-  // Update project name if lead changes
   useEffect(() => {
-    if (lead?.project) {
-      setFormData(prev => ({ ...prev, projectName: lead.project }));
+    if (lead?.paymentPlan) {
+      setFormData(lead.paymentPlan);
+      if (lead.paymentPlan.projectName) {
+        setProjectUnits(getUnitsForProject(lead.paymentPlan.projectName));
+      }
     }
   }, [lead]);
 
-  // Update units list when project changes
-  useEffect(() => {
-    if (formData.projectName) {
-      const units = getUnitsForProject(formData.projectName);
-      setProjectUnits(units);
-    } else {
-      setProjectUnits([]);
-    }
-  }, [formData.projectName]);
-
-  // Update total amount when unit changes
-  useEffect(() => {
-    if (formData.unitNo && projectUnits.length > 0) {
-      const selectedUnit = projectUnits.find(u => u.unitNo === formData.unitNo);
-      if (selectedUnit) {
-        setFormData(prev => ({ ...prev, totalAmount: selectedUnit.price }));
-      }
-    }
-  }, [formData.unitNo, projectUnits]);
-
-  // Calculate Net Amount: Total + Garage + Maintenance
-  useEffect(() => {
-    const total = parseFloat(formData.totalAmount) || 0;
-    const garage = parseFloat(formData.garageAmount) || 0;
-    const maintenance = parseFloat(formData.maintenanceAmount) || 0;
-    const net = total + garage + maintenance;
-    
-    // Only update if value changed to avoid infinite loops if we were formatting
+  const handleChange = (field) => (e) => {
+    const val = e.target.value;
     setFormData(prev => {
-        if (prev.netAmount == net) return prev;
-        return { ...prev, netAmount: net };
-    });
-  }, [formData.totalAmount, formData.garageAmount, formData.maintenanceAmount]);
-
-  // Calculate Installment Amount: (Net - Down - Extra) / Months
-  useEffect(() => {
-    const net = parseFloat(formData.netAmount) || 0;
-    const down = parseFloat(formData.downPayment) || 0;
-    const extra = parseFloat(formData.extraInstallments) || 0;
-    const months = parseFloat(formData.noOfMonths) || 0;
-
-    if (months > 0) {
-      const installment = (net - down - extra) / months;
-      // Round to 2 decimal places
-      const formattedInstallment = Math.round(installment * 100) / 100;
+      const newData = { ...prev, [field]: val };
       
-      setFormData(prev => {
-          if (prev.installmentAmount == formattedInstallment) return prev;
-          return { ...prev, installmentAmount: formattedInstallment };
-      });
-    }
-  }, [formData.netAmount, formData.downPayment, formData.extraInstallments, formData.noOfMonths]);
-
-
-  const handleChange = (key) => (e) => {
-    setFormData(prev => ({ ...prev, [key]: e.target.value }));
+      // Handle project change to update units
+      if (field === 'projectName') {
+        setProjectUnits(getUnitsForProject(val));
+        newData.unitNo = ''; // Reset unit when project changes
+      }
+      
+      return newData;
+    });
   };
 
   const handleSave = () => {
-    if (onSave) onSave(formData);
+    onSave(formData);
     onClose();
   };
 
   if (!isOpen) return null;
-
-  const inputClass = `w-full p-3 rounded-lg border outline-none transition-all ${
-    isLight 
-      ? 'bg-white border-gray-300 focus:border-blue-500 text-gray-900' 
-      : 'bg-slate-800 border-slate-600 focus:border-blue-500 text-white'
-  }`;
-
-  const labelClass = `block text-sm font-medium mb-1 ${
-    isLight ? 'text-gray-700' : 'text-gray-300'
-  }`;
 
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6">
@@ -178,36 +205,45 @@ const PaymentPlanModal = ({ isOpen, onClose, onSave, lead }) => {
           <div className="space-y-4">
             {/* Total Amount */}
             <div>
-              <label className={labelClass}>{isRTL ? 'السعر الإجمالي' : 'Total Amount'}</label>
-              <input 
-                type="number" 
-                className={inputClass} 
+              <SmartAmountInput 
+                isLight={isLight}
+                label={isRTL ? 'السعر الإجمالي' : 'Total Amount'}
                 value={formData.totalAmount} 
-                onChange={handleChange('totalAmount')}
+                onChange={(val) => setFormData(prev => ({ ...prev, totalAmount: val }))}
+                showToggle={false}
                 placeholder="0.00"
+                isRTL={isRTL}
+                inputClass={inputClass}
+                labelClass={labelClass}
               />
             </div>
 
             {/* Down Payment & Receipt Amount */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>{isRTL ? 'المقدم' : 'Down Payment'}</label>
-                <input 
-                  type="number" 
-                  className={inputClass} 
+                <SmartAmountInput 
+                  isLight={isLight}
+                  label={isRTL ? 'المقدم' : 'Down Payment'}
                   value={formData.downPayment} 
-                  onChange={handleChange('downPayment')}
+                  baseAmount={formData.totalAmount}
+                  onChange={(val) => setFormData(prev => ({ ...prev, downPayment: val }))}
                   placeholder="0.00"
+                  isRTL={isRTL}
+                  inputClass={inputClass}
+                  labelClass={labelClass}
                 />
               </div>
               <div>
-                <label className={labelClass}>{isRTL ? 'قيمة الإيصال' : 'Receipt Amount'}</label>
-                <input 
-                  type="number" 
-                  className={inputClass} 
+                <SmartAmountInput 
+                  isLight={isLight}
+                  label={isRTL ? 'قيمة الإيصال' : 'Receipt Amount'}
                   value={formData.receiptAmount} 
-                  onChange={handleChange('receiptAmount')}
+                  baseAmount={formData.totalAmount}
+                  onChange={(val) => setFormData(prev => ({ ...prev, receiptAmount: val }))}
                   placeholder="0.00"
+                  isRTL={isRTL}
+                  inputClass={inputClass}
+                  labelClass={labelClass}
                 />
               </div>
             </div>
@@ -215,13 +251,16 @@ const PaymentPlanModal = ({ isOpen, onClose, onSave, lead }) => {
             {/* Installments */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
               <div>
-                <label className={labelClass}>{isRTL ? 'قيمة القسط' : 'Installment Amount'}</label>
-                <input 
-                  type="number" 
-                  className={inputClass} 
+                <SmartAmountInput 
+                  isLight={isLight}
+                  label={isRTL ? 'قيمة القسط' : 'Installment Amount'}
                   value={formData.installmentAmount} 
-                  onChange={handleChange('installmentAmount')}
+                  baseAmount={formData.totalAmount}
+                  onChange={(val) => setFormData(prev => ({ ...prev, installmentAmount: val }))}
                   placeholder="0.00"
+                  isRTL={isRTL}
+                  inputClass={inputClass}
+                  labelClass={labelClass}
                 />
               </div>
               <div>
@@ -238,49 +277,61 @@ const PaymentPlanModal = ({ isOpen, onClose, onSave, lead }) => {
 
             {/* Extra Installments */}
             <div>
-              <label className={labelClass}>{isRTL ? 'أقساط إضافية' : 'Extra Installments'}</label>
-              <input 
-                type="number" 
-                className={inputClass} 
+              <SmartAmountInput 
+                isLight={isLight}
+                label={isRTL ? 'أقساط إضافية' : 'Extra Installments'}
                 value={formData.extraInstallments} 
-                onChange={handleChange('extraInstallments')}
+                baseAmount={formData.totalAmount}
+                onChange={(val) => setFormData(prev => ({ ...prev, extraInstallments: val }))}
                 placeholder="0.00"
+                isRTL={isRTL}
+                inputClass={inputClass}
+                labelClass={labelClass}
               />
             </div>
 
             {/* Garage & Maintenance */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>{isRTL ? 'قيمة الجراج' : 'Garage Amount'}</label>
-                <input 
-                  type="number" 
-                  className={inputClass} 
+                <SmartAmountInput 
+                  isLight={isLight}
+                  label={isRTL ? 'قيمة الجراج' : 'Garage Amount'}
                   value={formData.garageAmount} 
-                  onChange={handleChange('garageAmount')}
+                  onChange={(val) => setFormData(prev => ({ ...prev, garageAmount: val }))}
+                  showToggle={false}
                   placeholder="0.00"
+                  isRTL={isRTL}
+                  inputClass={inputClass}
+                  labelClass={labelClass}
                 />
               </div>
               <div>
-                <label className={labelClass}>{isRTL ? 'قيمة الصيانة' : 'Maintenance Amount'}</label>
-                <input 
-                  type="number" 
-                  className={inputClass} 
+                <SmartAmountInput 
+                  isLight={isLight}
+                  label={isRTL ? 'قيمة الصيانة' : 'Maintenance Amount'}
                   value={formData.maintenanceAmount} 
-                  onChange={handleChange('maintenanceAmount')}
+                  baseAmount={formData.totalAmount}
+                  onChange={(val) => setFormData(prev => ({ ...prev, maintenanceAmount: val }))}
                   placeholder="0.00"
+                  isRTL={isRTL}
+                  inputClass={inputClass}
+                  labelClass={labelClass}
                 />
               </div>
             </div>
 
             {/* Net Amount */}
             <div>
-              <label className={labelClass}>{isRTL ? 'الصافي' : 'Net Amount'}</label>
-              <input 
-                type="number" 
-                className={inputClass} 
+              <SmartAmountInput 
+                isLight={isLight}
+                label={isRTL ? 'الصافي' : 'Net Amount'}
                 value={formData.netAmount} 
-                onChange={handleChange('netAmount')}
+                onChange={(val) => setFormData(prev => ({ ...prev, netAmount: val }))}
+                showToggle={false}
                 placeholder="0.00"
+                isRTL={isRTL}
+                inputClass={inputClass}
+                labelClass={labelClass}
               />
             </div>
           </div>
