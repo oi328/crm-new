@@ -45,15 +45,24 @@ export default function ActiveCampaignsCard({ segments, employee, dateFrom, date
     paused: filteredCampaigns.filter(c => c.status === 'paused').length
   }
 
+  const totalActive = segCounts.onTrack + segCounts.atRisk
+  const total = filteredCampaigns.length
+  
+  // Percentages for the Chart (Mutually Exclusive)
+  const onTrackPct = total ? Math.round((segCounts.onTrack / total) * 100) : 0
+  const atRiskPct = total ? Math.round((segCounts.atRisk / total) * 100) : 0
+  const pausedPct = total ? Math.round((segCounts.paused / total) * 100) : 0
+  
+  // Total Active Percentage for the Top Card (Includes both On Track & At Risk)
+  const totalActivePct = total ? Math.round((totalActive / total) * 100) : 0
+
   const allSegments = [
-    { label: t('On Track'), value: segCounts.onTrack, color: '#22c55e' },
-    { label: t('At Risk'), value: segCounts.atRisk, color: '#f59e0b' },
+    { label: `${t('Active')} (${t('On Track')})`, value: segCounts.onTrack, color: '#22c55e' },
+    { label: `${t('Active')} (${t('At Risk')})`, value: segCounts.atRisk, color: '#f59e0b' },
     { label: t('Paused'), value: segCounts.paused, color: '#ef4444' }
   ]
 
   const displaySegments = showPaused ? allSegments : allSegments.filter((s) => s.label !== t('Paused'))
-
-  const totalActive = segCounts.onTrack + segCounts.atRisk
 
   const activeTop = filteredCampaigns.filter(c => c.status !== 'paused')
   const avgOpenRate = activeTop.length ? Math.round(activeTop.reduce((a, c) => a + c.openRate, 0) / activeTop.length) : 0
@@ -118,16 +127,16 @@ export default function ActiveCampaignsCard({ segments, employee, dateFrom, date
       {/* Performance metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 shrink-0">
         <div className={`${isLight ? 'p-4 rounded-xl bg-[var(--lm-muted-surface)] border border-[var(--lm-border)] shadow-md' : 'p-3 rounded-lg dark:bg-blue-900'}`}>
-          <div className={isLight ? 'text-sm font-medium text-black' : 'text-xs text-gray-600 dark:text-gray-300'}>{t('Avg. Open Rate')}</div>
-          <div className={isLight ? 'text-2xl font-bold text-black' : 'text-lg font-semibold dark:text-gray-100'}>{avgOpenRate}%</div>
+          <div className={isLight ? 'text-sm font-medium text-black' : 'text-xs text-gray-600 dark:text-gray-300'}>{`${t('Active')} (${t('On Track')})`}</div>
+          <div className={isLight ? 'text-2xl font-bold text-black' : 'text-lg font-semibold dark:text-gray-100'}>{onTrackPct}%</div>
         </div>
         <div className={`${isLight ? 'p-4 rounded-xl bg-[var(--lm-muted-surface)] border border-[var(--lm-border)] shadow-md' : 'p-3 rounded-lg dark:bg-blue-900'}`}>
-          <div className={isLight ? 'text-sm font-medium text-black' : 'text-xs text-gray-600 dark:text-gray-300'}>{t('Avg. Click Rate')}</div>
-          <div className={isLight ? 'text-2xl font-bold text-black' : 'text-lg font-semibold dark:text-gray-100'}>{avgClickRate}%</div>
+          <div className={isLight ? 'text-sm font-medium text-black' : 'text-xs text-gray-600 dark:text-gray-300'}>{`${t('Active')} (${t('At Risk')})`}</div>
+          <div className={isLight ? 'text-2xl font-bold text-black' : 'text-lg font-semibold dark:text-gray-100'}>{atRiskPct}%</div>
         </div>
         <div className={`${isLight ? 'p-4 rounded-xl bg-[var(--lm-muted-surface)] border border-[var(--lm-border)] shadow-md' : 'p-3 rounded-lg dark:bg-blue-900'}`}>
-          <div className={isLight ? 'text-sm font-medium text-black' : 'text-xs text-gray-600 dark:text-gray-300'}>{t('Conversion Rate')}</div>
-          <div className={isLight ? 'text-2xl font-bold text-black' : 'text-lg font-semibold dark:text-gray-100'}>{avgConversionRate}%</div>
+          <div className={isLight ? 'text-sm font-medium text-black' : 'text-xs text-gray-600 dark:text-gray-300'}>{t('Paused')}</div>
+          <div className={isLight ? 'text-2xl font-bold text-black' : 'text-lg font-semibold dark:text-gray-100'}>{pausedPct}%</div>
         </div>
       </div>
 
@@ -176,6 +185,7 @@ export default function ActiveCampaignsCard({ segments, employee, dateFrom, date
                   <span className={`${isLight ? 'text-sm font-medium text-gray-900' : 'text-sm font-medium dark:text-gray-200'} whitespace-normal break-words`}>{c.name}</span>
                 </div>
                 <span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium ${statusBadgeClass(c.status)}`}>{statusLabel(c.status)}</span>
+                <span className={`text-[10px] ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>{t('Created By')}: {c.owner}</span>
               </div>
                 <div className={`${isLight ? 'mt-2 flex flex-col gap-1 text-xs md:text-sm text-gray-800' : 'mt-2 flex flex-col gap-1 text-xs md:text-sm text-[var(--muted-text)]'}`}>
                   <div className={isLight ? 'text-black' : ''}>{t('Open Rate')}: {c.openRate}%</div>

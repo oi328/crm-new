@@ -1,350 +1,565 @@
-import React, { useMemo, useState } from 'react'
-// Layout removed per app-level layout usage
+import React, { useMemo, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import * as XLSX from 'xlsx'
-import { Bar, Line } from 'react-chartjs-2'
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend } from 'chart.js'
+import { Bar } from 'react-chartjs-2'
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
 import { PieChart } from '@shared/components/PieChart'
 import SearchableSelect from '@shared/components/SearchableSelect'
+import { ArrowLeft, ArrowRight, Filter, User, Users, Tag, Briefcase, Calendar, Trophy, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FaFileExport, FaChevronDown, FaFileExcel, FaFilePdf } from 'react-icons/fa'
+import BackButton from '../components/BackButton'
+import EnhancedLeadDetailsModal from '@shared/components/EnhancedLeadDetailsModal'
+import { useTheme } from '@shared/context/ThemeProvider'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend)
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 export default function ClosedDealsReport() {
   const { t, i18n } = useTranslation()
+  const { theme } = useTheme()
   const isRTL = (i18n?.language || '').toLowerCase().startsWith('ar')
 
-  // Demo dataset matching requested layout
-  const deals = [
-    { id: 1, client: 'ABC Pharma', value: 48000, product: 'Digital Marketing Package', closedDate: '2025-11-02', salesperson: 'Ahmed Ali', durationDays: 7, paymentStatus: 'Paid' },
-    { id: 2, client: 'Delta Med', value: 35000, product: 'Web Development', closedDate: '2025-11-04', salesperson: 'Sara Hassan', durationDays: 5, paymentStatus: 'Pending' },
-    { id: 3, client: 'Green Labs', value: 60000, product: 'CRM System', closedDate: '2025-11-05', salesperson: 'Omar Tarek', durationDays: 9, paymentStatus: 'Paid' },
-    { id: 4, client: 'Sun Health', value: 42000, product: 'SEO & Content', closedDate: '2025-11-06', salesperson: 'Ahmed Ali', durationDays: 8, paymentStatus: 'Partial' },
-    { id: 5, client: 'Medix Co.', value: 28000, product: 'Landing Page + Ads', closedDate: '2025-11-07', salesperson: 'Sara Hassan', durationDays: 6, paymentStatus: 'Paid' },
-    { id: 6, client: 'BioCure', value: 52000, product: 'Marketing Automation', closedDate: '2025-10-30', salesperson: 'Omar Tarek', durationDays: 10, paymentStatus: 'Pending' },
-    { id: 7, client: 'LifeChem', value: 31000, product: 'Social Media Management', closedDate: '2025-10-28', salesperson: 'Ahmed Ali', durationDays: 4, paymentStatus: 'Paid' },
-    { id: 8, client: 'Nova Labs', value: 65000, product: 'CRM + Training', closedDate: '2025-10-25', salesperson: 'Mona Adel', durationDays: 11, paymentStatus: 'Partial' },
-    { id: 9, client: 'HealthPro', value: 47000, product: 'Web Revamp', closedDate: '2025-11-08', salesperson: 'Ahmed Ali', durationDays: 7, paymentStatus: 'Paid' },
-    { id: 10, client: 'CarePlus', value: 33000, product: 'Content & Design', closedDate: '2025-11-03', salesperson: 'Mona Adel', durationDays: 6, paymentStatus: 'Pending' },
+  const initialDeals = [
+    { id: 1, leadName: 'ABC Pharma', contact: '+20 100 111 1111', value: 48000, dealType: 'New Sale', project: 'Project A', source: 'Facebook', closedDate: '2025-11-02', salesperson: 'Ahmed Ali' },
+    { id: 2, leadName: 'Delta Med', contact: '+20 100 222 2222', value: 35000, dealType: 'Upsell', project: 'Project B', source: 'Website', closedDate: '2025-11-04', salesperson: 'Sara Hassan' },
+    { id: 3, leadName: 'Green Labs', contact: '+20 100 333 3333', value: 60000, dealType: 'New Sale', project: 'Project A', source: 'Referral', closedDate: '2025-11-05', salesperson: 'Omar Tarek' },
+    { id: 4, leadName: 'Sun Health', contact: '+20 100 444 4444', value: 42000, dealType: 'Renewal', project: 'Project C', source: 'Facebook', closedDate: '2025-11-06', salesperson: 'Ahmed Ali' },
+    { id: 5, leadName: 'Medix Co.', contact: '+20 100 555 5555', value: 28000, dealType: 'New Sale', project: 'Project B', source: 'Google', closedDate: '2025-11-07', salesperson: 'Sara Hassan' },
+    { id: 6, leadName: 'BioCure', contact: '+20 100 666 6666', value: 52000, dealType: 'New Sale', project: 'Project C', source: 'Website', closedDate: '2025-10-30', salesperson: 'Omar Tarek' },
+    { id: 7, leadName: 'LifeChem', contact: '+20 100 777 7777', value: 31000, dealType: 'Upsell', project: 'Project A', source: 'Referral', closedDate: '2025-10-28', salesperson: 'Ahmed Ali' },
+    { id: 8, leadName: 'Nova Labs', contact: '+20 100 888 8888', value: 65000, dealType: 'Renewal', project: 'Project C', source: 'Google', closedDate: '2025-10-25', salesperson: 'Mona Adel' },
+    { id: 9, leadName: 'HealthPro', contact: '+20 100 999 9999', value: 47000, dealType: 'New Sale', project: 'Project A', source: 'Facebook', closedDate: '2025-11-08', salesperson: 'Ahmed Ali' },
+    { id: 10, leadName: 'CarePlus', contact: '+20 101 000 0000', value: 33000, dealType: 'New Sale', project: 'Project B', source: 'Website', closedDate: '2025-11-03', salesperson: 'Mona Adel' },
   ]
 
-  // Sales targets (EGP) for progress and company-wide achievement
-  const salesTargets = {
-    'Ahmed Ali': 100000,
-    'Sara Hassan': 90000,
-    'Omar Tarek': 120000,
-    'Mona Adel': 80000,
-  }
-  const companyTarget = Object.values(salesTargets).reduce((a, b) => a + b, 0)
+  const [deals, setDeals] = useState(initialDeals)
 
-  // Filters
-  const [salesperson, setSalesperson] = useState('all')
-  const [paymentStatus, setPaymentStatus] = useState('all')
-  const [dateType, setDateType] = useState('range') // 'range' | 'month'
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [month, setMonth] = useState('') // YYYY-MM
+  const salesPersonOptions = useMemo(() => {
+    const set = new Set(deals.map(d => d.salesperson))
+    return ['all', ...Array.from(set)]
+  }, [deals])
+
+  const managerOptions = ['all', 'Manager 1', 'Manager 2']
+
+  const sourceOptions = useMemo(() => {
+    const set = new Set(deals.map(d => d.source))
+    return ['all', ...Array.from(set)]
+  }, [deals])
+
+  const projectOptions = useMemo(() => {
+    const set = new Set(deals.map(d => d.project))
+    return ['all', ...Array.from(set)]
+  }, [deals])
+
+  const [salesPersonFilter, setSalesPersonFilter] = useState('all')
+  const [managerFilter, setManagerFilter] = useState('all')
+  const [sourceFilter, setSourceFilter] = useState('all')
+  const [projectFilter, setProjectFilter] = useState('all')
+  const [lastActionDateFilter, setLastActionDateFilter] = useState('')
+  const [closedDealDateFilter, setClosedDealDateFilter] = useState('')
+  const [showAllFilters, setShowAllFilters] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [showLeadModal, setShowLeadModal] = useState(false)
+  const [selectedLead, setSelectedLead] = useState(null)
 
   const filtered = useMemo(() => {
-    let arr = [...deals]
-    if (salesperson !== 'all') arr = arr.filter(d => d.salesperson === salesperson)
-    if (paymentStatus !== 'all') arr = arr.filter(d => d.paymentStatus === paymentStatus)
-    if (dateType === 'range') {
-      if (dateFrom) arr = arr.filter(d => d.closedDate >= dateFrom)
-      if (dateTo) arr = arr.filter(d => d.closedDate <= dateTo)
-    } else if (dateType === 'month') {
-      if (month) arr = arr.filter(d => (d.closedDate || '').startsWith(month))
-    }
-    return arr
-  }, [deals, salesperson, paymentStatus, dateType, dateFrom, dateTo, month])
+    return deals.filter(d => {
+      const bySales = salesPersonFilter === 'all' || d.salesperson === salesPersonFilter
+      const byManager = managerFilter === 'all' || managerFilter === 'Manager 1' || managerFilter === 'Manager 2'
+      const bySource = sourceFilter === 'all' || d.source === sourceFilter
+      const byProject = projectFilter === 'all' || d.project === projectFilter
+      const byLastAction = !lastActionDateFilter ? true : d.closedDate >= lastActionDateFilter
+      const byClosedDate = !closedDealDateFilter ? true : d.closedDate === closedDealDateFilter
+      return bySales && byManager && bySource && byProject && byLastAction && byClosedDate
+    })
+  }, [deals, salesPersonFilter, managerFilter, sourceFilter, projectFilter, lastActionDateFilter, closedDealDateFilter])
 
-  // Summary KPIs
+  const [currentPage, setCurrentPage] = useState(1)
+  const [entriesPerPage, setEntriesPerPage] = useState(10)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [salesPersonFilter, managerFilter, sourceFilter, projectFilter, lastActionDateFilter, closedDealDateFilter])
+
   const totalDeals = filtered.length
-  const totalRevenue = filtered.reduce((sum, d) => sum + (d.value || 0), 0)
-  const averageDealValue = totalDeals ? Math.round(totalRevenue / totalDeals) : 0
-  const averageClosingTime = totalDeals ? Math.round(filtered.reduce((sum, d) => sum + (d.durationDays || 0), 0) / totalDeals) : 0
-  const companyTargetAchieved = companyTarget ? Math.round((totalRevenue / companyTarget) * 100) : 0
+  const pageCount = Math.ceil(totalDeals / entriesPerPage)
+  const paginatedData = filtered.slice(
+    (currentPage - 1) * entriesPerPage,
+    currentPage * entriesPerPage
+  )
 
-  // Grouping helpers
-  const bySalespersonValue = useMemo(() => {
+  const totalRevenue = filtered.reduce((sum, d) => sum + (d.value || 0), 0)
+  const totalLeads = useMemo(() => {
+    const set = new Set(filtered.map(d => d.leadName))
+    return set.size
+  }, [filtered])
+  const target = 400000
+  const achievedPercent = target ? Math.round((totalRevenue / target) * 100) : 0
+
+  const closedByChannelSegments = useMemo(() => {
+    const map = new Map()
+    filtered.forEach(d => {
+      const key = d.source || t('Unknown')
+      map.set(key, (map.get(key) || 0) + 1)
+    })
+    const baseColors = ['#3b82f6', '#10b981', '#f97316', '#a855f7', '#ef4444', '#22c55e']
+    return Array.from(map.entries()).map(([label, value], idx) => ({
+      label,
+      value,
+      color: baseColors[idx % baseColors.length]
+    }))
+  }, [filtered, t])
+
+  const closedByProjectSegments = useMemo(() => {
+    const map = new Map()
+    filtered.forEach(d => {
+      const key = d.project || t('Unknown')
+      map.set(key, (map.get(key) || 0) + 1)
+    })
+    const baseColors = ['#8b5cf6', '#ec4899', '#10b981', '#f97316', '#3b82f6', '#22c55e']
+    return Array.from(map.entries()).map(([label, value], idx) => ({
+      label,
+      value,
+      color: baseColors[idx % baseColors.length]
+    }))
+  }, [filtered, t])
+
+  const barData = useMemo(() => {
     const map = new Map()
     filtered.forEach(d => {
       map.set(d.salesperson, (map.get(d.salesperson) || 0) + d.value)
     })
-    return map
-  }, [filtered])
-
-  const paymentDist = useMemo(() => {
-    const map = { Paid: 0, Pending: 0, Partial: 0 }
-    filtered.forEach(d => { map[d.paymentStatus] = (map[d.paymentStatus] || 0) + 1 })
-    return map
-  }, [filtered])
-
-  const dealsTrend = useMemo(() => {
-    // Count deals per day
-    const map = new Map()
-    filtered.forEach(d => {
-      map.set(d.closedDate, (map.get(d.closedDate) || 0) + 1)
-    })
-    const entries = Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+    const labels = Array.from(map.keys())
+    const values = Array.from(map.values())
     return {
-      labels: entries.map(e => e[0]),
-      counts: entries.map(e => e[1])
+      labels,
+      datasets: [
+        {
+          label: t('Deal Value'),
+          data: values,
+          backgroundColor: 'rgba(59, 130, 246, 0.7)'
+        }
+      ]
     }
-  }, [filtered])
+  }, [filtered, t])
 
-  // Export helpers
-  const exportExcel = () => {
+  const barOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'x',
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: t('Sales Person')
+        }
+      },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: t('Deal Value')
+        }
+      }
+    }
+  }
+
+  const handleExportExcel = () => {
     const rows = filtered.map(d => ({
-      Client: d.client,
-      Salesperson: d.salesperson,
-      ProductService: d.product,
-      ClosedDate: d.closedDate,
-      DealValueEGP: d.value,
-      DurationDays: d.durationDays,
-      PaymentStatus: d.paymentStatus,
+      [t('Lead Name')]: d.leadName,
+      [t('Contact')]: d.contact,
+      [t('Source')]: d.source,
+      [t('Project')]: d.project,
+      [t('Deal Type')]: d.dealType,
+      [t('Deal Value')]: d.value,
+      [t('Sales Person')]: d.salesperson,
+      [t('Closed Deal Date')]: d.closedDate
     }))
-    const worksheet = XLSX.utils.json_to_sheet(rows)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'ClosedDeals')
-    XLSX.writeFile(workbook, 'closed-deals-report.xlsx')
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'ClosedDeals')
+    XLSX.writeFile(wb, 'Closed_Deals_Report.xlsx')
+    setShowExportMenu(false)
   }
-  const exportPdf = () => {
-    // Use browser print to PDF for simplicity
+
+  const handleExportPdf = () => {
     window.print()
+    setShowExportMenu(false)
   }
 
-  const statusBadge = (status) => {
-    const classes =
-      status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-      status === 'Partial' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-      'bg-red-50 text-red-700 border-red-200'
-    return <span className={`inline-block px-2 py-1 text-xs rounded-md border ${classes}`}>{t(status)}</span>
+  const handlePreview = (deal) => {
+    setSelectedLead({
+      id: deal.id,
+      name: deal.leadName,
+      phone: deal.contact,
+      source: deal.source,
+      status: 'qualified',
+      assignedTo: deal.salesperson,
+      project: deal.project
+    })
+    setShowLeadModal(true)
   }
 
-  // Charts data
-  const barData = {
-    labels: Array.from(bySalespersonValue.keys()),
-    datasets: [
-      {
-        label: t('Deal Value (EGP)'),
-        data: Array.from(bySalespersonValue.values()),
-        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 1,
-      },
-    ],
+  const handleDelete = (id) => {
+    setDeals(prev => prev.filter(d => d.id !== id))
   }
 
-  const lineData = {
-    labels: dealsTrend.labels,
-    datasets: [
-      {
-        label: t('Closed Deals'),
-        data: dealsTrend.counts,
-        fill: false,
-        borderColor: 'rgba(16, 185, 129, 1)',
-        backgroundColor: 'rgba(16, 185, 129, 0.3)',
-        tension: 0.3,
-      },
-    ],
+  const clearFilters = () => {
+    setSalesPersonFilter('all')
+    setManagerFilter('all')
+    setSourceFilter('all')
+    setProjectFilter('all')
+    setLastActionDateFilter('')
+    setClosedDealDateFilter('')
   }
 
-  const pieData = [
-    { label: t('Paid'), value: paymentDist.Paid, color: '#10b981' },
-    { label: t('Partial'), value: paymentDist.Partial, color: '#f59e0b' },
-    { label: t('Pending'), value: paymentDist.Pending, color: '#ef4444' },
-  ]
-
-  const allSalespeople = Array.from(new Set(deals.map(d => d.salesperson)))
+  const renderPieCard = (title, data) => {
+    const total = data.reduce((sum, item) => sum + (item.value || 0), 0)
+    return (
+      <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="text-sm font-semibold mb-2 dark:text-white text-center md:text-left">{title}</div>
+        <div className="h-48 flex items-center justify-center">
+          <PieChart
+            segments={data}
+            size={170}
+            centerValue={total}
+            centerLabel={t('Total')}
+          />
+        </div>
+        <div className="mt-4 flex flex-wrap justify-center gap-3">
+          {data.map(segment => (
+            <div key={segment.label} className="flex items-center gap-1.5 text-xs">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: segment.color }}></div>
+              <span className="dark:text-white">
+                {segment.label}: {segment.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('Closed Deals Report')}</h1>
-        <div className="flex items-center gap-2">
-          <button onClick={exportPdf} className="btn btn-primary">{t('Download PDF')}</button>
-          <button onClick={exportExcel} className="btn btn-secondary">{t('Download Excel')}</button>
-        </div>
+    <div className="p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-hidden min-w-0 max-w-[1600px] mx-auto space-y-6">
+      {/* Header & Back Button */}
+      <div className="mb-8">
+        <BackButton to="/reports" />
+        <h1 className="text-2xl font-bold dark:text-white mb-2">
+          {t('Welcome Reports, Closed Deals')}
+        </h1>
+        <p className="dark:text-white text-sm">
+          {t('Analyze your closed deals performance and revenue')}
+        </p>
       </div>
 
-      {/* Filters */}
-      <div className="glass-panel rounded-xl p-4">
-        <div className="flex flex-wrap items-end gap-3">
-          {/* Salesperson */}
-          <div className="flex flex-col">
-            <label className="text-sm text-[var(--muted-text)]">{t('Salesperson')}</label>
-            <SearchableSelect value={salesperson} onChange={(v) => setSalesperson(v)} className="min-w-[180px]">
-              <option value="all">{t('All')}</option>
-              {allSalespeople.map(sp => (
-                <option key={sp} value={sp}>{sp}</option>
-              ))}
-            </SearchableSelect>
+      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-4">
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2 dark:text-white font-semibold">
+            <Filter size={20} className="text-blue-500 dark:text-blue-400" />
+            <h3>{t('Filter')}</h3>
           </div>
-
-          {/* Date type */}
-          <div className="flex flex-col">
-            <label className="text-sm text-[var(--muted-text)]">{t('Date Filter Type')}</label>
-            <SearchableSelect value={dateType} onChange={(v) => setDateType(v)} className="min-w-[160px]">
-              <option value="range">{t('By Date Range')}</option>
-              <option value="month">{t('By Month')}</option>
-            </SearchableSelect>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowAllFilters(prev => !prev)}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            >
+              {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')}
+              <FaChevronDown
+                size={12}
+                className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`}
+              />
+            </button>
+            <button
+              onClick={clearFilters}
+              className="px-3 py-1.5 text-sm dark:text-white hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              {t('Reset')}
+            </button>
           </div>
+        </div>
 
-          {dateType === 'range' ? (
-            <>
-              <div className="flex flex-col">
-                <label className="text-sm text-[var(--muted-text)]">{t('From')}</label>
-                <input type="date" lang={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'en'} dir={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'rtl' : 'ltr'} placeholder={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'اليوم/الشهر/السنة' : 'mm/dd/yyyy'} value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="input" />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-sm text-[var(--muted-text)]">{t('To')}</label>
-                <input type="date" lang={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'en'} dir={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'rtl' : 'ltr'} placeholder={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'اليوم/الشهر/السنة' : 'mm/dd/yyyy'} value={dateTo} onChange={e => setDateTo(e.target.value)} className="input" />
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col">
-              <label className="text-sm text-[var(--muted-text)]">{t('Month')}</label>
-              <input type="month" value={month} onChange={e => setMonth(e.target.value)} className="input" />
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <User size={12} className="text-blue-500 dark:text-blue-400" />
+                {t('Sales Person')}
+              </label>
+              <SearchableSelect value={salesPersonFilter} onChange={v => setSalesPersonFilter(v)}>
+                {salesPersonOptions.map(s => (
+                  <option key={s} value={s}>
+                    {s === 'all' ? t('All') : s}
+                  </option>
+                ))}
+              </SearchableSelect>
             </div>
-          )}
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Users size={12} className="text-blue-500 dark:text-blue-400" />
+                {t('Manager')}
+              </label>
+              <SearchableSelect value={managerFilter} onChange={v => setManagerFilter(v)}>
+                {managerOptions.map(m => (
+                  <option key={m} value={m}>
+                    {m === 'all' ? t('All') : m}
+                  </option>
+                ))}
+              </SearchableSelect>
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Tag size={12} className="text-blue-500 dark:text-blue-400" />
+                {t('Source')}
+              </label>
+              <SearchableSelect value={sourceFilter} onChange={v => setSourceFilter(v)}>
+                {sourceOptions.map(s => (
+                  <option key={s} value={s}>
+                    {s === 'all' ? t('All') : s}
+                  </option>
+                ))}
+              </SearchableSelect>
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Briefcase size={12} className="text-blue-500 dark:text-blue-400" />
+                {t('Project')}
+              </label>
+              <SearchableSelect value={projectFilter} onChange={v => setProjectFilter(v)}>
+                {projectOptions.map(p => (
+                  <option key={p} value={p}>
+                    {p === 'all' ? t('All') : p}
+                  </option>
+                ))}
+              </SearchableSelect>
+            </div>
+          </div>
 
-          {/* Payment status */}
-          <div className="flex flex-col">
-            <label className="text-sm text-[var(--muted-text)]">{t('Payment Status')}</label>
-            <SearchableSelect value={paymentStatus} onChange={(v) => setPaymentStatus(v)} className="min-w-[160px]">
-              <option value="all">{t('All')}</option>
-              <option value="Paid">{t('Paid')}</option>
-              <option value="Partial">{t('Partial')}</option>
-              <option value="Pending">{t('Pending')}</option>
-            </SearchableSelect>
+          <div
+            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-500 ease-in-out overflow-hidden ${
+              showAllFilters ? 'max-h-[1000px] opacity-100 pt-2' : 'max-h-0 opacity-0'
+            }`}
+          >
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                {t('Last Action Date')}
+              </label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                value={lastActionDateFilter}
+                onChange={e => setLastActionDateFilter(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                {t('Closed Deal Date')}
+              </label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                value={closedDealDateFilter}
+                onChange={e => setClosedDealDateFilter(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="h-4" aria-hidden="true"></div>
-
-      {/* Summary KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: t('Total Closed Deals'), value: totalDeals, color: 'bg-blue-500' },
-          { label: t('Total Revenue (EGP)'), value: totalRevenue.toLocaleString(), color: 'bg-emerald-500' },
-          { label: t('Average Deal Value'), value: averageDealValue.toLocaleString(), color: 'bg-indigo-500' },
-          { label: t('Average Closing Time'), value: `${averageClosingTime} ${t('days')}`, color: 'bg-amber-500' },
-          { label: t('% of Target Achieved'), value: `${companyTargetAchieved}%`, color: 'bg-teal-500' },
-        ].map((kpi, idx) => (
-          <div key={idx} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">{kpi.label}</div>
-                <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">{kpi.value}</div>
-              </div>
-              <div className={`w-10 h-10 rounded-lg ${kpi.color} opacity-80`}></div>
+          { label: t('Total Closed Deals'), value: totalDeals, accent: 'bg-emerald-500' },
+          { label: t('Total Leads'), value: totalLeads, accent: 'bg-indigo-500' },
+          { label: t('Total Revenue'), value: `${totalRevenue.toLocaleString()} EGP`, accent: 'bg-blue-500' },
+          { label: t('Achieved of Target'), value: `${achievedPercent}%`, accent: 'bg-orange-500' }
+        ].map(card => (
+          <div
+            key={card.label}
+            className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex items-center justify-between"
+          >
+            <div>
+              <div className="text-xs dark:text-white">{card.label}</div>
+              <div className="text-lg font-semibold">{card.value}</div>
             </div>
+            <div className={`w-8 h-8 rounded-lg ${card.accent}`}></div>
           </div>
         ))}
       </div>
 
-      <div className="h-4" aria-hidden="true"></div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Bar: value per salesperson */}
-        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="flex items-center justify-between mb-3">
-            <div className={`flex items-center gap-2`}>
-              <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
-              <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold text-gray-800 dark:text-gray-100`}>{t('Deal Value per Salesperson')}</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {renderPieCard(t('Closed Deals by Channels'), closedByChannelSegments)}
+        {renderPieCard(t('Closed Deals by Project'), closedByProjectSegments)}
+        <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+              <Trophy size={20} />
             </div>
+            <div className="text-sm font-semibold dark:text-white">{t('Deal Value for each Person')}</div>
           </div>
-          <Bar
-            data={barData}
-            options={{
-              responsive: true,
-              plugins: { legend: { display: false } },
-              scales: { y: { beginAtZero: true } },
-            }}
-          />
-        </div>
-
-        {/* Pie (Donut): payment status distribution */}
-        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center justify-center">
-              <PieChart
-                segments={pieData}
-                centerValue={totalDeals}
-                centerLabel={t('Deals')}
-                size={200}
-                cutout={'70%'}
-                borderRadius={6}
-              />
-            </div>
-            <div className="flex-1 md:ml-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[{ key: 'Paid', color: '#10b981', value: paymentDist.Paid }, { key: 'Partial', color: '#f59e0b', value: paymentDist.Partial }, { key: 'Pending', color: '#ef4444', value: paymentDist.Pending }].map((item) => {
-                const pct = totalDeals ? Math.round((item.value / totalDeals) * 100) : 0
-                return (
-                  <div key={item.key} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></span>
-                    <div className="flex-1">
-                      <div className="text-sm text-gray-700 dark:text-gray-200">{t(item.key)}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{item.value} / {totalDeals} ({pct}%)</div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+          <div className="flex-1 mt-2 w-full min-h-[220px]">
+            <Bar data={barData} options={barOptions} />
           </div>
-        </div>
-
-        {/* Line: closed deals trend */}
-        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="flex items-center justify-between mb-3">
-            <div className={`flex items-center gap-2 mb-3`}>
-              <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
-              <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold text-gray-800 dark:text-gray-100`}>{t('Closed Deals Trend')}</h3>
-            </div>
-          </div>
-          <Line
-            data={lineData}
-            options={{
-              responsive: true,
-              plugins: { legend: { display: false } },
-              scales: { y: { beginAtZero: true, precision: 0 } },
-            }}
-          />
         </div>
       </div>
 
-      <div className="h-4" aria-hidden="true"></div>
-
-      {/* Table */}
-      <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold dark:text-white">{t('Closed Deals Overview')}</h2>
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(prev => !prev)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+            >
+              <FaFileExport />
+              {t('Export')}
+              <FaChevronDown
+                className={`transform transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`}
+                size={12}
+              />
+            </button>
+            {showExportMenu && (
+              <div className={`absolute top-full ${isRTL ? 'left-0' : 'right-0'} mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-48`}>
+                <button
+                  onClick={handleExportExcel}
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                >
+                  <FaFileExcel className="text-green-600" /> {t('Export to Excel')}
+                </button>
+                <button
+                  onClick={handleExportPdf}
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                >
+                  <FaFilePdf className="text-red-600" /> {t('Export to PDF')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left border-b border-gray-200 dark:border-gray-700">
-                {[t('Client'), t('Deal Value'), t('Product / Service'), t('Closed Date'), t('Salesperson'), t('Duration (Days)'), t('Payment Status')].map((h, idx) => (
-                  <th key={idx} className="px-3 py-2 text-gray-700 dark:text-gray-200 font-medium">{h}</th>
-                ))}
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white">
+              <tr>
+                <th className="px-4 py-3">{t('Lead Name')}</th>
+                <th className="px-4 py-3">{t('Contact')}</th>
+                <th className="px-4 py-3">{t('Source')}</th>
+                <th className="px-4 py-3">{t('Project')}</th>
+                <th className="px-4 py-3">{t('Deal Type')}</th>
+                <th className="px-4 py-3 text-center">{t('Deal Value')}</th>
+                <th className="px-4 py-3">{t('Sales Person')}</th>
+                <th className="px-4 py-3">{t('Closed Deal Date')}</th>
+                <th className="px-4 py-3 text-center">{t('Actions')}</th>
               </tr>
             </thead>
-            <tbody>
-              {filtered.map((d, idx) => (
-                <tr key={`${d.id}-${idx}`} className="border-b border-gray-100 dark:border-gray-700">
-                  <td className="px-3 py-2 text-gray-800 dark:text-gray-100">{d.client}</td>
-                  <td className="px-3 py-2">{d.value.toLocaleString()} EGP</td>
-                  <td className="px-3 py-2">{d.product}</td>
-                  <td className="px-3 py-2">{d.closedDate}</td>
-                  <td className="px-3 py-2">{d.salesperson}</td>
-                  <td className="px-3 py-2">{d.durationDays}</td>
-                  <td className="px-3 py-2">{statusBadge(d.paymentStatus)}</td>
+            <tbody className="divide-y divide-white/10 dark:divide-gray-700/50">
+              {paginatedData.map(deal => (
+                <tr key={deal.id} className="hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                  <td className="px-4 py-3 font-medium dark:text-white">{deal.leadName}</td>
+                  <td className="px-4 py-3 dark:text-white">{deal.contact}</td>
+                  <td className="px-4 py-3 dark:text-white">{deal.source}</td>
+                  <td className="px-4 py-3 dark:text-white">{deal.project}</td>
+                  <td className="px-4 py-3 dark:text-white">{deal.dealType}</td>
+                  <td className="px-4 py-3 text-center font-semibold dark:text-white">{deal.value.toLocaleString()} EGP</td>
+                  <td className="px-4 py-3 dark:text-white">{deal.salesperson}</td>
+                  <td className="px-4 py-3 dark:text-white">{deal.closedDate}</td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="inline-flex items-center gap-2">
+                      <button
+                        onClick={() => handlePreview(deal)}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                        title={t('Preview')}
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(deal.id)}
+                        className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                        title={t('Delete')}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="px-4 py-8 text-center dark:text-white">
+                    {t('No closed deals found')}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+
+        <div className="px-6 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex items-center justify-between gap-3">
+          <div className="text-[11px] sm:text-xs text-[var(--muted-text)]">
+            {isRTL
+              ? `إظهار ${Math.min((currentPage - 1) * entriesPerPage + 1, totalDeals)}-${Math.min(currentPage * entriesPerPage, totalDeals)} من ${totalDeals}`
+              : `Showing ${Math.min((currentPage - 1) * entriesPerPage + 1, totalDeals)}-${Math.min(currentPage * entriesPerPage, totalDeals)} of ${totalDeals}`}
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                title={isRTL ? 'السابق' : 'Prev'}
+              >
+                {isRTL ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <ChevronLeft className="w-4 h-4" />
+                )}
+              </button>
+              <span className="text-sm whitespace-nowrap">
+                {isRTL
+                  ? `الصفحة ${currentPage} من ${pageCount}`
+                  : `Page ${currentPage} of ${pageCount}`}
+              </span>
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(p => Math.min(p + 1, pageCount))}
+                disabled={currentPage === pageCount}
+                title={isRTL ? 'التالي' : 'Next'}
+              >
+                {isRTL ? (
+                  <ChevronLeft className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] sm:text-xs text-[var(--muted-text)] whitespace-nowrap">
+                {isRTL ? 'لكل صفحة:' : 'Per page:'}
+              </span>
+              <select
+                className="input w-24 text-sm py-0 px-2 h-8"
+                value={entriesPerPage}
+                onChange={(e) => {
+                  setEntriesPerPage(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
-    </>
+      <EnhancedLeadDetailsModal
+        lead={selectedLead}
+        isOpen={showLeadModal}
+        onClose={() => setShowLeadModal(false)}
+        theme={theme}
+      />
+    </div>
   )
 }

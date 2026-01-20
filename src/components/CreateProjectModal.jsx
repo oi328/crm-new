@@ -262,7 +262,20 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
         cilContent: initialValues.cil?.content || '',
         cilSignature: initialValues.cil?.signature || '',
         cilAttachments: initialValues.cil?.attachments || [],
+        
+        // Map Publish fields
+        contactName: initialValues.contactName || initialValues.publish?.contactName || 'Current User',
+        contactEmail: initialValues.contactEmail || initialValues.publish?.contactEmail || 'user@example.com',
+        contactPhone: initialValues.contactPhone || initialValues.publish?.contactPhone || '+20 123 456 7890',
+        marketingPackage: initialValues.marketingPackage || initialValues.publish?.marketingPackage || 'standard',
+        publishStatus: initialValues.publishStatus || initialValues.publish?.publishStatus || 'Draft',
       }))
+
+      // Load channels if they exist
+      const existingChannels = initialValues.channels || initialValues.publish?.channels
+      if (Array.isArray(existingChannels) && existingChannels.length > 0) {
+        setChannels(existingChannels)
+      }
     }
   }, [initialValues])
 
@@ -337,7 +350,10 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
         },
         publish: {
           contactName: formData.contactName,
+          contactEmail: formData.contactEmail,
+          contactPhone: formData.contactPhone,
           marketingPackage: formData.marketingPackage,
+          channels: channels,
         },
       }
       try {
@@ -345,7 +361,7 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
         const evt = new CustomEvent('app:toast', { detail: { type: 'success', message: inputLanguage === 'ar' ? 'تم حفظ بيانات المشروع' : 'Project data saved' } })
         window.dispatchEvent(evt)
       } catch (_) {}
-      onSave && onSave(formData)
+      onSave && onSave({ ...formData, channels })
       onClose()
     }
   }
@@ -556,6 +572,66 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
 
   const renderStep2 = () => (
     <div className="space-y-6 animate-fadeIn">
+      {/* Price Range */}
+      <div className="space-y-4">
+        <h3 className="font-semibold flex items-center gap-2">
+          <FaTag className="text-blue-500" />
+          {inputLanguage === 'ar' ? 'نطاق السعر' : 'Price Range'}
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="label text-xs">{inputLanguage === 'ar' ? 'من' : 'From'}</label>
+            <input 
+              type="number"
+              className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.minPrice ? 'border-red-500' : ''}`}
+              value={formData.minPrice}
+              onChange={e => setFormData({...formData, minPrice: e.target.value})}
+              placeholder="0"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="label text-xs">{inputLanguage === 'ar' ? 'إلى' : 'To'}</label>
+            <input 
+              type="number"
+              className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+              value={formData.maxPrice}
+              onChange={e => setFormData({...formData, maxPrice: e.target.value})}
+              placeholder="0"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Space Range */}
+      <div className="space-y-4">
+        <h3 className="font-semibold flex items-center gap-2">
+          <FaRulerCombined className="text-blue-500" />
+          {inputLanguage === 'ar' ? 'نطاق المساحة (متر مربع)' : 'Space Range (sqm)'}
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="label text-xs">{inputLanguage === 'ar' ? 'من' : 'From'}</label>
+            <input 
+              type="number"
+              className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+              value={formData.minSpace}
+              onChange={e => setFormData({...formData, minSpace: e.target.value})}
+              placeholder="0"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="label text-xs">{inputLanguage === 'ar' ? 'إلى' : 'To'}</label>
+            <input 
+              type="number"
+              className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
+              value={formData.maxSpace}
+              onChange={e => setFormData({...formData, maxSpace: e.target.value})}
+              placeholder="0"
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-4">
         <h3 className="font-semibold text-lg">{inputLanguage === 'ar' ? 'مرافق المشروع' : 'Project Amenities'}</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -719,66 +795,6 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
 
   const renderStep5 = () => (
     <div className="space-y-6 animate-fadeIn">
-      {/* Price Range */}
-      <div className="space-y-4">
-        <h3 className="font-semibold flex items-center gap-2">
-          <FaTag className="text-blue-500" />
-          {inputLanguage === 'ar' ? 'نطاق السعر' : 'Price Range'}
-        </h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="label text-xs">{inputLanguage === 'ar' ? 'من' : 'From'}</label>
-            <input 
-              type="number"
-              className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 ${errors.minPrice ? 'border-red-500' : ''}`}
-              value={formData.minPrice}
-              onChange={e => setFormData({...formData, minPrice: e.target.value})}
-              placeholder="0"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="label text-xs">{inputLanguage === 'ar' ? 'إلى' : 'To'}</label>
-            <input 
-              type="number"
-              className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-              value={formData.maxPrice}
-              onChange={e => setFormData({...formData, maxPrice: e.target.value})}
-              placeholder="0"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Space Range */}
-      <div className="space-y-4">
-        <h3 className="font-semibold flex items-center gap-2">
-          <FaRulerCombined className="text-blue-500" />
-          {inputLanguage === 'ar' ? 'نطاق المساحة (متر مربع)' : 'Space Range (sqm)'}
-        </h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="label text-xs">{inputLanguage === 'ar' ? 'من' : 'From'}</label>
-            <input 
-              type="number"
-              className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-              value={formData.minSpace}
-              onChange={e => setFormData({...formData, minSpace: e.target.value})}
-              placeholder="0"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="label text-xs">{inputLanguage === 'ar' ? 'إلى' : 'To'}</label>
-            <input 
-              type="number"
-              className="input dark:bg-gray-800 w-full border border-black dark:border-gray-700"
-              value={formData.maxSpace}
-              onChange={e => setFormData({...formData, maxSpace: e.target.value})}
-              placeholder="0"
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Payment Plans */}
       <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -1048,47 +1064,64 @@ export default function CreateProjectModal({ onClose, isRTL, onSave, mode = 'cre
           <FaBullhorn className="text-blue-500" />
           {inputLanguage === 'ar' ? 'معلومات التواصل' : 'Contact Information'}
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className="space-y-1">
-            <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider flex items-center gap-1">
-              <FaUser className="text-gray-400" />
-              {inputLanguage === 'ar' ? 'الاسم' : 'Name'}
-            </span>
-            <div>
-              <input 
-                className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 `}
-                value={formData.contactName}
-                onChange={e => setFormData({...formData, contactName: e.target.value})}
-              />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div className="space-y-1">
+              <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider flex items-center gap-1">
+                <FaUser className="text-gray-400" />
+                {inputLanguage === 'ar' ? 'الاسم' : 'Name'}
+              </span>
+              <div>
+                <input 
+                  className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 `}
+                  value={formData.contactName}
+                  onChange={e => setFormData({...formData, contactName: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider flex items-center gap-1">
+                <FaEnvelope className="text-gray-400" />
+                {inputLanguage === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+              </span>
+              <div>
+                <input 
+                  className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 `}
+                  value={formData.contactEmail}
+                  onChange={e => setFormData({...formData, contactEmail: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider flex items-center gap-1">
+                <FaPhone className="text-gray-400" />
+                {inputLanguage === 'ar' ? 'الهاتف' : 'Phone'}
+              </span>
+              <div>
+                <input 
+                  className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 `}
+                  value={formData.contactPhone}
+                  onChange={e => setFormData({...formData, contactPhone: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider flex items-center gap-1">
+                <FaTag className="text-gray-400" />
+                {inputLanguage === 'ar' ? 'باقة التسويق' : 'Marketing Package'}
+              </span>
+              <div>
+                <select 
+                  className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 `}
+                  value={formData.marketingPackage}
+                  onChange={e => setFormData({...formData, marketingPackage: e.target.value})}
+                >
+                  <option value="standard">{inputLanguage === 'ar' ? 'قياسي' : 'Standard'}</option>
+                  <option value="featured">{inputLanguage === 'ar' ? 'مميز' : 'Featured'}</option>
+                  <option value="premium">{inputLanguage === 'ar' ? 'فاخر' : 'Premium'}</option>
+                </select>
+              </div>
             </div>
           </div>
-          <div className="space-y-1">
-            <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider flex items-center gap-1">
-              <FaEnvelope className="text-gray-400" />
-              {inputLanguage === 'ar' ? 'البريد الإلكتروني' : 'Email'}
-            </span>
-            <div>
-              <input 
-                className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 `}
-                value={formData.contactEmail}
-                onChange={e => setFormData({...formData, contactEmail: e.target.value})}
-              />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider flex items-center gap-1">
-              <FaPhone className="text-gray-400" />
-              {inputLanguage === 'ar' ? 'الهاتف' : 'Phone'}
-            </span>
-            <div>
-              <input 
-                className={`input dark:bg-gray-800 w-full border border-black dark:border-gray-700 `}
-                value={formData.contactPhone}
-                onChange={e => setFormData({...formData, contactPhone: e.target.value})}
-              />
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Channel Management */}

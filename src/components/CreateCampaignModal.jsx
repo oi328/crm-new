@@ -12,6 +12,7 @@ export default function CreateCampaignModal({ isOpen, onClose, onCreate }) {
     startAt: '',
     endAt: '',
     budget: '',
+    currency: 'EGP',
     description: ''
   })
 
@@ -106,17 +107,39 @@ export default function CreateCampaignModal({ isOpen, onClose, onCreate }) {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm mb-1">{t('Budget')}</label>
-            <input
-              type="number"
-              name="budget"
-              value={form.budget}
-              onChange={handleChange}
-              className="w-full border rounded px-3 py-2 bg-white dark:bg-blue-900 dark:text-white"
-              placeholder="0"
-              min="0"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm mb-1">{t('Currency') || 'Currency'}</label>
+              <select
+                name="currency"
+                value={form.currency}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2 bg-white dark:bg-blue-900 dark:text-white"
+              >
+                <option value="EGP">EGP</option>
+                <option value="USD">USD</option>
+                <option value="SAR">SAR</option>
+                <option value="AED">AED</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm mb-1">{t('Budget')}</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  name="budget"
+                  value={form.budget}
+                  onChange={handleChange}
+                  className={`w-full border rounded px-3 py-2 bg-white dark:bg-blue-900 dark:text-white ${isRTL ? 'pl-12' : 'pr-12'}`}
+                  placeholder="0"
+                  min="0"
+                />
+                <div className={`absolute inset-y-0 ${isRTL ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center pointer-events-none text-gray-500`}>
+                  {form.currency || 'EGP'}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div>

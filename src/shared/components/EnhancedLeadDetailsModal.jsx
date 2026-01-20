@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useTheme } from '../context/ThemeProvider';
 import { FaUser, FaTimes, FaCog, FaPlus, FaEdit, FaCheckCircle, FaClock, FaSearch, FaFilter, FaSortAmountDown, FaList, FaCalendarAlt, FaPhone, FaEnvelope, FaTrash, FaEye, FaEllipsisV, FaWhatsapp, FaVideo, FaComments, FaMapMarkerAlt, FaDollarSign, FaUserCheck, FaChevronDown, FaFileAlt, FaDownload, FaPaperclip } from 'react-icons/fa';
 import AddActionModal from '@components/AddActionModal';
 import EditLeadModal from '@components/EditLeadModal';
@@ -10,7 +11,9 @@ import { useStages } from '@hooks/useStages';
 import { saveRequest as saveRealEstateRequest } from '../../data/realEstateRequests';
 import { saveRequest as saveInventoryRequest } from '../../data/inventoryRequests';
 
-const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, theme = 'light', assignees = [], onAssign, onUpdateLead }) => {
+const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, theme: propTheme = 'light', assignees = [], onAssign, onUpdateLead }) => {
+  const { theme: contextTheme } = useTheme();
+  const theme = contextTheme || propTheme;
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -31,8 +34,49 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
   const [composeText, setComposeText] = useState('');
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [showAssignMenu, setShowAssignMenu] = useState(false);
-  const [assignStep, setAssignStep] = useState('teams'); // 'teams' or 'members'
-  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [historyDateFilter, setHistoryDateFilter] = useState('');
+  const [checkInHistory, setCheckInHistory] = useState([]);
+
+  // Sample data for demonstration
+  const leadData = {
+    name: lead?.fullName || lead?.leadName || lead?.name || 'النوه صان',
+    phone: lead?.mobile || lead?.phone || '+966512345698',
+    email: lead?.email || 'lead28@example.com',
+    company: lead?.company || 'النصري الطحان عكي الحداور',
+    location: lead?.location || 'Not specified',
+    source: lead?.source || 'referral',
+    createdDate: lead?.createdDate || 'Not specified',
+    status: lead?.status || 'qualified',
+    priority: lead?.priority || 'high',
+    stage: lead?.stage || (isArabic ? 'جديد' : 'New'),
+    createdBy: lead?.createdBy || 'Not specified',
+    salesPerson: (() => {
+      const s = String(lead?.stage || '').toLowerCase();
+      const isNew = s.includes('new') || s.includes('جديد') || s.includes('نيوليد');
+      return isNew ? '-' : (lead?.assignedTo || lead?.salesPerson || 'Not specified');
+    })()
+  };
+
+  useEffect(() => {
+    // Load Check-In History from localStorage and filter for this lead
+    try {
+      const allReports = JSON.parse(localStorage.getItem('checkInReports') || '[]');
+      const leadReports = allReports.filter(report => 
+        (report.leadId && report.leadId === lead?.id) || 
+        (report.customerName && (report.customerName === leadData.name || report.customerName === lead?.name))
+      ).sort((a, b) => new Date(b.checkInDate) - new Date(a.checkInDate));
+      
+      setCheckInHistory(leadReports);
+    } catch (e) {
+      console.error('Error loading check-in history', e);
+    }
+  }, [lead, leadData.name]);
+
+  const filteredCheckInHistory = checkInHistory.filter(item => {
+    if (!historyDateFilter) return true;
+    const itemDate = new Date(item.checkInDate).toISOString().split('T')[0];
+    return itemDate === historyDateFilter;
+  }).sort((a, b) => new Date(b.checkInDate) - new Date(a.checkInDate));
 
   // Mock Teams Data
   const TEAMS_DATA = {
@@ -152,26 +196,6 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
   }, [lead]);
 
   if (!isOpen) return null;
-
-  // Sample data for demonstration
-  const leadData = {
-    name: lead?.fullName || lead?.leadName || lead?.name || 'النوه صان',
-    phone: lead?.mobile || lead?.phone || '+966512345698',
-    email: lead?.email || 'lead28@example.com',
-    company: lead?.company || 'النصري الطحان عكي الحداور',
-    location: lead?.location || 'Not specified',
-    source: lead?.source || 'referral',
-    createdDate: lead?.createdDate || 'Not specified',
-    status: lead?.status || 'qualified',
-    priority: lead?.priority || 'high',
-    stage: lead?.stage || (isArabic ? 'جديد' : 'New'),
-    createdBy: lead?.createdBy || 'Not specified',
-    salesPerson: (() => {
-      const s = String(lead?.stage || '').toLowerCase();
-      const isNew = s.includes('new') || s.includes('جديد') || s.includes('نيوليد');
-      return isNew ? '-' : (lead?.assignedTo || lead?.salesPerson || 'Not specified');
-    })()
-  };
 
   // Handle adding new action
   const handleAddAction = (newAction) => {
@@ -574,6 +598,142 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
     { id: 'communication', label: 'Communication' }
   ];
 
+  // Determine if currently checked in (latest record has no checkOutDate)
+  const latestCheckIn = checkInHistory.length > 0 ? checkInHistory[0] : null;
+  const isCheckedIn = latestCheckIn && !latestCheckIn.checkOutDate;
+
+  const handleCheckIn = () => {
+    if (!navigator.geolocation) {
+      alert(isArabic ? 'المتصفح لا يدعم تحديد الموقع' : 'Geolocation is not supported by your browser');
+      return;
+    }
+
+    const toastEvent = new CustomEvent('app:toast', { 
+      detail: { 
+        type: 'info', 
+        message: isArabic ? 'جاري تحديد الموقع...' : 'Getting location...' 
+      } 
+    });
+    window.dispatchEvent(toastEvent);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const allReports = JSON.parse(localStorage.getItem('checkInReports') || '[]');
+        
+        if (isCheckedIn) {
+          // Perform Check-Out
+          const updatedReports = allReports.map(report => {
+            if (report.id === latestCheckIn.id) {
+              return {
+                ...report,
+                checkOutDate: new Date().toISOString(),
+                checkOutLocation: {
+                  lat: latitude,
+                  lng: longitude,
+                  address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+                },
+                status: 'completed'
+              };
+            }
+            return report;
+          });
+          
+          localStorage.setItem('checkInReports', JSON.stringify(updatedReports));
+          
+          // Update local state
+          setCheckInHistory(prev => prev.map(item => {
+            if (item.id === latestCheckIn.id) {
+              return {
+                 ...item,
+                 checkOutDate: new Date().toISOString(),
+                 checkOutLocation: {
+                    lat: latitude,
+                    lng: longitude,
+                    address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+                 },
+                 status: 'completed'
+              };
+            }
+            return item;
+          }));
+
+          const successEvent = new CustomEvent('app:toast', { 
+            detail: { 
+              type: 'success', 
+              message: isArabic ? 'تم تسجيل الانصراف بنجاح' : 'Check-Out recorded successfully' 
+            } 
+          });
+          window.dispatchEvent(successEvent);
+
+        } else {
+          // Perform Check-In
+          const newCheckIn = {
+            id: Date.now(),
+            type: 'lead',
+            leadId: lead?.id,
+            customerName: leadData.name,
+            salesPerson: lead?.assignedTo || leadData?.salesPerson || (isArabic ? 'غير محدد' : 'Unassigned'),
+            checkInDate: new Date().toISOString(),
+            checkOutDate: null, // Explicitly null
+            location: {
+              lat: latitude,
+              lng: longitude,
+              address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+            },
+            status: 'pending' // Initial status
+          };
+  
+          const updatedReports = [...allReports, newCheckIn];
+          localStorage.setItem('checkInReports', JSON.stringify(updatedReports));
+  
+          // Update local state
+          setCheckInHistory(prev => [newCheckIn, ...prev]);
+  
+          const successEvent = new CustomEvent('app:toast', { 
+            detail: { 
+              type: 'success', 
+              message: isArabic ? 'تم تسجيل الحضور بنجاح' : 'Check-In recorded successfully' 
+            } 
+          });
+          window.dispatchEvent(successEvent);
+        }
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        let errorMessage = isArabic ? 'فشل تحديد الموقع' : 'Failed to get location';
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = isArabic ? 'تم رفض إذن الموقع. يرجى تفعيل الموقع من إعدادات المتصفح.' : 'Location permission denied. Please enable location in browser settings.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = isArabic ? 'معلومات الموقع غير متوفرة.' : 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = isArabic ? 'انتهت مهلة طلب الموقع.' : 'The request to get user location timed out.';
+            break;
+          default:
+            errorMessage = isArabic ? 'حدث خطأ غير معروف أثناء تحديد الموقع.' : 'An unknown error occurred getting location.';
+            break;
+        }
+
+        const errorEvent = new CustomEvent('app:toast', { 
+          detail: { 
+            type: 'error', 
+            message: errorMessage
+          } 
+        });
+        window.dispatchEvent(errorEvent);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   const isLight = theme === 'light';
   return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-0">
@@ -599,6 +759,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
             <div className="flex flex-col items-end space-y-3">
               {/* Action Buttons Row */}
               <div className="flex items-center justify-between gap-2 w-[220px] sm:w-[280px] relative">
+                {/* Removed Check-In Button from here */}
                 {/* Removed preview toggle button */}
                 {/* Add Action (icon-only) */}
                 {!showAddActionModal && (
@@ -711,8 +872,18 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                 </button>
                 {/* Dropdown Menu */}
                 {showHeaderMenu && (
-                  <div ref={headerMenuRef} className={`${isLight ? 'bg-white/70 backdrop-blur-md border border-gray-200 text-slate-800' : 'bg-slate-900/70 backdrop-blur-md border border-slate-700 text-white'} absolute right-12 top-10 z-50 rounded-xl shadow-xl min-w-[180px] p-2`}
-                       onMouseLeave={() => setShowHeaderMenu(false)}>
+                  <div ref={headerMenuRef} className={`${isLight ? 'bg-white/70 backdrop-blur-md border border-gray-200 text-slate-800' : 'bg-slate-900/70 backdrop-blur-md border border-slate-700 text-white'} absolute right-12 top-10 z-50 rounded-xl shadow-xl min-w-[180px] p-2`}>
+                    
+                    <button onClick={() => { setShowHeaderMenu(false); handleCheckIn(); }}
+                            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
+                      {isCheckedIn ? <FaCheckCircle className="text-red-500" /> : <FaMapMarkerAlt className="text-blue-500" />}
+                      <span className="text-sm font-medium">
+                        {isCheckedIn 
+                          ? (isArabic ? 'تسجيل انصراف' : 'Check-Out')
+                          : (isArabic ? 'تسجيل حضور' : 'Check-In')}
+                      </span>
+                    </button>
+
                     <button onClick={() => { setShowHeaderMenu(false); setShowPaymentPlanModal(true); }}
                             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-black/5">
                       <FaDollarSign className="text-emerald-500" />
@@ -995,6 +1166,144 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                   </div>
                 </>
               )}
+
+              {/* Check-In History Table */}
+              <div className="mt-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className={`text-lg font-semibold ${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'}`}>
+                    {isArabic ? 'سجل الزيارات' : 'Check-In History'}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                     <button
+                        onClick={() => {
+                          if (window.confirm(isArabic ? 'هل أنت متأكد من مسح جميع سجلات الزيارة؟' : 'Are you sure you want to clear all check-in history?')) {
+                            localStorage.removeItem('checkInReports');
+                            setCheckInHistory([]);
+                            const toast = new CustomEvent('app:toast', { detail: { type: 'success', message: isArabic ? 'تم مسح السجل بنجاح' : 'History cleared successfully' } });
+                            window.dispatchEvent(toast);
+                          }
+                        }}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title={isArabic ? 'مسح السجل' : 'Clear History'}
+                     >
+                       <FaTrash />
+                     </button>
+                     <span className={`text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{isArabic ? 'تاريخ:' : 'Date:'}</span>
+                     <input
+                       type="date"
+                       value={historyDateFilter}
+                       onChange={(e) => setHistoryDateFilter(e.target.value)}
+                       className={`px-3 py-1.5 text-sm rounded-lg border focus:outline-none ${isLight ? 'bg-white border-gray-300 text-black' : 'bg-slate-600 border-slate-500 text-white'}`}
+                     />
+                  </div>
+                </div>
+                
+                <div className={`overflow-x-auto rounded-lg border ${isLight ? 'border-gray-200' : 'border-slate-600'}`}>
+                  <table className={`w-full text-sm text-left ${isArabic ? 'text-right' : ''} ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    <thead className={`text-xs uppercase ${isLight ? 'bg-gray-50 text-slate-700' : 'bg-slate-700 text-slate-300'}`}>
+                      <tr>
+                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'الموظف' : 'Sales Person'}</th>
+                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'وقت الحضور' : 'Check-In Time'}</th>
+                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'وقت الانصراف' : 'Check-Out Time'}</th>
+                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'موقع الحضور' : 'Check-In Location'}</th>
+                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'موقع الانصراف' : 'Check-Out Location'}</th>
+                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'الحالة' : 'Status'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-slate-600">
+                      {filteredCheckInHistory.length > 0 ? (
+                        filteredCheckInHistory.map((item) => (
+                          <tr key={item.id} className={`${isLight ? 'bg-white hover:bg-gray-50' : 'bg-slate-800 hover:bg-slate-700'}`}>
+                            <td className="px-4 py-3 font-medium whitespace-nowrap dark:text-white">
+                              {item.salesPerson || '-'}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="flex flex-col">
+                                <span>{new Date(item.checkInDate).toLocaleDateString(isArabic ? 'ar-EG' : 'en-US')}</span>
+                                <span className="text-xs text-gray-500">{new Date(item.checkInDate).toLocaleTimeString(isArabic ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {item.checkOutDate ? (
+                                <div className="flex flex-col">
+                                  <span>{new Date(item.checkOutDate).toLocaleDateString(isArabic ? 'ar-EG' : 'en-US')}</span>
+                                  <span className="text-xs text-gray-500">{new Date(item.checkOutDate).toLocaleTimeString(isArabic ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                               <div className="flex items-center gap-2">
+                                  <span className="truncate max-w-[150px]" title={item.location?.address || `${item.location?.lat}, ${item.location?.lng}`}>
+                                    {item.location?.address || (item.location?.lat ? `${item.location.lat.toFixed(4)}, ${item.location.lng.toFixed(4)}` : '-')}
+                                  </span>
+                                  {item.location && (item.location.lat || item.location.address) && (
+                                     <button
+                                       onClick={() => {
+                                          const url = item.location.lat && item.location.lng 
+                                            ? `https://www.google.com/maps/search/?api=1&query=${item.location.lat},${item.location.lng}`
+                                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location.address)}`;
+                                          window.open(url, '_blank');
+                                       }}
+                                       className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
+                                       title={isArabic ? 'عرض موقع الحضور' : 'Preview Check-In Location'}
+                                     >
+                                        <FaMapMarkerAlt />
+                                        {isArabic ? 'عرض' : 'Preview'}
+                                     </button>
+                                  )}
+                               </div>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                               <div className="flex items-center gap-2">
+                                  <span className="truncate max-w-[150px]" title={item.checkOutLocation?.address || `${item.checkOutLocation?.lat}, ${item.checkOutLocation?.lng}`}>
+                                    {item.checkOutLocation?.address || (item.checkOutLocation?.lat ? `${item.checkOutLocation.lat.toFixed(4)}, ${item.checkOutLocation.lng.toFixed(4)}` : '-')}
+                                  </span>
+                                  {item.checkOutLocation && (item.checkOutLocation.lat || item.checkOutLocation.address) && (
+                                     <button
+                                       onClick={() => {
+                                          const url = item.checkOutLocation.lat && item.checkOutLocation.lng 
+                                            ? `https://www.google.com/maps/search/?api=1&query=${item.checkOutLocation.lat},${item.checkOutLocation.lng}`
+                                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.checkOutLocation.address)}`;
+                                          window.open(url, '_blank');
+                                       }}
+                                       className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors flex items-center gap-1"
+                                       title={isArabic ? 'عرض موقع الانصراف' : 'Preview Check-Out Location'}
+                                     >
+                                        <FaMapMarkerAlt />
+                                        {isArabic ? 'عرض' : 'Preview'}
+                                     </button>
+                                  )}
+                               </div>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                item.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {item.status === 'pending' 
+                                  ? (isArabic ? 'تشيك ان' : 'Check-In') 
+                                  : item.status === 'completed' 
+                                    ? (isArabic ? 'تشيك اوت' : 'Check-Out')
+                                    : (item.status || '-')
+                                }
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                            {isArabic ? 'لا توجد سجلات زيارة' : 'No check-in history found'}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
 
             </div>

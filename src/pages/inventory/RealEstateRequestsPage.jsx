@@ -14,7 +14,7 @@ export default function RealEstateRequestsPage() {
     
     const [requests, setRequests] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(5);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [showAllFilters, setShowAllFilters] = useState(false);
     const [filters, setFilters] = useState({
         status: '',
@@ -262,7 +262,7 @@ export default function RealEstateRequestsPage() {
                        onClick={() => setShowImportModal(true)}
                      >
                        <FaFileImport />
-                       {isRTL ? 'استيراد' : 'Import'}
+                       <span className="text-white">{isRTL ? 'استيراد' : 'Import'}</span>
                      </button>
                     <button 
                         onClick={() => {
@@ -273,7 +273,7 @@ export default function RealEstateRequestsPage() {
                         className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2"
                     >
                         <FaPlus size={14} />
-                        {isRTL ? 'إضافة طلب' : 'Add Request'}
+                        <span className="text-white">{isRTL ? 'إضافة طلب' : 'Add Request'}</span>
                     </button>
                     <div className="relative w-full lg:w-auto">
                        <button 
@@ -281,7 +281,7 @@ export default function RealEstateRequestsPage() {
                          onClick={() => setShowExportMenu(!showExportMenu)}
                        >
                          <FaFileExport />
-                         {isRTL ? 'تصدير' : 'Export'}
+                         <span className="text-white">{isRTL ? 'تصدير' : 'Export'}</span>
                        </button>
                        {showExportMenu && (
                          <div className="absolute w-full right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
@@ -608,10 +608,10 @@ export default function RealEstateRequestsPage() {
                                     value={itemsPerPage}
                                     onChange={(e) => setItemsPerPage(Number(e.target.value))}
                                 >
-                                    <option value={5}>5</option>
                                     <option value={10}>10</option>
                                     <option value={20}>20</option>
                                     <option value={50}>50</option>
+                                    <option value={100}>100</option>
                                 </select>
                             </div>
                         </div>

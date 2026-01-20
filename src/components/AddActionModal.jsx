@@ -9,6 +9,9 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
   const { theme } = useTheme();
   const isLight = theme === 'light';
   
+  const isRTL = i18n.dir() === 'rtl';
+  const isArabic = isRTL;
+
   const [actionData, setActionData] = useState({
     type: initialType,
     actionType: initialType,
@@ -60,14 +63,23 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
 
   // عدم الإرجاع قبل الهوكس لضمان استدعائها دومًا
 
-  const isArabic = i18n.language === 'ar';
-
   const actionTypes = [
     { value: 'call', label: isArabic ? 'مكالمة' : 'Call', icon: FaPhone, color: 'bg-blue-500' },
     { value: 'whatsapp', label: 'WhatsApp', icon: FaComments, color: 'bg-green-500' },
     { value: 'email', label: isArabic ? 'بريد' : 'Email', icon: FaEnvelope, color: 'bg-yellow-500' },
     { value: 'google_meet', label: 'Google Meet', icon: FaCalendarAlt, color: 'bg-purple-500' },
-    { value: 'send_offer', label: isArabic ? 'إرسال عرض سعر' : 'Send Offer', icon: FaFileAlt, color: 'bg-teal-500' }
+    { value: 'sms', label: isArabic ? 'إرسال عرض سعر' : 'Sms', icon: FaFileAlt, color: 'bg-teal-500' }
+  ];
+
+  const callSubTypes = [
+    { value: 'incoming', label: isArabic ? 'وارد' : 'Incoming' },
+    { value: 'outgoing', label: isArabic ? 'صادر' : 'Outgoing' },
+    { value: 'missed', label: isArabic ? 'فائتة' : 'Missed' }
+  ];
+
+  const emailSubTypes = [
+    { value: 'sent', label: isArabic ? 'مرسل' : 'Sent' },
+    { value: 'reply', label: isArabic ? 'رد' : 'Reply' }
   ];
 
   const nextActionOptions = [
@@ -103,9 +115,9 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
   ];
   const unitOptions = [
     { value: '', label: isArabic ? 'اختر' : 'Select' },
-    { value: 'unit_101', label: 'Unit 101' },
-    { value: 'unit_202', label: 'Unit 202' },
-    { value: 'unit_303', label: 'Unit 303' }
+    { value: 'unit_101', label: isArabic ? 'وحدة 101' : 'Unit 101' },
+    { value: 'unit_202', label: isArabic ? 'وحدة 202' : 'Unit 202' },
+    { value: 'unit_303', label: isArabic ? 'وحدة 303' : 'Unit 303' }
   ];
 
   const reservationTypes = [
@@ -255,6 +267,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
     setActionData({
       type: 'call',
       actionType: 'call',
+      subType: '',
       nextAction: 'follow_up',
       title: '',
       description: '',
@@ -351,7 +364,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                 name="nextAction"
                 value={actionData.nextAction}
                 onChange={handleInputChange}
-                className={`${isLight ? 'w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                className={`${isLight ? `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900` : `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}`}
               >
                 {nextActionOptions.map(opt => (
                   <option key={opt.value} value={opt.value}>
@@ -359,31 +372,78 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                   </option>
                 ))}
               </select>
-              <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+              <FaChevronDown className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
             </div>
           </div>
 
           {/* Action Type Selection - مخفي عند اختيار اجتماع */}
           {actionData.nextAction !== 'meeting' && (
-            <div>
-              <label className={`block text-sm font-medium mb-3 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>
-                {isArabic ? 'نوع الأكشن' : 'Action Type'}
-              </label>
-              <div className="relative">
-                <select
-                  name="actionType"
-                  value={actionData.actionType}
-                  onChange={handleInputChange}
-                  className={`${isLight ? 'w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
-                >
-                  {actionTypes.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-                <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+            <div className={`grid ${['call', 'email'].includes(actionData.actionType) ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-4`}>
+              <div>
+                <label className={`block text-sm font-medium mb-3 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>
+                  {isArabic ? 'نوع الأكشن' : 'Action Type'}
+                </label>
+                <div className="relative">
+                  <select
+                    name="actionType"
+                    value={actionData.actionType}
+                    onChange={handleInputChange}
+                    className={`${isLight ? `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900` : `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}`}
+                  >
+                    {actionTypes.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                  <FaChevronDown className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                </div>
               </div>
+
+              {/* Sub Type Selection for Call/Email */}
+              {actionData.actionType === 'call' && (
+                <div>
+                   <label className={`block text-sm font-medium mb-3 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>
+                      {isArabic ? 'نوع المكالمة' : 'Call Type'}
+                   </label>
+                   <div className="relative">
+                      <select
+                        name="subType"
+                        value={actionData.subType || ''}
+                        onChange={handleInputChange}
+                         className={`${isLight ? `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900` : `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}`}
+                      >
+                         <option value="">{isArabic ? 'اختر' : 'Select'}</option>
+                         {callSubTypes.map(type => (
+                            <option key={type.value} value={type.value}>{type.label}</option>
+                         ))}
+                      </select>
+                      <FaChevronDown className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                   </div>
+                </div>
+              )}
+              
+              {actionData.actionType === 'email' && (
+                <div>
+                   <label className={`block text-sm font-medium mb-3 ${isLight ? 'text-slate-900' : 'text-gray-300'}`}>
+                      {isArabic ? 'نوع البريد' : 'Email Type'}
+                   </label>
+                   <div className="relative">
+                      <select
+                        name="subType"
+                        value={actionData.subType || ''}
+                        onChange={handleInputChange}
+                         className={`${isLight ? `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900` : `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}`}
+                      >
+                         <option value="">{isArabic ? 'اختر' : 'Select'}</option>
+                         {emailSubTypes.map(type => (
+                            <option key={type.value} value={type.value}>{type.label}</option>
+                         ))}
+                      </select>
+                      <FaChevronDown className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                   </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -432,7 +492,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                     name="meetingType"
                     value={actionData.meetingType}
                     onChange={handleInputChange}
-                    className={`${isLight ? 'w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                    className={`${isLight ? `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900` : `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}`}
                   >
                     {meetingTypes.map(type => (
                       <option key={type.value} value={type.value}>
@@ -440,7 +500,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                       </option>
                     ))}
                   </select>
-                  <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                  <FaChevronDown className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
                 </div>
               </div>
               <div>
@@ -452,7 +512,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                     name="meetingLocation"
                     value={actionData.meetingLocation}
                     onChange={handleInputChange}
-                    className={`${isLight ? 'w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                    className={`${isLight ? `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900` : `w-full px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}`}
                   >
                     {meetingLocations.map(location => (
                       <option key={location.value} value={location.value}>
@@ -460,7 +520,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                       </option>
                     ))}
                   </select>
-                  <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                  <FaChevronDown className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
                 </div>
               </div>
             </div>
@@ -499,13 +559,13 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                     name="reservationType"
                     value={actionData.reservationType}
                     onChange={handleInputChange}
-                    className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                    className={`${isLight ? `w-full appearance-none px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900` : `w-full appearance-none px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}`}
                   >
                     {reservationTypes.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
-                  <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                  <FaChevronDown className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
                 </div>
               </div>
 
@@ -522,13 +582,13 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                         name="reservationProject"
                         value={actionData.reservationProject}
                         onChange={handleInputChange}
-                        className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                        className={`${isLight ? `w-full appearance-none px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900` : `w-full appearance-none px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}`}
                       >
                         {projectOptions.map((opt) => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                       </select>
-                      <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                      <FaChevronDown className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
                     </div>
                   </div>
                   <div>
@@ -538,13 +598,13 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                         name="reservationUnit"
                         value={actionData.reservationUnit}
                         onChange={handleInputChange}
-                        className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                        className={`${isLight ? `w-full appearance-none px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900` : `w-full appearance-none px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}`}
                       >
                         {unitOptions.map((opt) => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                       </select>
-                      <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                      <FaChevronDown className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
                     </div>
                   </div>
                   <div>
@@ -635,16 +695,16 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                 </div>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'قيمة الإيجار' : 'Rent Amount'}</label>
+                <input name="rentAmount" type="number" value={actionData.rentAmount} onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'بداية الإيجار' : 'Rent Start'}</label>
                 <input name="rentStart" type="date" value={actionData.rentStart} onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'نهاية الإيجار' : 'Rent End'}</label>
                 <input name="rentEnd" type="date" value={actionData.rentEnd} onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'قيمة الإيجار' : 'Rent Amount'}</label>
-                <input name="rentAmount" type="number" value={actionData.rentAmount} onChange={handleInputChange} className={`${isLight ? 'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-slate-900' : 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white'}`} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">{isArabic ? 'مرفق' : 'Attachment'}</label>
@@ -662,7 +722,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                     name="cancelReason"
                     value={actionData.cancelReason}
                     onChange={handleInputChange}
-                    className={`${isLight ? 'w-full appearance-none px-3 py-2 pr-10 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900' : 'w-full appearance-none px-3 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white'}`}
+                    className={`${isLight ? `w-full appearance-none px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900` : `w-full appearance-none px-3 py-2 ${isRTL ? 'pl-10' : 'pr-10'} bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white`}`}
                   >
                     <option value="">{isArabic ? 'اختر السبب' : 'Select Reason'}</option>
                     {cancelReasons.map((r, idx) => (
@@ -671,7 +731,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                       </option>
                     ))}
                   </select>
-                  <FaChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
+                  <FaChevronDown className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-500' : 'text-gray-300'} pointer-events-none`} />
                 </div>
              </div>
           )}

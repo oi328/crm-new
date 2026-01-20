@@ -11,7 +11,6 @@ export default defineConfig({
   base: '/crm-new/',
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['react-icons/si']
   },
   server: {
     headers: {

@@ -1,24 +1,25 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FaPlus, FaFilter, FaSearch, FaEdit, FaTrash, FaTimes, FaChevronLeft, FaChevronRight, FaChevronDown } from 'react-icons/fa'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import SearchableSelect from '../components/SearchableSelect'
 
 const MOCK_CAMPAIGNS = [
-  { id: 1, name: 'Summer Sale 2024', source: 'Meta', budgetType: 'daily', totalBudget: 50, startDate: '2024-06-01', endDate: '2024-06-30', status: 'Active', landingPage: 'lp1' },
-  { id: 2, name: 'Back to School', source: 'Google', budgetType: 'lifetime', totalBudget: 1500, startDate: '2024-08-15', endDate: '2024-09-15', status: 'Scheduled', landingPage: 'lp2' },
-  { id: 3, name: 'Winter Clearance', source: 'TikTok', budgetType: 'daily', totalBudget: 75, startDate: '2024-12-01', endDate: '2024-12-31', status: 'Ended', landingPage: 'lp3' },
-  { id: 4, name: 'Brand Awareness', source: 'LinkedIn', budgetType: 'lifetime', totalBudget: 5000, startDate: '2024-01-01', endDate: '2024-12-31', status: 'Active', landingPage: 'lp1' },
-  { id: 5, name: 'Lead Gen - eBook', source: 'Meta', budgetType: 'daily', totalBudget: 30, startDate: '2024-03-01', endDate: '2024-04-01', status: 'Paused', landingPage: 'lp2' },
-  { id: 6, name: 'Black Friday 2024', source: 'Meta', budgetType: 'lifetime', totalBudget: 2000, startDate: '2024-11-20', endDate: '2024-11-30', status: 'Scheduled', landingPage: 'lp1' },
-  { id: 7, name: 'Retargeting Campaign', source: 'Google', budgetType: 'daily', totalBudget: 45, startDate: '2024-01-01', endDate: '2024-12-31', status: 'Active', landingPage: 'lp3' },
-  { id: 8, name: 'App Install Push', source: 'TikTok', budgetType: 'lifetime', totalBudget: 3000, startDate: '2024-05-01', endDate: '2024-06-01', status: 'Ended', landingPage: 'lp2' },
-  { id: 9, name: 'Webinar Signups', source: 'LinkedIn', budgetType: 'daily', totalBudget: 100, startDate: '2024-09-01', endDate: '2024-09-15', status: 'Scheduled', landingPage: 'lp3' },
-  { id: 10, name: 'Holiday Special', source: 'Meta', budgetType: 'lifetime', totalBudget: 1200, startDate: '2024-12-15', endDate: '2024-12-31', status: 'Scheduled', landingPage: 'lp1' },
-  { id: 11, name: 'Spring Collection', source: 'Pinterest', budgetType: 'lifetime', totalBudget: 800, startDate: '2025-03-01', endDate: '2025-03-31', status: 'Scheduled', landingPage: 'lp1' },
-  { id: 12, name: 'Influencer Collab', source: 'Instagram', budgetType: 'daily', totalBudget: 150, startDate: '2024-07-01', endDate: '2024-07-15', status: 'Ended', landingPage: 'lp2' },
-  { id: 13, name: 'Q4 Push', source: 'Google', budgetType: 'daily', totalBudget: 200, startDate: '2024-10-01', endDate: '2024-12-31', status: 'Active', landingPage: 'lp3' },
-  { id: 14, name: 'New Feature Promo', source: 'Twitter', budgetType: 'lifetime', totalBudget: 500, startDate: '2024-02-01', endDate: '2024-02-14', status: 'Ended', landingPage: 'lp1' },
-  { id: 15, name: 'Loyalty Program', source: 'Email', budgetType: 'daily', totalBudget: 20, startDate: '2024-01-01', endDate: '2024-12-31', status: 'Active', landingPage: 'lp2' }
+  { id: 1, name: 'Summer Sale 2024', source: 'Meta', budgetType: 'daily', totalBudget: 50, startDate: '2024-06-01', endDate: '2024-06-30', status: 'Active', landingPage: 'lp1', createdBy: 'Osama Sales' },
+  { id: 2, name: 'Back to School', source: 'Google', budgetType: 'lifetime', totalBudget: 1500, startDate: '2024-08-15', endDate: '2024-09-15', status: 'Scheduled', landingPage: 'lp2', createdBy: 'Ahmed Ibrahim' },
+  { id: 3, name: 'Winter Clearance', source: 'TikTok', budgetType: 'daily', totalBudget: 75, startDate: '2024-12-01', endDate: '2024-12-31', status: 'Ended', landingPage: 'lp3', createdBy: 'Admin' },
+  { id: 4, name: 'Brand Awareness', source: 'LinkedIn', budgetType: 'lifetime', totalBudget: 5000, startDate: '2024-01-01', endDate: '2024-12-31', status: 'Active', landingPage: 'lp1', createdBy: 'Osama Sales' },
+  { id: 5, name: 'Lead Gen - eBook', source: 'Meta', budgetType: 'daily', totalBudget: 30, startDate: '2024-03-01', endDate: '2024-04-01', status: 'Paused', landingPage: 'lp2', createdBy: 'Youssef Hemeda' },
+  { id: 6, name: 'Black Friday 2024', source: 'Meta', budgetType: 'lifetime', totalBudget: 2000, startDate: '2024-11-20', endDate: '2024-11-30', status: 'Scheduled', landingPage: 'lp1', createdBy: 'Admin' },
+  { id: 7, name: 'Retargeting Campaign', source: 'Google', budgetType: 'daily', totalBudget: 45, startDate: '2024-01-01', endDate: '2024-12-31', status: 'Active', landingPage: 'lp3', createdBy: 'Ahmed Ibrahim' },
+  { id: 8, name: 'App Install Push', source: 'TikTok', budgetType: 'lifetime', totalBudget: 3000, startDate: '2024-05-01', endDate: '2024-06-01', status: 'Ended', landingPage: 'lp2', createdBy: 'Osama Sales' },
+  { id: 9, name: 'Webinar Signups', source: 'LinkedIn', budgetType: 'daily', totalBudget: 100, startDate: '2024-09-01', endDate: '2024-09-15', status: 'Scheduled', landingPage: 'lp3', createdBy: 'Youssef Hemeda' },
+  { id: 10, name: 'Holiday Special', source: 'Meta', budgetType: 'lifetime', totalBudget: 1200, startDate: '2024-12-15', endDate: '2024-12-31', status: 'Scheduled', landingPage: 'lp1', createdBy: 'Admin' },
+  { id: 11, name: 'Spring Collection', source: 'Pinterest', budgetType: 'lifetime', totalBudget: 800, startDate: '2025-03-01', endDate: '2025-03-31', status: 'Scheduled', landingPage: 'lp1', createdBy: 'Ahmed Ibrahim' },
+  { id: 12, name: 'Influencer Collab', source: 'Instagram', budgetType: 'daily', totalBudget: 150, startDate: '2024-07-01', endDate: '2024-07-15', status: 'Ended', landingPage: 'lp2', createdBy: 'Osama Sales' },
+  { id: 13, name: 'Q4 Push', source: 'Google', budgetType: 'daily', totalBudget: 200, startDate: '2024-10-01', endDate: '2024-12-31', status: 'Active', landingPage: 'lp3', createdBy: 'Youssef Hemeda' },
+  { id: 14, name: 'New Feature Promo', source: 'Twitter', budgetType: 'lifetime', totalBudget: 500, startDate: '2024-02-01', endDate: '2024-02-14', status: 'Ended', landingPage: 'lp1', createdBy: 'Admin' },
+  { id: 15, name: 'Loyalty Program', source: 'Email', budgetType: 'daily', totalBudget: 20, startDate: '2024-01-01', endDate: '2024-12-31', status: 'Active', landingPage: 'lp2', createdBy: 'Ahmed Ibrahim' }
 ]
 
 const MOCK_LEADS = [
@@ -73,6 +74,7 @@ export default function Campaigns() {
     source: '',
     status: '',
     budgetType: '',
+    createdBy: '',
     startDateFrom: '',
     startDateTo: '',
     endDateFrom: '',
@@ -89,7 +91,7 @@ export default function Campaigns() {
     cpdMax: ''
   })
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 5
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   const [showAllFilters, setShowAllFilters] = useState(false)
 
   const [form, setForm] = useState({
@@ -98,6 +100,7 @@ export default function Campaigns() {
     source: '',
     budgetType: 'daily',
     totalBudget: '',
+    currency: 'EGP',
     startDate: '',
     endDate: '',
     landingPage: '',
@@ -235,6 +238,8 @@ export default function Campaigns() {
       if (filters.search && !c.name.toLowerCase().includes(filters.search.toLowerCase())) return false
       if (filters.source && c.source !== filters.source) return false
       if (filters.status && c.status && c.status !== filters.status) return false
+      if (filters.budgetType && c.budgetType !== filters.budgetType) return false
+      if (filters.createdBy && c.createdBy !== filters.createdBy) return false
       const sMs = toMs(c.startDate)
       const eMs = toMs(c.endDate)
       if (sFrom && (!sMs || sMs < sFrom)) return false
@@ -274,7 +279,9 @@ export default function Campaigns() {
       search: '', 
       
       source: '',
-      status:'',
+      status: '',
+      budgetType: '',
+      createdBy: '',
       startDateFrom: '',
       startDateTo: '',
       endDateFrom: '',
@@ -325,7 +332,7 @@ export default function Campaigns() {
       if (form.id) {
         updatedCampaigns = campaigns.map(c => c.id === form.id ? { ...form } : c)
       } else {
-        const newCampaign = { ...form, id: Date.now() }
+        const newCampaign = { ...form, id: Date.now(), createdBy: 'Admin' }
         updatedCampaigns = [newCampaign, ...campaigns]
         setCurrentPage(1)
       }
@@ -336,7 +343,7 @@ export default function Campaigns() {
       setMessage({ type: 'success', text: isArabic ? 'تم حفظ الحملة بنجاح' : 'Campaign saved successfully' })
       setTimeout(() => {
         setShowForm(false)
-        setForm({ name: '', source: '', budgetType: 'daily', totalBudget: '', startDate: '', endDate: '', landingPage: '', notes: '', status: 'Active' })
+        setForm({ name: '', source: '', budgetType: 'daily', totalBudget: '', currency: 'EGP', startDate: '', endDate: '', landingPage: '', notes: '', status: 'Active' })
         setMessage(null)
       }, 1000)
     } catch (err) {
@@ -358,12 +365,12 @@ export default function Campaigns() {
         <button 
           className="btn btn-sm bg-green-600 hover:bg-blue-700 text-white border-none gap-2 flex items-center" 
           onClick={() => {
-            setForm({ id: null, name: '', source: '', budgetType: 'daily', totalBudget: '', startDate: '', endDate: '', landingPage: '', notes: '', status: 'Active' })
+            setForm({ id: null, name: '', source: '', budgetType: 'daily', totalBudget: '', currency: 'EGP', startDate: '', endDate: '', landingPage: '', notes: '', status: 'Active' })
             setShowForm(true)
             setMessage(null)
           }}
         >
-          <FaPlus /> {isArabic ? 'إضافة حملة' : 'Create Campaign'}
+          <FaPlus /> <span className="text-white">{isArabic ? 'إضافة حملة' : 'Create Campaign'}</span>
         </button>
       </div>
 
@@ -374,7 +381,7 @@ export default function Campaigns() {
             <FaFilter className="text-blue-500" /> {isArabic ? 'تصفية' : 'Filter'}
           </h2>  
             <div className="flex items-center gap-2">
-              <button onClick={() => setShowAllFilters(prev => !prev)} className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+              <button onClick={() => setShowAllFilters(prev => !prev)} className={`flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors`}>
                 {showAllFilters ? (isArabic ? 'إخفاء' : 'Hide') : (isArabic ? 'عرض الكل' : 'Show All')} 
                 <FaChevronDown size={14} className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
               </button>
@@ -384,14 +391,14 @@ export default function Campaigns() {
             </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           {/* Search */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
               <FaSearch className="text-blue-500" size={10} /> {isArabic ? 'بحث' : 'Search'}
             </label>
             <input 
-              className="input w-full" 
+              className="input w-full text-sm" 
               value={filters.search} 
               onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))} 
               placeholder={isArabic ? 'اسم الحملة...' : 'Campaign Name...'} 
@@ -405,7 +412,6 @@ export default function Campaigns() {
               value={filters.source}
               onChange={(val) => setFilters(prev => ({ ...prev, source: val }))}
               options={[
-                '',
                 ...Array.from(new Set(campaigns.map(c => c.source).filter(Boolean)))
               ]}
               isRTL={isArabic}
@@ -415,100 +421,123 @@ export default function Campaigns() {
           {/* Status */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'الحالة' : 'Status'}</label>
-            <select 
-              className="input w-full" 
-              value={filters.status} 
-              onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}
-            >
-              <option value="">{isArabic ? 'الكل' : 'All'}</option>
-              <option value="Active">Active</option>
-              <option value="Paused">Paused</option>
-              <option value="Scheduled">Scheduled</option>
-              <option value="Ended">Ended</option>
-            </select>
+            <SearchableSelect
+              value={filters.status}
+              onChange={(val) => setFilters(prev => ({ ...prev, status: val }))}
+              options={[
+                { value: 'Active', label: 'Active' },
+                { value: 'Paused', label: 'Paused' },
+                { value: 'Scheduled', label: 'Scheduled' },
+                { value: 'Ended', label: 'Ended' }
+              ]}
+              isRTL={isArabic}
+              placeholder={isArabic ? 'الكل' : 'All'}
+            />
           </div>
 
           {/* Budget Type */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'نوع الميزانية' : 'Budget Type'}</label>
-            <select 
-              className="input w-full" 
-              value={filters.budgetType} 
-              onChange={e => setFilters(prev => ({ ...prev, budgetType: e.target.value }))}
-            >
-              <option value="">{isArabic ? 'الكل' : 'All'}</option>
-              <option value="daily">{isArabic ? 'يومي' : 'Daily'}</option>
-              <option value="lifetime">{isArabic ? 'إجمالي' : 'Lifetime'}</option>
-            </select>
+            <SearchableSelect
+              value={filters.budgetType}
+              onChange={(val) => setFilters(prev => ({ ...prev, budgetType: val }))}
+              options={[
+                // {
+                { value: 'daily', label: isArabic ? 'يومي' : 'Daily' },
+                { value: 'lifetime', label: isArabic ? 'إجمالي' : 'Lifetime' }
+              ]}
+              isRTL={isArabic}
+              placeholder={isArabic ? 'الكل' : 'All'}
+            />
           </div>
         </div>
-        <div className={`mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 transition-all duration-300 overflow-hidden ${showAllFilters ? 'max-h-[1000px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
+        <div className={`mt-3 grid grid-cols-1 md:grid-cols-4 gap-3 transition-all duration-300 overflow-hidden ${showAllFilters ? 'max-h-[1000px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
+          {/* Created By */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'بواسطة' : 'Created By'}</label>
+            <SearchableSelect
+              value={filters.createdBy}
+              onChange={(val) => setFilters(prev => ({ ...prev, createdBy: val }))}
+              options={[
+                ...Array.from(new Set(campaigns.map(c => c.createdBy).filter(Boolean))).map(creator => ({
+                  value: creator,
+                  label: creator
+                }))
+              ]}
+              isRTL={isArabic}
+              placeholder={isArabic ? 'الكل' : 'All'}
+            />
+          </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'تاريخ البداية من' : 'Start Date From'}</label>
-            <input type="date" className="input w-full" value={filters.startDateFrom} onChange={e => setFilters(p => ({ ...p, startDateFrom: e.target.value }))} />
+            <input type="date" className="input w-full text-sm" value={filters.startDateFrom} onChange={e => setFilters(p => ({ ...p, startDateFrom: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'تاريخ البداية إلى' : 'Start Date To'}</label>
-            <input type="date" className="input w-full" value={filters.startDateTo} onChange={e => setFilters(p => ({ ...p, startDateTo: e.target.value }))} />
+            <input type="date" className="input w-full text-sm" value={filters.startDateTo} onChange={e => setFilters(p => ({ ...p, startDateTo: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'تاريخ الانتهاء من' : 'End Date From'}</label>
-            <input type="date" className="input w-full" value={filters.endDateFrom} onChange={e => setFilters(p => ({ ...p, endDateFrom: e.target.value }))} />
+            <input type="date" className="input w-full text-sm" value={filters.endDateFrom} onChange={e => setFilters(p => ({ ...p, endDateFrom: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'تاريخ الانتهاء إلى' : 'End Date To'}</label>
-            <input type="date" className="input w-full" value={filters.endDateTo} onChange={e => setFilters(p => ({ ...p, endDateTo: e.target.value }))} />
+            <input type="date" className="input w-full text-sm" value={filters.endDateTo} onChange={e => setFilters(p => ({ ...p, endDateTo: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'الميزانية من' : 'Budget Min'}</label>
-            <input type="number" className="input w-full" value={filters.budgetMin} onChange={e => setFilters(p => ({ ...p, budgetMin: e.target.value }))} />
+            <input type="number" className="input w-full text-sm" value={filters.budgetMin} onChange={e => setFilters(p => ({ ...p, budgetMin: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'الميزانية إلى' : 'Budget Max'}</label>
-            <input type="number" className="input w-full" value={filters.budgetMax} onChange={e => setFilters(p => ({ ...p, budgetMax: e.target.value }))} />
+            <input type="number" className="input w-full text-sm" value={filters.budgetMax} onChange={e => setFilters(p => ({ ...p, budgetMax: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">CPL Min</label>
-            <input type="number" className="input w-full" value={filters.cplMin} onChange={e => setFilters(p => ({ ...p, cplMin: e.target.value }))} />
+            <input type="number" className="input w-full text-sm" value={filters.cplMin} onChange={e => setFilters(p => ({ ...p, cplMin: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">CPL Max</label>
-            <input type="number" className="input w-full" value={filters.cplMax} onChange={e => setFilters(p => ({ ...p, cplMax: e.target.value }))} />
+            <input type="number" className="input w-full text-sm" value={filters.cplMax} onChange={e => setFilters(p => ({ ...p, cplMax: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">CPA Min</label>
-            <input type="number" className="input w-full" value={filters.cpaMin} onChange={e => setFilters(p => ({ ...p, cpaMin: e.target.value }))} />
+            <input type="number" className="input w-full text-sm" value={filters.cpaMin} onChange={e => setFilters(p => ({ ...p, cpaMin: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">CPA Max</label>
-            <input type="number" className="input w-full" value={filters.cpaMax} onChange={e => setFilters(p => ({ ...p, cpaMax: e.target.value }))} />
+            <input type="number" className="input w-full text-sm" value={filters.cpaMax} onChange={e => setFilters(p => ({ ...p, cpaMax: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'معدل التحويل من' : 'Conv. Rate Min (%)'}</label>
-            <input type="number" className="input w-full" value={filters.convMin} onChange={e => setFilters(p => ({ ...p, convMin: e.target.value }))} />
+            <input type="number" className="input w-full text-sm" value={filters.convMin} onChange={e => setFilters(p => ({ ...p, convMin: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'معدل التحويل إلى' : 'Conv. Rate Max (%)'}</label>
-            <input type="number" className="input w-full" value={filters.convMax} onChange={e => setFilters(p => ({ ...p, convMax: e.target.value }))} />
+            <input type="number" className="input w-full text-sm" value={filters.convMax} onChange={e => setFilters(p => ({ ...p, convMax: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'التكلفة اليومية من' : 'Cost/Day Min'}</label>
-            <input type="number" className="input w-full" value={filters.cpdMin} onChange={e => setFilters(p => ({ ...p, cpdMin: e.target.value }))} />
+            <input type="number" className="input w-full text-sm" value={filters.cpdMin} onChange={e => setFilters(p => ({ ...p, cpdMin: e.target.value }))} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'التكلفة اليومية إلى' : 'Cost/Day Max'}</label>
-            <input type="number" className="input w-full" value={filters.cpdMax} onChange={e => setFilters(p => ({ ...p, cpdMax: e.target.value }))} />
+            <input type="number" className="input w-full text-sm" value={filters.cpdMax} onChange={e => setFilters(p => ({ ...p, cpdMax: e.target.value }))} />
           </div>
         </div>
       </div>
 
       {/* Table Section */}
-      <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
-        <h2 className="text-xl font-medium mb-4">{isArabic ? 'قائمة الحملات' : 'Campaigns List'}</h2>
+      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden mb-4">
+        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold dark:text-white">
+            {isArabic ? 'قائمة الحملات' : 'Campaigns List'}
+          </h2>
+        </div>
         
         {filteredCampaigns.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
-            <p className="text-sm text-[var(--muted-text)]">{isArabic ? 'لا توجد حملات مطابقة للبحث' : 'No campaigns match your search'}</p>
+            <p className="text-[var(--muted-text)] text-lg">{isArabic ? 'لا توجد حملات مطابقة للبحث' : 'No campaigns match your search'}</p>
             <button 
               onClick={() => {
                 if(window.confirm(isArabic ? 'هل تريد استعادة البيانات التجريبية؟ سيتم حذف أي تغييرات.' : 'Reset to sample data? This will clear changes.')) {
@@ -523,11 +552,11 @@ export default function Campaigns() {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
             {/* Mobile Card View */}
-            <div className="md:hidden space-y-4 mb-4">
+            <div className="grid grid-cols-1 md:hidden gap-4 p-4">
               {paginatedCampaigns.map(campaign => (
-                <div key={campaign.id} className="card glass-card p-4 space-y-3">
+                <div key={campaign.id} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
                   {/* Header */}
                   <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
                     <div>
@@ -568,7 +597,7 @@ export default function Campaigns() {
                     <div className="flex justify-between items-center col-span-2 border-t border-gray-100 dark:border-gray-800 pt-2 mt-1">
                        <span className="text-[var(--muted-text)] text-xs">{isArabic ? 'الميزانية' : 'Budget'}</span>
                        <div className="flex flex-col text-right">
-                          <span className="font-semibold font-mono text-sm">{(Number(campaign.totalBudget) || 0).toLocaleString()}</span>
+                          <span className="font-semibold font-mono text-sm">{(Number(campaign.totalBudget) || 0).toLocaleString()} {campaign.currency || 'EGP'}</span>
                           <span className="text-[10px] opacity-60 capitalize">{campaign.budgetType}</span>
                        </div>
                     </div>
@@ -580,19 +609,20 @@ export default function Campaigns() {
                       const cpa = closed > 0 ? (spend / closed) : 0
                       const conv = totalLeads > 0 ? (closed / totalLeads) * 100 : 0
                       const cpd = getCostPerDay(campaign)
+                      const curr = campaign.currency || 'EGP'
                       return (
                         <>
                           <div className="flex justify-between items-center">
                             <span className="text-[var(--muted-text)] text-xs">CPD</span>
-                            <span className="font-mono font-medium">{cpd ? `$${cpd.toFixed(2)}` : '-'}</span>
+                            <span className="font-mono font-medium">{cpd ? `${cpd.toFixed(2)} ${curr}` : '-'}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-[var(--muted-text)] text-xs">{isArabic ? 'CPL' : 'CPL'}</span>
-                            <span className="font-mono font-medium">{cpl ? `$${cpl.toFixed(2)}` : '-'}</span>
+                            <span className="font-mono font-medium">{cpl ? `${cpl.toFixed(2)} ${curr}` : '-'}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-[var(--muted-text)] text-xs">{isArabic ? 'CPA' : 'CPA'}</span>
-                            <span className="font-mono font-medium">{cpa ? `$${cpa.toFixed(2)}` : '-'}</span>
+                            <span className="font-mono font-medium">{cpa ? `${cpa.toFixed(2)} ${curr}` : '-'}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-[var(--muted-text)] text-xs">{isArabic ? 'معدل التحويل' : 'Conv. Rate'}</span>
@@ -606,121 +636,143 @@ export default function Campaigns() {
               ))}
             </div>
 
-            <table className="hidden md:table w-full text-sm text-left rtl:text-right">
-              <thead className="text-xs text-[var(--muted-text)] uppercase bg-gray-50/5 border-b border-white/10">
-                <tr>
-                  <th className="px-4 py-3">{isArabic ? 'اسم الحملة' : 'Campaign Name'}</th>
-                  <th className="px-4 py-3">{isArabic ? 'المصدر' : 'Source'}</th>
-                  <th className="px-4 py-3">{isArabic ? 'تاريخ البداية' : 'Start Date'}</th>
-                  <th className="px-4 py-3">{isArabic ? 'تاريخ الانتهاء' : 'End Date'}</th>
-                  <th className="px-4 py-3">{isArabic ? 'الميزانية' : 'Budget'}</th>
-                  <th className="px-4 py-3">CPD</th>
-                  <th className="px-4 py-3">{isArabic ? 'CPL' : 'CPL'}</th>
-                  <th className="px-4 py-3">{isArabic ? 'CPA' : 'CPA'}</th>
-                  <th className="px-4 py-3">{isArabic ? 'معدل التحويل' : 'Conversion Rate'}</th>
-                  <th className="px-4 py-3">{isArabic ? 'الحالة' : 'Status'}</th>
-                  <th className="px-4 py-3 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedCampaigns.map(campaign => (
-                  <tr key={campaign.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="px-4 py-3 font-medium">{campaign.name}</td>
-                    <td className="px-4 py-3 opacity-80">{campaign.source || '-'}</td>
-                    <td className="px-4 py-3 text-xs">{campaign.startDate || '-'}</td>
-                    <td className="px-4 py-3 text-xs">{campaign.endDate || '-'}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col text-xs">
-                        <span className="font-semibold">{(Number(campaign.totalBudget) || 0).toLocaleString()}</span>
-                        <span className="opacity-60 capitalize">{campaign.budgetType}</span>
-                      </div>
-                    </td>
-                    {(() => {
-                      const spend = getPlannedSpend(campaign)
-                      const { totalLeads, closed } = getCampaignLeadsStats(campaign.name)
-                      const cpl = totalLeads > 0 ? (spend / totalLeads) : 0
-                      const cpa = closed > 0 ? (spend / closed) : 0
-                      const conv = totalLeads > 0 ? (closed / totalLeads) * 100 : 0
-                      const cpd = getCostPerDay(campaign)
-                      return (
-                        <>
-                          <td className="px-4 py-3 text-xs font-semibold">{cpd ? `$${cpd.toFixed(2)}` : '-'}</td>
-                          <td className="px-4 py-3 text-xs font-semibold">{cpl ? `$${cpl.toFixed(2)}` : '-'}</td>
-                          <td className="px-4 py-3 text-xs font-semibold">{cpa ? `$${cpa.toFixed(2)}` : '-'}</td>
-                          <td className="px-4 py-3 text-xs">{conv ? `${conv.toFixed(1)}%` : '-'}</td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              campaign.status === 'Active' ? 'bg-green-500/20 text-green-400' :
-                              campaign.status === 'Paused' ? 'bg-yellow-500/20 text-yellow-400' :
-                              campaign.status === 'Ended' ? 'bg-red-500/20 text-red-400' :
-                              'bg-gray-500/20 text-gray-400'
-                            }`}>
-                              {campaign.status || 'Active'}
-                            </span>
-                          </td>
-                        </>
-                      )
-                    })()}
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => handleEdit(campaign)} className="text-blue-400 hover:text-blue-300 transition-colors">
-                          <FaEdit />
-                        </button>
-                        <button onClick={() => handleDelete(campaign.id)} className="text-red-400 hover:text-red-300 transition-colors">
-                          <FaTrash />
-                        </button>
-                      </div>
-                    </td>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm text-left rtl:text-right">
+                <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white border-b border-white/10">
+                  <tr>
+                    <th className="px-4 py-3">{isArabic ? 'اسم الحملة' : 'Campaign Name'}</th>
+                    <th className="px-4 py-3">{isArabic ? 'المصدر' : 'Source'}</th>
+                    <th className="px-4 py-3">{isArabic ? 'تاريخ البداية' : 'Start Date'}</th>
+                    <th className="px-4 py-3">{isArabic ? 'تاريخ الانتهاء' : 'End Date'}</th>
+                    <th className="px-4 py-3">{isArabic ? 'الميزانية' : 'Budget'}</th>
+                    <th className="px-4 py-3">CPD</th>
+                    <th className="px-4 py-3">{isArabic ? 'CPL' : 'CPL'}</th>
+                    <th className="px-4 py-3">{isArabic ? 'CPA' : 'CPA'}</th>
+                    <th className="px-4 py-3">{isArabic ? 'معدل التحويل' : 'Conversion Rate'}</th>
+                    <th className="px-4 py-3">{isArabic ? 'الحالة' : 'Status'}</th>
+                    <th className="px-4 py-3">{isArabic ? 'بواسطة' : 'Created By'}</th>
+                    <th className="px-4 py-3 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {paginatedCampaigns.map(campaign => (
+                    <tr key={campaign.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-4 py-3 font-medium">{campaign.name}</td>
+                      <td className="px-4 py-3 opacity-80">{campaign.source || '-'}</td>
+                      <td className="px-4 py-3 text-xs">{campaign.startDate || '-'}</td>
+                      <td className="px-4 py-3 text-xs">{campaign.endDate || '-'}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col text-xs">
+                          <span className="font-semibold">{(Number(campaign.totalBudget) || 0).toLocaleString()} {campaign.currency || 'EGP'}</span>
+                          <span className="opacity-60 capitalize">{campaign.budgetType}</span>
+                        </div>
+                      </td>
+                      {(() => {
+                        const spend = getPlannedSpend(campaign)
+                        const { totalLeads, closed } = getCampaignLeadsStats(campaign.name)
+                        const cpl = totalLeads > 0 ? (spend / totalLeads) : 0
+                        const cpa = closed > 0 ? (spend / closed) : 0
+                        const conv = totalLeads > 0 ? (closed / totalLeads) * 100 : 0
+                        const cpd = getCostPerDay(campaign)
+                        const curr = campaign.currency || 'EGP'
+                        return (
+                          <>
+                            <td className="px-4 py-3 text-xs font-semibold">{cpd ? `${cpd.toFixed(2)} ${curr}` : '-'}</td>
+                            <td className="px-4 py-3 text-xs font-semibold">{cpl ? `${cpl.toFixed(2)} ${curr}` : '-'}</td>
+                            <td className="px-4 py-3 text-xs font-semibold">{cpa ? `${cpa.toFixed(2)} ${curr}` : '-'}</td>
+                            <td className="px-4 py-3 text-xs">{conv ? `${conv.toFixed(1)}%` : '-'}</td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                campaign.status === 'Active' ? 'bg-green-500/20 text-green-400' :
+                                campaign.status === 'Paused' ? 'bg-yellow-500/20 text-yellow-400' :
+                                campaign.status === 'Ended' ? 'bg-red-500/20 text-red-400' :
+                                'bg-gray-500/20 text-gray-400'
+                              }`}>
+                                {campaign.status || 'Active'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 opacity-80">{campaign.createdBy || '-'}</td>
+                          </>
+                        )
+                      })()}
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button onClick={() => handleEdit(campaign)} className="text-blue-400 hover:text-blue-300 transition-colors">
+                            <FaEdit />
+                          </button>
+                          <button onClick={() => handleDelete(campaign.id)} className="text-red-400 hover:text-red-300 transition-colors">
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        {/* Pagination */}
-        {filteredCampaigns.length > 0 && (
-          <div className="mt-2 flex items-center justify-between rounded-xl p-1.5 sm:p-2 glass-panel">
-            <div className="text-[10px] sm:text-xs text-[var(--muted-text)]">
-              {isArabic 
-                ? `عرض ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, filteredCampaigns.length)} من ${filteredCampaigns.length}` 
-                : `Showing ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, filteredCampaigns.length)} of ${filteredCampaigns.length}`}
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="flex items-center gap-1">
-                <button
-                  className="btn btn-ghost p-1 h-7 w-7 sm:btn-sm sm:h-8 sm:w-8"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  title={isArabic ? 'السابق' : 'Prev'}
-                >
-                  <FaChevronLeft className={isArabic ? 'scale-x-[-1]' : ''} size={12} />
-                </button>
-                <span className="text-xs sm:text-sm">{isArabic ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
-                <button
-                  className="btn btn-ghost p-1 h-7 w-7 sm:btn-sm sm:h-8 sm:w-8"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  title={isArabic ? 'التالي' : 'Next'}
-                >
-                  <FaChevronRight className={isArabic ? 'scale-x-[-1]' : ''} size={12} />
-                </button>
+            {/* Pagination Footer */}
+            <div className="px-4 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex sm:flex-row items-center justify-between gap-3">
+              <div className="text-[11px] sm:text-xs text-[var(--muted-text)]">
+                {isArabic
+                  ? `إظهار ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredCampaigns.length)}-${Math.min(currentPage * itemsPerPage, filteredCampaigns.length)} من ${filteredCampaigns.length}`
+                  : `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredCampaigns.length)}-${Math.min(currentPage * itemsPerPage, filteredCampaigns.length)} of ${filteredCampaigns.length}`}
               </div>
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] sm:text-xs text-[var(--muted-text)]">{isArabic ? 'لكل صفحة:' : 'Per page:'}</span>
-                <select
-                  className="input w-20 sm:w-24 text-xs sm:text-sm h-7 sm:h-8 min-h-0"
-                  value={itemsPerPage}
-                  onChange={e => setItemsPerPage(Number(e.target.value))}
-                >
-                  <option value={6}>6</option>
-                  <option value={12}>12</option>
-                  <option value={24}>24</option>
-                  <option value={48}>48</option>
-                </select>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    title={isArabic ? 'السابق' : 'Prev'}
+                  >
+                    {isArabic ? (
+                      <ChevronRight className="w-4 h-4" />
+                    ) : (
+                      <ChevronLeft className="w-4 h-4" />
+                    )}
+                  </button>
+                  <span className="text-sm whitespace-nowrap">
+                    {isArabic
+                      ? `الصفحة ${currentPage} من ${totalPages}`
+                      : `Page ${currentPage} of ${totalPages}`}
+                  </span>
+                  <button
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    title={isArabic ? 'التالي' : 'Next'}
+                  >
+                    {isArabic ? (
+                      <ChevronLeft className="w-4 h-4" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="text-[10px] sm:text-xs text-[var(--muted-text)] whitespace-nowrap">
+                    {isArabic ? 'لكل صفحة:' : 'Per page:'}
+                  </span>
+                  <select
+                    className="input w-24 text-sm py-0 px-2 h-8"
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value))
+                      setCurrentPage(1)
+                    }}
+                  >
+                    <option value={6}>6</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 
@@ -770,6 +822,18 @@ export default function Campaigns() {
 
                 {/* Budget Section Group */}
                 <div className="p-4 rounded-xl bg-gray-50/5 border border-white/5 space-y-4">
+                  {/* Currency */}
+                  <div>
+                    <label className="block dark:!text-white text-sm font-medium mb-2">{isArabic ? 'العملة' : 'Currency'}</label>
+                    <select name="currency" value={form.currency} onChange={onChange} className="input w-full dark:!text-white">
+                      <option value="EGP">EGP</option>
+                      <option value="USD">USD</option>
+                      <option value="SAR">SAR</option>
+                      <option value="AED">AED</option>
+                      <option value="EUR">EUR</option>
+                    </select>
+                  </div>
+
                   {/* Budget Type */}
                   <div>
                     <label className="block dark:!text-white text-sm font-medium mb-2">{isArabic ? 'نوع الميزانية' : 'Budget Type'}</label>
@@ -808,19 +872,19 @@ export default function Campaigns() {
                       </span>
                     </label>
                     <div className="relative">
-                      <div className={`absolute inset-y-0 ${isArabic ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
-                        <span className="text-gray-400 font-bold">$</span>
-                      </div>
                       <input 
                         type="number" 
                         name="totalBudget" 
                         value={form.totalBudget} 
                         onChange={onChange} 
-                        className={`input w-full dark:!text-white ${isArabic ? 'pr-8' : 'pl-8'} font-mono text-lg`} 
+                        className={`input w-full dark:!text-white ${isArabic ? 'pl-12' : 'pr-12'} font-mono text-lg`} 
                         placeholder="0.00" 
                         min="0"
                         step="0.01"
                       />
+                      <div className={`absolute inset-y-0 ${isArabic ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center pointer-events-none`}>
+                        <span className="text-gray-400 font-bold text-sm">{form.currency || (isArabic ? 'ج.م' : 'EGP')}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

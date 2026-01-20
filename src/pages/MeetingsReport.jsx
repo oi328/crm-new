@@ -1,533 +1,675 @@
-import React, { useMemo, useState } from 'react'
-// Layout removed per app-level layout usage
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts'
-import { PieChart as Donut } from '@shared/components/PieChart'
+import { Link } from 'react-router-dom'
+import BackButton from '../components/BackButton'
+import { Trophy, Filter, ChevronDown, ChevronRight, User, Users, Briefcase, Tag, Calendar, Clock, CheckCircle, ChevronLeft } from 'lucide-react'
+import { PieChart } from '@shared/components/PieChart'
+import { RiDeleteBinLine, RiEyeLine } from 'react-icons/ri'
+import SearchableSelect from '../components/SearchableSelect'
 import * as XLSX from 'xlsx'
-import { RiFilterLine, RiBarChart2Line, RiCalendarCheckLine } from 'react-icons/ri'
+import { FaCalendarAlt, FaFileExport, FaChevronDown, FaFileExcel, FaFilePdf } from 'react-icons/fa'
+import EnhancedLeadDetailsModal from '@shared/components/EnhancedLeadDetailsModal'
+import { useTheme } from '@shared/context/ThemeProvider'
 
 export default function MeetingsReport() {
   const { t, i18n } = useTranslation()
   const isRTL = i18n.language === 'ar'
-  const [activeTab, setActiveTab] = useState('Overall')
+  const { theme } = useTheme()
 
-  // Demo time-series data for meetings over time
-  const meetingsOverTime = useMemo(() => {
-    const base = 3
-    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
-    return days.map((d, i) => ({ day: d, meetings: base + (i % 4) + (i > 3 ? 2 : 0) }))
+  // Mock Data
+  const kpiData = {
+    totalMeetings: 124,
+    totalLeads: 850,
+    arrangeMeetings: 45,
+    doneMeetings: 79
+  }
+
+  const channelData = [
+    { label: 'Facebook', value: 3, color: '#3b82f6' },
+    { label: 'Google', value: 1, color: '#10b981' },
+    { label: 'Referral', value: 2, color: '#f97316' },
+    { label: 'Website', value: 1, color: '#a855f7' },
+    { label: 'Instagram', value: 1, color: '#ef4444' }
+  ]
+
+  const bestPerformers = [
+    { id: 1, name: 'Abdel hamid', score: 78 },
+    { id: 2, name: 'Mohamed Ahmed', score: 58 },
+    { id: 3, name: 'Sara Ali', score: 45 },
+    { id: 4, name: 'Omar Khaled', score: 32 },
+  ]
+
+  const initialMeetings = [
+    { id: 1, leadName: 'Ahmed Mahmoud', mobile: '01012345678', status: 'arranged', source: 'Facebook', project: 'Project A', salesPerson: 'Abdel hamid', meetingDate: '2023-10-25', lastActionDate: '2023-10-20' },
+    { id: 2, leadName: 'Mona Said', mobile: '01198765432', status: 'done', source: 'Website', project: 'Project B', salesPerson: 'Mohamed Ahmed', meetingDate: '2023-10-24', lastActionDate: '2023-10-22' },
+    { id: 3, leadName: 'Khaled Omar', mobile: '01234567890', status: 'arranged', source: 'Referral', project: 'Project A', salesPerson: 'Abdel hamid', meetingDate: '2023-10-26', lastActionDate: '2023-10-23' },
+    { id: 4, leadName: 'Nour Hassan', mobile: '01555555555', status: 'done', source: 'Instagram', project: 'Project C', salesPerson: 'Sara Ali', meetingDate: '2023-10-20', lastActionDate: '2023-10-18' },
+    { id: 5, leadName: 'Eslam Gamal', mobile: '01000000000', status: 'done', source: 'Facebook', project: 'Project A', salesPerson: 'Abdel hamid', meetingDate: '2023-10-15', lastActionDate: '2023-10-10' },
+  ]
+
+  // State for filters
+  const [salesPersonFilter, setSalesPersonFilter] = useState([])
+  const [managerFilter, setManagerFilter] = useState([])
+  const [sourceFilter, setSourceFilter] = useState([])
+  const [projectFilter, setProjectFilter] = useState([])
+  const [lastActionDateFilter, setLastActionDateFilter] = useState('')
+  const [meetingDateFilter, setMeetingDateFilter] = useState('')
+  const [showAllFilters, setShowAllFilters] = useState(false)
+
+  const [meetings, setMeetings] = useState(initialMeetings)
+  const [showLeadModal, setShowLeadModal] = useState(false)
+  const [selectedLead, setSelectedLead] = useState(null)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [expandedRows, setExpandedRows] = useState({})
+
+  const toggleRow = (id) => {
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const exportMenuRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+        setShowExportMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
   }, [])
 
-  const totalMeetings = useMemo(() => meetingsOverTime.reduce((sum, d) => sum + d.meetings, 0), [meetingsOverTime])
-  const totalLeads = 28 // simple demo metric to mirror screenshot
+  // Filter Logic (Basic implementation)
+  const filteredMeetings = useMemo(() => {
+    return meetings.filter(meeting => {
+      const matchSales = salesPersonFilter.length === 0 || salesPersonFilter.includes(meeting.salesPerson)
+      const matchProject = projectFilter.length === 0 || projectFilter.includes(meeting.project)
+      const matchSource = sourceFilter.length === 0 || sourceFilter.includes(meeting.source)
+      // Add other filter logic as needed
+      return matchSales && matchProject && matchSource
+    })
+  }, [meetings, salesPersonFilter, projectFilter, sourceFilter])
 
-  // Demo pie segments for Channels & Projects (as in screenshots)
-  const channelSegments = [
-    { label: isRTL ? 'واتساب' : 'WhatsApp', value: 35, color: '#3b82f6' },
-    { label: isRTL ? 'اتصالات' : 'Calls', value: 15, color: '#8b5cf6' },
-  ]
-  const projectSegments = [
-    { label: isRTL ? 'مشروع أ' : 'Project A', value: 30, color: '#3b82f6' },
-    { label: isRTL ? 'مشروع ب' : 'Project B', value: 15, color: '#8b5cf6' },
-  ]
-
-  // Leaderboard sample data
-  const bestEmployees = [
-    { name: 'Alaa Mahamed', score: 7 },
-    { name: 'Mariam Salama', score: 6 },
-    { name: 'Mohamed Osama', score: 6 },
-    { name: 'Eman Anwar', score: 6 },
-    { name: 'Mohamed Mostafa', score: 5 },
-  ]
-
-  const TabButton = ({ label, icon }) => (
-    <button
-      className={`px-5 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2 ${activeTab === label ? 'bg-primary text-white shadow-lg ring-1 ring-primary/50' : 'btn-glass'}`}
-      onClick={() => setActiveTab(label)}
-    >
-      {icon && <span className="text-base">{icon}</span>}
-      <span>{label}</span>
-    </button>
-  )
-
-  const SectionHeader = ({ title, desc, icon }) => (
-    <div className="flex items-center justify-between mb-2">
-      <div className={`flex items-center gap-2`}>
-        <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
-        {icon && <span className="text-primary">{icon}</span>}
-        <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold`}>{title}</h3>
-      </div>
-      {desc && <div className="text-sm text-[var(--muted-text)]">{desc}</div>}
-    </div>
-  )
-
-  const MetricCard = ({ title, value, icon }) => (
-    <div className="glass-panel rounded-xl p-4 h-full">
-      <div className="flex items-center justify-between mb-2">
-        <div className="inline-flex items-center gap-2">
-          {icon && <span className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center">{icon}</span>}
-          <span className="text-sm text-[var(--muted-text)]">{title}</span>
-        </div>
-      </div>
-      <div className="text-3xl font-bold">{value}</div>
-    </div>
-  )
-
-  // Overall data list demo
   const [entriesPerPage, setEntriesPerPage] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
-  const [sortBy, setSortBy] = useState({ key: 'name', dir: 'asc' })
-  const [showFilter, setShowFilter] = useState(false)
-  const [filters, setFilters] = useState({ salesman: '', project: '', dateFrom: '', dateTo: '' })
-  const [selectedKeys, setSelectedKeys] = useState([])
-  // Demo meetings status dataset for Arrange/Done counts
-  const meetingsStatusData = useMemo(() => ([
-    { date: '2025-11-01', status: 'arranged' },
-    { date: '2025-11-02', status: 'arranged' },
-    { date: '2025-11-03', status: 'done' },
-    { date: '2025-11-04', status: 'arranged' },
-    { date: '2025-11-05', status: 'done' },
-    { date: '2025-11-06', status: 'done' },
-    { date: '2025-11-07', status: 'arranged' },
-  ]), [])
-  const dateInRange = (d) => {
-    const from = filters.dateFrom ? new Date(filters.dateFrom) : null
-    const to = filters.dateTo ? new Date(filters.dateTo) : null
-    const cur = new Date(d)
-    const fromOk = from ? cur >= from : true
-    const toOk = to ? cur <= to : true
-    return fromOk && toOk
-  }
-  const arrangedCount = useMemo(() => meetingsStatusData.filter(m => m.status === 'arranged' && dateInRange(m.date)).length, [meetingsStatusData, filters])
-  const doneCount = useMemo(() => meetingsStatusData.filter(m => m.status === 'done' && dateInRange(m.date)).length, [meetingsStatusData, filters])
-  const exportMeetingsStatus = () => {
-    const rows = meetingsStatusData.filter(m => dateInRange(m.date))
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'MeetingsStatus')
-    XLSX.writeFile(wb, 'meetings_status.xlsx')
-  }
-  const overallRows = useMemo(() => ([
-    { date: '2025-11-01', name: 'Abdullah Saleh', mobile: '1004******', meetings: 1, project: 'Crown Medical Center', salesman: 'Mohamed' },
-    { date: '2025-11-01', name: 'دينا', mobile: '1095******', meetings: 1, project: 'Crown Medical Center', salesman: 'Mohamed' },
-    { date: '2025-11-02', name: 'Mohamed Zayed', mobile: '1012******', meetings: 1, project: 'Crown Plaza Mall', salesman: 'Mohamed' },
-    { date: '2025-11-02', name: 'جمال', mobile: '1094******', meetings: 1, project: 'Crown Plaza Mall', salesman: 'Mina M' },
-    { date: '2025-11-03', name: 'ayman Shafie', mobile: '1033******', meetings: 1, project: 'Crown Medical Center', salesman: 'Eman A' },
-    { date: '2025-11-03', name: 'Shady', mobile: '1005******', meetings: 1, project: 'Crown Plaza Mall', salesman: 'Eman A' },
-    { date: '2025-11-04', name: 'سيف محمد', mobile: '1147128208', meetings: 1, project: 'Crown Plaza Mall', salesman: 'Mohamed' },
-    { date: '2025-11-04', name: 'Rawan Ahmed', mobile: '1006******', meetings: 2, project: 'Crown Medical Center', salesman: 'Hossam' },
-    { date: '2025-11-05', name: 'Layla Saad', mobile: '1011******', meetings: 1, project: 'Crown Plaza Mall', salesman: 'Khaled' },
-    { date: '2025-11-06', name: 'Omar Nabil', mobile: '1009******', meetings: 3, project: 'Crown Medical Center', salesman: 'Nour' },
-    { date: '2025-11-06', name: 'Heba Adel', mobile: '1010******', meetings: 1, project: 'Crown Medical Center', salesman: 'Mariam' },
-  ]), [])
-  const filteredRows = useMemo(() => {
-    return overallRows.filter(r => {
-      const salesmanOk = filters.salesman ? String(r.salesman).toLowerCase().includes(String(filters.salesman).toLowerCase().trim()) : true
-      const projectOk = filters.project ? String(r.project).toLowerCase().includes(String(filters.project).toLowerCase().trim()) : true
-      const fromOk = filters.dateFrom ? r.date >= filters.dateFrom : true
-      const toOk = filters.dateTo ? r.date <= filters.dateTo : true
-      const dateOk = fromOk && toOk
-      return salesmanOk && projectOk && dateOk
-    })
-  }, [overallRows, filters])
 
-  const sortedRows = useMemo(() => {
-    const rows = [...filteredRows]
-    rows.sort((a, b) => {
-      const av = a[sortBy.key]
-      const bv = b[sortBy.key]
-      if (typeof av === 'number' && typeof bv === 'number') {
-        return sortBy.dir === 'asc' ? av - bv : bv - av
-      }
-      return sortBy.dir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av))
-    })
-    return rows
-  }, [filteredRows, sortBy])
-  const pageCount = Math.max(1, Math.ceil(sortedRows.length / entriesPerPage))
-  const paginatedRows = useMemo(() => {
+  const pageCount = Math.max(1, Math.ceil(filteredMeetings.length / entriesPerPage))
+  const paginatedMeetings = useMemo(() => {
     const start = (currentPage - 1) * entriesPerPage
-    return sortedRows.slice(start, start + entriesPerPage)
-  }, [sortedRows, currentPage, entriesPerPage])
+    return filteredMeetings.slice(start, start + entriesPerPage)
+  }, [filteredMeetings, currentPage, entriesPerPage])
 
-  const rowKey = (r) => `${r.name}|${r.mobile}`
-  const allSelected = useMemo(() => paginatedRows.length > 0 && paginatedRows.every(r => selectedKeys.includes(rowKey(r))), [paginatedRows, selectedKeys])
-  const toggleSelectAll = (checked) => {
-    const pageKeys = paginatedRows.map(rowKey)
-    if (checked) {
-      setSelectedKeys(prev => Array.from(new Set([...prev, ...pageKeys])))
-    } else {
-      setSelectedKeys(prev => prev.filter(k => !pageKeys.includes(k)))
+  const projectSegments = useMemo(() => {
+    const map = new Map()
+    filteredMeetings.forEach(meeting => {
+      const key = meeting.project || (isRTL ? 'غير معروف' : 'Unknown')
+      map.set(key, (map.get(key) || 0) + 1)
+    })
+    const baseColors = ['#8b5cf6', '#ec4899', '#10b981', '#f97316', '#3b82f6', '#22c55e']
+    return Array.from(map.entries()).map(([label, value], idx) => ({
+      label,
+      value,
+      color: baseColors[idx % baseColors.length]
+    }))
+  }, [filteredMeetings, isRTL])
+
+  // Mock Options for Selects
+  const salesPersonOptions = [
+    { value: 'Abdel hamid', label: 'Abdel hamid' },
+    { value: 'Mohamed Ahmed', label: 'Mohamed Ahmed' },
+    { value: 'Sara Ali', label: 'Sara Ali' },
+  ]
+  const managerOptions = [
+    { value: 'Manager 1', label: 'Manager 1' },
+    { value: 'Manager 2', label: 'Manager 2' },
+  ]
+  const sourceOptions = [
+    { value: 'Facebook', label: 'Facebook' },
+    { value: 'Website', label: 'Website' },
+    { value: 'Instagram', label: 'Instagram' },
+    { value: 'Referral', label: 'Referral' },
+  ]
+  const projectOptions = [
+    { value: 'Project A', label: 'Project A' },
+    { value: 'Project B', label: 'Project B' },
+    { value: 'Project C', label: 'Project C' },
+  ]
+
+  const handleExport = () => {
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(filteredMeetings)
+    XLSX.utils.book_append_sheet(wb, ws, 'Meetings')
+    XLSX.writeFile(wb, 'Meetings_Report.xlsx')
+  }
+
+  const exportToPdf = async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const autoTable = await import('jspdf-autotable')
+      const doc = new jsPDF()
+      
+      const tableColumn = [
+        isRTL ? 'الاسم' : "Lead Name", 
+        isRTL ? 'رقم الهاتف' : "Mobile Contact", 
+        isRTL ? 'حالة الاجتماع' : "Meeting Status", 
+        isRTL ? 'المصدر' : "Source", 
+        isRTL ? 'المشروع' : "Project", 
+        isRTL ? 'مسؤول المبيعات' : "Sales Person",
+        isRTL ? 'تاريخ الاجتماع' : "Meeting Date"
+      ]
+      const tableRows = []
+
+      filteredMeetings.forEach(meeting => {
+        const rowData = [
+          meeting.leadName,
+          meeting.mobile,
+          meeting.status,
+          meeting.source,
+          meeting.project,
+          meeting.salesPerson,
+          meeting.meetingDate
+        ]
+        tableRows.push(rowData)
+      })
+
+      doc.text(isRTL ? 'تقرير الاجتماعات' : "Meetings Report", 14, 15)
+      autoTable.default(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { font: 'helvetica', fontSize: 8 },
+        headStyles: { fillColor: [66, 139, 202] }
+      })
+      doc.save("meetings_report.pdf")
+      setShowExportMenu(false)
+    } catch (error) {
+      console.error("Export PDF Error:", error)
     }
   }
 
-  const toggleSort = (key) => setSortBy((s) => ({ key, dir: s.key === key && s.dir === 'asc' ? 'desc' : 'asc' }))
-  const exportList = () => {
-    const ws = XLSX.utils.json_to_sheet(sortedRows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Meetings')
-    XLSX.writeFile(wb, 'meetings_list.xlsx')
+  const handleDelete = (id) => {
+    if (window.confirm(isRTL ? 'هل أنت متأكد من حذف هذا الاجتماع؟' : 'Are you sure you want to delete this meeting?')) {
+      setMeetings(prev => prev.filter(m => m.id !== id))
+    }
   }
 
-  // Checkin tab sample
-  const [range, setRange] = useState('Day')
-  const checkinLeaderboard = [
-    { name: 'Amany Gamal', score: 1 },
-  ]
-  const checkins = [
-    { salesman: 'Amany Gamal', date: '11-01-2024 06:02 PM', location: '#' },
-  ]
-  const filteredCheckins = useMemo(() => {
-    return checkins.filter(c => {
-      const salesmanOk = filters.salesman ? String(c.salesman).toLowerCase().includes(String(filters.salesman).toLowerCase()) : true
-      // crude date filter using string compare; for demo only
-      const df = filters.dateFrom ? filters.dateFrom : ''
-      const dt = filters.dateTo ? filters.dateTo : ''
-      const dateStr = c.date?.split(' ')[0] || '' // assume DD-MM-YYYY
-      const swapToISO = (d) => d ? d.split('-').reverse().join('-') : '' // to YYYY-MM-DD
-      const dateISO = swapToISO(dateStr)
-      const fromISO = swapToISO(df)
-      const toISO = swapToISO(dt)
-      const dateOk = (fromISO ? dateISO >= fromISO : true) && (toISO ? dateISO <= toISO : true)
-      return salesmanOk && dateOk
-    })
-  }, [checkins, filters])
+  const clearFilters = () => {
+    setSalesPersonFilter([])
+    setManagerFilter([])
+    setSourceFilter([])
+    setProjectFilter([])
+    setLastActionDateFilter('')
+    setMeetingDateFilter('')
+    setCurrentPage(1)
+  }
+
+  const renderPieChart = (title, data) => {
+    const total = data.reduce((sum, item) => sum + (item.value || 0), 0)
+
+    return (
+      <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="text-sm font-semibold mb-2 dark:text-white text-center md:text-left">{title}</div>
+        <div className="h-48 flex items-center justify-center">
+          <PieChart
+            segments={data}
+            size={170}
+            centerValue={total}
+            centerLabel={isRTL ? 'الإجمالي' : 'Total'}
+          />
+        </div>
+        <div className="mt-4 flex flex-wrap justify-center gap-3">
+          {data.map((segment) => (
+            <div key={segment.label} className="flex items-center gap-1.5 text-xs">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: segment.color }}></div>
+              <span className="dark:text-white">
+                {segment.label}: {segment.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <>
-      <div className="space-y-4">
-        {/* Page title + actions */}
-        <div className="flex items-center justify-between relative">
-          <h1 className="text-2xl font-semibold">{t('Meetings Report')}</h1>
-          <button onClick={() => setShowFilter(s => !s)} className="btn btn-glass inline-flex items-center gap-2">
-            <RiFilterLine className="text-base" />
-            <span>{t('Filter')}</span>
-          </button>
-          {showFilter && (
-            <div className="absolute right-0 top-full mt-2 z-20 glass-panel rounded-xl p-4 w-80 shadow-lg">
-              <div className="text-sm font-semibold mb-2">{t('Filter Data')}</div>
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div className="col-span-2">
-                  <label className="text-xs mb-1 block">{t('Sales Person')}</label>
-                  <input value={filters.salesman} onChange={(e)=>setFilters(f=>({...f, salesman: e.target.value}))} className="input w-full text-sm" placeholder={t('Type name')} />
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs mb-1 block">{t('Project')}</label>
-                  <input value={filters.project} onChange={(e)=>setFilters(f=>({...f, project: e.target.value}))} className="input w-full text-sm" placeholder={t('Type project')} />
-                </div>
-                <div>
-                  <label className="text-xs mb-1 block">{t('From Date')}</label>
-                  <input type="date" lang={isRTL ? 'ar' : 'en'} dir={isRTL ? 'rtl' : 'ltr'} placeholder={isRTL ? 'اليوم/الشهر/السنة' : 'mm/dd/yyyy'} value={filters.dateFrom} onChange={(e)=>setFilters(f=>({...f, dateFrom: e.target.value}))} className="input w-full text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs mb-1 block">{t('To Date')}</label>
-                  <input type="date" lang={isRTL ? 'ar' : 'en'} dir={isRTL ? 'rtl' : 'ltr'} placeholder={isRTL ? 'اليوم/الشهر/السنة' : 'mm/dd/yyyy'} value={filters.dateTo} onChange={(e)=>setFilters(f=>({...f, dateTo: e.target.value}))} className="input w-full text-sm" />
-                </div>
-              </div>
-              <div className="flex items-center justify-end gap-2">
-                <button className="btn btn-glass" onClick={()=>setFilters({ salesman:'', project:'', dateFrom:'', dateTo:'' })}>{t('Clear')}</button>
-                <button className="btn bg-primary text-white" onClick={()=>setShowFilter(false)}>{t('Apply')}</button>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="text-sm text-[var(--muted-text)]">{t('reports.meetings.desc')}</div>
-
-        {/* Empty row above tabs */}
-        <div className="h-3" />
-        {/* Tabs */}
-        <div className="flex items-center gap-3 mt-2">
-          <TabButton label="Overall" icon={<RiBarChart2Line />} />
-          <TabButton label="Checkin" icon={<RiCalendarCheckLine />} />
-        </div>
-        {/* Empty row below tabs */}
-        <div className="h-3" />
-
-        {/* Content */}
-        {activeTab === 'Overall' && (
-          <div className="space-y-4">
-            {/* Chart + metrics */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Chart */}
-              <div className="glass-panel rounded-xl p-4 lg:col-span-2">
-                <SectionHeader title={isRTL ? 'الاجتماعات عبر الزمن' : 'Meeting Over time'} />
-                <div className="h-56">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={meetingsOverTime}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="day" />
-                      <YAxis allowDecimals={false} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                        itemStyle={{ color: '#111827', fontSize: '12px', fontWeight: 'bold' }}
-                        labelStyle={{ color: '#111827', fontWeight: 'bold', marginBottom: '0.25rem' }}
-                      />
-                      <Line type="monotone" dataKey="meetings" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Metrics */}
-              <div className="grid grid-cols-1 gap-4">
-                <MetricCard title={isRTL ? 'إجمالي الاجتماعات' : 'Total Of Meetings'} value={totalMeetings} icon={'⚡'} />
-                <MetricCard title={isRTL ? 'إجمالي العملاء المحتملين' : 'Total Of Leads'} value={totalLeads} icon={'👥'} />
-                <MetricCard title={isRTL ? 'عدد ال Arrange Meetings' : 'Arrange Meetings Count'} value={arrangedCount} icon={'📅'} />
-                <MetricCard title={isRTL ? 'عدد ال Done Meetings' : 'Done Meetings Count'} value={doneCount} icon={'✅'} />
-              </div>
-            </div>
-
-            {/* Channels / Projects / Best */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Channels */}
-              <div className="glass-panel rounded-xl p-4">
-                <h3 className="text-lg font-semibold mb-2">{isRTL ? 'القنوات' : 'Channels'}</h3>
-                <div className="flex items-center justify-center h-48">
-                  <Donut segments={channelSegments} centerValue={channelSegments.reduce((s,v)=>s+v.value,0)} centerLabel={isRTL ? 'الإجمالي' : 'Total'} size={180} />
-                </div>
-              </div>
-              {/* Projects */}
-              <div className="glass-panel rounded-xl p-4">
-                <h3 className="text-lg font-semibold mb-2">{isRTL ? 'المشاريع' : 'Projects'}</h3>
-                <div className="flex items-center justify-center h-48">
-                  <Donut segments={projectSegments} centerValue={projectSegments.reduce((s,v)=>s+v.value,0)} centerLabel={isRTL ? 'الإجمالي' : 'Total'} size={180} />
-                </div>
-              </div>
-              {/* The Best leaderboard */}
-              <div className="glass-panel rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold">{isRTL ? 'الأفضل' : 'The Best'}</h3>
-                  <button className="btn-glass px-2 py-1 rounded-md text-xs">All ▾</button>
-                </div>
-                <div className="space-y-2">
-                  {bestEmployees.map((e, idx) => (
-                    <div key={idx} className={`flex items-center justify-between p-2 rounded-lg ${idx===0 ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'bg-transparent'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">{idx+1}</div>
-                        <div className="text-sm">{e.name}</div>
-                      </div>
-                      <div className="text-sm font-semibold">{e.score}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Data list placeholder */}
-            <div className="glass-panel rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold">{isRTL ? 'قائمة البيانات' : 'Data List'}</h3>
-                <button onClick={exportList} className="btn btn-glass">{isRTL ? 'تصدير القائمة' : 'Export List'}</button>
-              </div>
-              <div className="text-sm text-[var(--muted-text)] mb-3">{isRTL ? 'أدِر أعضاء فريقك وصلاحيات حساباتهم هنا.' : 'Manage your team members and their account permissions here.'}</div>
-
-              {/* Table */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr>
-                      <th className="px-3 py-2 text-left">
-                        <input
-                          type="checkbox"
-                          aria-label="select all"
-                          checked={allSelected}
-                          onChange={(e) => toggleSelectAll(e.target.checked)}
-                        />
-                      </th>
-                      <th className="px-3 py-2 text-left cursor-pointer" onClick={() => toggleSort('name')}>{isRTL ? 'ليد' : 'Lead'} {sortBy.key==='name' ? (sortBy.dir==='asc' ? '↑' : '↓') : ''}</th>
-                      <th className="px-3 py-2 text-left cursor-pointer" onClick={() => toggleSort('mobile')}>{isRTL ? 'الجوال' : 'Mobile'} {sortBy.key==='mobile' ? (sortBy.dir==='asc' ? '↑' : '↓') : ''}</th>
-                      <th className="px-3 py-2 text-left cursor-pointer" onClick={() => toggleSort('meetings')}>{isRTL ? 'عدد الاجتماعات' : 'Number Of Meetings'} {sortBy.key==='meetings' ? (sortBy.dir==='asc' ? '↑' : '↓') : ''}</th>
-                      <th className="px-3 py-2 text-left cursor-pointer" onClick={() => toggleSort('project')}>{isRTL ? 'المشروع' : 'Project'} {sortBy.key==='project' ? (sortBy.dir==='asc' ? '↑' : '↓') : ''}</th>
-                      <th className="px-3 py-2 text-left cursor-pointer" onClick={() => toggleSort('salesman')}>{isRTL ? 'المبيعات' : 'Sales Person'} {sortBy.key==='salesman' ? (sortBy.dir==='asc' ? '↑' : '↓') : ''}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedRows.map((row, idx) => (
-                      <React.Fragment key={idx}>
-                        <tr className="border-t">
-                          <td className="px-3 py-2">
-                            <input
-                              type="checkbox"
-                              aria-label="select row"
-                              checked={selectedKeys.includes(rowKey(row))}
-                              onChange={(e) => {
-                                const k = rowKey(row)
-                                setSelectedKeys(prev => e.target.checked ? Array.from(new Set([...prev, k])) : prev.filter(x => x !== k))
-                              }}
-                            />
-                          </td>
-                          <td className="px-3 py-2">{row.name}</td>
-                          <td className="px-3 py-2">{row.mobile}</td>
-                          <td className="px-3 py-2">{row.meetings}</td>
-                          <td className="px-3 py-2">{row.project}</td>
-                          <td className="px-3 py-2">{row.salesman}</td>
-                        </tr>
-                        {idx !== paginatedRows.length - 1 && (
-                          <tr>
-                            <td colSpan={6}><div className="h-2"></div></td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
-                    {paginatedRows.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="px-3 py-6 text-center text-[var(--muted-text)]">{isRTL ? 'لا توجد بيانات' : 'No data found'}</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Cards */}
-              <div className="md:hidden space-y-4">
-                {paginatedRows.length === 0 && (
-                  <div className="text-center py-6 text-[var(--muted-text)]">{isRTL ? 'لا توجد بيانات' : 'No data found'}</div>
-                )}
-                {paginatedRows.map((row, idx) => (
-                  <div key={idx} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
-                    <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          aria-label="select row"
-                          checked={selectedKeys.includes(rowKey(row))}
-                          onChange={(e) => {
-                            const k = rowKey(row)
-                            setSelectedKeys(prev => e.target.checked ? Array.from(new Set([...prev, k])) : prev.filter(x => x !== k))
-                          }}
-                        />
-                        <h4 className="font-semibold text-sm">{row.name}</h4>
-                      </div>
-                      <span className="text-xs text-[var(--muted-text)]">{row.mobile}</span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'عدد الاجتماعات' : 'Number Of Meetings'}</span>
-                        <span className="text-xs">{row.meetings}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'المشروع' : 'Project'}</span>
-                        <span className="text-xs">{row.project}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'المبيعات' : 'Sales Person'}</span>
-                        <span className="text-xs">{row.salesman}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination footer */}
-              <div className="flex items-center justify-between mt-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <label>{isRTL ? 'عرض' : 'Show Entries'}</label>
-                  <select value={entriesPerPage} onChange={(e)=>{setEntriesPerPage(Number(e.target.value)); setCurrentPage(1)}} className="input text-sm">
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button disabled={currentPage===1} onClick={()=>setCurrentPage(p=>Math.max(1,p-1))} className="btn btn-glass">{isRTL ? 'السابق' : 'Previous'}</button>
-                  <div className="px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 text-sm">{currentPage}</div>
-                  <button disabled={currentPage===pageCount} onClick={()=>setCurrentPage(p=>Math.min(pageCount,p+1))} className="btn btn-glass">{isRTL ? 'التالي' : 'Next'}</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'Checkin' && (
-          <div className="space-y-4">
-            {/* Checkin header + time range */}
-            <div className="glass-panel rounded-xl p-4">
-              <h3 className="text-lg font-semibold">{isRTL ? 'تسجيل الوصول' : 'Check In'}</h3>
-              <div className="text-sm text-[var(--muted-text)] mb-3">{isRTL ? 'أدِر أعضاء فريقك وصلاحياتهم هنا.' : 'Manage your team members and their account permissions here.'}</div>
-              <div className="flex items-center gap-3">
-                {['Day','Weekly','Monthly','Year'].map((r) => (
-                  <button key={r} onClick={()=>setRange(r)} className={`px-3 py-1 rounded-md text-sm ${range===r ? 'bg-primary text-white' : 'btn-glass'}`}>{isRTL ? ({Day:'يومي',Weekly:'أسبوعي',Monthly:'شهري',Year:'سنوي'}[r]) : r}</button>
-                ))}
-              </div>
-              <div className="h-56 mt-3">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={meetingsOverTime}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="meetings" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Right leaderboard */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2 space-y-4">
-                {/* Data List */}
-                <div className="glass-panel rounded-xl p-4">
-                  <h3 className="text-lg font-semibold mb-2">{isRTL ? 'قائمة البيانات' : 'Data List'}</h3>
-                  <div className="text-sm text-[var(--muted-text)] mb-3">{isRTL ? 'أدِر أعضاء فريقك وصلاحياتهم هنا.' : 'Manage your team members and their account permissions here.'}</div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr>
-                          <th className="px-3 py-2 text-left"><input type="checkbox" aria-label="select all" /></th>
-                          <th className="px-3 py-2 text-left">{isRTL ? 'مندوب المبيعات' : 'Sales Person'}</th>
-                          <th className="px-3 py-2 text-left">{isRTL ? 'تاريخ تسجيل الوصول' : 'Check In Date'}</th>
-                          <th className="px-3 py-2 text-left">{isRTL ? 'الموقع' : 'Location'}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                    {filteredCheckins.map((c, idx) => (
-                      <React.Fragment key={idx}>
-                        <tr className="border-t">
-                          <td className="px-3 py-2"><input type="checkbox" aria-label="select row" /></td>
-                          <td className="px-3 py-2">{c.salesman}</td>
-                          <td className="px-3 py-2">{c.date}</td>
-                          <td className="px-3 py-2"><a href={c.location} className="text-primary">{isRTL ? 'الموقع' : 'Location'}</a></td>
-                        </tr>
-                        {idx !== filteredCheckins.length - 1 && (
-                          <tr>
-                            <td colSpan={4} className="py-2" />
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="text-sm">{isRTL ? 'عرض 1' : 'Show Entries 1'}</div>
-                    <div className="flex items-center gap-2">
-                      <button className="btn btn-glass" disabled>Previous</button>
-                      <div className="px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 text-sm">1</div>
-                      <button className="btn btn-glass" disabled>Next</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="glass-panel rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold">{isRTL ? 'الأفضل' : 'The Best'}</h3>
-                  <button className="btn-glass px-2 py-1 rounded-md text-xs">All ▾</button>
-                </div>
-                <div className="space-y-2">
-                  {checkinLeaderboard.map((e, idx) => (
-                    <div key={idx} className={`flex items-center justify-between p-2 rounded-lg ${idx===0 ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'bg-transparent'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">{idx+1}</div>
-                        <div className="text-sm">{e.name}</div>
-                      </div>
-                      <div className="text-sm font-semibold">{e.score}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+    <div className="p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-hidden min-w-0 max-w-[1600px] mx-auto space-y-6">
+      <div>
+        <BackButton to="/reports" />
+        <h1 className="text-2xl font-bold dark:text-white mb-2">
+          {isRTL ? 'تقرير الاجتماعات' : 'Welcome Reports, Meetings'}
+        </h1>
+        <p className="dark:text-white  text-sm">
+          {isRTL ? 'تتبع وتحليل أداء الاجتماعات الخاصة بك' : 'Track and analyze your meetings performance'}
+        </p>
       </div>
-    </>
+
+      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-4">
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2 dark:text-white font-semibold">
+            <Filter size={20} className="text-blue-500 dark:text-blue-400" />
+            <h3>{isRTL ? 'تصفية' : 'Filter'}</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowAllFilters(prev => !prev)}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            >
+              {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')}
+              <ChevronDown
+                size={12}
+                className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`}
+              />
+            </button>
+            <button
+              onClick={clearFilters}
+              className="px-3 py-1.5 text-sm dark:text-white hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              {isRTL ? 'إعادة تعيين' : 'Reset'}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <User size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'مسؤول المبيعات' : 'Sales Person'}
+              </label>
+              <SearchableSelect
+                options={salesPersonOptions}
+                value={salesPersonFilter}
+                onChange={setSalesPersonFilter}
+                placeholder={isRTL ? 'اختر' : 'Select'}
+                multiple
+                isRTL={isRTL}
+                icon={<User size={16} />}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Users size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'المدير' : 'Manager'}
+              </label>
+              <SearchableSelect
+                options={managerOptions}
+                value={managerFilter}
+                onChange={setManagerFilter}
+                placeholder={isRTL ? 'اختر' : 'Select'}
+                multiple
+                isRTL={isRTL}
+                icon={<Users size={16} />}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Tag size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'المصدر' : 'Source'}
+              </label>
+              <SearchableSelect
+                options={sourceOptions}
+                value={sourceFilter}
+                onChange={setSourceFilter}
+                placeholder={isRTL ? 'اختر' : 'Select'}
+                multiple
+                isRTL={isRTL}
+                icon={<Tag size={16} />}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Briefcase size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'المشروع' : 'Project'}
+              </label>
+              <SearchableSelect
+                options={projectOptions}
+                value={projectFilter}
+                onChange={setProjectFilter}
+                placeholder={isRTL ? 'اختر' : 'Select'}
+                multiple
+                isRTL={isRTL}
+                icon={<Briefcase size={16} />}
+              />
+            </div>
+          </div>
+
+          <div
+            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-500 ease-in-out overflow-hidden ${
+              showAllFilters ? 'max-h-[1000px] opacity-100 pt-2' : 'max-h-0 opacity-0'
+            }`}
+          >
+
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'تاريخ الاجتماع' : 'Meeting Date'}
+              </label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                value={meetingDateFilter}
+                onChange={(e) => setMeetingDateFilter(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
+          <h3 className="dark:text-white  font-medium mb-2">{isRTL ? 'إجمالي الاجتماعات' : 'Total of Meetings'}</h3>
+          <span className="text-3xl font-bold text-blue-600">{kpiData.totalMeetings}</span>
+        </div>
+        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
+          <h3 className="dark:text-white  font-medium mb-2">{isRTL ? 'إجمالي العملاء' : 'Total of Leads'}</h3>
+          <span className="text-3xl font-bold text-purple-600">{kpiData.totalLeads}</span>
+        </div>
+        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
+          <h3 className="dark:text-white  font-medium mb-2">{isRTL ? 'ترتيب اجتماعات' : 'Arrange Meetings'}</h3>
+          <span className="text-3xl font-bold text-orange-600">{kpiData.arrangeMeetings}</span>
+        </div>
+        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
+          <h3 className="dark:text-white  font-medium mb-2">{isRTL ? 'اجتماعات تمت' : 'Done Meetings'}</h3>
+          <span className="text-3xl font-bold text-green-600">{kpiData.doneMeetings}</span>
+        </div>
+      </div>
+
+      {/* Charts & Best Performers */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {renderPieChart(isRTL ? 'تحليل الاجتماعات حسب القناة' : 'Meeting by Channel Analysis', channelData)}
+        {renderPieChart(isRTL ? 'تحليل الاجتماعات حسب المشروع' : 'Meetings by Project Analysis', projectSegments)}
+
+        {/* The Best */}
+        <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg text-yellow-600 dark:text-yellow-400">
+              <Trophy size={20} />
+            </div>
+            <div className="text-sm font-semibold dark:text-white">{isRTL ? 'الأفضل' : 'The Best'}</div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+            <ul className="space-y-3">
+              {bestPerformers.length === 0 && (
+                <li className="text-xs dark:text-white text-center py-4">{isRTL ? 'لا توجد بيانات' : 'No data'}</li>
+              )}
+              {bestPerformers.map((performer, index) => {
+                let rankColor = 'bg-gray-100 dark:bg-gray-700 dark:text-white'
+                let rankIcon = null
+
+                if (index === 0) {
+                  rankColor =
+                    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-700'
+                  rankIcon = <Trophy size={12} />
+                } else if (index === 1) {
+                  rankColor =
+                    'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600'
+                } else if (index === 2) {
+                  rankColor =
+                    'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-700'
+                }
+
+                return (
+                  <li
+                    key={performer.id}
+                    className="flex items-center justify-between p-2 rounded-xl hover:bg-white/5 dark:hover:bg-white/5 transition-colors group/item"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-8 h-8 flex items-center justify-center rounded-full font-bold text-xs shadow-sm ${rankColor}`}
+                      >
+                        {rankIcon || index + 1}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium dark:text-white group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
+                          {performer.name}
+                        </span>
+                        <span className="text-[10px] dark:text-white">
+                          {index === 0 ? (isRTL ? 'الأفضل أداء' : 'Top Performer') : `${isRTL ? 'الترتيب' : 'Rank'} #${index + 1}`}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-sm font-bold dark:text-white">{performer.score}</span>
+                      <span className="text-[10px] dark:text-white">{isRTL ? 'اجتماعات' : 'Meetings'}</span>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold dark:text-white">{isRTL ? 'نظرة عامة على الاجتماعات' : 'Meetings Overview'}</h2>
+          <div className="relative" ref={exportMenuRef}>
+            <button 
+              onClick={() => setShowExportMenu(!showExportMenu)} 
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+            >
+              <FaFileExport /> {isRTL ? 'تصدير' : 'Export'}
+              <FaChevronDown className={`transform transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} size={12} />
+            </button>
+            
+            {showExportMenu && (
+              <div className={`absolute top-full ${isRTL ? 'left-0' : 'right-0'} mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-48`}>
+                <button 
+                  onClick={handleExport}
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                >
+                  <FaFileExcel className="text-green-600" /> {isRTL ? 'تصدير إلى Excel' : 'Export to Excel'}
+                </button>
+                <button 
+                  onClick={exportToPdf}
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                >
+                  <FaFilePdf className="text-red-600" /> {isRTL ? 'تصدير إلى PDF' : 'Export to PDF'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white">
+              <tr>
+                <th className="px-4 py-3">{isRTL ? 'اسم العميل' : 'Lead Name'}</th>
+                <th className="hidden md:table-cell px-4 py-3">{isRTL ? 'رقم الهاتف' : 'Mobile Contact'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center">{isRTL ? 'ترتيب اجتماعات' : 'Arrange Meetings'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center">{isRTL ? 'اجتماعات تمت' : 'Done Meetings'}</th>
+                <th className="hidden md:table-cell px-4 py-3">{isRTL ? 'المصدر' : 'Source'}</th>
+                <th className="hidden md:table-cell px-4 py-3">{isRTL ? 'المشروع' : 'Project'}</th>
+                <th className="hidden md:table-cell px-4 py-3">{isRTL ? 'مسؤول المبيعات' : 'Sales Person'}</th>
+                <th className="hidden md:table-cell px-4 py-3">{isRTL ? 'تاريخ الاجتماع' : 'Meeting Date'}</th>
+                <th className="px-4 py-3 text-center">{isRTL ? 'الإجراءات' : 'Actions'}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10 dark:divide-gray-700/50">
+              {paginatedMeetings.map((meeting) => (
+                <React.Fragment key={meeting.id}>
+                  <tr className="hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                    <td className="px-4 py-3 font-medium dark:text-white flex items-center gap-2">
+                      <button 
+                        onClick={() => toggleRow(meeting.id)}
+                        className="md:hidden p-1 hover:bg-white/10 rounded-full transition-colors"
+                      >
+                         <ChevronRight 
+                           size={16} 
+                           className={`transform transition-transform duration-200 ${expandedRows[meeting.id] ? 'rotate-90' : 'rtl:rotate-180'}`}
+                         />
+                      </button>
+                      {meeting.leadName}
+                    </td>
+                    <td className="hidden md:table-cell px-4 py-3 dark:text-white ">{meeting.mobile}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-center">
+                      {meeting.status === 'arranged' && (
+                        <span className="inline-block w-3 h-3 rounded-full bg-orange-500"></span>
+                      )}
+                    </td>
+                    <td className="hidden md:table-cell px-4 py-3 text-center">
+                      {meeting.status === 'done' && (
+                        <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
+                      )}
+                    </td>
+                    <td className="hidden md:table-cell px-4 py-3 dark:text-white ">{meeting.source}</td>
+                    <td className="hidden md:table-cell px-4 py-3 dark:text-white ">{meeting.project}</td>
+                    <td className="hidden md:table-cell px-4 py-3 dark:text-white ">{meeting.salesPerson}</td>
+                    <td className="hidden md:table-cell px-4 py-3 dark:text-white ">{meeting.meetingDate}</td>
+                    <td className="px-4 py-3 flex items-center justify-center gap-2">
+                      <button
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title={isRTL ? 'عرض العميل' : 'Preview Lead'}
+                        onClick={() => {
+                          setSelectedLead(meeting)
+                          setShowLeadModal(true)
+                        }}
+                      >
+                        <RiEyeLine size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(meeting.id)}
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
+                        title={isRTL ? 'حذف' : 'Delete'}
+                      >
+                        <RiDeleteBinLine size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                  
+                  {/* Mobile Expanded Row */}
+                  {expandedRows[meeting.id] && (
+                    <tr className="md:hidden bg-white/5 dark:bg-white/5">
+                      <td colSpan={9} className="px-4 py-3">
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div className="flex flex-col gap-1">
+                             <span className="text-[var(--muted-text)]">{isRTL ? 'رقم الهاتف' : 'Mobile Contact'}</span>
+                             <span className="dark:text-white font-medium">{meeting.mobile}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                             <span className="text-[var(--muted-text)]">{isRTL ? 'الحالة' : 'Status'}</span>
+                             <div className="flex items-center gap-2">
+                               {meeting.status === 'arranged' && (
+                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                                   {isRTL ? 'ترتيب اجتماعات' : 'Arrange Meetings'}
+                                 </span>
+                               )}
+                               {meeting.status === 'done' && (
+                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                   {isRTL ? 'اجتماعات تمت' : 'Done Meetings'}
+                                 </span>
+                               )}
+                             </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                             <span className="text-[var(--muted-text)]">{isRTL ? 'المصدر' : 'Source'}</span>
+                             <span className="dark:text-white">{meeting.source}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                             <span className="text-[var(--muted-text)]">{isRTL ? 'المشروع' : 'Project'}</span>
+                             <span className="dark:text-white">{meeting.project}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                             <span className="text-[var(--muted-text)]">{isRTL ? 'مسؤول المبيعات' : 'Sales Person'}</span>
+                             <span className="dark:text-white">{meeting.salesPerson}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                             <span className="text-[var(--muted-text)]">{isRTL ? 'تاريخ الاجتماع' : 'Meeting Date'}</span>
+                             <span className="dark:text-white">{meeting.meetingDate}</span>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+              {filteredMeetings.length === 0 && (
+                <tr>
+                  <td colSpan="9" className="px-4 py-8 text-center dark:text-white ">
+                    {isRTL ? 'لا توجد اجتماعات' : 'No meetings found'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-4 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex sm:flex-row items-center justify-between gap-3">
+          <div className="text-[11px] sm:text-xs text-[var(--muted-text)] dark:text-white">
+            {isRTL
+              ? `إظهار ${Math.min((currentPage - 1) * entriesPerPage + 1, filteredMeetings.length)}-${Math.min(currentPage * entriesPerPage, filteredMeetings.length)} من ${filteredMeetings.length}`
+              : `Showing ${Math.min((currentPage - 1) * entriesPerPage + 1, filteredMeetings.length)}-${Math.min(currentPage * entriesPerPage, filteredMeetings.length)} of ${filteredMeetings.length}`}
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                title={isRTL ? 'السابق' : 'Prev'}
+              >
+                {isRTL ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <ChevronLeft className="w-4 h-4" />
+                )}
+              </button>
+              <span className="text-sm whitespace-nowrap dark:text-white">
+                {isRTL
+                  ? `الصفحة ${currentPage} من ${pageCount}`
+                  : `Page ${currentPage} of ${pageCount}`}
+              </span>
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(p => Math.min(p + 1, pageCount))}
+                disabled={currentPage === pageCount}
+                title={isRTL ? 'التالي' : 'Next'}
+              >
+                {isRTL ? (
+                  <ChevronLeft className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] sm:text-xs text-[var(--muted-text)] whitespace-nowrap dark:text-white">
+                {isRTL ? 'لكل صفحة:' : 'Per page:'}
+              </span>
+              <select
+                className="input w-24 text-sm py-0 px-2 h-8"
+                value={entriesPerPage}
+                onChange={(e) => {
+                  setEntriesPerPage(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showLeadModal && (
+        <EnhancedLeadDetailsModal
+          isOpen={showLeadModal}
+          onClose={() => {
+            setShowLeadModal(false)
+            setSelectedLead(null)
+          }}
+          lead={selectedLead}
+          isArabic={i18n.language === 'ar'}
+          theme={theme}
+        />
+      )}
+    </div>
   )
 }

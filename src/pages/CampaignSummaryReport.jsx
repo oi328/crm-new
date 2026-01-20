@@ -1,14 +1,17 @@
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import { Bar, Line } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend } from 'chart.js'
 import AdvancedDateFilter from '../components/AdvancedDateFilter'
+import BackButton from '../components/BackButton'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend)
 
 export default function CampaignSummaryReport() {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const isRTL = (i18n?.language || '').toLowerCase().startsWith('ar')
 
   const [startDate, setStartDate] = useState('2024-01-01')
@@ -137,8 +140,9 @@ export default function CampaignSummaryReport() {
   }, [platformStats, needingImprovement, t])
 
   return (
-      <div id="report-root" className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6">
+        <BackButton to="/reports" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="text-2xl font-semibold">{t('Campaign Summary')}</h1>
           <div className={`flex items-center gap-2`}>
             <button onClick={exportExcel} className="btn btn-primary px-3 py-2 rounded-md border">

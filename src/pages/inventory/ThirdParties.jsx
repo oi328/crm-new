@@ -109,7 +109,7 @@ export default function ThirdParties() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(6)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -474,10 +474,10 @@ export default function ThirdParties() {
                   value={itemsPerPage}
                   onChange={e => setItemsPerPage(Number(e.target.value))}
                 >
-                  <option value={6}>6</option>
-                  <option value={12}>12</option>
-                  <option value={24}>24</option>
-                  <option value={48}>48</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
                 </select>
               </div>
             </div>

@@ -34,6 +34,14 @@ export default {
           900: '#111827',
           950: '#030712',
         },
+        theme: {
+          text: '#212529',
+          bg: '#FFFFFF',
+          sidebar: '#F1F3F5',
+          'sidebar-active': '#D6E4FF',
+          'sidebar-active-text': '#194B9F',
+          border: '#CED4DA',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui'],

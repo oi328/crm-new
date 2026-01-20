@@ -1,8 +1,17 @@
 import React from 'react'
-import { FaEye, FaPhone, FaWhatsapp, FaEnvelope, FaVideo, FaTrash, FaUserPlus } from 'react-icons/fa'
+import { FaEye, FaPhone, FaWhatsapp, FaEnvelope, FaVideo, FaTrash, FaUserPlus, FaExchangeAlt } from 'react-icons/fa'
 
 const LeadHoverTooltip = ({ lead, position, onAction, isRtl, onMouseEnter, onMouseLeave, innerRef }) => {
-  const actions = [
+  const isDuplicate = String(lead?.stage || lead?.status || '').toLowerCase().includes('duplicate');
+
+  const actions = isDuplicate ? [
+    { id: 'compare', icon: FaExchangeAlt, label: isRtl ? 'مقارنة' : 'Compare', color: 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' },
+    { id: 'call', icon: FaPhone, label: isRtl ? 'اتصال' : 'Call', color: 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20' },
+    { id: 'whatsapp', icon: FaWhatsapp, label: isRtl ? 'واتساب' : 'WhatsApp', color: 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20' },
+    { id: 'email', icon: FaEnvelope, label: isRtl ? 'إيميل' : 'Email', color: 'text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20' },
+    { id: 'video', icon: FaVideo, label: isRtl ? 'فيديو' : 'Video', color: 'text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20' },
+    { id: 'delete', icon: FaTrash, label: isRtl ? 'حذف' : 'Delete', color: 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' }
+  ] : [
     { id: 'view', icon: FaEye, label: isRtl ? 'عرض' : 'View', color: 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20' },
     { id: 'call', icon: FaPhone, label: isRtl ? 'اتصال' : 'Call', color: 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20' },
     { id: 'whatsapp', icon: FaWhatsapp, label: isRtl ? 'واتساب' : 'WhatsApp', color: 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20' },
@@ -10,7 +19,7 @@ const LeadHoverTooltip = ({ lead, position, onAction, isRtl, onMouseEnter, onMou
     { id: 'video', icon: FaVideo, label: isRtl ? 'فيديو' : 'Video', color: 'text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20' },
     { id: 'convert', icon: FaUserPlus, label: isRtl ? 'تحويل لعميل' : 'Convert', color: 'text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20' },
     { id: 'delete', icon: FaTrash, label: isRtl ? 'حذف' : 'Delete', color: 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' }
-  ]
+  ];
 
   return (
     // Outer container: position the tooltip, but do not capture pointer events

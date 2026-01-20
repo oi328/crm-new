@@ -1,11 +1,16 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
-import { RiSearchLine, RiDownloadLine, RiRefreshLine } from 'react-icons/ri'
+import { useNavigate } from 'react-router-dom'
+import BackButton from '../components/BackButton'
+import { RiSearchLine, RiRefreshLine } from 'react-icons/ri'
+import { FaFileExport, FaFileExcel, FaFilePdf } from 'react-icons/fa'
+import { Filter, ChevronDown as FilterChevron, Calendar, FileText, CheckCircle2, XCircle, ChevronDown, ChevronUp, Eye, Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
-import { Bar, Line, Doughnut } from 'react-chartjs-2'
+import { Bar } from 'react-chartjs-2'
+import { PieChart } from '@shared/components/PieChart'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -24,6 +29,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 const ExportsReport = () => {
   const { t } = useTranslation()
   const isRTL = i18n.dir() === 'rtl'
+  const navigate = useNavigate()
 
   // Top-level UI state
   const [query, setQuery] = useState('')
@@ -32,22 +38,42 @@ const ExportsReport = () => {
   const [selectAll, setSelectAll] = useState(false)
   const [previewItem, setPreviewItem] = useState(null)
   const [showExportModal, setShowExportModal] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const exportMenuRef = useRef(null)
+  
+  // Mobile table expanded rows
+  const [expandedRows, setExpandedRows] = useState(new Set())
+
+  const toggleRow = (id) => {
+    const newExpanded = new Set(expandedRows)
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id)
+    } else {
+      newExpanded.add(id)
+    }
+    setExpandedRows(newExpanded)
+  }
 
   // Filters
   const [selectedManager, setSelectedManager] = useState('All')
   const [selectedEmployee, setSelectedEmployee] = useState('All')
   const [selectedDept, setSelectedDept] = useState('All')
-  const [dateMode, setDateMode] = useState('month') // day | week | month | range
-  const [selectedDate, setSelectedDate] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
+  const [datePreset, setDatePreset] = useState('year')
 
   // Demo users
   const managers = ['All', 'Ahmed Ali', 'Sara Hassan']
   const employees = ['All', 'Maram Admin', 'Ibrahim Manager', 'Lina Ops']
   const departments = ['All', 'Customers', 'Orders', 'Sales', 'Inventory']
 
-  // Demo dataset with audit fields
+  const dateOptions = [
+    { value: 'today', label: isRTL ? 'اليوم' : 'Today' },
+    { value: 'week', label: isRTL ? 'أسبوعيًا' : 'Weekly' },
+    { value: 'month', label: isRTL ? 'شهريًا' : 'Monthly' },
+    { value: 'year', label: isRTL ? 'سنويًا' : 'Yearly' },
+  ]
+
+  // Demo dataset
   const [exportsData, setExportsData] = useState(() => {
     const now = new Date()
     const mk = (fileName, dept, by, tsOffsetDays, status, notes) => ({
@@ -69,42 +95,17 @@ const ExportsReport = () => {
     ]
   })
 
-  // Audit trail
-  const [auditLogs, setAuditLogs] = useState(() => [])
-  const logAudit = (action, status, fileName, user, dept, notes = '') => {
-    setAuditLogs(prev => [
-      {
-        id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        action,
-        status,
-        fileName,
-        user,
-        department: dept,
-        timestamp: new Date(),
-        notes,
-      },
-      ...prev,
-    ])
-  }
-
-  // KPI counts
-  const kpis = useMemo(() => {
-    const total = exportsData.length
-    const success = exportsData.filter(x => x.status === 'Success').length
-    const failed = exportsData.filter(x => x.status === 'Failed').length
-    return { total, success, failed }
-  }, [exportsData])
-
   // Date helpers
   const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-  const inWeek = (date, ref) => {
-    const d = new Date(ref)
-    const diff = (date - d) / (1000 * 60 * 60 * 24)
-    return Math.abs(diff) <= 3 // approx week window around ref date
-  }
   const sameMonth = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth()
 
   // Filtering
+  const latestDate = useMemo(() => {
+    if (!exportsData.length) return new Date()
+    const timestamps = exportsData.map(r => r.timestamp.getTime())
+    return new Date(Math.max(...timestamps))
+  }, [exportsData])
+
   const filtered = useMemo(() => {
     let rows = exportsData
     // text query
@@ -114,29 +115,52 @@ const ExportsReport = () => {
     if (selectedEmployee !== 'All') rows = rows.filter(r => r.performedBy === selectedEmployee)
     // department
     if (selectedDept !== 'All') rows = rows.filter(r => r.department === selectedDept)
-    // date mode
-    if (dateMode === 'day' && selectedDate) {
-      const ref = new Date(selectedDate)
-      rows = rows.filter(r => sameDay(r.timestamp, ref))
-    }
-    if (dateMode === 'week' && selectedDate) {
-      const ref = new Date(selectedDate)
-      rows = rows.filter(r => inWeek(r.timestamp, ref))
-    }
-    if (dateMode === 'month' && selectedDate) {
-      const ref = new Date(selectedDate)
-      rows = rows.filter(r => sameMonth(r.timestamp, ref))
-    }
-    if (dateMode === 'range' && startDate && endDate) {
-      const s = new Date(startDate)
-      const e = new Date(endDate)
-      rows = rows.filter(r => r.timestamp >= s && r.timestamp <= e)
-    }
+
+    // status
+    if (statusFilter !== 'All') rows = rows.filter(r => r.status === statusFilter)
+    
+    // date preset
+    rows = rows.filter(r => {
+      const dt = r.timestamp
+      if (datePreset === 'today') return sameDay(dt, latestDate)
+      if (datePreset === 'week') {
+        const diffMs = latestDate.getTime() - dt.getTime()
+        const diffDays = diffMs / (1000 * 60 * 60 * 24)
+        return diffDays <= 7 && diffDays >= 0
+      }
+      if (datePreset === 'month') return sameMonth(dt, latestDate)
+      if (datePreset === 'year') return dt.getFullYear() === latestDate.getFullYear()
+      return true
+    })
+    
     return rows
-  }, [exportsData, query, selectedManager, selectedEmployee, selectedDept, dateMode, selectedDate, startDate, endDate])
+  }, [exportsData, query, selectedManager, selectedEmployee, selectedDept, statusFilter, datePreset, latestDate])
+
+  const clearFilters = () => {
+    setSelectedManager('All')
+    setSelectedEmployee('All')
+    setSelectedDept('All')
+    setStatusFilter('All')
+    setDatePreset('year')
+    setQuery('')
+    setCurrentPage(1)
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+        setShowExportMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   // Pagination
   const pageCount = Math.max(1, Math.ceil(filtered.length / entriesPerPage))
+  const totalExports = filtered.length
   const paginatedRows = useMemo(() => {
     const start = (currentPage - 1) * entriesPerPage
     return filtered.slice(start, start + entriesPerPage)
@@ -155,7 +179,6 @@ const ExportsReport = () => {
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-    logAudit('Download Row', 'Success', row.fileName, row.performedBy, row.department, '')
   }
 
   const handleRerun = (rowIdx) => {
@@ -167,7 +190,6 @@ const ExportsReport = () => {
       item.status = ok ? 'Success' : 'Failed'
       item.notes = ok ? '' : 'Retry failed'
       next[rowIdx] = item
-      logAudit('Re-run Export', item.status, item.fileName, item.performedBy, item.department, item.notes)
       return next
     })
   }
@@ -175,64 +197,55 @@ const ExportsReport = () => {
   // Excel & PDF export of filtered dataset
   const exportExcel = () => {
     const rows = filtered.map(r => ({
-      'File Name': r.fileName,
-      'Department': r.department,
-      'Performed By': r.performedBy,
-      'Date & Time': r.timestamp.toLocaleString(),
-      'Status': r.status,
-      'Notes / Errors': r.notes || '',
+      [isRTL ? 'اسم الملف' : 'File Name']: r.fileName,
+      [isRTL ? 'القسم' : 'Department']: r.department,
+      [isRTL ? 'نفّذ بواسطة' : 'Performed By']: r.performedBy,
+      [isRTL ? 'التاريخ والوقت' : 'Date & Time']: r.timestamp.toLocaleString(),
+      [isRTL ? 'الحالة' : 'Status']: r.status,
+      [isRTL ? 'اخطاء' : 'error']: r.notes || '',
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Exports')
     XLSX.writeFile(wb, 'exports_report.xlsx')
-    logAudit('Export Excel', 'Success', 'exports_report.xlsx', 'System', selectedDept === 'All' ? 'Mixed' : selectedDept)
+    setShowExportMenu(false)
   }
 
   const exportPDF = () => {
     const doc = new jsPDF('l', 'pt', 'a4')
-    doc.setFontSize(14)
-    doc.text(isRTL ? 'تقرير التصدير' : 'Exports Report', 40, 40)
-    const head = [[
+    
+    const tableColumn = [
       isRTL ? 'اسم الملف' : 'File Name',
       isRTL ? 'القسم' : 'Department',
       isRTL ? 'نفّذ بواسطة' : 'Performed By',
       isRTL ? 'التاريخ والوقت' : 'Date & Time',
       isRTL ? 'الحالة' : 'Status',
-      isRTL ? 'ملاحظات' : 'Notes',
-    ]]
-    const body = filtered.map(r => [r.fileName, r.department, r.performedBy, r.timestamp.toLocaleString(), r.status, r.notes || ''])
-    doc.autoTable({ head, body, startY: 60 })
+      isRTL ? 'اخطاء' : 'error'
+    ]
+    
+    const tableRows = filtered.map(r => [
+      r.fileName,
+      r.department,
+      r.performedBy,
+      r.timestamp.toLocaleString(),
+      r.status,
+      r.notes || ''
+    ])
+
+    doc.text(isRTL ? 'تقرير التصدير' : 'Exports Report', 40, 40)
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 60,
+      styles: { font: 'Amiri-Regular', fontSize: 10, halign: isRTL ? 'right' : 'left' },
+      headStyles: { fillColor: [66, 139, 202], halign: isRTL ? 'right' : 'left' }
+    })
     doc.save('exports_report.pdf')
-    logAudit('Export PDF', 'Success', 'exports_report.pdf', 'System', selectedDept === 'All' ? 'Mixed' : selectedDept)
+    setShowExportMenu(false)
   }
 
   // Charts
-  const deptCounts = useMemo(() => {
-    const m = new Map()
-    filtered.forEach(r => m.set(r.department, (m.get(r.department) || 0) + 1))
-    const labels = Array.from(m.keys())
-    const data = labels.map(l => m.get(l))
-    return { labels, data }
-  }, [filtered])
-
-  const successVsFailed = useMemo(() => {
-    const s = filtered.filter(r => r.status === 'Success').length
-    const f = filtered.filter(r => r.status === 'Failed').length
-    return { success: s, failed: f }
-  }, [filtered])
-
-  const timelineData = useMemo(() => {
-    const fmt = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toLocaleDateString()
-    const m = new Map()
-    filtered.forEach(r => {
-      const key = fmt(r.timestamp)
-      m.set(key, (m.get(key) || 0) + 1)
-    })
-    const labels = Array.from(m.keys()).sort((a, b) => new Date(a) - new Date(b))
-    const data = labels.map(l => m.get(l))
-    return { labels, data }
-  }, [filtered])
+  // Removed Exports Over Time line chart per latest design
 
   // UI helpers
   const StatusBadge = ({ status }) => {
@@ -264,330 +277,599 @@ const ExportsReport = () => {
       notes: ok ? '' : 'Service unavailable',
     }
     setExportsData(prev => [newRecord, ...prev])
-    logAudit('Export', newRecord.status, newRecord.fileName, user, newRecord.department, newRecord.notes)
     setShowExportModal(false)
     setExportForm({ fileName: '', department: 'Customers' })
   }
+  const successful = filtered.filter(x => x.status === 'Success').length
+  const failed = filtered.filter(x => x.status === 'Failed').length
+  const successVsFailed = { success: successful, failed }
 
+  const exportsPerManager = useMemo(() => {
+    const map = new Map()
+    filtered.forEach(r => {
+      map.set(r.performedBy, (map.get(r.performedBy) || 0) + 1)
+    })
+    return map
+  }, [filtered])
+
+  const kpiCards = [
+    {
+      title: isRTL ? 'إجمالي الصادرات' : 'Total Exports',
+      value: totalExports,
+      icon: FileText,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20'
+    },
+    {
+      title: isRTL ? 'الصادرات الناجحة' : 'Successful Exports',
+      value: successful,
+      icon: CheckCircle2,
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bgColor: 'bg-emerald-50 dark:bg-emerald-900/20'
+    },
+    {
+      title: isRTL ? 'الصادرات الفاشلة' : 'Failed Exports',
+      value: failed,
+      icon: XCircle,
+      color: 'text-red-600 dark:text-red-400',
+      bgColor: 'bg-red-50 dark:bg-red-900/20'
+    }
+  ]
   return (
-    <>
-      <div className="p-4 space-y-4">
-        {/* Header + Actions */}
-        <div className="glass-panel rounded-xl p-4">
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="text-2xl font-semibold">{isRTL ? 'لوحة تقارير التصدير' : 'Exports Report'}</h1>
-            <div className="flex items-center gap-2">
-              <button className="btn btn-glass" onClick={exportPDF}>
-                <RiDownloadLine className="mr-1" /> {isRTL ? 'تنزيل PDF' : 'Download PDF'}
-              </button>
-              <button className="btn btn-glass" onClick={exportExcel}>
-                <RiDownloadLine className="mr-1" /> {isRTL ? 'تنزيل Excel' : 'Download Excel'}
-              </button>
-              <button className="btn btn-primary" onClick={()=>setShowExportModal(true)}>
-                {isRTL ? 'تصدير' : 'Export'}
-              </button>
-            </div>
+    <div className="p-4 md:px-6 md:py-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-hidden min-w-0">
+      <div className="mb-6">
+        <BackButton to="/reports" />
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold dark:text-white mb-2">
+              {isRTL ? 'تقرير التصدير' : 'Exports Report'}
+            </h1>
+            <p className="dark:text-white text-sm">
+              {isRTL ? 'راقب كل عمليات تصدير البيانات ومشاكلها' : 'Monitor all data export operations and issues'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-8">
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2 dark:text-white font-semibold">
+            <Filter size={20} className="text-blue-500 dark:text-blue-400" />
+            <h3>{isRTL ? 'تصفية' : 'Filter'}</h3>
+          </div>
+
+          <div className="flex items-center gap-2">
+
+            <button
+              onClick={clearFilters}
+              className="px-3 py-1.5 text-sm dark:text-white hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              {isRTL ? 'إعادة تعيين' : 'Reset'}
+            </button>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="glass-panel rounded-xl p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div>
-              <label className="label">{isRTL ? 'المدير' : 'Manager'}</label>
-              <select className="input w-full" value={selectedManager} onChange={(e)=>{ setSelectedManager(e.target.value); setCurrentPage(1) }}>
-                {managers.map(m => <option key={m} value={m}>{m}</option>)}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                {isRTL ? 'المدير' : 'Manager'}
+              </label>
+              <select
+                value={selectedManager}
+                onChange={(e) => {
+                  setSelectedManager(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-transparent"
+              >
+                <option value="all">{isRTL ? 'الكل' : 'All'}</option>
+                {managers.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
               </select>
             </div>
-            <div>
-              <label className="label">{isRTL ? 'الموظف' : 'Employee'}</label>
-              <select className="input w-full" value={selectedEmployee} onChange={(e)=>{ setSelectedEmployee(e.target.value); setCurrentPage(1) }}>
-                {employees.map(m => <option key={m} value={m}>{m}</option>)}
+            
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                {isRTL ? 'الحالة' : 'Status'}
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-transparent"
+              >
+                <option value="All">{isRTL ? 'الكل' : 'All'}</option>
+                <option value="Success">{isRTL ? 'ناجح' : 'Success'}</option>
+                <option value="Failed">{isRTL ? 'فشل' : 'Failed'}</option>
               </select>
             </div>
-            <div>
-              <label className="label">{isRTL ? 'القسم' : 'Department'}</label>
-              <select className="input w-full" value={selectedDept} onChange={(e)=>{ setSelectedDept(e.target.value); setCurrentPage(1) }}>
-                {departments.map(d => <option key={d} value={d}>{d}</option>)}
+            
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'تاريخ الإجراء' : 'Action Date'}
+              </label>
+              <select
+                value={datePreset}
+                onChange={(e) => {
+                  setDatePreset(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-transparent"
+              >
+                {dateOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
-            <div>
-              <label className="label">{isRTL ? 'الوضع الزمني' : 'Date Mode'}</label>
-              <select className="input w-full" value={dateMode} onChange={(e)=>{ setDateMode(e.target.value); setCurrentPage(1) }}>
-                <option value="day">{isRTL ? 'اليوم' : 'Day'}</option>
-                <option value="week">{isRTL ? 'الأسبوع' : 'Week'}</option>
-                <option value="month">{isRTL ? 'الشهر' : 'Month'}</option>
-                <option value="range">{isRTL ? 'نطاق' : 'Range'}</option>
-              </select>
-            </div>
-            {dateMode !== 'range' && (
-              <div>
-                <label className="label">{isRTL ? 'التاريخ' : 'Date'}</label>
-                <input type="date" className="input w-full" value={selectedDate} onChange={(e)=>{ setSelectedDate(e.target.value); setCurrentPage(1) }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {kpiCards.map((card, idx) => {
+          const Icon = card.icon
+          return (
+            <div
+              key={idx}
+              className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
+            >
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110">
+                <Icon size={80} className={card.color} />
               </div>
-            )}
-            {dateMode === 'range' && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label">{isRTL ? 'من' : 'Start'}</label>
-                  <input type="date" className="input w-full" value={startDate} onChange={(e)=>{ setStartDate(e.target.value); setCurrentPage(1) }} />
+              <div className="flex flex-col justify-between h-full relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl ${card.bgColor} ${card.color}`}>
+                    <Icon size={20} />
+                  </div>
+                  <h3 className="dark:text-white text-sm font-semibold opacity-80">
+                    {card.title}
+                  </h3>
                 </div>
-                <div>
-                  <label className="label">{isRTL ? 'إلى' : 'End'}</label>
-                  <input type="date" className="input w-full" value={endDate} onChange={(e)=>{ setEndDate(e.target.value); setCurrentPage(1) }} />
+                <div className="flex items-baseline space-x-2 rtl:space-x-reverse pl-1">
+                  <span className={`text-2xl font-bold ${card.color}`}>
+                    {card.value}
+                  </span>
                 </div>
               </div>
-            )}
-            <div>
-              <label className="label">{isRTL ? 'بحث' : 'Search'}</label>
-              <div className="relative">
-                <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input value={query} onChange={(e)=>{ setQuery(e.target.value); setCurrentPage(1) }} placeholder={isRTL ? 'بحث بالاسم' : 'Search file name'} className="input w-full pl-9" />
-              </div>
             </div>
-          </div>
-        </div>
-        {/* Spacer under filters */}
-        <div className="h-4" aria-hidden="true" />
+          )
+        })}
+      </div>
 
-        {/* KPI cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="glass-panel rounded-xl p-4">
-            <div className="text-sm text-gray-500">{isRTL ? 'إجمالي عمليات التصدير' : 'Total Exports'}</div>
-            <div className="text-2xl font-semibold">{kpis.total}</div>
-          </div>
-          <div className="glass-panel rounded-xl p-4">
-            <div className="text-sm text-gray-500">{isRTL ? 'الناجحة' : 'Successful'}</div>
-            <div className="text-2xl font-semibold text-emerald-600">{kpis.success}</div>
-          </div>
-          <div className="glass-panel rounded-xl p-4">
-            <div className="text-sm text-gray-500">{isRTL ? 'الفاشلة' : 'Failed'}</div>
-            <div className="text-2xl font-semibold text-rose-600">{kpis.failed}</div>
-          </div>
-        </div>
-        {/* Spacer under cards */}
-        <div className="h-4" aria-hidden="true" />
-
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-          <div className="glass-panel rounded-xl p-4">
-            <div className="font-semibold mb-2">{isRTL ? 'التصدير حسب القسم' : 'Exports per Department'}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
+        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm p-4 rounded-2xl">
+          <div className="font-semibold mb-2">{isRTL ? 'كمية التصدير لكل مدير' : 'Exports Quantity per Manager'}</div>
+          <div className="h-[260px]">
             <Bar
               data={{
-                labels: deptCounts.labels,
-                datasets: [{ label: isRTL ? 'عدد' : 'Count', data: deptCounts.data, backgroundColor: '#4f46e5' }],
-              }}
-              options={{ responsive: true, plugins: { legend: { display: false } } }}
-            />
-          </div>
-          <div className="glass-panel rounded-xl p-4">
-            <div className="font-semibold mb-2">{isRTL ? 'الناجحة مقابل الفاشلة' : 'Successful vs Failed'}</div>
-            <Doughnut
-              data={{
-                labels: [isRTL ? 'ناجحة' : 'Successful', isRTL ? 'فاشلة' : 'Failed'],
-                datasets: [{
-                  data: [successVsFailed.success, successVsFailed.failed],
-                  backgroundColor: ['#10b981', '#ef4444'],
-                  borderColor: ['#ffffff', '#ffffff'],
-                  borderWidth: 2,
-                  hoverOffset: 6,
-                }],
+                labels: Array.from(exportsPerManager.keys()),
+                datasets: [
+                  {
+                    label: isRTL ? 'التصدير' : 'Exports',
+                    data: Array.from(exportsPerManager.values()),
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderRadius: 6,
+                    maxBarThickness: 40,
+                    categoryPercentage: 0.6,
+                    barPercentage: 0.7,
+                  },
+                ],
               }}
               options={{
                 responsive: true,
-                cutout: '70%',
-                plugins: {
-                  legend: { position: 'bottom', labels: { usePointStyle: true } },
-                  tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw}` } },
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: {
+                    ticks: {
+                      autoSkip: false,
+                      maxRotation: 0,
+                      minRotation: 0,
+                    },
+                    title: {
+                      display: true,
+                      text: isRTL ? 'المدير' : 'Manager',
+                    },
+                  },
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      stepSize: 1,
+                      precision: 0,
+                      callback: v => `${v}`,
+                    },
+                    title: {
+                      display: true,
+                      text: isRTL ? 'التصدير' : 'Exports',
+                    },
+                  },
                 },
               }}
             />
-            <div className="mt-3 flex items-center gap-4 text-sm">
+          </div>
+        </div>
+        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm p-4 rounded-2xl">
+          <div className="text-sm font-medium mb-2 dark:text-white">{isRTL ? 'الناجحة / الفاشلة' : 'Success & Fail'}</div>
+          <div className="h-[260px] flex flex-col items-center justify-center">
+            <div className="flex-1 flex items-center justify-center">
+              <PieChart
+                segments={[
+                  { label: isRTL ? 'ناجحة' : 'Success', value: successVsFailed.success, color: '#10b981' },
+                  { label: isRTL ? 'فاشلة' : 'Failed', value: successVsFailed.failed, color: '#ef4444' },
+                ]}
+                size={170}
+                centerValue={totalExports}
+                centerLabel={isRTL ? 'إجمالي التصدير' : 'Total Exports'}
+              />
+            </div>
+            <div className="mt-4 w-full flex items-center justify-between gap-4 text-xs md:text-sm">
               <div className="inline-flex items-center gap-2">
-                <span className="inline-block w-2 h-2 rounded-full bg-emerald-600" />
-                <span className="text-emerald-700">{isRTL ? 'ناجحة' : 'Successful'}: {successVsFailed.success}</span>
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-[var(--content-text)] dark:text-white">
+                  {isRTL ? 'ناجحة' : 'Success'}: {successVsFailed.success}
+                  {totalExports > 0 && (
+                    <> ({Math.round((successVsFailed.success / totalExports) * 100)}%)</>
+                  )}
+                </span>
               </div>
               <div className="inline-flex items-center gap-2">
-                <span className="inline-block w-2 h-2 rounded-full bg-rose-600" />
-                <span className="text-rose-700">{isRTL ? 'فاشلة' : 'Failed'}: {successVsFailed.failed}</span>
+                <span className="inline-block w-2 h-2 rounded-full bg-rose-500" />
+                <span className="text-[var(--content-text)] dark:text-white">
+                  {isRTL ? 'فاشلة' : 'Failed'}: {successVsFailed.failed}
+                  {totalExports > 0 && (
+                    <> ({Math.round((successVsFailed.failed / totalExports) * 100)}%)</>
+                  )}
+                </span>
               </div>
             </div>
           </div>
-          <div className="glass-panel rounded-xl p-4">
-            <div className="font-semibold mb-2">{isRTL ? 'العمليات عبر الزمن' : 'Exports Over Time'}</div>
-            <Line
-              data={{
-                labels: timelineData.labels,
-                datasets: [{ label: isRTL ? 'التصدير' : 'Exports', data: timelineData.data, borderColor: '#4f46e5', backgroundColor: '#4f46e5' }],
-              }}
-              options={{ responsive: true, plugins: { legend: { display: false } } }}
-            />
+        </div>
+      </div>
+
+      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden mb-4">
+        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold dark:text-white">
+            {isRTL ? 'قائمة التصدير' : 'Exports List'}
+          </h2>
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+            >
+              <FaFileExport /> {isRTL ? 'تصدير' : 'Export'}
+              <ChevronDown
+                className={`transform transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`}
+                size={12}
+              />
+            </button>
+            {showExportMenu && (
+              <div
+                className={`absolute top-full ${isRTL ? 'left-0' : 'right-0'} mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-48`}
+              >
+                <button
+                  onClick={exportExcel}
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                >
+                  <FaFileExcel className="text-green-600" /> {isRTL ? 'تصدير كـ Excel' : 'Export to Excel'}
+                </button>
+                <button
+                  onClick={exportPDF}
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                >
+                  <FaFilePdf className="text-red-600" /> {isRTL ? 'تصدير كـ PDF' : 'Export to PDF'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Spacer above table */}
-        <div className="h-4" aria-hidden="true" />
-        {/* Table */}
-        <div className="glass-panel rounded-xl p-0 overflow-hidden">
-          <table className="nova-table nova-table--glass w-full">
-            <thead>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left dark:text-white">
+            <thead className="text-xs dark:text-white uppercase bg-gray-50/50 dark:bg-gray-700/50 dark:text-white">
               <tr>
-                <th className="nova-th"></th>
-                <th className="nova-th">{isRTL ? 'اسم الملف' : 'File Name'}</th>
-                <th className="nova-th">{isRTL ? 'القسم' : 'Department'}</th>
-                <th className="nova-th">{isRTL ? 'نفّذ بواسطة' : 'Performed By'}</th>
-                <th className="nova-th">{isRTL ? 'التاريخ والوقت' : 'Date & Time'}</th>
-                <th className="nova-th">{isRTL ? 'الحالة' : 'Status'}</th>
-                <th className="nova-th">{isRTL ? 'ملاحظات' : 'Notes'}</th>
-                <th className="nova-th">{isRTL ? 'الإجراء' : 'Action'}</th>
+                <th className="px-4 py-3 md:hidden"></th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'اسم الملف' : 'File Name'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'الحالة' : 'Status'}</th>
+                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'القسم' : 'Department'}</th>
+                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'نفّذ بواسطة' : 'Performed By'}</th>
+                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'التاريخ والوقت' : 'Date & Time'}</th>
+                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'اخطاء' : 'error'}</th>
+                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'الإجراء' : 'Action'}</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedRows.map((row, idx) => (
-                <tr key={idx} className="nova-tr">
-                  <td className="nova-td"><input type="checkbox" checked={selectAll} onChange={(e)=>setSelectAll(e.target.checked)} aria-label="select" /></td>
-                  <td className="nova-td text-sm">{row.fileName}</td>
-                  <td className="nova-td text-sm">{row.department}</td>
-                  <td className="nova-td text-sm">{row.performedBy}</td>
-                  <td className="nova-td text-sm">{row.timestamp.toLocaleString()}</td>
-                  <td className="nova-td"><StatusBadge status={row.status} /></td>
-                  <td className="nova-td text-sm">{row.notes || '-'}</td>
-                  <td className="nova-td">
-                    <div className="flex items-center gap-2">
-                      <button onClick={()=>setPreviewItem(row)} className="text-primary text-sm hover:underline">{isRTL ? 'معاينة' : 'Preview'}</button>
-                      <button onClick={()=>handleDownloadRowCSV(row)} className="btn btn-glass px-2 py-1" title={isRTL ? 'تنزيل' : 'Download'}>
-                        <RiDownloadLine />
-                      </button>
-                      {row.status === 'Failed' && (
-                        <button onClick={()=>handleRerun((currentPage - 1) * entriesPerPage + idx)} className="btn btn-glass px-2 py-1" title={isRTL ? 'إعادة المحاولة' : 'Re-run'}>
-                          <RiRefreshLine />
-                        </button>
+              {paginatedRows.length > 0 ? (
+                paginatedRows.map((row) => {
+                  const isExpanded = expandedRows.has(row.fileName + row.timestamp.getTime()) // Use unique ID if available, otherwise combine fields
+                  // Wait, row doesn't have ID in mock data? Let's check mk function.
+                  // mk doesn't add ID. I should use index or generate ID. 
+                  // But paginatedRows map index is local.
+                  // I'll use a combination of fileName and timestamp for key and ID.
+                  const rowId = row.fileName + row.timestamp.getTime()
+                  const isRowExpanded = expandedRows.has(rowId)
+
+                  return (
+                    <React.Fragment key={rowId}>
+                      <tr className="border-b dark:text-white dark:border-gray-700/50 hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                        <td className="px-4 py-3 md:hidden">
+                          <button
+                            onClick={() => toggleRow(rowId)}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                          >
+                            {isRowExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 font-medium  dark:text-white whitespace-nowrap">
+                          {row.fileName}
+                        </td>
+                        <td className="px-4 py-3">
+                          <StatusBadge status={row.status} />
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell">{row.department}</td>
+                        <td className="px-4 py-3 hidden md:table-cell">{row.performedBy}</td>
+                        <td className="px-4 py-3 hidden md:table-cell" dir="ltr">
+                          {row.timestamp.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell max-w-xs truncate" title={row.notes}>
+                          {row.notes || '—'}
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setPreviewItem(row)}
+                              className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400 transition-colors"
+                              title={isRTL ? 'معاينة' : 'Preview'}
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDownloadRowCSV(row)}
+                              className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400 transition-colors"
+                              title={isRTL ? 'تحميل' : 'Download'}
+                            >
+                              <Download size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {isRowExpanded && (
+                        <tr className="md:hidden bg-gray-50 dark:bg-gray-800/50">
+                          <td colSpan={8} className="px-4 py-3 space-y-2">
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div className=" dark:text-white">{isRTL ? 'القسم' : 'Department'}:</div>
+                              <div>{row.department}</div>
+                              <div className=" dark:text-white">{isRTL ? 'نفّذ بواسطة' : 'Action By'}:</div>
+                              <div>{row.performedBy}</div>
+                              <div className=" dark:text-white">{isRTL ? 'تاريخ الإجراء' : 'Action Date'}:</div>
+                              <div dir="ltr">{row.timestamp.toLocaleString()}</div>
+                              <div className=" dark:text-white">{isRTL ? 'خطأ' : 'Error'}:</div>
+                              <div>{row.notes || '—'}</div>
+                              <div className="col-span-2 flex justify-end gap-2 mt-2">
+                                <button
+                                  onClick={() => setPreviewItem(row)}
+                                  className="flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-xs"
+                                >
+                                  <Eye size={14} /> {isRTL ? 'معاينة' : 'Preview'}
+                                </button>
+                                <button
+                                  onClick={() => handleDownloadRowCSV(row)}
+                                  className="flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-xs"
+                                >
+                                  <Download size={14} /> {isRTL ? 'تحميل' : 'Download'}
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {paginatedRows.length === 0 && (
+                    </React.Fragment>
+                  )
+                })
+              ) : (
                 <tr>
-                  <td className="nova-td text-center text-sm text-gray-500" colSpan={8}>{isRTL ? 'لا توجد نتائج' : 'No results'}</td>
+                  <td colSpan={8} className="px-4 py-8 text-center dark:text-white">
+                    {isRTL ? 'لا توجد بيانات' : 'No data available'}
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
-          {/* Table footer */}
-          <div className="p-3 flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              {isRTL ? 'العناصر لكل صفحة' : 'Entries per page'}
-              <select value={entriesPerPage} onChange={(e)=>{ setEntriesPerPage(Number(e.target.value)); setCurrentPage(1) }} className="ml-2 input w-20">
+        </div>
+
+        <div className="px-6 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex items-center justify-between gap-3">
+          <div className="text-[11px] sm:text-xs text-[var(--muted-text)]">
+            {isRTL
+              ? `إظهار ${Math.min((currentPage - 1) * entriesPerPage + 1, totalExports)}-${Math.min(currentPage * entriesPerPage, totalExports)} من ${totalExports}`
+              : `Showing ${Math.min((currentPage - 1) * entriesPerPage + 1, totalExports)}-${Math.min(currentPage * entriesPerPage, totalExports)} of ${totalExports}`}
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                title={isRTL ? 'السابق' : 'Prev'}
+              >
+                {isRTL ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <ChevronLeft className="w-4 h-4" />
+                )}
+              </button>
+              <span className="text-sm whitespace-nowrap">
+                {isRTL
+                  ? `الصفحة ${currentPage} من ${pageCount}`
+                  : `Page ${currentPage} of ${pageCount}`}
+              </span>
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(p => Math.min(p + 1, pageCount))}
+                disabled={currentPage === pageCount}
+                title={isRTL ? 'التالي' : 'Next'}
+              >
+                {isRTL ? (
+                  <ChevronLeft className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] sm:text-xs text-[var(--muted-text)] whitespace-nowrap">
+                {isRTL ? 'لكل صفحة:' : 'Per page:'}
+              </span>
+              <select
+                className="input w-24 text-sm py-0 px-2 h-8"
+                value={entriesPerPage}
+                onChange={(e) => {
+                  setEntriesPerPage(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+              >
                 <option value={10}>10</option>
-                <option value={25}>25</option>
+                <option value={20}>20</option>
                 <option value={50}>50</option>
+                <option value={100}>100</option>
               </select>
             </div>
-            <div className="flex items-center gap-2">
-              <button className="btn btn-glass" disabled={currentPage === 1} onClick={()=>setCurrentPage(p=>Math.max(1, p-1))}>{isRTL ? 'السابق' : 'Prev'}</button>
-              <span className="text-sm">{currentPage} / {pageCount}</span>
-              <button className="btn btn-glass" disabled={currentPage === pageCount} onClick={()=>setCurrentPage(p=>Math.min(pageCount, p+1))}>{isRTL ? 'التالي' : 'Next'}</button>
-            </div>
           </div>
         </div>
-        {/* Spacer below table */}
-        <div className="h-4" aria-hidden="true" />
-
-        {/* Audit Trail */}
-        <div className="glass-panel rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="font-semibold">{isRTL ? 'سجل التدقيق' : 'Audit Trail'}</div>
-            <div className="text-xs text-gray-500">{isRTL ? 'يسجّل جميع عمليات التصدير والتنزيل وإعادة المحاولة' : 'Logs all export, download, and re-run actions'}</div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="nova-table nova-table--glass w-full">
-              <thead>
-                <tr>
-                  <th className="nova-th">{isRTL ? 'الوقت' : 'Time'}</th>
-                  <th className="nova-th">{isRTL ? 'الإجراء' : 'Action'}</th>
-                  <th className="nova-th">{isRTL ? 'اسم الملف' : 'File Name'}</th>
-                  <th className="nova-th">{isRTL ? 'القسم' : 'Department'}</th>
-                  <th className="nova-th">{isRTL ? 'المستخدم' : 'User'}</th>
-                  <th className="nova-th">{isRTL ? 'الحالة' : 'Status'}</th>
-                  <th className="nova-th">{isRTL ? 'ملاحظات' : 'Notes'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {auditLogs.length === 0 && (
-                  <tr>
-                    <td className="nova-td text-center text-sm text-gray-500" colSpan={7}>{isRTL ? 'لا توجد سجلات بعد' : 'No logs yet'}</td>
-                  </tr>
-                )}
-                {auditLogs.map((log) => (
-                  <tr key={log.id} className="nova-tr">
-                    <td className="nova-td text-sm">{new Date(log.timestamp).toLocaleString()}</td>
-                    <td className="nova-td text-sm">{log.action}</td>
-                    <td className="nova-td text-sm">{log.fileName}</td>
-                    <td className="nova-td text-sm">{log.department}</td>
-                    <td className="nova-td text-sm">{log.user}</td>
-                    <td className="nova-td"><StatusBadge status={log.status} /></td>
-                    <td className="nova-td text-sm">{log.notes || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Preview Modal */}
-        {previewItem && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40" onClick={()=>setPreviewItem(null)} />
-            <div className="relative z-50 glass-panel rounded-xl p-4 w-[560px] max-w-[95vw]">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">{isRTL ? 'معاينة الملف' : 'File Preview'}</h2>
-                <button className="btn btn-glass" onClick={()=>setPreviewItem(null)}>{isRTL ? 'إغلاق' : 'Close'}</button>
-              </div>
-              <div className="text-sm space-y-2">
-                <div><span className="font-medium">{isRTL ? 'الاسم' : 'Name'}:</span> {previewItem.fileName}</div>
-                <div><span className="font-medium">{isRTL ? 'القسم' : 'Department'}:</span> {previewItem.department}</div>
-                <div><span className="font-medium">{isRTL ? 'الحالة' : 'Status'}:</span> {previewItem.status}</div>
-                <div><span className="font-medium">{isRTL ? 'نفّذ بواسطة' : 'Performed By'}:</span> {previewItem.performedBy}</div>
-                <div><span className="font-medium">{isRTL ? 'التاريخ' : 'Date'}:</span> {previewItem.timestamp.toLocaleString()}</div>
-              </div>
-              <div className="mt-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent text-xs text-gray-600 dark:text-gray-300">
-                {isRTL ? 'هذه معاينة وصفية.' : 'This is a descriptive preview.'}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Export Modal */}
-        {showExportModal && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40" onClick={()=>setShowExportModal(false)} />
-            <div className="relative z-50 glass-panel rounded-xl p-4 w-[560px] max-w-[95vw]">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">{isRTL ? 'تصدير جديد' : 'New Export'}</h2>
-                <button className="btn btn-glass" onClick={()=>setShowExportModal(false)}>{isRTL ? 'إغلاق' : 'Close'}</button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="label">{isRTL ? 'اسم الملف' : 'File Name'}</label>
-                  <input className="input w-full" value={exportForm.fileName} onChange={(e)=>setExportForm(f=>({ ...f, fileName: e.target.value }))} placeholder={isRTL ? 'clients_export.csv' : 'clients_export.csv'} />
-                </div>
-                <div>
-                  <label className="label">{isRTL ? 'القسم' : 'Department'}</label>
-                  <select className="input w-full" value={exportForm.department} onChange={(e)=>setExportForm(f=>({ ...f, department: e.target.value }))}>
-                    {departments.filter(d => d !== 'All').map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center justify-end gap-2">
-                <button className="btn btn-glass" onClick={()=>setShowExportModal(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</button>
-                <button className="btn btn-primary" onClick={performExport}>{isRTL ? 'تنفيذ التصدير' : 'Perform Export'}</button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-    </>
+
+      {previewItem && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setPreviewItem(null)}
+          />
+          <div className="relative z-50 glass-panel rounded-xl p-4 w-[560px] max-w-[95vw] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold dark:text-white">
+                {isRTL ? 'معاينة الملف' : 'File Preview'}
+              </h2>
+              <button
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                onClick={() => setPreviewItem(null)}
+              >
+                <XCircle size={20} className=" dark:text-white" />
+              </button>
+            </div>
+            <div className="text-sm space-y-2 dark:text-white">
+              <div>
+                <span className="font-medium dark:text-white">
+                  {isRTL ? 'الاسم' : 'Name'}:
+                </span>{' '}
+                {previewItem.fileName}
+              </div>
+              <div>
+                <span className="font-medium dark:text-white">
+                  {isRTL ? 'القسم' : 'Department'}:
+                </span>{' '}
+                {previewItem.department}
+              </div>
+              <div>
+                <span className="font-medium dark:text-white">
+                  {isRTL ? 'الحالة' : 'Status'}:
+                </span>{' '}
+                {previewItem.status}
+              </div>
+              <div>
+                <span className="font-medium dark:text-white">
+                  {isRTL ? 'نفّذ بواسطة' : 'Performed By'}:
+                </span>{' '}
+                {previewItem.performedBy}
+              </div>
+              <div>
+                <span className="font-medium dark:text-white">
+                  {isRTL ? 'التاريخ' : 'Date'}:
+                </span>{' '}
+                {previewItem.timestamp.toLocaleString()}
+              </div>
+            </div>
+            <div className="mt-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-xs dark:text-white">
+              {isRTL ? 'هذه معاينة وصفية.' : 'This is a descriptive preview.'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showExportModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowExportModal(false)}
+          />
+          <div className="relative z-50 glass-panel rounded-xl p-4 w-[560px] max-w-[95vw] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold dark:text-white">
+                {isRTL ? 'تصدير جديد' : 'New Export'}
+              </h2>
+              <button
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                onClick={() => setShowExportModal(false)}
+              >
+                 <XCircle size={20} className=" dark:text-white" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="label dark:text-white">
+                  {isRTL ? 'اسم الملف' : 'File Name'}
+                </label>
+                <input
+                  className="input w-full dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  value={exportForm.fileName}
+                  onChange={(e) =>
+                    setExportForm(f => ({ ...f, fileName: e.target.value }))
+                  }
+                  placeholder={isRTL ? 'clients_export.csv' : 'clients_export.csv'}
+                />
+              </div>
+              <div>
+                <label className="label dark:text-white">
+                  {isRTL ? 'القسم' : 'Department'}
+                </label>
+                <select
+                  className="input w-full dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  value={exportForm.department}
+                  onChange={(e) =>
+                    setExportForm(f => ({ ...f, department: e.target.value }))
+                  }
+                >
+                  {departments
+                    .filter(d => d !== 'All')
+                    .map(d => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                className="px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700  dark:text-white transition-colors"
+                onClick={() => setShowExportModal(false)}
+              >
+                {isRTL ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors" onClick={performExport}>
+                {isRTL ? 'تنفيذ التصدير' : 'Perform Export'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

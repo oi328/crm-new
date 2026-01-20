@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@shared/context/ThemeProvider'
-import { FaPlus, FaSearch, FaFilter, FaDownload, FaEye, FaEdit, FaTrash, FaPhone, FaEnvelope, FaWhatsapp, FaVideo, FaChevronDown, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
+import { useAppState } from '@shared/context/AppStateProvider'
+import { FaPlus, FaSearch, FaFilter, FaDownload, FaEye, FaEdit, FaTrash, FaPhone, FaEnvelope, FaWhatsapp, FaVideo, FaChevronDown, FaChevronLeft, FaChevronRight, FaExchangeAlt, FaClone } from 'react-icons/fa'
 // import { api } from '../utils/api'
 import LeadModal from '../components/LeadModal'
 import AddActionModal from '../components/AddActionModal'
@@ -9,6 +10,7 @@ import EnhancedLeadDetailsModal from '@shared/components/EnhancedLeadDetailsModa
 import ImportLeadsModal from '../components/ImportLeadsModal'
 import ColumnToggle from '../components/ColumnToggle'
 import LeadHoverTooltip from '../components/LeadHoverTooltip'
+import CompareLeadsModal from '../components/CompareLeadsModal'
 import { useStages } from '../hooks/useStages'
 import { useNavigate, useLocation } from 'react-router-dom'
  // Import the custom checkbox
@@ -18,6 +20,7 @@ import * as XLSX from 'xlsx'
 export const Leads = () => {
   const { t, i18n } = useTranslation()
   const { theme } = useTheme()
+  const { user } = useAppState()
   const navigate = useNavigate()
   const { stages, statuses } = useStages()
   const isRtl = String(i18n.language || '').startsWith('ar')
@@ -26,26 +29,26 @@ export const Leads = () => {
   const [leads, setLeads] = useState([])
   const [filteredLeads, setFilteredLeads] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [sourceFilter, setSourceFilter] = useState('all')
-  const [priorityFilter, setPriorityFilter] = useState('all')
+  const [sourceFilter, setSourceFilter] = useState([])
+  const [priorityFilter, setPriorityFilter] = useState([])
   // New filter states
-  const [projectFilter, setProjectFilter] = useState('all')
-  const [stageFilter, setStageFilter] = useState('all')
-  const [managerFilter, setManagerFilter] = useState('all')
-  const [salesPersonFilter, setSalesPersonFilter] = useState('all')
-  const [createdByFilter, setCreatedByFilter] = useState('all')
+  const [projectFilter, setProjectFilter] = useState([])
+  const [stageFilter, setStageFilter] = useState([])
+  const [managerFilter, setManagerFilter] = useState([])
+  const [salesPersonFilter, setSalesPersonFilter] = useState([])
+  const [createdByFilter, setCreatedByFilter] = useState([])
   const [assignDateFilter, setAssignDateFilter] = useState('')
   const [actionDateFilter, setActionDateFilter] = useState('')
   const [creationDateFilter, setCreationDateFilter] = useState('')
-  const [oldStageFilter, setOldStageFilter] = useState('all')
+  const [oldStageFilter, setOldStageFilter] = useState([])
   const [closedDateFilter, setClosedDateFilter] = useState('')
-  const [campaignFilter, setCampaignFilter] = useState('all')
-  const [countryFilter, setCountryFilter] = useState('all')
+  const [campaignFilter, setCampaignFilter] = useState([])
+  const [countryFilter, setCountryFilter] = useState([])
   const [expectedRevenueFilter, setExpectedRevenueFilter] = useState('')
   const [emailFilter, setEmailFilter] = useState('')
-  const [whatsappIntentsFilter, setWhatsappIntentsFilter] = useState('all')
-  const [callTypeFilter, setCallTypeFilter] = useState('all')
-  const [duplicateStatusFilter, setDuplicateStatusFilter] = useState('all')
+  const [whatsappIntentsFilter, setWhatsappIntentsFilter] = useState([])
+  const [actionTypeFilter, setActionTypeFilter] = useState([])
+  const [duplicateStatusFilter, setDuplicateStatusFilter] = useState([])
   const [sortBy, setSortBy] = useState('createdAt')
   const [sortOrder, setSortOrder] = useState('desc')
   const [selectedLeads, setSelectedLeads] = useState([])
@@ -53,7 +56,7 @@ export const Leads = () => {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingLead, setEditingLead] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(20)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   const [pageSearch, setPageSearch] = useState('')
   const [exportFrom, setExportFrom] = useState(1)
   const [exportTo, setExportTo] = useState(1)
@@ -91,10 +94,10 @@ export const Leads = () => {
     }
   }, []);
   
-  const textColor = 'text-gray-900 dark:text-white'
+  const textColor = 'text-theme-text dark:text-white'
   const bgColor = 'bg-white dark:bg-gray-900'
   
-  const tableHeaderBgClass = 'bg-gray-100 dark:bg-gray-900/95'
+  const tableHeaderBgClass = 'bg-theme-sidebar dark:bg-gray-900/95'
   const buttonBase = 'text-sm font-semibold rounded-lg transition-all duration-200 ease-out'
   const primaryButton = `btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none`
   
@@ -179,17 +182,73 @@ export const Leads = () => {
     try {
       const params = new URLSearchParams(location.search || '')
       const s = params.get('stage')
-      if (s) setStageFilter(s)
+      if (s) {
+        setStageFilter(s)
+      } else {
+        setStageFilter('all')
+      }
     } catch (e) {
       console.error('Error parsing URL for stage filter:', e) // FIX 4: Added console.error
     }
   }, [location.search])
+
+  const handleCompareLead = (duplicateLead) => {
+    // Attempt to find the "original" lead
+    // 1. Search by phone number (clean format)
+    // 2. Search by email
+    // 3. Exclude the current duplicate lead ID
+    // 4. Sort by creation date (oldest is original)
+    
+    const cleanPhone = (p) => String(p || '').replace(/[^0-9]/g, '')
+    const targetPhone = cleanPhone(duplicateLead.phone || duplicateLead.mobile)
+    const targetEmail = (duplicateLead.email || '').toLowerCase()
+    
+    const possibleOriginals = leads.filter(l => {
+      if (l.id === duplicateLead.id) return false // Skip self
+      
+      const lPhone = cleanPhone(l.phone || l.mobile)
+      const lEmail = (l.email || '').toLowerCase()
+      
+      const phoneMatch = targetPhone && lPhone && targetPhone === lPhone
+      const emailMatch = targetEmail && lEmail && targetEmail === lEmail
+      
+      return phoneMatch || emailMatch
+    }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    
+    // If found, take the oldest one as original
+    // If not found (e.g. pagination), mock one for demonstration or show alert
+    let originalLead = possibleOriginals[0]
+    
+    if (!originalLead) {
+       // Mock for demonstration if no original found in current list
+       // In production, this should trigger an API call to find the original lead by phone/email
+       originalLead = {
+         ...duplicateLead,
+         id: 'ORIG-MOCK',
+         assignedTo: 'Sarah Connor', // Different agent
+         createdAt: new Date(new Date(duplicateLead.createdAt).setDate(new Date(duplicateLead.createdAt).getDate() - 5)).toISOString(), // 5 days earlier
+         stage: 'qualified',
+         notes: 'Original lead interaction history...',
+         lastContact: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString()
+       }
+    }
+    
+    setCompareData({
+      duplicate: duplicateLead,
+      original: originalLead
+    })
+    setShowCompareModal(true)
+  }
 
   // Hover tooltip state
   const [hoveredLead, setHoveredLead] = useState(null)
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
   const [showTooltip, setShowTooltip] = useState(false)
   const tooltipRef = useRef(null)
+  
+  // Compare Modal State
+  const [showCompareModal, setShowCompareModal] = useState(false)
+  const [compareData, setCompareData] = useState({ duplicate: null, original: null })
 
   // Filter visibility state
   const [showAllFilters, setShowAllFilters] = useState(false)
@@ -548,27 +607,60 @@ export const Leads = () => {
 
   useEffect(() => {
     let filtered = leads.filter(lead => {
+      // VISIBILITY CONTROL: Duplicate leads only visible to managers
+      const isDuplicateStage = String(lead.stage || '').toLowerCase() === 'duplicate';
+      const userRole = (user?.role || '').toLowerCase();
+      const isManagerOrAdmin = ['admin', 'manager', 'sales director', 'operations manager', 'super admin'].some(r => userRole.includes(r));
+      
+      if (isDuplicateStage && !isManagerOrAdmin) {
+        return false;
+      }
+
       // FIX 2: Added String() and || '' for safe access and toLowerCase() for case-insensitive search
       const matchesSearch = String(lead.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                            String(lead.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                            String(lead.company || '').toLowerCase().includes(searchTerm.toLowerCase())
 
-      // FIX 2: Added String() and || '' for safe access and toLowerCase() for case-insensitive comparison
-      const matchesSource = sourceFilter === 'all' || String(lead.source || '').toLowerCase() === sourceFilter.toLowerCase()
-      const matchesPriority = priorityFilter === 'all' || String(lead.priority || '').toLowerCase() === priorityFilter.toLowerCase()
+      // Helper for multi-select matching
+      const matchesMulti = (filter, value) => {
+        if (!Array.isArray(filter) || filter.length === 0) return true;
+        const v = String(value || '').toLowerCase();
+        return filter.some(f => String(f).toLowerCase() === v);
+      }
+
+      const matchesSource = matchesMulti(sourceFilter, lead.source)
+      const matchesPriority = matchesMulti(priorityFilter, lead.priority)
+      const matchesProject = matchesMulti(projectFilter, lead.project)
       
-      // FIX 2: New filter conditions - Added safety and case-insensitivity
-      const matchesProject = projectFilter === 'all' || String(lead.project || '').toLowerCase() === projectFilter.toLowerCase()
-      const matchesStage = stageFilter === 'all' || String(lead.stage || '').toLowerCase() === stageFilter.toLowerCase()
-      const matchesManager = managerFilter === 'all' || String(lead.manager || '').toLowerCase() === managerFilter.toLowerCase()
-      const matchesSalesPerson = salesPersonFilter === 'all' || String(lead.assignedTo || '').toLowerCase() === salesPersonFilter.toLowerCase()
-      const matchesCreatedBy = createdByFilter === 'all' || String(lead.createdBy || '').toLowerCase() === createdByFilter.toLowerCase()
-      const matchesOldStage = oldStageFilter === 'all' || String(lead.oldStage || '').toLowerCase() === oldStageFilter.toLowerCase()
-      const matchesCampaign = campaignFilter === 'all' || String(lead.campaign || '').toLowerCase() === campaignFilter.toLowerCase()
-      const matchesCountry = countryFilter === 'all' || String(lead.country || '').toLowerCase() === countryFilter.toLowerCase()
-      const matchesWhatsappIntents = whatsappIntentsFilter === 'all' || String(lead.whatsappIntents || '').toLowerCase() === whatsappIntentsFilter.toLowerCase()
-      const matchesCallType = callTypeFilter === 'all' || String(lead.callType || '').toLowerCase() === callTypeFilter.toLowerCase()
-      const matchesDuplicateStatus = duplicateStatusFilter === 'all' || String(lead.duplicateStatus || '').toLowerCase() === duplicateStatusFilter.toLowerCase()
+      // Smart stage matching for Dashboard filters (Multi-select)
+      let matchesStage = false;
+      if (!Array.isArray(stageFilter) || stageFilter.length === 0) {
+        matchesStage = true;
+      } else {
+        matchesStage = stageFilter.some(f => {
+          const s = String(lead.stage || lead.status || '').toLowerCase();
+          const filterVal = f.toLowerCase();
+          const src = String(lead.source || '').toLowerCase();
+          const cType = String(lead.actionType || '').toLowerCase();
+          
+          if (filterVal === 'new' || filterVal === 'new lead') return s === 'new' || s === 'new lead';
+          if (filterVal === 'duplicate') return s === 'duplicate' || String(lead.isDuplicate) === 'true' || String(lead.duplicateStatus) === 'duplicate';
+          if (filterVal === 'pending') return s === 'pending' || s === 'in-progress' || s === 'qualified' || s.includes('qualif');
+          if (filterVal === 'coldcalls' || filterVal === 'cold calls') return s.includes('cold') || src === 'cold-call' || src === 'direct' || cType === 'cold-call';
+          if (filterVal === 'followup' || filterVal === 'follow up') return s.includes('follow') || cType === 'follow-up';
+          return s === filterVal;
+        });
+      }
+
+      const matchesManager = matchesMulti(managerFilter, lead.manager)
+      const matchesSalesPerson = matchesMulti(salesPersonFilter, lead.assignedTo)
+      const matchesCreatedBy = matchesMulti(createdByFilter, lead.createdBy)
+      const matchesOldStage = matchesMulti(oldStageFilter, lead.oldStage)
+      const matchesCampaign = matchesMulti(campaignFilter, lead.campaign)
+      const matchesCountry = matchesMulti(countryFilter, lead.country)
+      const matchesWhatsappIntents = matchesMulti(whatsappIntentsFilter, lead.whatsappIntents)
+      const matchesActionType = matchesMulti(actionTypeFilter, lead.actionType)
+      const matchesDuplicateStatus = matchesMulti(duplicateStatusFilter, lead.duplicateStatus)
       
       // Date filters
       const matchesAssignDate = !assignDateFilter || (lead.assignDate && lead.assignDate.includes(assignDateFilter))
@@ -583,7 +675,7 @@ export const Leads = () => {
       return matchesSearch && matchesSource && matchesPriority &&
              matchesProject && matchesStage && matchesManager && matchesSalesPerson &&
              matchesCreatedBy && matchesOldStage && matchesCampaign && matchesCountry &&
-             matchesWhatsappIntents && matchesCallType && matchesDuplicateStatus &&
+             matchesWhatsappIntents && matchesActionType && matchesDuplicateStatus &&
              matchesAssignDate && matchesActionDate && matchesCreationDate && matchesClosedDate &&
              matchesEmail && matchesExpectedRevenue
     })
@@ -611,7 +703,7 @@ export const Leads = () => {
       projectFilter, stageFilter, managerFilter, salesPersonFilter, createdByFilter,
       assignDateFilter, actionDateFilter, creationDateFilter, oldStageFilter, closedDateFilter,
       campaignFilter, countryFilter, expectedRevenueFilter, emailFilter, whatsappIntentsFilter,
-      callTypeFilter, duplicateStatusFilter])
+      actionTypeFilter, duplicateStatusFilter, user])
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -620,7 +712,7 @@ export const Leads = () => {
       case 'in-progress': return 'bg-yellow-100 text-black dark:bg-yellow-900 dark:text-yellow-200'
       case 'converted': return 'bg-purple-100 text-black dark:bg-purple-900 dark:text-purple-200'
       case 'lost': return 'bg-red-100 text-black dark:bg-red-900 dark:text-red-200'
-      default: return 'bg-gray-100 text-black dark:bg-gray-900 dark:text-gray-200'
+      default: return 'bg-gray-100  dark:bg-gray-900 dark:text-white'
     }
   }
 
@@ -629,7 +721,7 @@ export const Leads = () => {
       case 'high': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
       case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
       case 'low': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      default: return 'bg-gray-100  dark:bg-gray-900 dark:text-white'
     }
   }
 
@@ -981,16 +1073,16 @@ export const Leads = () => {
             onClick={() => navigate('/leads/new')}
             className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none gap-2 max-[480px]:px-2 max-[480px]:py-1.5 max-[480px]:h-8 max-[480px]:gap-1 max-[480px]:text-xs whitespace-nowrap"
           >
-            <FaPlus className="w-3 h-3" />
-            <span>{t('Add New Lead')}</span>
+            <FaPlus className=" w-3 h-3" />
+            <span className="text-white">{t('Add New Lead')}</span>
           </button>
-          <button onClick={() => setShowImportModal(true)} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none gap-2 max-[480px]:px-2 max-[480px]:py-1.5 max-[480px]:h-8 max-[480px]:gap-1 max-[480px]:text-xs whitespace-nowrap" >
-            <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button onClick={() => setShowImportModal(true)} className="btn btn-sm bg-blue-600 hover:bg-blue-700  border-none gap-2 max-[480px]:px-2 max-[480px]:py-1.5 max-[480px]:h-8 max-[480px]:gap-1 max-[480px]:text-xs whitespace-nowrap" >
+            <svg className="  w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 3v12" />
               <path d="M8 11l4 4 4-4" />
               <path d="M4 20h16" />
             </svg>
-            <span>{t('Import Leads')}</span>
+            <span className="text-white">{t('Import')}</span>
           </button>
         </div>
       </div>
@@ -1009,30 +1101,29 @@ export const Leads = () => {
             <button
               onClick={() => {
                 setSearchTerm('')
-                setSourceFilter('all')
-                setPriorityFilter('all')
-                setProjectFilter('all')
-                setStageFilter('all')
-                setManagerFilter('all')
-                setSalesPersonFilter('all')
-                setCreatedByFilter('all')
+                setSourceFilter([])
+                setPriorityFilter([])
+                setProjectFilter([])
+                setStageFilter([])
+                setManagerFilter([])
+                setSalesPersonFilter([])
+                setCreatedByFilter([])
                 setAssignDateFilter('')
                 setActionDateFilter('')
                 setCreationDateFilter('')
-                setOldStageFilter('all')
+                setOldStageFilter([])
                 setClosedDateFilter('')
-                setCampaignFilter('all')
-                setCountryFilter('all')
+                setCampaignFilter([])
+                setCountryFilter([])
                 setExpectedRevenueFilter('')
                 setEmailFilter('')
-                setWhatsappIntentsFilter('all')
-                setCallTypeFilter('all')
-                setDuplicateStatusFilter('all')
+                setActionTypeFilter([])
+                setDuplicateStatusFilter([])
                 setSortBy('createdAt')
                 setSortOrder('desc')
                 setCurrentPage(1)
               }}
-              className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              className="px-3 py-1.5 text-sm dark:text-white hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             >
               {t('Reset')}
             </button>
@@ -1054,7 +1145,7 @@ export const Leads = () => {
                 placeholder={t('Search leads...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-2 py-1 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-theme-text text-sm font-medium  dark:placeholder-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
               />
             </div>
 
@@ -1068,12 +1159,12 @@ export const Leads = () => {
               </label>
               <SearchableSelect
                 value={sourceFilter}
+                multiple={true}
                 onChange={setSourceFilter}
                 options={[
-                  { value: 'all', label: t('All Sources') },
                   ...Array.from(new Set(leads.map(l => l.source).filter(Boolean))).map(source => ({ value: source, label: t(source) }))
                 ]}
-                placeholder={t('All Sources')}
+                placeholder={t('All')}
                 isRTL={isRtl}
               />
             </div>
@@ -1088,14 +1179,14 @@ export const Leads = () => {
               </label>
               <SearchableSelect
                 value={priorityFilter}
+                multiple={true}
                 onChange={setPriorityFilter}
                 options={[
-                  { value: 'all', label: t('All Priority') },
                   { value: 'high', label: t('High') },
                   { value: 'medium', label: t('Medium') },
                   { value: 'low', label: t('Low') }
                 ]}
-                placeholder={t('All Priority')}
+                placeholder={t('All ')}
                 isRTL={isRtl}
               />
             </div>
@@ -1110,12 +1201,13 @@ export const Leads = () => {
               </label>
               <SearchableSelect
                 value={projectFilter}
+                multiple={true}
                 onChange={setProjectFilter}
                 options={[
-                  { value: 'all', label: t('All Projects') },
+                  
                   ...Array.from(new Set(leads.map(l => l.project).filter(Boolean))).map(project => ({ value: project, label: t(project) }))
                 ]}
-                placeholder={t('All Projects')}
+                placeholder={t('All')}
                 isRTL={isRtl}
               />
             </div>
@@ -1134,17 +1226,17 @@ export const Leads = () => {
                   {t('Stage')}
                 </label>
                 <SearchableSelect
-                  value={stageFilter}
-                  onChange={setStageFilter}
+                value={stageFilter}
+                multiple={true}
+                onChange={setStageFilter}
                   options={[
-                    { value: 'all', label: t('All Stages') },
                     { value: 'new', label: `🆕 ${t('New Lead')}` },
                     { value: 'duplicate', label: `🔄 ${t('Duplicate')}` },
                     { value: 'pending', label: `⏳ ${t('Pending')}` },
                     { value: 'cold-call', label: `📞 ${t('Cold Calls')}` },
                     { value: 'follow-up', label: `🔁 ${t('follow up')}` }
                   ]}
-                  placeholder={t('All Stages')}
+                  placeholder={t('All ')}
                   isRTL={isRtl}
                 />
               </div>
@@ -1159,12 +1251,12 @@ export const Leads = () => {
                 </label>
                 <SearchableSelect
                   value={managerFilter}
+                  multiple={true}
                   onChange={setManagerFilter}
                   options={[
-                    { value: 'all', label: t('All Managers') },
                     ...Array.from(new Set(leads.map(l => l.manager).filter(Boolean))).map(manager => ({ value: manager, label: t(manager) }))
                   ]}
-                  placeholder={t('All Managers')}
+                  placeholder={t('All ')}
                   isRTL={isRtl}
                 />
               </div>
@@ -1181,10 +1273,9 @@ export const Leads = () => {
                   value={salesPersonFilter}
                   onChange={setSalesPersonFilter}
                   options={[
-                    { value: 'all', label: t('All Sales Persons') },
                     ...Array.from(new Set(leads.map(l => l.assignedTo).filter(Boolean))).map(salesPerson => ({ value: salesPerson, label: t(salesPerson) }))
                   ]}
-                  placeholder={t('All Sales Persons')}
+                  placeholder={t('All ')}
                   isRTL={isRtl}
                 />
               </div>
@@ -1198,13 +1289,13 @@ export const Leads = () => {
                   {t('Created By')}
                 </label>
                 <SearchableSelect
-                  value={createdByFilter}
-                  onChange={setCreatedByFilter}
+                value={createdByFilter}
+                multiple={true}
+                onChange={setCreatedByFilter}
                   options={[
-                    { value: 'all', label: t('All Creators') },
                     ...Array.from(new Set(leads.map(l => l.createdBy).filter(Boolean))).map(creator => ({ value: creator, label: t(creator) }))
                   ]}
-                  placeholder={t('All Creators')}
+                  placeholder={t('All ')}
                   isRTL={isRtl}
                 />
               </div>
@@ -1221,10 +1312,9 @@ export const Leads = () => {
                   value={oldStageFilter}
                   onChange={setOldStageFilter}
                   options={[
-                    { value: 'all', label: t('All Old Stages') },
                     ...Array.from(new Set(leads.map(l => l.oldStage).filter(Boolean))).map(oldStage => ({ value: oldStage, label: t(oldStage) }))
                   ]}
-                  placeholder={t('All Old Stages')}
+                  placeholder={t('All')}
                   isRTL={isRtl}
                 />
               </div>
@@ -1239,12 +1329,12 @@ export const Leads = () => {
                 </label>
                 <SearchableSelect
                   value={campaignFilter}
+                  multiple={true}
                   onChange={setCampaignFilter}
                   options={[
-                    { value: 'all', label: t('All Campaigns') },
                     ...Array.from(new Set(leads.map(l => l.campaign).filter(Boolean))).map(campaign => ({ value: campaign, label: t(campaign) }))
                   ]}
-                  placeholder={t('All Campaigns')}
+                  placeholder={t('All ')}
                   isRTL={isRtl}
                 />
               </div>
@@ -1258,13 +1348,13 @@ export const Leads = () => {
                   {t('Country')}
                 </label>
                 <SearchableSelect
-                  value={countryFilter}
-                  onChange={setCountryFilter}
+                value={countryFilter}
+                multiple={true}
+                onChange={setCountryFilter}
                   options={[
-                    { value: 'all', label: t('All Countries') },
                     ...Array.from(new Set(leads.map(l => l.country).filter(Boolean))).map(country => ({ value: country, label: t(country) }))
                   ]}
-                  placeholder={t('All Countries')}
+                  placeholder={t('All ')}
                   isRTL={isRtl}
                 />
               </div>
@@ -1283,7 +1373,7 @@ export const Leads = () => {
                   placeholder={t('Enter minimum value...')}
                   value={expectedRevenueFilter}
                   onChange={(e) => setExpectedRevenueFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white  text-xs font-medium  dark:placeholder-text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
 
@@ -1298,55 +1388,41 @@ export const Leads = () => {
                   placeholder={t('Search email...')}
                   value={emailFilter}
                   onChange={(e) => setEmailFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-theme-text text-sm font-medium  dark:placeholder-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
 
-              {/* Whatsapp Intents Filter */}
-              <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
-                  <FaWhatsapp size={12} className="text-blue-500 dark:text-blue-400" />
-                  {t('WhatsApp Intents')}
-                </label>
-                <SearchableSelect
-                  value={whatsappIntentsFilter}
-                  onChange={setWhatsappIntentsFilter}
-                  options={[
-                    { value: 'all', label: t('All Intents') },
-                    { value: 'purchase', label: t('Purchase') },
-                    { value: 'inquiry', label: t('Inquiry') },
-                    { value: 'support', label: t('Support') }
-                  ]}
-                  placeholder={t('All Intents')}
-                  isRTL={isRtl}
-                />
-              </div>
 
-              {/* Call Type Filter */}
+
+              {/* action Type Filter */}
               <div className="space-y-1">
                 <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  {t('Call Type')}
+                  {t('action Type')}
                 </label>
                 <SearchableSelect
-                  value={callTypeFilter}
-                  onChange={setCallTypeFilter}
+                  value={actionTypeFilter}
+                  multiple={true}
+                  onChange={setActionTypeFilter}
                   options={[
-                    { value: 'all', label: t('All Call Types') },
-                    { value: 'inbound', label: t('Inbound') },
-                    { value: 'outbound', label: t('Outbound') },
-                    { value: 'follow-up', label: t('Follow-up') }
+                    { value: 'call', label: t('Call ') },
+                    { value: 'whatsapp', label: t('whatsapp') },
+                    { value: 'email', label: t('email') },
+
+                    { value: 'google meet ', label: t('google meet') },
+                    { value: 'sms', label: t('sms ') }
+
                   ]}
-                  placeholder={t('All Call Types')}
+                  placeholder={t('Action Types')}
                   isRTL={isRtl}
                 />
               </div>
 
               {/* Duplicate Status Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v4a1 1 0 001 1h4a1 1 0 001-1V7m0 10v4a1 1 0 001 1h4a1 1 0 001-1v-4m-6-4H6a2 2 0 00-2 2v4a2 2 0 002 2h4m-6-4h4m-4 0v-4" />
                   </svg>
@@ -1354,13 +1430,13 @@ export const Leads = () => {
                 </label>
                 <SearchableSelect
                   value={duplicateStatusFilter}
+                  multiple={true}
                   onChange={setDuplicateStatusFilter}
                   options={[
-                    { value: 'all', label: t('All Duplicates') },
                     { value: 'duplicate', label: t('Duplicate') },
                     { value: 'unique', label: t('Unique') }
                   ]}
-                  placeholder={t('All Duplicates')}
+                  placeholder={t('All ')}
                   isRTL={isRtl}
                 />
               </div>
@@ -1377,7 +1453,7 @@ export const Leads = () => {
                   type="date"
                   value={assignDateFilter}
                   onChange={(e) => setAssignDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-xs font-medium  dark:placeholder-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
 
@@ -1393,7 +1469,7 @@ export const Leads = () => {
                   type="date"
                   value={actionDateFilter}
                   onChange={(e) => setActionDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-xs font-medium  dark:placeholder-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
 
@@ -1409,7 +1485,7 @@ export const Leads = () => {
                   type="date"
                   value={creationDateFilter}
                   onChange={(e) => setCreationDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-xs font-medium  dark:placeholder-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
 
@@ -1425,7 +1501,7 @@ export const Leads = () => {
                   type="date"
                   value={closedDateFilter}
                   onChange={(e) => setClosedDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-xs font-medium  dark:placeholder-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
             </div>
@@ -1437,7 +1513,7 @@ export const Leads = () => {
       </div>
 
       <div className={`flex items-center justify-between mb-3`}>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Leads Pipline')}</h2>
+        <h2 className="text-xl font-bold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Leads Pipline')}</h2>
         <ColumnToggle
           columns={allColumns}
           visibleColumns={visibleColumns}
@@ -1450,7 +1526,7 @@ export const Leads = () => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mb-4">
         <button
-          onClick={() => setStageFilter('all')}
+          onClick={() => setStageFilter([])}
           className={`btn btn-glass text-sm inline-flex items-center justify-between gap-2 px-3 py-2 ${textColor}`}
         >
           <span className="flex items-center gap-2"><span>Σ</span><span>{t('total leads')}</span></span>
@@ -1459,7 +1535,7 @@ export const Leads = () => {
         {sidebarStages.map((s) => (
           <button
             key={s.key}
-            onClick={() => setStageFilter(s.key)}
+            onClick={() => setStageFilter([s.key])}
             className={`btn btn-glass text-sm inline-flex items-center justify-between gap-2 px-3 py-2 ${textColor}`}
           >
             <span className="flex items-center gap-2"><span>{s.icon}</span><span>{t(s.key)}</span></span>
@@ -1470,10 +1546,10 @@ export const Leads = () => {
 
       {/* Main Table */}
       <div className={`glass-panel rounded-2xl overflow-hidden`}>
-        <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center p-3 border-b border-theme-border dark:border-gray-700">
           {selectedLeads.length > 0 ? (
             <div className="flex items-center gap-4 flex-wrap">
-              <span className="text-sm font-medium  dark:text-gray-300">
+              <span className="text-sm font-medium  dark:text-white">
                 {t('Selected')}: {selectedLeads.length} {t('Leads')}
               </span>
 
@@ -1504,7 +1580,7 @@ export const Leads = () => {
                   ]}
                   placeholder={t('Bulk Assign to')}
                   isRTL={isRtl}
-                  className="py-1.5 bg-white dark:bg-transparent backdrop-blur-sm text-sm dark:border-gray-600 min-w-[150px]"
+                  className="py-1.5  dark:bg-transparent backdrop-blur-sm text-sm dark:border-gray-600 min-w-[150px]"
                 />
                 <button onClick={applyBulkAssign} className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none">
                   {t('Assign')}
@@ -1520,11 +1596,11 @@ export const Leads = () => {
               </button>
             </div>
           ) : (
-            <span className="text-sm font-medium  dark:text-gray-400">{t('No leads selected for bulk actions')}</span>
+            <span className="text-sm font-medium  dark:text-white">{t('No leads selected for bulk actions')}</span>
           )}
         </div>
         <div ref={scrollXRef} className="mt-4 w-full overflow-x-auto rounded-lg shadow-md backdrop-blur-lg" style={{ '--table-header-bg': theme === 'dark' ? 'transparent' : undefined, '--scroll-bg': theme === 'dark' ? '#0f172a' : '#f9fafb' }}>
-          <table className="w-max min-w-full divide-y divide-gray-200 dark:divide-gray-700 dark:text-white" style={{ tableLayout: 'auto' }}>
+          <table className="w-max min-w-full divide-y divide-theme-border dark:divide-gray-700 dark:text-white" style={{ tableLayout: 'auto' }}>
             <thead className={` ${tableHeaderBgClass} backdrop-blur-md sticky top-0 z-30 shadow-md`} style={{ backgroundColor: 'var(--table-header-bg)' }}>
               <tr>
                 {/* Checkbox Column */}
@@ -1533,7 +1609,7 @@ export const Leads = () => {
                     type="checkbox"
                     checked={selectedLeads.length === paginatedLeads.length && paginatedLeads.length > 0}
                     onChange={handleSelectAll}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-theme-border rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
                   />
                 </th>
 
@@ -1542,7 +1618,7 @@ export const Leads = () => {
                   <th
                     key="lead"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white w-40 whitespace-nowrap cursor-pointer`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-theme-text dark:text-white w-40 whitespace-nowrap cursor-pointer`}
                     style={{ backgroundColor: 'var(--table-header-bg)' }}
                     onClick={() => {
                       if (sortBy === 'lead') {
@@ -1577,7 +1653,7 @@ export const Leads = () => {
                   <th
                     key="actions"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white whitespace-nowrap sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-30`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-theme-text dark:text-white whitespace-nowrap sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-30`}
                     style={{ minWidth: '160px', backgroundColor: 'var(--table-header-bg)' }}
                   >
                     {t('Actions')}
@@ -1589,7 +1665,7 @@ export const Leads = () => {
                     <th
                       key={key}
                       scope="col"
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white whitespace-nowrap ${['source','stage','priority','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
+                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-theme-text dark:text-white whitespace-nowrap ${['source','stage','priority','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
                       style={{ minWidth: `${columnMinWidths[key] || 140}px`, backgroundColor: 'var(--table-header-bg)' }}
                       onClick={['source','stage','priority','expectedRevenue'].includes(key) ? () => {
                         if (sortBy === key) {
@@ -1612,7 +1688,7 @@ export const Leads = () => {
               </tr>
             </thead>
 
-            <tbody className=" divide-y divide-gray-200 dark:bg-transparent dark:divide-gray-700">
+            <tbody className=" divide-y divide-theme-border dark:bg-transparent dark:divide-gray-700">
               {paginatedLeads.map((lead, index) => (
                 <tr
                   key={lead.id}
@@ -1630,15 +1706,20 @@ export const Leads = () => {
                       checked={selectedLeads.includes(lead.id)}
                       onChange={() => handleSelectLead(lead.id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-theme-border rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
                     />
                   </td>
 
                   {/* Lead Info */}
                   {visibleColumns.lead && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium  dark:text-white">
-                      <div className="font-semibold text-base">{lead.name}</div>
-                      <div className=" dark:text-gray-400 text-xs mt-0.5">{lead.company}</div>
+                      <div className="font-semibold text-base flex items-center gap-1">
+                        {lead.name}
+                        {String(lead.stage || lead.status || '').toLowerCase().includes('duplicate') && (
+                          <FaClone className="text-red-500" size={12} title={t('Duplicate Lead')} />
+                        )}
+                      </div>
+                      <div className=" dark:text-white text-xs mt-0.5">{lead.company}</div>
                     </td>
                   )}
 
@@ -1664,22 +1745,37 @@ export const Leads = () => {
 
                   {/* Actions (after Contact) */}
                   {visibleColumns.actions && (
-                    <td className={`px-6 py-3 whitespace-nowrap text-xs font-medium ${activeRowId === lead.id ? `sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-gray-50 dark:bg-slate-900/25 border border-gray-200 dark:border-slate-700/40 shadow-sm` : ''} `}>
+                    <td className={`px-6 py-3 whitespace-nowrap text-xs font-medium ${activeRowId === lead.id ? `sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-gray-50 dark:bg-slate-900/25 border border-theme-border dark:border-slate-700/40 shadow-sm` : ''} `}>
                       <div className="flex items-center gap-2 flex-nowrap">
-                        <button
-                          title={t('Preview')}
-                          onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowLeadModal(true); }}
-                          className={`inline-flex items-center justify-center ${theme === 'light' ? 'text-gray-700 hover:text-blue-500' : 'text-indigo-300 hover:text-indigo-400'}`}
-                        >
-                          <FaEye size={16} className={`${theme === 'light' ? 'text-gray-700' : 'text-indigo-300'}`} />
-                        </button>
-                        <button
-                          title={t('Add Action')}
-                          onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowAddActionModal(true) }}
-                          className={`inline-flex items-center justify-center ${theme === 'light' ? 'text-gray-700 hover:text-blue-500' : 'text-emerald-300 hover:text-emerald-400'}`}
-                        >
-                          <FaPlus size={16} className={`${theme === 'light' ? 'text-gray-700' : 'text-emerald-300'}`} />
-                        </button>
+                        {!String(lead.stage || lead.status || '').toLowerCase().includes('duplicate') ? (
+                          <>
+                            <button
+                              title={t('Preview')}
+                              onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowLeadModal(true); }}
+                              className={`inline-flex items-center justify-center ${theme === 'light' ? 'text-gray-700 hover:text-blue-500' : 'text-indigo-300 hover:text-indigo-400'}`}
+                            >
+                              <FaEye size={16} className={`${theme === 'light' ? 'text-gray-700' : 'text-indigo-300'}`} />
+                            </button>
+                            <button
+                              title={t('Add Action')}
+                              onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setShowAddActionModal(true) }}
+                              className={`inline-flex items-center justify-center ${theme === 'light' ? 'text-gray-700 hover:text-blue-500' : 'text-emerald-300 hover:text-emerald-400'}`}
+                            >
+                              <FaPlus size={16} className={`${theme === 'light' ? 'text-gray-700' : 'text-emerald-300'}`} />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            title={t('Compare')}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              handleCompareLead(lead);
+                            }}
+                            className={`inline-flex items-center justify-center ${theme === 'light' ? 'text-red-600 hover:text-red-700' : 'text-red-400 hover:text-red-300'}`}
+                          >
+                            <FaExchangeAlt size={16} />
+                          </button>
+                        )}
                         <button
                           title={t('Call')}
                           onClick={(e) => { e.stopPropagation(); const raw = lead.phone || lead.mobile || ''; const digits = String(raw).replace(/[^0-9]/g, ''); if (digits) window.open(`tel:${digits}`); }}
@@ -1715,14 +1811,14 @@ export const Leads = () => {
 
                   {/* Project */}
                   {visibleColumns.project && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.project}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white" style={{ minWidth: `${columnMinWidths.project}px` }}>
                       {lead.project || '-'}
                     </td>
                   )}
 
                   {/* Sales Person */}
                   {visibleColumns.salesPerson && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.salesPerson}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white" style={{ minWidth: `${columnMinWidths.salesPerson}px` }}>
                       {(() => {
                         const s = String(lead.stage || '').toLowerCase();
                         const isNew = s.includes('new') || s.includes('جديد') || s.includes('نيوليد');
@@ -1733,14 +1829,14 @@ export const Leads = () => {
 
                   {/* Last Comment */}
                   {visibleColumns.lastComment && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.lastComment}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white" style={{ minWidth: `${columnMinWidths.lastComment}px` }}>
                       {lead.notes || '-'}
                     </td>
                   )}
 
                   {/* Stage */}
                   {visibleColumns.stage && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.stage}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white" style={{ minWidth: `${columnMinWidths.stage}px` }}>
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold leading-5 rounded-full ${getStatusColor(lead.stage)}`}>
                         {t(lead.stage || 'N/A')}
                       </span>
@@ -1749,14 +1845,14 @@ export const Leads = () => {
 
                   {/* Expected Revenue */}
                   {visibleColumns.expectedRevenue && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.expectedRevenue}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white" style={{ minWidth: `${columnMinWidths.expectedRevenue}px` }}>
                       {lead.estimatedValue ? `${lead.estimatedValue.toLocaleString()} ${t('SAR')}` : '-'}
                     </td>
                   )}
 
                   {/* Priority */}
                   {visibleColumns.priority && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.priority}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white" style={{ minWidth: `${columnMinWidths.priority}px` }}>
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold leading-5 rounded-full ${getPriorityColor(lead.priority)}`}>
                         {t(lead.priority || 'N/A')}
                       </span>
@@ -1770,31 +1866,38 @@ export const Leads = () => {
           </table>
           
           {paginatedLeads.length === 0 && (
-            <div className="text-center py-10  dark:text-gray-400">
+            <div className="text-center py-10 text-theme-text dark:text-white">
               <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium  dark:text-white">{t('No Leads Found')}</h3>
-              <p className="mt-1 text-sm  dark:text-gray-400">{t('Try adjusting your filters or adding new leads.')}</p>
+              <h3 className="mt-2 text-sm font-medium text-theme-text dark:text-white">{t('No Leads Found')}</h3>
+              <p className="mt-1 text-sm text-theme-text dark:text-white">{t('Try adjusting your filters or adding new leads.')}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Pagination Controls */}
-      <nav className="flex flex-col gap-4 p-3 lg:p-4 border-t border-gray-200 dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
+      <nav className="flex flex-col gap-4 p-3 lg:p-4 border-t border-theme-border dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
         {/* Row 1: Show Entries & Page Navigation */}
         <div className="flex  lg:flex-row justify-between items-center gap-3">
           {/* Show Entries */}
-          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium  dark:text-white">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium text-theme-text dark:text-white">
             <span style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Show')}</span>
-            <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm text-gray-900 dark:text-white text-xs">
+            <select 
+              value={itemsPerPage} 
+              onChange={(e) => { 
+                setItemsPerPage(Number(e.target.value)); 
+                setCurrentPage(1); 
+              }} 
+              className="px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm text-theme-text dark:text-white text-xs"
+            >
               <option value={10}>10</option>
               <option value={20}>20</option>
               <option value={50}>50</option>
               <option value={100}>100</option>
             </select>
-            <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('entries')}</span>
+            <span className="text-xs font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('entries')}</span>
             <label htmlFor="page-search" className="sr-only">{t('Search Page')}</label>
             <input
               id="page-search"
@@ -1811,7 +1914,7 @@ export const Leads = () => {
                   }
                 }
               }}
-              className="ml-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
+              className="ml-2 px-3 py-1.5 border border-theme-border dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm text-theme-text dark:text-white text-xs w-full sm:w-64 lg:w-28  dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
               style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
           </div>
@@ -1821,20 +1924,20 @@ export const Leads = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="block px-3 py-2 text-white focus:text-white leading-tight text-gray-500  border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+              className="block px-3 py-2 leading-tight text-theme-text border border-theme-border rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
             >
-              <span className="sr-only text-white focus:text-white">{t('Previous')}</span>
+              <span className="sr-only text-theme-text dark:text-white focus:text-white">{t('Previous')}</span>
               <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
             </button>
-            <span className="text-sm font-medium text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>
-              {t('Page')} <span className="font-semibold text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>{currentPage}</span> {t('of')} <span className="font-semibold text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>{Math.ceil(filteredLeads.length / itemsPerPage)}</span>
+            <span className="text-sm font-medium text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>
+              {t('Page')} <span className="font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{currentPage}</span> {t('of')} <span className="font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{Math.ceil(filteredLeads.length / itemsPerPage)}</span>
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}
               disabled={currentPage === Math.ceil(filteredLeads.length / itemsPerPage)}
-              className="block px-3 py-2 leading-tight  border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+              className="block px-3 py-2 leading-tight text-theme-text border border-theme-border rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
             >
-              <span className="sr-only text-white focus:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Next')}</span>
+              <span className="sr-only text-theme-text dark:text-white focus:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Next')}</span>
               <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path></svg>
             </button>
           </div>
@@ -1842,8 +1945,8 @@ export const Leads = () => {
 
         {/* Row 2: Export Controls */}
         <div className="flex justify-center items-center">
-          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700 justify-center">
-            <span className="text-xs font-semibold text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>{t('Export Pages')}</span>
+          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-theme-border dark:border-gray-600  dark:bg-gray-700 justify-center">
+            <span className="text-xs font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Export Pages')}</span>
             <input
               type="number"
               min="1"
@@ -1851,10 +1954,10 @@ export const Leads = () => {
               placeholder="From"
               value={exportFrom}
               onChange={(e) => setExportFrom(e.target.value)}
-              className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
+              className="w-16 px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm text-white text-xs focus:border-blue-500"
               style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
-            <span className="text-xs font-semibold text-black dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}>{t('to')}</span>
+            <span className="text-xs font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('to')}</span>
             <input
               type="number"
               min="1"
@@ -1862,7 +1965,7 @@ export const Leads = () => {
               placeholder="To"
               value={exportTo}
               onChange={(e) => setExportTo(e.target.value)}
-              className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
+              className="w-16 px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm text-theme-text dark:text-white text-xs focus:border-blue-500"
               style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
             <button
@@ -1898,6 +2001,9 @@ export const Leads = () => {
                 setSelectedLead(hoveredLead)
                 setShowAddActionModal(true)
                 break
+              case 'compare':
+                 handleCompareLead(hoveredLead)
+                 break
               case 'call':
                 window.open(`tel:${hoveredLead.phone}`)
                 break
@@ -1937,6 +2043,58 @@ export const Leads = () => {
       )}
 
       {/* Modals */}
+      <CompareLeadsModal
+        isOpen={showCompareModal}
+        onClose={() => setShowCompareModal(false)}
+        duplicateLead={compareData.duplicate}
+        originalLead={compareData.original}
+        onResolve={(action) => {
+          const { duplicate, original } = compareData;
+          if (!duplicate || !original) {
+             setShowCompareModal(false);
+             return;
+          }
+
+          switch (action) {
+            case 'warn':
+              // Add warning note to duplicate
+              const warningLead = {
+                ...duplicate,
+                notes: (duplicate.notes ? duplicate.notes + '\n' : '') + `[System Warning] This lead is a duplicate of ${original.name} (#${original.id}).`,
+                // Optional: Update stage to Duplicate if it exists in your workflow
+                // stage: 'Duplicate' 
+              };
+              handleUpdateLead(warningLead);
+              break;
+
+            case 'transfer':
+              // Transfer duplicate to original owner
+              const transferLead = {
+                ...duplicate,
+                assignedTo: original.assignedTo,
+                notes: (duplicate.notes ? duplicate.notes + '\n' : '') + `[System] Ownership transferred to ${original.assignedTo} (resolved as duplicate of #${original.id}).`
+              };
+              handleUpdateLead(transferLead);
+              break;
+
+            case 'keep_original':
+              // Delete duplicate lead
+              const deletedLead = {
+                ...duplicate,
+                deletedAt: new Date().toISOString()
+              };
+              
+              // Save to deleted leads in localStorage
+              const existingDeletedLeads = JSON.parse(localStorage.getItem('deletedLeads') || '[]');
+              existingDeletedLeads.push(deletedLead);
+              localStorage.setItem('deletedLeads', JSON.stringify(existingDeletedLeads));
+              
+              setLeads(prev => prev.filter(l => l.id !== duplicate.id));
+              break;
+          }
+          setShowCompareModal(false);
+        }}
+      />
       {showEditModal && (
         <LeadModal
           isOpen={showEditModal}

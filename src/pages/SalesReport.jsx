@@ -1,4 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import BackButton from '../components/BackButton'
 // Layout removed per app-level layout usage
 import { useTranslation } from 'react-i18next'
 import { FaBullseye, FaClipboardList, FaFileSignature, FaClipboardCheck, FaHandshake, FaTimesCircle } from 'react-icons/fa'
@@ -6,6 +8,8 @@ import { FaBullseye, FaClipboardList, FaFileSignature, FaClipboardCheck, FaHands
 export default function SalesReport() {
   const { t, i18n } = useTranslation()
   const isArabic = i18n.language === 'ar'
+  const isRTL = isArabic
+  const navigate = useNavigate()
 
   // Filters
   const [dateFrom, setDateFrom] = useState('')
@@ -338,6 +342,7 @@ export default function SalesReport() {
 
   return (
     <>
+      <BackButton to="/reports" />
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('Sales Report')}</h1>
         <div className="flex items-center gap-2">
@@ -531,7 +536,129 @@ export default function SalesReport() {
             <span className="text-xs text-[var(--muted-text)]">{t('Show Entries')} {pageData.length}</span>
           </div>
 
-          <div className="overflow-x-auto">
+        {/* Mobile Cards View */}
+        <div className="grid grid-cols-1 gap-4 md:hidden">
+          {pageData.length === 0 && (
+             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+               {t('No data')}
+             </div>
+          )}
+          {pageData.map((row, idx) => (
+            <div key={idx} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
+              {activeTab === 'opportunities' && (
+                <>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-sm dark:text-white">{row.customer}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{row.owner}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      row.status === 'open' ? 'bg-blue-100 text-blue-800' :
+                      row.status === 'closed' ? 'bg-green-100 text-green-800' :
+                      row.status === 'missed' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {row.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 border-t border-white/10 dark:border-gray-700/50 pt-3">
+                    <span className="font-medium">{row.value}</span>
+                    <span>{row.createdAt}</span>
+                  </div>
+                </>
+              )}
+              
+              {activeTab === 'cils' && (
+                 <>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-sm dark:text-white">{row.client}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{row.project}</p>
+                    </div>
+                    <div className="text-right">
+                       <p className="text-xs font-medium dark:text-white">{row.phone}</p>
+                       <p className="text-xs text-gray-500">{row.date}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400 border-t border-white/10 dark:border-gray-700/50 pt-3">
+                    <div>
+                      <span className="block font-medium mb-1">{t('Developer', 'Developer')}</span>
+                      {row.developer}
+                    </div>
+                    <div>
+                      <span className="block font-medium mb-1">{t('Agent', 'Agent')}</span>
+                      {row.agent}
+                    </div>
+                  </div>
+                 </>
+              )}
+
+              {activeTab === 'eoi' && (
+                <>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-sm dark:text-white">{row.lead}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{row.project}</p>
+                    </div>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                      {row.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 border-t border-white/10 dark:border-gray-700/50 pt-3">
+                    <span>{row.date}</span>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'reservation' && (
+                <>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-sm dark:text-white">{row.lead}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{row.unit}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                       row.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {row.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 border-t border-white/10 dark:border-gray-700/50 pt-3">
+                    <span>{row.date}</span>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'deals' && (
+                <>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-sm dark:text-white">{row.customer}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{row.amount}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                       row.status === 'won' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {row.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 border-t border-white/10 dark:border-gray-700/50 pt-3">
+                    <span>{row.date}</span>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'cancel_reasons' && (
+                <div className="flex justify-between items-center">
+                   <span className="font-medium text-sm dark:text-white">{row.reason}</span>
+                   <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">{row.count}</span>
+                </div>
+              )}
+
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
             <table className="nova-table nova-table--glass w-full text-sm min-w-[700px]">
               <thead>
                 <tr>

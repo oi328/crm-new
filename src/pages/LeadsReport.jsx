@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from 'react-router-dom';
+import BackButton from '../components/BackButton';
 // Layout removed per app-level layout usage
 import { mockReservationData, mockCallsData, mockTeamsData, mockTotalAccounts } from '../data/mockData';
 import Tabs from '../components/LeadsReport/Tabs';
 import SalesActions from '../components/LeadsReport/SalesActions';
 import SalesLeads from '../components/LeadsReport/SalesLeads';
-import { LuRefreshCw, LuLoader } from 'react-icons/lu';
+import { RefreshCw, Loader } from 'lucide-react';
 
 // Simulate API fetch
 const fetchData = () => {
@@ -23,8 +25,9 @@ const fetchData = () => {
 };
 
 const LeadsReport = () => {
-  const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('Sales Actions');
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === 'rtl';
+  const [activeTab, setActiveTab] = useState('actions');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [data, setData] = useState({ reservationData: [], callsData: [], teamsData: [], totalAccounts: 0, leads: [] });
@@ -94,25 +97,26 @@ const LeadsReport = () => {
         {/* Header */}
         <div className="flex flex-col gap-2 md:flex-row items-start md:items-center md:justify-between">
           <div className="self-start">
-            <h1 className="text-2xl font-semibold text-left">Leads Report</h1>
+            <BackButton to="/reports" />
+            <h1 className="text-2xl font-semibold text-left">{isRTL ? 'تقرير العملاء المحتملين' : 'Leads Report'}</h1>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400">{t('salesActions.lastUpdate')}: {lastUpdate}</span>
+            <span className="text-xs text-gray-400">{isRTL ? 'آخر تحديث' : 'Last update'}: {lastUpdate}</span>
             <button
               onClick={handleUpdate}
-              title={t('Update')}
-              aria-label={t('Update')}
+              title={isRTL ? 'تحديث' : 'Update'}
+              aria-label={isRTL ? 'تحديث' : 'Update'}
               aria-busy={updating}
               aria-disabled={updating}
               disabled={updating}
               className="relative overflow-hidden inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-500 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 ring-1 ring-blue-400/40 hover:from-blue-500 hover:to-indigo-500 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-blue-400"
             >
               {updating ? (
-                <LuLoader className="w-4 h-4 animate-spin" />
+                <Loader className="w-4 h-4 animate-spin" />
               ) : (
-                <LuRefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" />
               )}
-              {updating ? t('Updating...') : t('Update')}
+              {updating ? (isRTL ? 'جاري التحديث...' : 'Updating...') : (isRTL ? 'تحديث' : 'Update')}
             </button>
             <span className="sr-only" aria-live="polite">{updating ? 'Updating data' : 'Data up to date'}</span>
           </div>
@@ -124,7 +128,7 @@ const LeadsReport = () => {
           <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
         <div className="mt-10">
-          {activeTab === 'Sales Actions' && 
+          {activeTab === 'actions' && 
             <SalesActions 
               reservationData={data.reservationData} 
               callsData={data.callsData} 
@@ -134,7 +138,7 @@ const LeadsReport = () => {
               onUpdate={handleUpdate}
             />
           }
-          {activeTab === 'Sales Leads' && <SalesLeads leads={data.leads} />}
+          {activeTab === 'leads' && <SalesLeads leads={data.leads} />}
         </div>
       </div>
     </>

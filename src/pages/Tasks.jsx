@@ -134,8 +134,90 @@ export default function Tasks() {
   // حالة محلية قابلة للتعديل لصفوف الجدول
   const [rows, setRows] = useState(data)
   const setStatus = (id, status) => setRows(prev => prev.map(r => r.id === id ? { ...r, status } : r))
-  const startTask = (id) => setStatus(id, 'ACCEPTING')
-  const finishTask = (id) => setStatus(id, 'FINISHED')
+  const startTask = (id) => {
+    setStatus(id, 'ACCEPTING')
+    const task = rows.find(item => item.id === id)
+    if (task) {
+      const saveReport = (locationData) => {
+        const checkInReportData = {
+          id: Date.now(),
+          salesPerson: task.salesman || 'Unknown',
+          checkInDate: new Date().toISOString(),
+          location: locationData,
+          status: 'Check In',
+          type: 'task'
+        }
+        try {
+          const saved = localStorage.getItem('checkInReports')
+          const existing = saved ? JSON.parse(saved) : []
+          existing.push(checkInReportData)
+          localStorage.setItem('checkInReports', JSON.stringify(existing))
+        } catch (e) {
+          console.error('Error saving check-in report:', e)
+        }
+      }
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            saveReport({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              address: 'Current Location'
+            })
+          },
+          (error) => {
+            console.error("Error getting location", error)
+            saveReport({ lat: 30.0444, lng: 31.2357, address: 'Cairo, Egypt (Default)' })
+          }
+        )
+      } else {
+        saveReport({ lat: 30.0444, lng: 31.2357, address: 'Cairo, Egypt (Default)' })
+      }
+    }
+  }
+  const finishTask = (id) => {
+    setStatus(id, 'FINISHED')
+    const task = rows.find(item => item.id === id)
+    if (task) {
+      const saveReport = (locationData) => {
+        const checkInReportData = {
+          id: Date.now(),
+          salesPerson: task.salesman || 'Unknown',
+          checkInDate: new Date().toISOString(),
+          location: locationData,
+          status: 'Check Out',
+          type: 'task'
+        }
+        try {
+          const saved = localStorage.getItem('checkInReports')
+          const existing = saved ? JSON.parse(saved) : []
+          existing.push(checkInReportData)
+          localStorage.setItem('checkInReports', JSON.stringify(existing))
+        } catch (e) {
+          console.error('Error saving check-out report:', e)
+        }
+      }
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            saveReport({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              address: 'Current Location'
+            })
+          },
+          (error) => {
+            console.error("Error getting location", error)
+            saveReport({ lat: 30.0444, lng: 31.2357, address: 'Cairo, Egypt (Default)' })
+          }
+        )
+      } else {
+        saveReport({ lat: 30.0444, lng: 31.2357, address: 'Cairo, Egypt (Default)' })
+      }
+    }
+  }
   const cancelTask = (id) => { if (window.confirm(isArabic ? 'تأكيد إلغاء المهمة؟' : 'Confirm cancel task?')) setStatus(id, 'CANCELLED') }
   const clearTasks = () => setRows([])
   const reseedTasks = () => setRows(data)

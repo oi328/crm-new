@@ -90,9 +90,6 @@ export default function ContactUs() {
           <p className="text-sm text-[var(--muted-text)]">{heroText}</p>
         </section>
 
-        <div className="spacer-row w-full">
-          <div className="h-2"></div>
-        </div>
 
         {/* Status banner */}
         {status && (
@@ -104,9 +101,6 @@ export default function ContactUs() {
           </div>
         )}
 
-        <div className="spacer-row w-full">
-          <div className="h-2"></div>
-        </div>
  
         {/* Contact grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 items-stretch gap-6">
@@ -172,9 +166,6 @@ export default function ContactUs() {
               </div>
 
               {/* Actions */}
-              <div className="spacer-row w-full">
-                <div className="h-2"></div>
-              </div>
               <div className={`flex items-center gap-2`}>
                 <button type="submit" className={`btn btn-primary inline-flex items-center gap-2`} disabled={sending}>
                   {sending ? (
@@ -195,8 +186,6 @@ export default function ContactUs() {
           {/* Contact info */}
           <section className={`card glass-card p-4 h-full ${isRTL ? 'text-right' : 'text-left'}`}>
             <div className="text-base font-medium text-[var(--muted-text)] mb-2">{isRTL ? 'وسائل الاتصال' : 'Contact Methods'}</div>
-            <div className="spacer-row w-full"><div className="h-4"></div></div>
-            <div className="spacer-row w-full"><div className="h-4"></div></div>
             <div className="flex flex-col gap-3">
               <div className="group flex items-start gap-3 cm-item cm-anim delay-100 p-2">
                 <span className="text-blue-500">
@@ -246,10 +235,7 @@ export default function ContactUs() {
               </div>
               {/* Social icons */}
               <div className="pt-2 sm:col-span-2 border-t border-gray-200 dark:border-gray-800">
-                <div className="spacer-row w-full"><div className="h-2"></div></div>
                 <div className="text-base font-medium text-[var(--muted-text)] mb-2">{isRTL ? 'تابعنا' : 'Follow us'}</div>
-                <div className="spacer-row w-full"><div className="h-2"></div></div>
-                <div className="spacer-row w-full"><div className="h-2"></div></div>
                 <div className={`flex items-center gap-3 justify-center`}>
                   <a href="#" aria-label="Facebook" className="inline-flex p-2 rounded-md hover:bg-white/10">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-4 h-4">
@@ -277,10 +263,6 @@ export default function ContactUs() {
           </section>
         </div>
 
-        {/* Spacer under contact grid */}
-        <div className="spacer-row w-full">
-          <div className="h-2"></div>
-        </div>
         {/* Location Map */}
         <section className="card glass-card p-4">
           <div className={`flex items-center justify-between gap-3`}>
@@ -311,10 +293,6 @@ export default function ContactUs() {
             ></iframe>
           </div>
         </section>
-        {/* Spacer under contact grid */}
-        <div className="spacer-row w-full">
-          <div className="h-2"></div>
-        </div>
       </div>
     
   )

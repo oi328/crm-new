@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom';
 import { PieChart } from '@shared/components/PieChart';
 import ActiveUsersChart from '@features/Dashboard/components/ActiveUsersChart'
 import ActiveCampaignsCard from '@features/Dashboard/components/ActiveCampaignsCard'
@@ -60,6 +61,7 @@ const ICON_MAP = {
 };
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { theme } = useTheme();
   const isLight = theme === 'light';
@@ -552,10 +554,8 @@ export const Dashboard = () => {
                    </h3>
                 </div>
                 <div className="flex items-center gap-2">
-                <button onClick={() => { setSelectedManager(''); setSelectedEmployee(''); setDateFrom(''); setDateTo(''); }} className="btn-reset flex items-center gap-1 text-[9px] px-1 py-0.5 font-medium transform hover:scale-105 transition-all duration-200 focus:outline-none">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
+                <button onClick={() => { setSelectedManager(''); setSelectedEmployee(''); setDateFrom(''); setDateTo(''); }} className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+
                   {t('Reset')}
                 </button>
                 <button onClick={() => setFiltersOpenMobile(v=>!v)} className="md:hidden flex items-center justify-center w-6 h-6 rounded-full border border-gray-300 dark:border-gray-600">
@@ -796,7 +796,7 @@ export const Dashboard = () => {
                 <div
                   key={'__fixed_total__'}
                   className={`relative overflow-hidden rounded-2xl p-1 group border-2 border-blue-400 bg-gradient-to-br from-blue-100/75 via-blue-100/65 to-blue-100/55 backdrop-blur-sm shadow-blue-300/30 shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-500`}
-                  onClick={() => setSelectedStageFilter('')}
+                  onClick={() => navigate('/leads')}
                   role="button"
                   tabIndex={0}
                 >
@@ -876,8 +876,8 @@ export const Dashboard = () => {
                 return (
                   <div
                     key={key}
-                    className={`relative overflow-hidden rounded-2xl p-1 group ${style.containerLight} border-2 shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-500 ${selectedStageFilter === stageKey ? 'ring-2 ring-blue-500' : ''}`}
-                    onClick={() => setSelectedStageFilter(stageKey)}
+                    className={`relative overflow-hidden rounded-2xl p-1 group ${style.containerLight} border-2 shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-500 cursor-pointer ${selectedStageFilter === stageKey ? 'ring-2 ring-blue-500' : ''}`}
+                    onClick={() => navigate(`/leads?stage=${stageKey}`)}
                     role="button"
                     tabIndex={0}
                   >

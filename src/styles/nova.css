@@ -483,6 +483,25 @@ html:not(.dark) .action-btn.icon-green { color: #16a34a; }
   background: var(--table-row-hover);
 }
 
+/* Thin blue scrollbar utility (for dropdowns, comments, etc.) */
+.scrollbar-thin-blue {
+  scrollbar-width: thin;
+  scrollbar-color: #2563eb transparent;
+}
+.scrollbar-thin-blue::-webkit-scrollbar {
+  width: 8px;
+}
+.scrollbar-thin-blue::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin-blue::-webkit-scrollbar-thumb {
+  background-color: #2563eb;
+  border-radius: 9999px;
+}
+.scrollbar-thin-blue:hover::-webkit-scrollbar-thumb {
+  background-color: #1d4ed8;
+}
+
 /* Contact Methods animations and hover effects */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(6px); }

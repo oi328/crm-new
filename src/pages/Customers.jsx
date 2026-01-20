@@ -443,7 +443,7 @@ export const Customers = () => {
         <section className="nova-card glass-neon p-4">
           <div className="overflow-auto -mx-4">
             <table className="nova-table w-full text-sm min-w-[1000px]">
-              <thead>
+              <thead >
                 <tr className="text-left bg-[var(--table-header-bg)]">
                   <th className="py-2 px-3">Name</th>
                   <th className="py-2 px-3">Type</th>

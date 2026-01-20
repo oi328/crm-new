@@ -98,6 +98,8 @@ import AddLandingPage from '../pages/AddLandingPage'
 import Tasks from '../pages/Tasks'
 import Notifications from '../pages/Notifications'
 import SalesReport from '../pages/SalesReport'
+import ProposalsReport from '../pages/ProposalsReport'
+import RevenueReport from '../pages/RevenueReport'
 import LeadsReport from '../pages/LeadsReport'
 import MeetingsReport from '../pages/MeetingsReport'
 import ImportsReport from '../pages/ImportsReport'
@@ -218,6 +220,8 @@ export default function AppRouter() {
             <Route path="/reports/sales/exports" element={<ExportsReport />} />
             <Route path="/exports" element={<ExportsReport />} />
             <Route path="/reports/sales/meetings" element={<MeetingsReport />} />
+            <Route path="/reports/sales/proposals" element={<ProposalsReport />} />
+            <Route path="/reports/sales/revenue" element={<RevenueReport />} />
             <Route path="/reports/leads" element={<LeadsReport />} />
             <Route path="/reports/team" element={<TeamPerformanceReport />} />
             <Route path="/reports/sms" element={<ReportPlaceholder titleKey="Sms Report" descKey="reports.sms.desc" />} />

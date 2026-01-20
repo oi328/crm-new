@@ -249,7 +249,7 @@ export default function Projects() {
 
   // Pagination state and derived values
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(6)
+  const [pageSize, setPageSize] = useState(10)
   const totalPages = useMemo(() => Math.max(1, Math.ceil(filtered.length / pageSize)), [filtered, pageSize])
   const paginated = useMemo(() => filtered.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize), [filtered, page, pageSize])
   useEffect(() => { setPage(1) }, [filters, pageSize])
@@ -331,11 +331,11 @@ export default function Projects() {
 
             <div className="w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
               <button className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" onClick={()=>setShowImportModal(true)}>
-                <FaFileImport />{Label.importProjects}
+                <FaFileImport /> <span className="text-white">{Label.importProjects}</span>
               </button>
 
               <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2" onClick={()=>setShowCreateModal(true)}>
-                <FaPlus /> {Label.createProject}
+                <FaPlus />  <span className="text-white">{Label.createProject}</span>
               </button>
               
               <div className="relative w-full lg:w-auto">
@@ -343,7 +343,7 @@ export default function Projects() {
                   className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" 
                   onClick={() => setShowExportMenu(!showExportMenu)}
                 >
-                 <FaFileExport  /> {isRTL ? 'تصدير' : 'Export'}
+                 <FaFileExport  /> <span className="text-white">{isRTL ? 'تصدير' : 'Export'}</span>
                   <FaChevronDown className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} size={10} />
                 </button>
                 
@@ -434,10 +434,10 @@ export default function Projects() {
                 value={pageSize}
                 onChange={e => setPageSize(Number(e.target.value))}
               >
-                <option value={4}>4</option>
-                <option value={6}>6</option>
-                <option value={8}>8</option>
-                <option value={12}>12</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
               </select>
             </div>
           </div>
@@ -1259,7 +1259,7 @@ function PaymentPlanTab({ isRTL, onClose, onSave }) {
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center gap-2" onClick={() => setShowExportMenu(!showExportMenu)}>
-                    {isRTL ? 'تصدير' : 'Export'} <FaChevronDown size={12} />
+                    <span className="text-white">{isRTL ? 'تصدير' : 'Export'}</span> <FaChevronDown size={12} />
                   </button>
                   {showExportMenu && (
                     <div className="absolute bottom-full mb-1 end-0 bg-[var(--card-bg)] border border-[var(--panel-border)] rounded-lg shadow-lg py-1 min-w-[120px] z-50">
@@ -1739,6 +1739,20 @@ function ProjectDetailsModal({ p, isRTL, onClose }) {
               ) : (
                 <div className="text-center py-8 text-[var(--muted-text)]">{isRTL ? 'لا توجد مواصفات' : 'No features'}</div>
               )}
+              <div className="space-y-4 mt-6">
+                <SectionTitle>{isRTL ? 'نطاق السعر' : 'Price Range'}</SectionTitle>
+                <div className="grid grid-cols-2 gap-4">
+                  <ReadOnlyField label={isRTL ? 'من' : 'From'} value={new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(p.minPrice||0)} />
+                  <ReadOnlyField label={isRTL ? 'إلى' : 'To'} value={new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(p.maxPrice||0)} />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <SectionTitle>{isRTL ? 'نطاق المساحة (متر مربع)' : 'Space Range (sqm)'}</SectionTitle>
+                <div className="grid grid-cols-2 gap-4">
+                  <ReadOnlyField label={isRTL ? 'من' : 'From'} value={p.minSpace} />
+                  <ReadOnlyField label={isRTL ? 'إلى' : 'To'} value={p.maxSpace} />
+                </div>
+              </div>
             </div>
           )}
 
@@ -1849,20 +1863,6 @@ function ProjectDetailsModal({ p, isRTL, onClose }) {
 
           {activeTab === 'financial' && (
             <div className="space-y-6">
-              <div className="space-y-4">
-                <SectionTitle>{isRTL ? 'نطاق السعر' : 'Price Range'}</SectionTitle>
-                <div className="grid grid-cols-2 gap-4">
-                  <ReadOnlyField label={isRTL ? 'من' : 'From'} value={new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(p.minPrice||0)} />
-                  <ReadOnlyField label={isRTL ? 'إلى' : 'To'} value={new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(p.maxPrice||0)} />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <SectionTitle>{isRTL ? 'نطاق المساحة (متر مربع)' : 'Space Range (sqm)'}</SectionTitle>
-                <div className="grid grid-cols-2 gap-4">
-                  <ReadOnlyField label={isRTL ? 'من' : 'From'} value={p.minSpace} />
-                  <ReadOnlyField label={isRTL ? 'إلى' : 'To'} value={p.maxSpace} />
-                </div>
-              </div>
               <div className="space-y-4">
                 <SectionTitle>{isRTL ? 'خطط الدفع' : 'Payment Plans'}</SectionTitle>
                 {Array.isArray(p.paymentPlan) && p.paymentPlan.length > 0 ? (
@@ -2095,16 +2095,45 @@ function ProjectDetailsModal({ p, isRTL, onClose }) {
           {activeTab === 'publish' && (
             <div className="space-y-4">
               <SectionTitle>{isRTL ? 'النشر' : 'Publish'}</SectionTitle>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                 <div className="space-y-1">
                   <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider">{isRTL ? 'الاسم' : 'Name'}</span>
-                  <div className="p-2 rounded-lg bg-transparent border border-gray-200 dark:border-gray-700 min-h-[38px]">{p.contactName || '-'}</div>
+                  <div className="p-2 rounded-lg bg-transparent border border-gray-200 dark:border-gray-700 min-h-[38px]">{p.contactName || p.publish?.contactName || '-'}</div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider">{isRTL ? 'البريد الإلكتروني' : 'Email'}</span>
+                  <div className="p-2 rounded-lg bg-transparent border border-gray-200 dark:border-gray-700 min-h-[38px]">{p.contactEmail || p.publish?.contactEmail || '-'}</div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider">{isRTL ? 'الهاتف' : 'Phone'}</span>
+                  <div className="p-2 rounded-lg bg-transparent border border-gray-200 dark:border-gray-700 min-h-[38px]">{p.contactPhone || p.publish?.contactPhone || '-'}</div>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[var(--muted-text)] block text-xs uppercase tracking-wider">{isRTL ? 'الحزمة التسويقية' : 'Marketing Package'}</span>
-                  <div className="p-2 rounded-lg bg-transparent border border-gray-200 dark:border-gray-700 min-h-[38px]">{p.marketingPackage || '-'}</div>
+                  <div className="p-2 rounded-lg bg-transparent border border-gray-200 dark:border-gray-700 min-h-[38px]">{p.marketingPackage || p.publish?.marketingPackage || '-'}</div>
                 </div>
               </div>
+
+              {(p.channels || p.publish?.channels) && (p.channels || p.publish?.channels).length > 0 && (
+                 <div className="mt-6 space-y-3">
+                   <h4 className="font-semibold">{isRTL ? 'القنوات' : 'Channels'}</h4>
+                   <div className="grid grid-cols-1 gap-3">
+                     {(p.channels || p.publish?.channels).map((ch, idx) => (
+                       <div key={idx} className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                         <div className="flex items-center gap-3">
+                           <div className={`w-2 h-2 rounded-full ${ch.active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                           <span className="font-medium">{ch.name}</span>
+                           <span className="text-xs text-[var(--muted-text)]">({ch.type})</span>
+                         </div>
+                         <div className="flex items-center gap-3 text-xs">
+                           {ch.selectedPackage && <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded">{ch.selectedPackage}</span>}
+                           <span className={`${ch.status === 'Live' ? 'text-green-600' : 'text-gray-500'}`}>{ch.status}</span>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+              )}
             </div>
           )}
 

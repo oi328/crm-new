@@ -275,7 +275,7 @@ export default function AddLandingPage({ isOpen, onClose, onAdd }) {
                   placeholder={isRTL ? 'ابحث عن حملة أو أدخل اسماً جديداً' : 'Search campaign or enter new'} 
                 />
                 <datalist id="campaigns-list">
-                  {dummyCampaigns.map((camp, idx) => (
+                  {campaigns.map((camp, idx) => (
                     <option key={idx} value={camp} />
                   ))}
                 </datalist>

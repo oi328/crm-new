@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FaWhatsapp, FaTelegram, FaGlobe } from 'react-icons/fa'
-import { SiGoogleads, SiTiktok, SiMeta } from 'react-icons/si'
+import { FaWhatsapp, FaTelegram, FaGlobe, FaGoogle, FaTiktok, FaFacebook } from 'react-icons/fa'
 import { metaService } from '../services/metaService'
 
 export function useIntegrations() {
@@ -30,7 +29,7 @@ export function useIntegrations() {
     { 
       id: 'meta', 
       name: 'Meta (Facebook & Instagram)', 
-      icon: SiMeta, 
+      icon: FaFacebook, 
       bg: 'bg-blue-600', 
       description: 'Connect Facebook & Instagram for Lead Ads, Pixel, and Messaging',
       connected: metaConnected,
@@ -39,7 +38,7 @@ export function useIntegrations() {
     { 
       id: 'google-ads', 
       name: 'Google Ads', 
-      icon: SiGoogleads, 
+      icon: FaGoogle, 
       bg: 'bg-yellow-500', 
       description: 'Connect Google Ads to manage and track campaigns',
       connected: googleConnected,
@@ -48,7 +47,7 @@ export function useIntegrations() {
     { 
       id: 'tiktok', 
       name: 'TikTok Ads', 
-      icon: SiTiktok, 
+      icon: FaTiktok, 
       bg: 'bg-gray-900', 
       description: 'Connect TikTok Ads for performance tracking',
       connected: false,

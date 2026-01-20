@@ -123,8 +123,8 @@ export default function ItemsPage() {
     group: '',
     brand: '',
     supplier: '',
-    status: 'all',
-    type: 'all'
+    status: '',
+    type: ''
   })
 
   const [showAllFilters, setShowAllFilters] = useState(false)
@@ -133,7 +133,7 @@ export default function ItemsPage() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(5)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const [inventoryMode, setInventoryMode] = useState('advanced')
 
@@ -262,8 +262,8 @@ export default function ItemsPage() {
         const q = filters.search.toLowerCase()
         if (!item.name.toLowerCase().includes(q) && !(item.sku || '').toLowerCase().includes(q)) return false
       }
-      if (filters.status !== 'all' && item.status !== filters.status) return false
-      if (filters.type !== 'all' && item.type !== filters.type) return false
+      if (filters.status && item.status !== filters.status) return false
+      if (filters.type && item.type !== filters.type) return false
       if (filters.family && item.family !== filters.family) return false
       if (filters.category && item.category !== filters.category) return false
       if (filters.group && item.group !== filters.group) return false
@@ -275,7 +275,7 @@ export default function ItemsPage() {
 
   function clearFilters() {
     setIsFiltering(true)
-    setFilters({ search: '', status: 'all', type: 'all', family: '', category: '', group: '', brand: '', supplier: '' })
+    setFilters({ search: '', status: '', type: '', family: '', category: '', group: '', brand: '', supplier: '' })
     setTimeout(() => setIsFiltering(false), 300)
   }
 
@@ -386,52 +386,42 @@ export default function ItemsPage() {
           <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
         </div>
         
-        <div className="w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
-           <button 
+          <div className=" w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+
+            <button 
               className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
               onClick={() => setShowImportModal(true)}
-           >
-              <FaFileImport />
-              {labels.import}
-           </button>
-
-
-
-           <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => {
-              setForm({ id: null, name: '', family: '', category: '', group: '', type: 'Product', sku: '', price: '', stock: 0, minStock: 0, unit: 'pcs', status: 'Active', description: '' })
-              setShowForm(true)
-          }}> <span><FaPlus /></span> {labels.add}
-          </button>
-           <div className="relative dropdown-container w-full lg:w-auto">
+            >
+              <FaFileImport  /> <span className="text-white">{isArabic ? 'استيراد' : 'Import'}</span>
+            </button>
+            <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => { setShowForm(true); setActiveTab('basic'); }}><FaPlus /><span className="text-white">{labels.add}</span></button>
+            <div className="relative  dropdown-container w-full lg:w-auto">
               <button 
-                  className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
-                  onClick={() => setShowExportMenu(!showExportMenu)}
+                className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
+                onClick={() => setShowExportMenu(!showExportMenu)}
               >
-                  <span className="flex items-center gap-2">
-                    <FaFileExport  />
-                    {labels.export}
-                  </span>
-                  <FaChevronDown className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} size={12} />
+                <FaFileExport /> <span className="text-white">{isArabic ? 'تصدير' : 'Export'}</span>
               </button>
-              
               {showExportMenu && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50">
-                      <button 
-                          className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
-                          onClick={exportItemsCsv}
-                      >
-                          <FaFileCsv className="text-green-500" /> {labels.exportCsv}
-                      </button>
-                      <button 
-                          className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
-                          onClick={() => exportItemsPdf(filtered)}
-                      >
-                          <FaFilePdf className="text-red-500" /> {labels.exportPdf}
-                      </button>
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 ring-1 ring-black ring-opacity-5">
+                  <div className="py-1">
+                    <button
+                      onClick={exportCategoriesCsv}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                    >
+                      <FaFileCsv className="mr-3 text-green-600" /> CSV
+                    </button>
+                    <button
+                      onClick={exportCategoriesPdf}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                    >
+                      <FaFilePdf className="mr-3 text-red-600" /> PDF
+                    </button>
                   </div>
+                </div>
               )}
-           </div>
-        </div>
+            </div>
+          </div>
       </div>
 
       {showImportModal && (
@@ -466,20 +456,30 @@ export default function ItemsPage() {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-[var(--muted-text)]">{labels.type}</label>
-              <select className="input w-full" value={filters.type} onChange={e => setFilters(prev => ({...prev, type: e.target.value}))}>
-                  <option value="all">{isArabic ? 'الكل' : 'All'}</option>
-                  <option value="Product">Product</option>
-                  <option value="Service">Service</option>
-                  <option value="Subscription">Subscription</option>
-              </select>
+              <SearchableSelect 
+                  value={filters.type} 
+                  onChange={val => setFilters(prev => ({...prev, type: val}))}
+                  options={[
+                      { value: 'Product', label: 'Product' },
+                      { value: 'Service', label: 'Service' },
+                      { value: 'Subscription', label: 'Subscription' }
+                  ]}
+                  isRTL={isArabic}
+                  placeholder={isArabic ? 'الكل' : 'All'}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-[var(--muted-text)]">{labels.status}</label>
-              <select className="input w-full" value={filters.status} onChange={e => setFilters(prev => ({...prev, status: e.target.value}))}>
-                  <option value="all">{isArabic ? 'الكل' : 'All'}</option>
-                  <option value="Active">{labels.active}</option>
-                  <option value="Inactive">{labels.inactive}</option>
-              </select>
+              <SearchableSelect 
+                  value={filters.status} 
+                  onChange={val => setFilters(prev => ({...prev, status: val}))}
+                  options={[
+                      { value: 'Active', label: labels.active },
+                      { value: 'Inactive', label: labels.inactive }
+                  ]}
+                  isRTL={isArabic}
+                  placeholder={isArabic ? 'الكل' : 'All'}
+              />
             </div>
           </div>
 
@@ -624,10 +624,10 @@ export default function ItemsPage() {
                     value={itemsPerPage}
                     onChange={e => setItemsPerPage(Number(e.target.value))}
                   >
-                    <option value={4}>4</option>
-                    <option value={6}>6</option>
-                    <option value={8}>8</option>
-                    <option value={12}>12</option>
+                    <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+          <option value={100}>100</option>
                   </select>
                 </div>
               </div>

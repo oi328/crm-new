@@ -115,7 +115,7 @@ export default function SearchableSelect({
     <div ref={ref} className={`relative ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
       <button
         type="button"
-        className={`w-full flex items-center justify-between rounded border px-3 py-2 ${isLight ? 'bg-white border-gray-300 text-gray-900' : 'bg-gray-800 border-gray-600 text-white'} ${className}`}
+        className={`w-full flex items-center justify-between rounded-md border px-3 py-2 bg-[var(--dropdown-bg)] border-[var(--dropdown-border)] text-[var(--content-text)] dark:text-white shadow-sm hover:border-[var(--nova-accent)]/60 transition-colors ${className}`}
         onClick={() => setOpen(v => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -126,17 +126,17 @@ export default function SearchableSelect({
       {open && (
         usePortal
           ? createPortal(
-              <div ref={menuRef} style={menuStyle} className={`rounded-md shadow-xl ${isLight ? 'bg-white border border-gray-200' : 'bg-gray-900/95 border border-gray-700'}`} onMouseDown={(e) => e.stopPropagation()}>
-                <div className="p-2 border-b border-base-300">
+              <div ref={menuRef} style={menuStyle} className="rounded-xl shadow-xl bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] backdrop-blur-md" onMouseDown={(e) => e.stopPropagation()}>
+                <div className="p-2 border-b border-[var(--dropdown-border)]/70">
                   <input
-                    className={`input input-sm w-full ${isLight ? 'text-gray-900 placeholder-gray-500' : 'text-white placeholder-white'}`}
+                    className={`input input-sm w-full bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)]/80 text-sm ${isLight ? 'text-theme-text placeholder-gray-500' : 'text-gray-100 placeholder-gray-400'} focus:outline-none focus:ring-0 focus:border-[var(--nova-accent)]`}
                     placeholder={isArabic ? 'ابحث بالكتابة...' : 'Type to search...'}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     ref={inputRef}
                   />
                 </div>
-                <ul role="listbox" className="max-h-44 overflow-auto py-1">
+                <ul role="listbox" className="max-h-52 overflow-auto py-1 scrollbar-thin-blue">
                   {filtered.length === 0 && (
                     <li className="px-3 py-2 text-sm text-[var(--muted-text)]">{isArabic ? 'لا توجد نتائج' : 'No results'}</li>
                   )}
@@ -145,7 +145,7 @@ export default function SearchableSelect({
                       key={o.value}
                       role="option"
                       aria-selected={o.value === value}
-                      className={`px-3 py-2 text-sm cursor-pointer hover:bg-[var(--table-row-hover)] ${o.value === value ? 'bg-[var(--table-row-hover)]' : ''} ${isLight ? 'text-gray-900' : 'text-gray-100'}`}
+                      className={`mx-1 rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${o.value === value ? 'bg-[rgba(37,99,235,0.28)] text-white' : 'hover:bg-[rgba(37,99,235,0.18)]'} ${isLight ? 'text-theme-text' : 'text-gray-100'}`}
                       onClick={() => { onChange && onChange(o.value); setOpen(false); setQuery('') }}
                     >
                       {o.label}
@@ -156,17 +156,17 @@ export default function SearchableSelect({
               document.body
             )
           : (
-              <div ref={menuRef} style={menuStyle} className={`rounded-md shadow-xl ${isLight ? 'bg-white border border-gray-200' : 'bg-gray-900/95 border border-gray-700'}`} onMouseDown={(e) => e.stopPropagation()}>
-                <div className="p-2 border-b border-base-300">
+              <div ref={menuRef} style={menuStyle} className="rounded-xl shadow-xl bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] backdrop-blur-md" onMouseDown={(e) => e.stopPropagation()}>
+                <div className="p-2 border-b border-[var(--dropdown-border)]/70">
                   <input
-                    className={`input input-sm w-full ${isLight ? 'text-gray-900 placeholder-gray-500' : 'text-white placeholder-white'}`}
+                    className={`input input-sm w-full bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)]/80 text-sm ${isLight ? 'text-theme-text placeholder-gray-500' : 'text-gray-100 placeholder-gray-400'} focus:outline-none focus:ring-0 focus:border-[var(--nova-accent)]`}
                     placeholder={isArabic ? 'ابحث بالكتابة...' : 'Type to search...'}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     ref={inputRef}
                   />
                 </div>
-                <ul role="listbox" className="max-h-44 overflow-auto py-1">
+                <ul role="listbox" className="max-h-52 overflow-auto py-1 scrollbar-thin-blue">
                   {filtered.length === 0 && (
                     <li className="px-3 py-2 text-sm text-[var(--muted-text)]">{isArabic ? 'لا توجد نتائج' : 'No results'}</li>
                   )}
@@ -175,7 +175,7 @@ export default function SearchableSelect({
                       key={o.value}
                       role="option"
                       aria-selected={o.value === value}
-                      className={`px-3 py-2 text-sm cursor-pointer hover:bg-[var(--table-row-hover)] ${o.value === value ? 'bg-[var(--table-row-hover)]' : ''} ${isLight ? 'text-gray-900' : 'text-gray-100'}`}
+                      className={`mx-1 rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${o.value === value ? 'bg-[rgba(37,99,235,0.28)] text-white' : 'hover:bg-[rgba(37,99,235,0.18)]'} ${isLight ? 'text-theme-text' : 'text-gray-100'}`}
                       onClick={() => { onChange && onChange(o.value); setOpen(false); setQuery('') }}
                     >
                       {o.label}

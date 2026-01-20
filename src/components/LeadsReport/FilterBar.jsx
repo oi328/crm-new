@@ -31,7 +31,7 @@ const FilterBar = ({
         />
       </div>
       <div className="flex items-center gap-2">
-        <LuUser className="text-gray-300" />
+        <User className="text-gray-300" />
         <select
           name="salesperson"
           value={salesperson || ''}
@@ -45,14 +45,12 @@ const FilterBar = ({
         </select>
       </div>
       <div className="flex items-center gap-2 md:ml-auto">
-        <button
+        <button 
           onClick={onUpdate}
           disabled={updating}
-          aria-busy={updating}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-blue-500 bg-blue-600 text-white hover:bg-blue-500 transition disabled:opacity-60 disabled:cursor-not-allowed"
+          className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
-          {updating ? <LuLoader className="w-4 h-4 animate-spin" /> : <LuRefreshCw className="w-4 h-4" />}
-          {updating ? 'Updating...' : 'Update'}
+          {updating ? <Loader className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
         </button>
       </div>
     </div>

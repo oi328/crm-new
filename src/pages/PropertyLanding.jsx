@@ -92,9 +92,9 @@ export default function PropertyLanding() {
           <tr><th>Installment Amount</th><td>${currencyFmt(plan.installmentAmount)}</td></tr>
           <tr><th>Installment Frequency</th><td>${plan.installmentFrequency || '-'}</td></tr>
           <tr><th>Years</th><td>${plan.years || '-'}</td></tr>
-          <tr><th>Extra Payment</th><td>${currencyFmt(plan.extraPayment)}</td></tr>
-          <tr><th>Extra Payment Frequency</th><td>${plan.extraPaymentFrequency || '-'}</td></tr>
-          <tr><th>Extra Payment Count</th><td>${plan.extraPaymentCount || '0'}</td></tr>
+          <tr><th>Additional Payment</th><td>${currencyFmt(plan.extraPayment)}</td></tr>
+          <tr><th>Additional Payment Frequency</th><td>${plan.extraPaymentFrequency || '-'}</td></tr>
+          <tr><th>Additional Payment Count</th><td>${plan.extraPaymentCount || '0'}</td></tr>
           <tr><th>Delivery</th><td>${plan.deliveryDate || '-'}</td></tr>
         </tbody>
       </table>
@@ -116,9 +116,9 @@ export default function PropertyLanding() {
       ['Installment Amount', String(plan.installmentAmount || '0')],
       ['Installment Frequency', plan.installmentFrequency || '-'],
       ['Years', String(plan.years || '-')],
-      ['Extra Payment', String(plan.extraPayment || '0')],
-      ['Extra Payment Frequency', plan.extraPaymentFrequency || '-'],
-      ['Extra Payment Count', String(plan.extraPaymentCount || '0')],
+      ['Additional Payment', String(plan.extraPayment || '0')],
+      ['Additional Payment Frequency', plan.extraPaymentFrequency || '-'],
+      ['Additional Payment Count', String(plan.extraPaymentCount || '0')],
       ['Delivery', plan.deliveryDate || '-'],
     ]
     autoTable(doc, {

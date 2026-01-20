@@ -106,6 +106,47 @@ const PaymentPlanModal = ({ isOpen, onClose, onSave, lead }) => {
 
   const [projectUnits, setProjectUnits] = useState([]);
 
+  // Auto-calculate Net Amount based on Total + Garage + Maintenance
+  useEffect(() => {
+    const total = parseFloat(formData.totalAmount) || 0;
+    const garage = parseFloat(formData.garageAmount) || 0;
+    const maintenance = parseFloat(formData.maintenanceAmount) || 0;
+    const calculatedNet = total + garage + maintenance;
+    
+    // Only update if value is different to avoid infinite loops
+    // and only if at least one value is set
+    if (formData.totalAmount || formData.garageAmount || formData.maintenanceAmount) {
+       setFormData(prev => {
+         // Avoid update if value hasn't effectively changed
+         if (parseFloat(prev.netAmount) === calculatedNet) return prev;
+         return { ...prev, netAmount: calculatedNet }
+       });
+    }
+  }, [formData.totalAmount, formData.garageAmount, formData.maintenanceAmount]);
+
+  // Auto-calculate Extra Installments
+  useEffect(() => {
+    const net = parseFloat(formData.netAmount) || 0;
+    const dp = parseFloat(formData.downPayment) || 0;
+    const receipt = parseFloat(formData.receiptAmount) || 0;
+    const inst = parseFloat(formData.installmentAmount) || 0;
+    const months = parseFloat(formData.noOfMonths) || 0;
+    
+    // Only run if we have a net amount to work with
+    if (net > 0) {
+        const totalRegular = inst * months;
+        const calculatedExtra = net - dp - receipt - totalRegular;
+        
+        // Update if different
+        setFormData(prev => {
+            // Round to 2 decimal places to avoid floating point jitter
+            const roundedExtra = Math.round(calculatedExtra * 100) / 100;
+            if (parseFloat(prev.extraInstallments) === roundedExtra) return prev;
+            return { ...prev, extraInstallments: roundedExtra > 0 ? roundedExtra : 0 };
+        });
+    }
+  }, [formData.netAmount, formData.downPayment, formData.receiptAmount, formData.installmentAmount, formData.noOfMonths]);
+
   useEffect(() => {
     if (lead?.paymentPlan) {
       setFormData(lead.paymentPlan);

@@ -160,7 +160,7 @@ const RealEstateRequestsImportModal = ({ onClose, onImport, isRTL }) => {
             <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600 text-white shadow-md">
               <FaCloudUploadAlt className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold" style={{ color: isDark ? 'white' : '#111827' }}>{isRTL ? 'استيراد طلبات العقارات' : 'Import Real Estate Requests'}</h3>
+            <h3 className="text-lg font-bold" style={{ color: isDark ? 'white' : '#111827' }}> {isRTL ? 'استيراد طلبات العقارات' : 'Import Real Estate Requests'}</h3>
           </div>
           <button
             onClick={onClose}
@@ -197,7 +197,7 @@ const RealEstateRequestsImportModal = ({ onClose, onImport, isRTL }) => {
                 className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none flex items-center gap-2"
               >
                 <FaDownload className="w-3 h-3" />
-                {isRTL ? 'تحميل' : 'Download'}
+                <span className='text-white'>{isRTL ? 'تحميل' : 'Download'}</span>
               </button>
             </div>
             <div className="mt-3 text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
@@ -245,7 +245,7 @@ const RealEstateRequestsImportModal = ({ onClose, onImport, isRTL }) => {
               onClick={() => document.getElementById('modal-excel-file-input')?.click()}
               className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
             >
-              {isRTL ? 'اختيار ملف' : 'Browse File'}
+              <span className='text-white'>{isRTL ? 'اختيار ملف' : 'Browse File'}</span>
             </button>
 
             {excelFile ? (
@@ -263,7 +263,7 @@ const RealEstateRequestsImportModal = ({ onClose, onImport, isRTL }) => {
               className={`btn btn-sm ${importing ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white border-none flex items-center gap-2`}
             >
               <FaCloudUploadAlt className="w-4 h-4" />
-              {importing ? (isRTL ? 'جاري الاستيراد...' : 'Importing...') : (isRTL ? 'استيراد البيانات' : 'Import Data')}
+              <span className='text-white'>{importing ? (isRTL ? 'جاري الاستيراد...' : 'Importing...') : (isRTL ? 'استيراد البيانات' : 'Import Data')}</span>
             </button>
             <span className="text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>{isRTL ? 'الملفات المدعومة: .xlsx, .xls' : 'Supported files: .xlsx, .xls'}</span>
           </div>

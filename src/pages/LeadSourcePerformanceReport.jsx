@@ -1,11 +1,15 @@
 import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link, useNavigate } from 'react-router-dom'
 import AdvancedDateFilter from '../components/AdvancedDateFilter'
 import LeadSourcePerformanceChart from '../components/LeadSourcePerformanceChart'
 import SearchableSelect from '@shared/components/SearchableSelect'
+import BackButton from '../components/BackButton'
+import { PieChart, BarChart, LineChart } from 'recharts'
 
 export default function LeadsPerformance() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isRTL = i18n.dir() === 'rtl'
 
   // Data aligned with the shared design
   const sourcesData = [
@@ -66,7 +70,8 @@ export default function LeadsPerformance() {
 
   return (
     <div className="space-y-6 bg-transparent text-[var(--content-text)]">
-        <h1 className="text-2xl font-semibold">{t('Lead Source Performance')}</h1>
+      <BackButton to="/reports" />
+      <h1 className="text-2xl font-semibold">{t('Lead Source Performance')}</h1>
 
         {/* Options card */}
         <div className="card glass-card p-4">

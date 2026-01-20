@@ -971,7 +971,7 @@ export const Leads = () => {
                 placeholder={t('Search leads...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-2 py-1 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-sm font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
               />
             </div>
 
@@ -1220,7 +1220,7 @@ export const Leads = () => {
                   placeholder={t('Enter minimum value...')}
                   value={expectedRevenueFilter}
                   onChange={(e) => setExpectedRevenueFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-sm font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
 
@@ -1235,7 +1235,7 @@ export const Leads = () => {
                   placeholder={t('Search email...')}
                   value={emailFilter}
                   onChange={(e) => setEmailFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-sm font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
 
@@ -1314,7 +1314,7 @@ export const Leads = () => {
                   type="date"
                   value={assignDateFilter}
                   onChange={(e) => setAssignDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-sm font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
 
@@ -1330,7 +1330,7 @@ export const Leads = () => {
                   type="date"
                   value={actionDateFilter}
                   onChange={(e) => setActionDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-sm font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
 
@@ -1346,7 +1346,7 @@ export const Leads = () => {
                   type="date"
                   value={creationDateFilter}
                   onChange={(e) => setCreationDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-sm font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
 
@@ -1362,7 +1362,7 @@ export const Leads = () => {
                   type="date"
                   value={closedDateFilter}
                   onChange={(e) => setClosedDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg  dark:bg-gray-700  dark:text-white text-xs font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-theme-border dark:border-gray-500 rounded-lg  dark:bg-gray-700  text-theme-text dark:text-white text-sm font-medium placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400 transition-all duration-200"
                 />
               </div>
             </div>
@@ -1407,7 +1407,7 @@ export const Leads = () => {
 
       {/* Main Table */}
       <div className={`glass-panel rounded-2xl overflow-hidden`}>
-        <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center p-3 border-b border-theme-border dark:border-gray-700">
           {selectedLeads.length > 0 ? (
             <div className="flex items-center gap-4 flex-wrap">
               <span className="text-sm font-medium  dark:text-gray-300">
@@ -1425,7 +1425,7 @@ export const Leads = () => {
           )}
         </div>
         <div ref={scrollXRef} className="overflow-x-auto relative backdrop-blur-lg" style={{ '--table-header-bg': theme === 'dark' ? 'transparent' : undefined, '--scroll-bg': theme === 'dark' ? '#0f172a' : '#f9fafb' }}>
-          <table className="w-max min-w-full divide-y divide-gray-200 dark:divide-gray-700 dark:text-white" style={{ tableLayout: 'auto' }}>
+          <table className="w-max min-w-full divide-y divide-theme-border dark:divide-gray-700 dark:text-white" style={{ tableLayout: 'auto' }}>
             <thead className={` ${tableHeaderBgClass} backdrop-blur-md sticky top-0 z-30 shadow-md`} style={{ backgroundColor: 'var(--table-header-bg)' }}>
               <tr>
                 {/* Checkbox Column */}
@@ -1434,7 +1434,7 @@ export const Leads = () => {
                     type="checkbox"
                     checked={selectedLeads.length === paginatedLeads.length && paginatedLeads.length > 0}
                     onChange={handleSelectAll}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-theme-border rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
                   />
                 </th>
 
@@ -1513,7 +1513,7 @@ export const Leads = () => {
               </tr>
             </thead>
 
-            <tbody className=" divide-y divide-gray-200 dark:bg-transparent dark:divide-gray-700">
+            <tbody className=" divide-y divide-theme-border dark:bg-transparent dark:divide-gray-700">
               {paginatedLeads.map((lead, index) => (
                 <tr
                   key={lead.id}
@@ -1531,7 +1531,7 @@ export const Leads = () => {
                       checked={selectedLeads.includes(lead.id)}
                       onChange={() => handleSelectLead(lead.id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-theme-border rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
                     />
                   </td>
 
@@ -1553,7 +1553,7 @@ export const Leads = () => {
 
                   {/* Actions (after Contact) */}
                   {visibleColumns.actions && (
-                    <td className={`px-6 py-3 whitespace-nowrap text-xs font-medium ${activeRowId === lead.id ? `sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-gray-50 dark:bg-slate-900/25 border border-gray-200 dark:border-slate-700/40 shadow-sm` : ''} `}>
+                    <td className={`px-6 py-3 whitespace-nowrap text-xs font-medium ${activeRowId === lead.id ? `sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-20 bg-gray-50 dark:bg-slate-900/25 border border-theme-border dark:border-slate-700/40 shadow-sm` : ''} `}>
                       <div className="flex items-center gap-2 flex-nowrap">
                         <button
                           title={t('Preview')}
@@ -1675,13 +1675,13 @@ export const Leads = () => {
       </div>
 
       {/* Pagination Controls */}
-      <nav className="flex flex-col gap-4 p-3 lg:p-4 border-t border-gray-200 dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
+      <nav className="flex flex-col gap-4 p-3 lg:p-4 border-t border-theme-border dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
         {/* Row 1: Show Entries & Page Navigation */}
         <div className="flex  lg:flex-row justify-between items-center gap-3">
           {/* Show Entries */}
           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium  dark:text-white">
             <span style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Show')}</span>
-            <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs">
+            <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs">
               <option value={10}>10</option>
               <option value={20}>20</option>
               <option value={50}>50</option>
@@ -1704,7 +1704,7 @@ export const Leads = () => {
                   }
                 }
               }}
-              className="ml-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
+              className="ml-2 px-3 py-1.5 border border-theme-border dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
               style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
           </div>
@@ -1714,7 +1714,7 @@ export const Leads = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="block px-3 py-2 text-white focus:text-white leading-tight text-gray-500  border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+              className="block px-3 py-2 text-white focus:text-white leading-tight text-gray-500  border border-theme-border rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
             >
               <span className="sr-only text-white focus:text-white">{t('Previous')}</span>
               <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
@@ -1725,7 +1725,7 @@ export const Leads = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}
               disabled={currentPage === Math.ceil(filteredLeads.length / itemsPerPage)}
-              className="block px-3 py-2 leading-tight  border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+              className="block px-3 py-2 leading-tight  border border-theme-border rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
             >
               <span className="sr-only text-white focus:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Next')}</span>
               <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path></svg>
@@ -1735,7 +1735,7 @@ export const Leads = () => {
 
         {/* Row 2: Export Controls */}
         <div className="flex justify-center items-center">
-          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-gray-300 dark:border-gray-600  dark:bg-gray-700 justify-center">
+          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-theme-border dark:border-gray-600  dark:bg-gray-700 justify-center">
             <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Export Pages')}</span>
             <input
               type="number"
@@ -1744,7 +1744,7 @@ export const Leads = () => {
               placeholder="From"
               value={exportFrom}
               onChange={(e) => setExportFrom(e.target.value)}
-              className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
+              className="w-16 px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
               style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
             <span className="text-xs font-semibold  dark:text-white   style={{ color: theme === 'dark' ? '#ffffff' : undefined }}">{t('to')}</span>
@@ -1755,7 +1755,7 @@ export const Leads = () => {
               placeholder="To"
               value={exportTo}
               onChange={(e) => setExportTo(e.target.value)}
-              className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
+              className="w-16 px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
               style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
             <button

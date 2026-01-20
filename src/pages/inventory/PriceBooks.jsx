@@ -224,7 +224,7 @@ export default function PriceBooks() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(5)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -546,10 +546,10 @@ export default function PriceBooks() {
                   value={itemsPerPage}
                   onChange={e => setItemsPerPage(Number(e.target.value))}
                 >
-                  <option value={5}>5</option>
                   <option value={10}>10</option>
                   <option value={20}>20</option>
                   <option value={50}>50</option>
+                  <option value={100}>100</option>
                 </select>
               </div>
             </div>

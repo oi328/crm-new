@@ -1,326 +1,697 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import * as XLSX from 'xlsx'
-import { PieChart } from '@shared/components/PieChart'
-import { FunnelChart } from '../components/FunnelChart'
-import { Bar } from 'react-chartjs-2'
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
+import { Link } from 'react-router-dom'
+import BackButton from '../components/BackButton'
+import { Filter, User, Users, Briefcase, Tag, Calendar, Layers, XCircle, FileText, CheckCircle, Clock, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FaFileExport, FaChevronDown, FaFileExcel, FaFilePdf } from 'react-icons/fa'
+import SearchableSelect from '@shared/components/SearchableSelect'
 import { useStages } from '../hooks/useStages'
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
-
-// Stages will be loaded dynamically from Settings via useStages
+import * as XLSX from 'xlsx'
 
 export default function LeadsPipelineReport() {
   const { t, i18n } = useTranslation()
   const { stages } = useStages()
+  const isRTL = i18n.dir() === 'rtl'
 
-  // Sample leads dataset matching requested layout
-  const leads = [
-    { name: 'ABC Pharma', stage: 'Qualified', expectedValue: 25000, salesperson: 'Ahmed Ali', dateCreated: '2025-11-02', expectedClose: '2025-12-10', status: 'Active' },
-    { name: 'Delta Med', stage: 'Proposal', expectedValue: 42000, salesperson: 'Sara Hassan', dateCreated: '2025-11-04', expectedClose: '2025-12-15', status: 'Pending' },
-    { name: 'Green Labs', stage: 'Negotiation', expectedValue: 33000, salesperson: 'Omar Tarek', dateCreated: '2025-11-06', expectedClose: '2025-12-22', status: 'Active' },
-    { name: 'Sun Health', stage: 'Contacted', expectedValue: 18000, salesperson: 'Ahmed Ali', dateCreated: '2025-11-07', expectedClose: '2025-12-05', status: 'Active' },
-    { name: 'Medix Co.', stage: 'New', expectedValue: 15000, salesperson: 'Mona Adel', dateCreated: '2025-11-05', expectedClose: '2025-12-01', status: 'Active' },
-    { name: 'BioCure', stage: 'Closed Won', expectedValue: 70000, salesperson: 'Sara Hassan', dateCreated: '2025-10-28', expectedClose: '2025-11-08', status: 'Closed' },
-    { name: 'LifeChem', stage: 'Closed Lost', expectedValue: 12000, salesperson: 'Omar Tarek', dateCreated: '2025-10-26', expectedClose: '2025-11-03', status: 'Lost' },
-    { name: 'CarePlus', stage: 'Proposal', expectedValue: 38000, salesperson: 'Mona Adel', dateCreated: '2025-11-03', expectedClose: '2025-12-18', status: 'Pending' },
-    { name: 'HealRight', stage: 'Qualified', expectedValue: 26000, salesperson: 'Ahmed Ali', dateCreated: '2025-11-01', expectedClose: '2025-12-12', status: 'Active' },
-    { name: 'NovaMed', stage: 'Negotiation', expectedValue: 45000, salesperson: 'Sara Hassan', dateCreated: '2025-11-02', expectedClose: '2025-12-20', status: 'Active' }
+  // Mock Data for Demonstration
+  const rawLeads = [
+    { id: 1, name: 'Lead A', salesperson: 'Abdelhamid', manager: 'Manager X', stage: 'New', source: 'Facebook', project: 'Project A', assignDate: '2025-01-01', createdAt: '2024-12-25', lastActionAt: '2025-01-02', closedAt: '', status: 'pending', type: 'cold' },
+    { id: 2, name: 'Lead B', salesperson: 'Abdelhamid', stage: 'Meeting', source: 'Google', project: 'Project B', assignDate: '2025-01-05', createdAt: '2025-01-01', lastActionAt: '2025-01-06', closedAt: '', status: 'active', type: 'hot' },
+    { id: 3, name: 'Lead C', salesperson: 'Sara Ali', manager: 'Manager Y', stage: 'Proposal', source: 'Referral', project: 'Project A', assignDate: '2025-01-10', createdAt: '2025-01-08', lastActionAt: '2025-01-11', closedAt: '', status: 'active', type: 'hot' },
+    { id: 4, name: 'Lead D', salesperson: 'Omar Khaled', manager: 'Manager X', stage: 'Closed Won', source: 'Website', project: 'Project C', assignDate: '2025-01-12', createdAt: '2025-01-10', lastActionAt: '2025-01-15', closedAt: '2025-01-15', status: 'closed', type: 'hot' },
+    { id: 5, name: 'Lead E', salesperson: 'Abdelhamid', stage: 'Canceled', source: 'Facebook', project: 'Project A', assignDate: '2025-01-15', createdAt: '2025-01-14', lastActionAt: '2025-01-16', closedAt: '', status: 'canceled', type: 'cold' },
+    { id: 6, name: 'Lead F', salesperson: 'Sara Ali', stage: 'Follow Up', source: 'Google', project: 'Project B', assignDate: '2025-01-18', createdAt: '2025-01-17', lastActionAt: '2025-01-19', closedAt: '', status: 'active', type: 'warm' },
+    { id: 7, name: 'Lead G', salesperson: 'Omar Khaled', stage: 'New', source: 'Referral', project: 'Project A', assignDate: '2025-01-20', createdAt: '2025-01-20', lastActionAt: '', closedAt: '', status: 'pending', type: 'new' },
+    { id: 8, name: 'Lead H', salesperson: 'Abdelhamid', stage: 'Proposal', source: 'Website', project: 'Project C', assignDate: '2025-01-22', createdAt: '2025-01-21', lastActionAt: '2025-01-23', closedAt: '', status: 'active', type: 'warm' },
+    { id: 9, name: 'Lead I', salesperson: 'Sara Ali', stage: 'Closed Lost', source: 'Facebook', project: 'Project A', assignDate: '2025-01-25', createdAt: '2025-01-24', lastActionAt: '2025-01-26', closedAt: '2025-01-26', status: 'closed', type: 'cold' },
+    { id: 10, name: 'Lead J', salesperson: 'Omar Khaled', stage: 'Meeting', source: 'Google', project: 'Project B', assignDate: '2025-01-28', createdAt: '2025-01-27', lastActionAt: '2025-01-29', closedAt: '', status: 'active', type: 'hot' },
+    // Add more mock data to make numbers look realistic
+    ...Array.from({ length: 50 }).map((_, i) => ({
+      id: 11 + i,
+      name: `Lead ${i}`,
+      salesperson: ['Abdelhamid', 'Sara Ali', 'Omar Khaled'][i % 3],
+      manager: ['Manager X', 'Manager Y'][i % 2],
+      stage: ['New', 'Meeting', 'Proposal', 'Follow Up', 'Closed Won', 'Canceled'][i % 6],
+      source: ['Facebook', 'Google', 'Website', 'Referral'][i % 4],
+      project: ['Project A', 'Project B', 'Project C'][i % 3],
+      assignDate: '2025-01-01',
+      createdAt: '2024-12-20',
+      lastActionAt: '2025-01-02',
+      closedAt: '',
+      status: ['active', 'pending', 'closed', 'canceled'][i % 4],
+      type: ['cold', 'hot', 'warm', 'new'][i % 4]
+    }))
   ]
 
-  const salespeople = useMemo(() => Array.from(new Set(leads.map(l => l.salesperson))), [])
-  const [salesperson, setSalesperson] = useState('all')
-  const [dateType, setDateType] = useState('created') // 'created' | 'expectedClose'
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
+  // Filters State
+  const [salesPersonFilter, setSalesPersonFilter] = useState('')
+  const [managerFilter, setManagerFilter] = useState('')
+  const [stageFilter, setStageFilter] = useState('')
+  const [sourceFilter, setSourceFilter] = useState('')
+  const [projectFilter, setProjectFilter] = useState('')
+  const [assignDate, setAssignDate] = useState('')
+  const [creationDate, setCreationDate] = useState('')
+  const [lastActionDate, setLastActionDate] = useState('')
+  const [closeDealsDate, setCloseDealsDate] = useState('')
+  const [showAllFilters, setShowAllFilters] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const exportMenuRef = useRef(null)
 
-  const filtered = useMemo(() => {
-    return leads.filter(l => {
-      const matchSales = salesperson === 'all' || l.salesperson === salesperson
-      const field = dateType === 'created' ? l.dateCreated : l.expectedClose
-      const d = new Date(field)
-      const afterFrom = from ? d >= new Date(from) : true
-      const beforeTo = to ? d <= new Date(to) : true
-      return matchSales && afterFrom && beforeTo
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+        setShowExportMenu(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  // Filter Logic
+  const filteredData = useMemo(() => {
+    return rawLeads.filter(lead => {
+      const matchSales = salesPersonFilter ? lead.salesperson === salesPersonFilter : true
+      const matchManager = managerFilter ? lead.manager === managerFilter : true
+      const matchStage = stageFilter ? lead.stage === stageFilter : true
+      const matchSource = sourceFilter ? lead.source === sourceFilter : true
+      const matchProject = projectFilter ? lead.project === projectFilter : true
+      const matchDate = assignDate ? lead.assignDate === assignDate : true
+      const matchCreationDate = creationDate ? lead.createdAt === creationDate : true
+      const matchLastActionDate = lastActionDate ? lead.lastActionAt === lastActionDate : true
+      const matchCloseDealsDate = closeDealsDate ? lead.closedAt === closeDealsDate : true
+      return matchSales && matchManager && matchStage && matchSource && matchProject && matchDate && matchCreationDate && matchLastActionDate && matchCloseDealsDate
     })
-  }, [salesperson, dateType, from, to])
+  }, [rawLeads, salesPersonFilter, managerFilter, stageFilter, sourceFilter, projectFilter, assignDate, creationDate, lastActionDate, closeDealsDate])
 
-  const totals = useMemo(() => {
-    const totalLeads = filtered.length
-    const totalExpected = filtered.reduce((s, l) => s + l.expectedValue, 0)
-    return { totalLeads, totalExpected }
-  }, [filtered])
+  // KPI Calculations
+  const totalLeads = filteredData.length
+  const newLeads = filteredData.filter(l => l.stage === 'New' || l.status === 'pending').length
+  const canceledLeads = filteredData.filter(l => l.stage === 'Canceled' || l.status === 'canceled').length
+  const meetingsCount = filteredData.filter(l => l.stage === 'Meeting').length
+  const proposalsCount = filteredData.filter(l => l.stage === 'Proposal').length
+  const followUpCount = filteredData.filter(l => l.stage === 'Follow Up').length
+  const closedCount = filteredData.filter(l => l.stage === 'Closed Won').length
 
-  const normalize = (s) => String(s || '').trim().toLowerCase()
-  const stageCounts = useMemo(() => {
-    const map = Object.fromEntries((stages || []).map(s => [normalize(s.name), 0]))
-    filtered.forEach(l => {
-      const key = normalize(l.stage)
-      if (key in map) map[key] = (map[key] || 0) + 1
+  // Aggregation for Table
+  const salesPersonStats = useMemo(() => {
+    const stats = {}
+    filteredData.forEach(lead => {
+      if (!stats[lead.salesperson]) {
+        stats[lead.salesperson] = {
+          name: lead.salesperson,
+          total: 0,
+          pendingNew: 0,
+          pendingCold: 0,
+          followUp: 0,
+          proposal: 0,
+          meeting: 0,
+          closed: 0,
+          canceled: 0
+        }
+      }
+      stats[lead.salesperson].total += 1
+      if (lead.stage === 'New') stats[lead.salesperson].pendingNew += 1
+      if (lead.type === 'cold') stats[lead.salesperson].pendingCold += 1
+      if (lead.stage === 'Follow Up') stats[lead.salesperson].followUp += 1
+      if (lead.stage === 'Proposal') stats[lead.salesperson].proposal += 1
+      if (lead.stage === 'Meeting') stats[lead.salesperson].meeting += 1
+      if (lead.stage === 'Closed Won') stats[lead.salesperson].closed += 1
+      if (lead.stage === 'Canceled') stats[lead.salesperson].canceled += 1
     })
-    return map
-  }, [filtered, stages])
+    return Object.values(stats)
+  }, [filteredData])
 
-  const stageValues = useMemo(() => {
-    const map = Object.fromEntries((stages || []).map(s => [normalize(s.name), 0]))
-    filtered.forEach(l => {
-      const key = normalize(l.stage)
-      if (key in map) map[key] = (map[key] || 0) + l.expectedValue
-    })
-    return map
-  }, [filtered, stages])
+  const [expandedRows, setExpandedRows] = useState({});
 
-  const pieBySalesperson = useMemo(() => {
-    const agg = {}
-    filtered.forEach(l => { agg[l.salesperson] = (agg[l.salesperson] || 0) + 1 })
-    const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-    const palette = ['#3b82f6','#22c55e','#f59e0b','#8b5cf6','#ef4444','#10b981','#6366f1']
-    return Object.entries(agg).map(([label, value], i) => ({ label, value, color: palette[i % palette.length] }))
-  }, [filtered])
+  const toggleRow = (id) => {
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
-  const tickColor = typeof document !== 'undefined' && document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151'
+  const [entriesPerPage, setEntriesPerPage] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const barLabels = (stages || []).map(s => s.name)
-  const barByStageValueData = {
-    labels: barLabels,
-    datasets: [{ label: t('Total Expected Value'), data: (stages || []).map(s => stageValues[normalize(s.name)]), backgroundColor: '#2563eb', borderRadius: 6, barThickness: 24 }]
-  }
-  const barOptions = { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { color: tickColor } }, y: { grid: { display: false }, ticks: { color: tickColor } } }, plugins: { legend: { display: true } } }
+  const pageCount = Math.max(1, Math.ceil(salesPersonStats.length / entriesPerPage))
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * entriesPerPage
+    return salesPersonStats.slice(start, start + entriesPerPage)
+  }, [salesPersonStats, currentPage, entriesPerPage])
 
-  const stageColor = (stage) => {
-    const def = (stages || []).find(s => normalize(s.name) === normalize(stage))
-    return def?.color || '#3b82f6'
-  }
-
-  const exportExcel = () => {
-    const rows = filtered.map(l => ({
-      LeadName: l.name,
-      SalesStage: l.stage,
-      ExpectedValueEGP: l.expectedValue,
-      Salesperson: l.salesperson,
-      DateCreated: l.dateCreated,
-      ExpectedClosing: l.expectedClose,
-      Status: l.status
+  const handleExport = () => {
+    const rows = filteredData.map(lead => ({
+      Name: lead.name,
+      Salesperson: lead.salesperson,
+      Manager: lead.manager || '',
+      Stage: lead.stage,
+      Source: lead.source,
+      Project: lead.project,
+      AssignDate: lead.assignDate,
+      CreatedAt: lead.createdAt,
+      LastActionAt: lead.lastActionAt,
+      ClosedAt: lead.closedAt || '',
+      Status: lead.status,
+      Type: lead.type
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'LeadsPipeline')
-    XLSX.writeFile(wb, 'leads-pipeline-dashboard.xlsx')
+    XLSX.utils.book_append_sheet(wb, ws, 'Leads Pipeline')
+    XLSX.writeFile(wb, 'leads_pipeline_report.xlsx')
+    setShowExportMenu(false)
   }
 
-  const exportPdf = () => window.print()
-  const getStageDef = (stage) => (stages || []).find(s => normalize(s.name) === normalize(stage))
+  const exportToPdf = async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const autoTable = await import('jspdf-autotable')
+      const doc = new jsPDF()
+      
+      const tableColumn = [
+        isRTL ? 'الاسم' : "Name", 
+        isRTL ? 'مسؤول المبيعات' : "Salesperson", 
+        isRTL ? 'المرحلة' : "Stage", 
+        isRTL ? 'المشروع' : "Project", 
+        isRTL ? 'الحالة' : "Status", 
+        isRTL ? 'النوع' : "Type"
+      ]
+      const tableRows = []
+
+      filteredData.forEach(lead => {
+        const rowData = [
+          lead.name,
+          lead.salesperson,
+          lead.stage,
+          lead.project,
+          lead.status,
+          lead.type
+        ]
+        tableRows.push(rowData)
+      })
+
+      doc.text(isRTL ? 'تقرير مسار العملاء' : "Leads Pipeline Report", 14, 15)
+      autoTable.default(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { font: 'helvetica', fontSize: 8 },
+        headStyles: { fillColor: [66, 139, 202] }
+      })
+      doc.save("leads_pipeline_report.pdf")
+      setShowExportMenu(false)
+    } catch (error) {
+      console.error("Export PDF Error:", error)
+    }
+  }
 
   return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">{t('Leads pipeline')}</h1>
+    <div className="p-6 max-w-7xl mx-auto space-y-8 min-h-screen ">
+        <div>
+          <BackButton to="/reports" />
+        </div>      
+      {/* Header & Navigation */}
+      
+        {/* Row 1: Back Button */}
+
+
+        {/* Row 2: Title and Export Button */}
+        <div className="flex flex-wrap gap-4 md:flex-row justify-between items-start md:items-center gap-4">
+          <h1 className="text-3xl font-bold  dark:text-white flex items-center gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+              <Layers size={32} />
+            </div>
+            {isRTL ? 'التقارير، مسار العملاء...' : 'Reports, Leads Pipeline...'}
+          </h1>
         </div>
-        <div className="h-2" aria-hidden="true"></div>
-        {/* Export */}
-        <div className="flex justify-end">
-          <div className="flex gap-2">
-            <button onClick={exportPdf} className="btn btn-primary">{t('Download PDF')}</button>
-            <button onClick={exportExcel} className="btn btn-secondary">{t('Download Excel')}</button>
+      
+
+      {/* Filters Section */}
+      <div className="backdrop-blur-md border border-white/50 dark:border-gray-700/50 p-4 rounded-2xl shadow-sm mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2 dark:text-white font-semibold">
+            <Filter size={20} className="text-blue-500 dark:text-blue-400" />
+            <h3>{isRTL ? 'الفلاتر' : 'Filters'}</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setShowAllFilters(prev => !prev)} 
+              className={`flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors`}
+            >
+              {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'إظهار' : 'Show')}
+              <ChevronDown size={12} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
+            </button>
+            <button
+              onClick={() => {
+                setSalesPersonFilter('')
+                setManagerFilter('')
+                setStageFilter('')
+                setSourceFilter('')
+                setProjectFilter('')
+                setAssignDate('')
+                setCreationDate('')
+                setLastActionDate('')
+                setCloseDealsDate('')
+                setShowAllFilters(false)
+              }}
+              className="px-3 py-1.5 text-sm dark:text-white hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              {isRTL ? 'إعادة تعيين' : 'Reset'}
+            </button>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div>
-              <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('Salesperson')}</label>
-              <select value={salesperson} onChange={(e) => setSalesperson(e.target.value)} className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
-                <option value="all">{t('All')}</option>
-                {salespeople.map(sp => <option key={sp} value={sp}>{sp}</option>)}
-              </select>
+        <div className="space-y-3">
+          {/* First Row - Always Visible */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Sales Person */}
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <User size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'مسؤول المبيعات' : 'Sales Person'}
+              </label>
+              <SearchableSelect 
+                options={[{ value: '', label: isRTL ? 'الكل' : 'All Sales Persons' }, ...Array.from(new Set(rawLeads.map(d => d.salesperson))).map(s => ({ value: s, label: s }))]}
+                value={salesPersonFilter}
+                onChange={setSalesPersonFilter}
+                placeholder={isRTL ? 'اختر' : 'Sales Person'}
+                icon={<User size={16} />}
+                isRTL={isRTL}
+              />
             </div>
-            <div>
-              <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('Date Type')}</label>
-              <select value={dateType} onChange={(e) => setDateType(e.target.value)} className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
-                <option value="created">{t('Created Date')}</option>
-                <option value="expectedClose">{t('Expected Close Date')}</option>
-              </select>
+
+            {/* Manager */}
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Users size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'المدير' : 'Manager'}
+              </label>
+              <SearchableSelect 
+                options={[{ value: '', label: isRTL ? 'الكل' : 'All Managers' }, ...Array.from(new Set(rawLeads.map(d => d.manager).filter(Boolean))).map(s => ({ value: s, label: s }))]}
+                value={managerFilter}
+                onChange={setManagerFilter}
+                placeholder={isRTL ? 'اختر' : 'Manager'}
+                icon={<Users size={16} />}
+                isRTL={isRTL}
+              />
             </div>
-            <div>
-              <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('From')}</label>
-              <input type="date" lang={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'en'} dir={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'rtl' : 'ltr'} placeholder={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'اليوم/الشهر/السنة' : 'mm/dd/yyyy'} value={from} onChange={(e) => setFrom(e.target.value)} className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100" />
+
+            {/* Stage */}
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Layers size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'المرحلة' : 'Stage'}
+              </label>
+              <SearchableSelect 
+                options={[{ value: '', label: isRTL ? 'الكل' : 'All Stages' }, ...Array.from(new Set(rawLeads.map(d => d.stage))).map(s => ({ value: s, label: s }))]}
+                value={stageFilter}
+                onChange={setStageFilter}
+                placeholder={isRTL ? 'اختر' : 'Stage Pipeline'}
+                icon={<Layers size={16} />}
+                isRTL={isRTL}
+              />
             </div>
-            <div>
-              <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('To')}</label>
-              <input type="date" lang={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'en'} dir={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'rtl' : 'ltr'} placeholder={(i18n?.language || '').toLowerCase().startsWith('ar') ? 'اليوم/الشهر/السنة' : 'mm/dd/yyyy'} value={to} onChange={(e) => setTo(e.target.value)} className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100" />
+
+            {/* Source */}
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Tag size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'المصدر' : 'Source'}
+              </label>
+              <SearchableSelect 
+                options={[{ value: '', label: isRTL ? 'الكل' : 'All Sources' }, ...Array.from(new Set(rawLeads.map(d => d.source))).map(s => ({ value: s, label: s }))]}
+                value={sourceFilter}
+                onChange={setSourceFilter}
+                placeholder={isRTL ? 'اختر' : 'Source'}
+                icon={<Tag size={16} />}
+                isRTL={isRTL}
+              />
             </div>
           </div>
-        </div>
-        <div className="h-4" aria-hidden="true"></div>
 
-        {/* Removed: Salesperson × Stage Heatmap */}
-
-        {/* Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[{ label: t('Total Leads'), value: totals.totalLeads, accent: 'bg-blue-500' }, { label: t('Total Expected Value'), value: `${totals.totalExpected.toLocaleString()} EGP`, accent: 'bg-emerald-500' }].map((k) => (
-            <div key={k.label} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-              <div className="flex items-center gap-3">
-                <span className={`inline-block w-2 h-6 rounded ${k.accent}`} />
-                <div>
-                  <div className="text-xs text-gray-600 dark:text-gray-300">{k.label}</div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{k.value}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="h-4" aria-hidden="true"></div>
-
-        {/* Visualizations */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Funnel (stage counts) */}
-          <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <div className={`flex items-center gap-2 mb-3`}>
-              <div className={`${i18n?.dir?.() === 'rtl' ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
-              <h3 className={`${i18n?.dir?.() === 'rtl' ? 'text-right' : ''} text-lg font-semibold text-gray-900 dark:text-gray-100`}>{t('Funnel by Stage')}</h3>
-            </div>
-            {(() => {
-              const darken = (hex, amt = 40) => {
-                try {
-                  const h = hex.replace('#','')
-                  const num = parseInt(h, 16)
-                  let r = (num >> 16) & 0xff
-                  let g = (num >> 8) & 0xff
-                  let b = num & 0xff
-                  r = Math.max(0, r - amt)
-                  g = Math.max(0, g - amt)
-                  b = Math.max(0, b - amt)
-                  return `#${(r<<16 | g<<8 | b).toString(16).padStart(6,'0')}`
-                } catch {
-                  return hex
-                }
-              }
-              const segments = (stages || []).map(s => ({
-                label: t(s.nameAr || s.name),
-                value: stageCounts[normalize(s.name)] || 0,
-                colorStart: s.color || '#3b82f6',
-                colorEnd: darken(s.color || '#3b82f6', 40),
-                icon: s.icon,
-              }))
-              return (
-                <FunnelChart
-                  segments={segments}
-                  width={460}
-                  sliceHeight={34}
-                  gap={12}
-                  showConversions
-                  formatValue={(v) => v.toLocaleString()}
+          {/* Additional Filters (Toggleable) */}
+          <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showAllFilters ? 'max-h-[800px] opacity-100 pt-3' : 'max-h-0 opacity-0'}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Project */}
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                  <Briefcase size={12} className="text-blue-500 dark:text-blue-400" />
+                  {isRTL ? 'المشروع أو المنتج' : 'Project or Product'}
+                </label>
+                <SearchableSelect 
+                  options={[{ value: '', label: isRTL ? 'الكل' : 'All Projects' }, ...Array.from(new Set(rawLeads.map(d => d.project))).map(s => ({ value: s, label: s }))]}
+                  value={projectFilter}
+                  onChange={setProjectFilter}
+                  placeholder={isRTL ? 'اختر' : 'Project or Product'}
+                  icon={<Briefcase size={16} />}
+                  isRTL={isRTL}
                 />
-              )
-            })()}
-          </div>
-
-          {/* Bar: total expected value by stage */}
-          <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('Expected Value by Stage')}</h3>
-            <div style={{ height: '260px' }}>
-              <Bar data={barByStageValueData} options={barOptions} />
-            </div>
-          </div>
-
-          {/* Pie: leads by salesperson */}
-          <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('Leads by Salesperson')}</h3>
-            <PieChart segments={pieBySalesperson} size={200} centerLabel={t('Leads')} />
-          </div>
-        </div>
-        <div className="h-4" aria-hidden="true"></div>
-
-        {/* Table */}
-        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="hidden md:block w-full overflow-x-auto">
-            <table className="min-w-max table-fixed text-sm whitespace-nowrap">
-              <thead className="bg-gray-100 dark:bg-gray-900/95" style={{ backgroundColor: 'var(--table-header-bg)' }}>
-                <tr className="text-left border-b border-gray-200 dark:border-gray-700">
-                  {[t('Lead Name'), t('Sales Stage'), t('Expected Value'), t('Salesperson'), t('Date Created'), t('Status')].map((h, idx) => (
-                    <th key={idx} className="px-3 py-2 text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((l, idx) => (
-                  <React.Fragment key={`${l.name}-${idx}`}>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
-                      <td className="px-3 py-2 text-gray-800 dark:text-gray-100 whitespace-nowrap">{l.name}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">
-                        {(() => {
-                          const def = getStageDef(l.stage)
-                          const label = i18n.language === 'ar' ? (def?.nameAr || def?.name || l.stage) : (def?.name || l.stage)
-                          const color = def?.color || stageColor(l.stage)
-                          return (
-                            <span className="inline-flex items-center gap-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: color }}>
-                              {def?.icon && <span className="text-sm">{def.icon}</span>}
-                              <span>{label}</span>
-                            </span>
-                          )
-                        })()}
-                      </td>
-                      <td className="px-3 py-2 text-gray-800 dark:text-gray-100 whitespace-nowrap">{`${l.expectedValue.toLocaleString()} EGP`}</td>
-                      <td className="px-3 py-2 text-gray-800 dark:text-gray-100 whitespace-nowrap">{l.salesperson}</td>
-                      <td className="px-3 py-2 text-gray-800 dark:text-gray-100 whitespace-nowrap">{new Date(l.dateCreated).toLocaleDateString()}</td>
-                      <td className="px-3 py-2 text-gray-800 dark:text-gray-100 whitespace-nowrap">{t(l.status)}</td>
-                    </tr>
-                    {idx !== filtered.length - 1 && (
-                      <tr className="hidden md:table-row">
-                        <td colSpan={6} className="py-2"></td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards */}
-          <div className="md:hidden space-y-4">
-            {filtered.length === 0 && (
-              <div className="text-center py-6 text-[var(--muted-text)]">{t('No data')}</div>
-            )}
-            {filtered.map((l, idx) => (
-              <div key={`${l.name}-${idx}`} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
-                <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-                  <h4 className="font-semibold text-sm">{l.name}</h4>
-                  <span className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700">{t(l.status)}</span>
-                </div>
-                <div className="grid grid-cols-1 gap-y-2 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[var(--muted-text)] text-xs">{t('Sales Stage')}</span>
-                    {(() => {
-                      const def = getStageDef(l.stage)
-                      const label = i18n.language === 'ar' ? (def?.nameAr || def?.name || l.stage) : (def?.name || l.stage)
-                      const color = def?.color || stageColor(l.stage)
-                      return (
-                        <span className="inline-flex items-center gap-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: color }}>
-                          {def?.icon && <span className="text-sm">{def.icon}</span>}
-                          <span>{label}</span>
-                        </span>
-                      )
-                    })()}
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--muted-text)] text-xs">{t('Expected Value')}</span>
-                    <span className="font-medium text-xs">{`${l.expectedValue.toLocaleString()} EGP`}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--muted-text)] text-xs">{t('Salesperson')}</span>
-                    <span className="text-xs">{l.salesperson}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--muted-text)] text-xs">{t('Date Created')}</span>
-                    <span className="text-xs">{new Date(l.dateCreated).toLocaleDateString()}</span>
-                  </div>
-                </div>
               </div>
-            ))}
+
+              {/* Assign Date */}
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                  <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                  {isRTL ? 'تاريخ التعيين' : 'Assign Date'}
+                </label>
+                <input 
+                  type="date" 
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm  dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  value={assignDate}
+                  onChange={(e) => setAssignDate(e.target.value)}
+                />
+              </div>
+
+              {/* Creation Date */}
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                  <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                  {isRTL ? 'تاريخ الإنشاء' : 'Creation Date'}
+                </label>
+                <input 
+                  type="date" 
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  value={creationDate}
+                  onChange={(e) => setCreationDate(e.target.value)}
+                />
+              </div>
+
+              {/* Last Action Date */}
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                  <Clock size={12} className="text-blue-500 dark:text-blue-400" />
+                  {isRTL ? 'تاريخ آخر إجراء' : 'Last Action Date'}
+                </label>
+                <input 
+                  type="date" 
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm  dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  value={lastActionDate}
+                  onChange={(e) => setLastActionDate(e.target.value)}
+                />
+              </div>
+
+              {/* Close Deals Date */}
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                  <CheckCircle size={12} className="text-blue-500 dark:text-blue-400" />
+                  {isRTL ? 'تاريخ إغلاق الصفقات' : 'Close Deals Date'}
+                </label>
+                <input 
+                  type="date" 
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm  dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  value={closeDealsDate}
+                  onChange={(e) => setCloseDealsDate(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-4">
+        {[
+          {
+            title: isRTL ? 'العملاء' : 'Customers',
+            value: totalLeads.toLocaleString(),
+            sub: isRTL ? '(الكل)' : '(Total)',
+            icon: Users,
+            color: 'text-blue-500 dark:text-blue-400',
+            bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+          },
+          {
+            title: isRTL ? 'العملاء المحتملين' : 'Leads',
+            value: newLeads,
+            sub: isRTL ? '(جديد/معلق)' : '(New/Pending)',
+            icon: Filter,
+            color: 'text-indigo-600 dark:text-indigo-400',
+            bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+          },
+          {
+            title: isRTL ? 'الاجتماعات' : 'Meetings',
+            value: meetingsCount,
+            sub: isRTL ? '(مجدولة)' : '(Scheduled)',
+            icon: Calendar,
+            color: 'text-purple-600 dark:text-purple-400',
+            bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+          },
+
+          {
+            title: isRTL ? 'العروض' : 'Proposals',
+            value: proposalsCount,
+            sub: isRTL ? '(مرسلة)' : '(Sent)',
+            icon: FileText,
+            color: 'text-cyan-600 dark:text-cyan-400',
+            bgColor: 'bg-cyan-50 dark:bg-cyan-900/20',
+          },
+          {
+            title: isRTL ? 'صفقات مغلقة' : 'Closed Deals',
+            value: closedCount,
+            sub: isRTL ? '(فوز)' : '(Won)',
+            icon: CheckCircle,
+            color: 'text-emerald-600 dark:text-emerald-400',
+            bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+          },
+          {
+            title: isRTL ? 'إلغاء' : 'Cancelation',
+            value: canceledLeads.toLocaleString(),
+            sub: isRTL ? '(خسارة)' : '(Lost)',
+            icon: XCircle,
+            color: 'text-red-600 dark:text-red-400',
+            bgColor: 'bg-red-50 dark:bg-red-900/20',
+          },
+        ].map((card, idx) => {
+          const Icon = card.icon
+          return (
+            <div 
+              key={idx}
+              className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
+            >
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110">
+                <Icon size={80} className={card.color} />
+              </div>
+
+              <div className="flex flex-col justify-between h-full relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl ${card.bgColor} ${card.color}`}>
+                    <Icon size={20} />
+                  </div>
+                  <h3 className="dark:text-white text-sm font-semibold opacity-80">
+                    {card.title}
+                  </h3>
+                </div>
+
+                <div className="flex items-baseline space-x-2 rtl:space-x-reverse pl-1">
+                  <span className={`text-2xl font-bold ${card.color}`}>
+                    {card.value}
+                  </span>
+                  <span className="text-xs dark:text-white font-medium">
+                    {card.sub}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Leads Overview List Table */}
+      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 overflow-hidden">
+        <div className="p-6 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
+           <h3 className="text-lg font-bold  dark:text-white">{isRTL ? 'قائمة نظرة عامة على العملاء' : 'Leads overview List:'}</h3>
+           <div className="relative" ref={exportMenuRef}>
+             <button 
+               onClick={() => setShowExportMenu(!showExportMenu)} 
+               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+             >
+               <FaFileExport /> {isRTL ? 'تصدير' : 'Export'}
+               <FaChevronDown className={`transform transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} size={12} />
+             </button>
+             
+             {showExportMenu && (
+               <div className={`absolute top-full ${isRTL ? 'left-0' : 'right-0'} mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-48`}>
+                 <button 
+                   onClick={() => {
+                     handleExport();
+                     setShowExportMenu(false);
+                   }}
+                   className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                 >
+                   <FaFileExcel className="text-green-600" /> {isRTL ? 'تصدير كـ Excel' : 'Export to Excel'}
+                 </button>
+                 <button 
+                   onClick={() => {
+                     exportToPdf();
+                     setShowExportMenu(false);
+                   }}
+                   className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                 >
+                   <FaFilePdf className="text-red-600" /> {isRTL ? 'تصدير كـ PDF' : 'Export to PDF'}
+                 </button>
+               </div>
+             )}
+           </div>
+         </div>
+        
+        {/* Responsive Table View */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left rtl:text-right">
+            <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white">
+              <tr>
+                <th className="md:hidden px-6 py-4 border-b border-white/10 dark:border-gray-700/50"></th>
+                <th className="px-6 py-4 font-medium border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'مسؤول المبيعات' : 'Sales Person'}</th>
+                <th className="hidden md:table-cell px-6 py-4 font-medium border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'رقم العملاء' : 'Leads No.'}</th>
+                <th className="hidden md:table-cell px-6 py-4 font-medium border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'معلق (جديد)' : 'Pending (New)'}</th>
+                <th className="hidden md:table-cell px-6 py-4 font-medium border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'معلق (بارد)' : 'Pending (Cold)'}</th>
+                <th className="hidden md:table-cell px-6 py-4 font-medium border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'متابعة' : 'Follow up'}</th>
+                <th className="hidden md:table-cell px-6 py-4 font-medium border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'عرض' : 'Proposal'}</th>
+                <th className="hidden md:table-cell px-6 py-4 font-medium border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'اجتماع' : 'Meeting'}</th>
+                <th className="hidden md:table-cell px-6 py-4 font-medium border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'مغلق' : 'Closed'}</th>
+                <th className="hidden md:table-cell px-6 py-4 font-medium border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'ملغى' : 'Canceled'}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10 dark:divide-gray-700/50">
+              {salesPersonStats.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={10}
+                    className="px-6 py-6 text-center text-[var(--muted-text)]"
+                  >
+                    {isRTL ? 'لا توجد بيانات' : 'No data'}
+                  </td>
+                </tr>
+              )}
+              {salesPersonStats.length > 0 && paginatedRows.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={10}
+                    className="px-6 py-6 text-center text-[var(--muted-text)]"
+                  >
+                    {isRTL ? 'لا توجد نتائج' : 'No results'}
+                  </td>
+                </tr>
+              )}
+              {paginatedRows.map((stat, idx) => (
+                <React.Fragment key={idx}>
+                  <tr className="hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                    <td className="md:hidden px-6 py-4">
+                      <button onClick={() => toggleRow(stat.name)} className="p-1 rounded-full hover:bg-white/10 text-[var(--muted-text)]">
+                        {expandedRows[stat.name] ? <ChevronDown size={16} className="transform rotate-180" /> : <ChevronDown size={16} />}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 font-bold dark:text-white">{stat.name}</td>
+                    <td className="hidden md:table-cell px-6 py-4 font-semibold dark:text-white">{stat.total}</td>
+                    <td className="hidden md:table-cell px-6 py-4 text-blue-600 dark:text-blue-400">{stat.pendingNew}</td>
+                    <td className="hidden md:table-cell px-6 py-4 dark:text-white">{stat.pendingCold}</td>
+                    <td className="hidden md:table-cell px-6 py-4 text-amber-600 dark:text-amber-400">{stat.followUp}</td>
+                    <td className="hidden md:table-cell px-6 py-4 text-purple-600 dark:text-purple-400">{stat.proposal}</td>
+                    <td className="hidden md:table-cell px-6 py-4 text-indigo-600 dark:text-indigo-400">{stat.meeting}</td>
+                    <td className="hidden md:table-cell px-6 py-4 text-green-600 dark:text-green-400 font-bold">{stat.closed}</td>
+                    <td className="hidden md:table-cell px-6 py-4 text-red-600 dark:text-red-400">{stat.canceled}</td>
+                  </tr>
+                  {/* Mobile Expandable Row */}
+                  {expandedRows[stat.name] && (
+                    <tr className="md:hidden bg-white/5 dark:bg-white/5">
+                      <td colSpan={2} className="px-6 py-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'رقم العملاء' : 'Leads No.'}</span>
+                            <span className="font-semibold dark:text-white">{stat.total}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'معلق (جديد)' : 'Pending (New)'}</span>
+                            <span className="font-semibold text-blue-600 dark:text-blue-400">{stat.pendingNew}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'معلق (بارد)' : 'Pending (Cold)'}</span>
+                            <span className="font-semibold dark:text-white">{stat.pendingCold}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'متابعة' : 'Follow up'}</span>
+                            <span className="font-semibold text-amber-600 dark:text-amber-400">{stat.followUp}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'عرض' : 'Proposal'}</span>
+                            <span className="font-semibold text-purple-600 dark:text-purple-400">{stat.proposal}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'اجتماع' : 'Meeting'}</span>
+                            <span className="font-semibold text-indigo-600 dark:text-indigo-400">{stat.meeting}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'مغلق' : 'Closed'}</span>
+                            <span className="font-semibold text-green-600 dark:text-green-400">{stat.closed}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[var(--muted-text)] text-xs">{isRTL ? 'ملغى' : 'Canceled'}</span>
+                            <span className="font-semibold text-red-600 dark:text-red-400">{stat.canceled}</span>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+          <div className="px-6 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex items-center justify-between gap-3">
+            <div className="text-[11px] sm:text-xs text-[var(--muted-text)]">
+              {isRTL
+                ? `إظهار ${Math.min((currentPage - 1) * entriesPerPage + 1, salesPersonStats.length)}-${Math.min(currentPage * entriesPerPage, salesPersonStats.length)} من ${salesPersonStats.length}`
+                : `Showing ${Math.min((currentPage - 1) * entriesPerPage + 1, salesPersonStats.length)}-${Math.min(currentPage * entriesPerPage, salesPersonStats.length)} of ${salesPersonStats.length}`}
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  title={isRTL ? 'السابق' : 'Prev'}
+                >
+                  {isRTL ? (
+                    <ChevronRight className="w-4 h-4" />
+                  ) : (
+                    <ChevronLeft className="w-4 h-4" />
+                  )}
+                </button>
+                <span className="text-sm whitespace-nowrap">
+                  {isRTL
+                    ? `الصفحة ${currentPage} من ${pageCount}`
+                    : `Page ${currentPage} of ${pageCount}`}
+                </span>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setCurrentPage(p => Math.min(p + 1, pageCount))}
+                  disabled={currentPage === pageCount}
+                  title={isRTL ? 'التالي' : 'Next'}
+                >
+                  {isRTL ? (
+                    <ChevronLeft className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                <span className="text-[10px] sm:text-xs text-[var(--muted-text)] whitespace-nowrap">
+                  {isRTL ? 'لكل صفحة:' : 'Per page:'}
+                </span>
+                <select
+                  className="input w-24 text-sm py-0 px-2 h-8"
+                  value={entriesPerPage}
+                  onChange={(e) => {
+                    setEntriesPerPage(Number(e.target.value))
+                    setCurrentPage(1)
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

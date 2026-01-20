@@ -6,7 +6,8 @@ import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import { Bar, Doughnut, Line } from 'react-chartjs-2'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import BackButton from '../components/BackButton'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -28,6 +29,7 @@ const TeamPerformanceReport = () => {
   const { t } = useTranslation()
   const isRTL = i18n.dir() === 'rtl'
   const location = useLocation()
+  const navigate = useNavigate()
 
   // Filters state
   const [selectedManager, setSelectedManager] = useState('All')
@@ -214,6 +216,8 @@ const TeamPerformanceReport = () => {
   return (
     <Layout>
       <div className="p-4 space-y-4">
+        <BackButton to="/reports" />
+
         {/* Header + Actions */}
         <div className="glass-panel rounded-xl p-4">
           <div className="flex items-center justify-between gap-3">
@@ -378,4 +382,3 @@ const TeamPerformanceReport = () => {
 }
 
 export default TeamPerformanceReport
-import SearchableSelect from '@shared/components/SearchableSelect'

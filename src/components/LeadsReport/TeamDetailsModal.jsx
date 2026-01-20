@@ -83,6 +83,7 @@ const useScrollShadows = (ref) => {
 
 const TeamDetailsModal = ({ onClose, team, roster = [], onSearch }) => {
   const { t, i18n } = useTranslation()
+  const isRTL = i18n.dir() === 'rtl'
   const [activeTab, setActiveTab] = useState('profile')
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(null)
@@ -175,11 +176,11 @@ const TeamDetailsModal = ({ onClose, team, roster = [], onSearch }) => {
     setSaving(true)
     const id = setTimeout(() => {
       setSaving(false)
-      setToast(i18n.language === 'ar' ? 'تم الحفظ تلقائيًا' : 'Auto-saved')
+      setToast(isRTL ? 'تم الحفظ تلقائيًا' : 'Auto-saved')
       setTimeout(() => setToast(''), 1500)
     }, 700)
     return () => clearTimeout(id)
-  }, [form])
+  }, [form, isRTL])
 
   const setField = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
 
@@ -191,15 +192,73 @@ const TeamDetailsModal = ({ onClose, team, roster = [], onSearch }) => {
     XLSX.writeFile(wb, `member_${form.id || 'unknown'}.xlsx`)
   }
 
-  const exportPDF = () => {
-    const doc = new jsPDF('p', 'pt', 'a4')
-    doc.setFontSize(14)
-    doc.text('Team Member Profile', 40, 40)
-    const body = [
-      ['Name', form.name], ['Role', form.role], ['Department', form.department], ['Employee ID', String(form.id)], ['Email', form.email], ['Phone', form.phone], ['Join Date', form.join_date], ['Status', form.status], ['Performance Score', String(form.performance_score)], ['Last Activity', form.last_activity]
-    ]
-    doc.autoTable({ head: [['Field','Value']], body, startY: 60 })
-    doc.save(`member_${form.id || 'unknown'}.pdf`)
+  const exportPDF = async () => {
+    try {
+      const doc = new jsPDF()
+      // Use dynamic import for Amiri font to avoid bundling issues if possible, or just standard
+      // Since we did dynamic import in SalesLeads, let's replicate the pattern or use standard if loaded globally
+      // For now, assuming standard jsPDF usage but adding font if needed.
+      // Actually, SalesLeads used base64 font. I should probably do the same here if I want Arabic support.
+      // But for brevity, I'll use the same logic as SalesLeads if possible.
+      // Since I can't easily share the huge base64 string across files without a helper,
+      // I will skip the font addition here and just use English headers if RTL font is missing,
+      // OR better, I will use English keys for PDF to avoid garbage characters if font is missing.
+      // BUT the user wants RTL support.
+      // I will copy the font loading logic from SalesLeads if I can find where I put it.
+      // Wait, in SalesLeads I put it inside `exportToPdf`.
+      
+      // Let's use English for PDF export to ensure readability if font is an issue,
+      // OR try to use the font.
+      // I will just use standard export but with localized values where possible (latin characters).
+      // If values are Arabic, they will be garbage without the font.
+      // So I MUST add the font.
+      
+      const response = await fetch('https://raw.githubusercontent.com/google/fonts/main/ofl/amiri/Amiri-Regular.ttf')
+      if (response.ok) {
+        const fontData = await response.arrayBuffer()
+        const base64Font = btoa(
+          new Uint8Array(fontData).reduce((data, byte) => data + String.fromCharCode(byte), '')
+        )
+        doc.addFileToVFS('Amiri-Regular.ttf', base64Font)
+        doc.addFont('Amiri-Regular.ttf', 'Amiri-Regular', 'normal')
+        doc.setFont('Amiri-Regular')
+      }
+      
+      doc.setFontSize(14)
+      doc.text(isRTL ? 'ملف عضو الفريق' : 'Team Member Profile', isRTL ? 190 : 14, 20, { align: isRTL ? 'right' : 'left' })
+      
+      const body = [
+        [isRTL ? 'الاسم' : 'Name', form.name],
+        [isRTL ? 'الدور' : 'Role', form.role],
+        [isRTL ? 'القسم' : 'Department', form.department],
+        [isRTL ? 'معرف الموظف' : 'Employee ID', String(form.id)],
+        [isRTL ? 'البريد الإلكتروني' : 'Email', form.email],
+        [isRTL ? 'الهاتف' : 'Phone', form.phone],
+        [isRTL ? 'تاريخ الانضمام' : 'Join Date', form.join_date],
+        [isRTL ? 'الحالة' : 'Status', form.status],
+        [isRTL ? 'نقاط الأداء' : 'Performance Score', String(form.performance_score)],
+        [isRTL ? 'آخر نشاط' : 'Last Activity', form.last_activity]
+      ]
+      
+      doc.autoTable({
+        head: [[isRTL ? 'الحقل' : 'Field', isRTL ? 'القيمة' : 'Value']],
+        body,
+        startY: 30,
+        styles: { font: 'Amiri-Regular', halign: isRTL ? 'right' : 'left' },
+        headStyles: { halign: isRTL ? 'right' : 'left' }
+      })
+      doc.save(`member_${form.id || 'unknown'}.pdf`)
+    } catch (e) {
+      console.error('PDF Export Error', e)
+      // Fallback
+      const doc = new jsPDF()
+      doc.text('Team Member Profile', 14, 20)
+       const body = [
+        ['Name', form.name], ['Role', form.role], ['Department', form.department], ['Employee ID', String(form.id)], ['Email', form.email], ['Phone', form.phone], ['Join Date', form.join_date], ['Status', form.status], ['Performance Score', String(form.performance_score)], ['Last Activity', form.last_activity]
+      ]
+      doc.autoTable({ head: [['Field','Value']], body, startY: 30 })
+      doc.save(`member_${form.id || 'unknown'}.pdf`)
+    }
   }
 
   if (!team && !demoRoster.length) return null
@@ -227,14 +286,14 @@ const TeamDetailsModal = ({ onClose, team, roster = [], onSearch }) => {
                 <FaDownload/> {t('Export')}
               </button>
               {showExport && (
-                <div className="absolute right-0 top-full mt-2 w-40 rounded-lg border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg p-2 z-10">
-                  <button className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2" onClick={() => { setShowExport(false); exportExcel() }}>
+                <div className={`absolute top-full mt-2 w-40 rounded-lg border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg p-2 z-10 ${isRTL ? 'left-0' : 'right-0'}`}>
+                  <button className="w-full text-start px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2" onClick={() => { setShowExport(false); exportExcel() }}>
                     <FaDownload/> {t('Excel')}
                   </button>
-                  <button className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2" onClick={() => { setShowExport(false); exportPDF() }}>
+                  <button className="w-full text-start px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2" onClick={() => { setShowExport(false); exportPDF() }}>
                     <FaFileAlt/> {t('PDF')}
                   </button>
-                  <button className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2" onClick={() => { setShowExport(false); window.print() }}>
+                  <button className="w-full text-start px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2" onClick={() => { setShowExport(false); window.print() }}>
                     <FaPrint/> {t('Print')}
                   </button>
                 </div>
@@ -256,7 +315,7 @@ const TeamDetailsModal = ({ onClose, team, roster = [], onSearch }) => {
               }>
                 <div className="relative space-y-2 max-h-[60vh] overflow-auto" ref={rosterScrollRef}>
                   {filteredRoster.map(m => (
-                    <button key={m.id} onClick={() => { setSelected(m); setForm(m) }} className={`w-full text-left p-3 rounded-lg border hover:shadow-sm ${selected?.id===m.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'}`}>
+                    <button key={m.id} onClick={() => { setSelected(m); setForm(m) }} className={`w-full text-start p-3 rounded-lg border hover:shadow-sm ${selected?.id===m.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'}`}>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><FaUser className="text-gray-600 dark:text-gray-300"/></div>
                         <div className="flex-1">
@@ -283,10 +342,10 @@ const TeamDetailsModal = ({ onClose, team, roster = [], onSearch }) => {
                       className="flex-1 px-3 py-2 rounded-lg bg-rose-600 text-white inline-flex items-center gap-2"
                       title={t('teamDetails.suspend')}
                       onClick={() => {
-                        const confirmed = window.confirm(i18n.language === 'ar' ? 'هل تريد تعليق هذا العضو؟' : 'Suspend this member?')
+                        const confirmed = window.confirm(isRTL ? 'هل تريد تعليق هذا العضو؟' : 'Suspend this member?')
                         if (confirmed) {
-                          setField('status', i18n.language === 'ar' ? 'معلّق' : 'Suspended')
-                          setToast(i18n.language === 'ar' ? 'تم تعليق الموظف' : 'Member suspended')
+                          setField('status', isRTL ? 'معلّق' : 'Suspended')
+                          setToast(isRTL ? 'تم تعليق الموظف' : 'Member suspended')
                           setTimeout(() => setToast(''), 1500)
                         }
                       }}
@@ -297,10 +356,10 @@ const TeamDetailsModal = ({ onClose, team, roster = [], onSearch }) => {
                       className="flex-1 px-3 py-2 rounded-lg bg-indigo-600 text-white inline-flex items-center gap-2"
                       title={t('teamDetails.reactivate')}
                       onClick={() => {
-                        const confirmed = window.confirm(i18n.language === 'ar' ? 'هل تريد إعادة تفعيل هذا العضو؟' : 'Reactivate this member?')
+                        const confirmed = window.confirm(isRTL ? 'هل تريد إعادة تفعيل هذا العضو؟' : 'Reactivate this member?')
                         if (confirmed) {
-                          setField('status', i18n.language === 'ar' ? 'نشط' : 'Active')
-                          setToast(i18n.language === 'ar' ? 'تم إعادة التفعيل' : 'Member reactivated')
+                          setField('status', isRTL ? 'نشط' : 'Active')
+                          setToast(isRTL ? 'تم إعادة التفعيل' : 'Member reactivated')
                           setTimeout(() => setToast(''), 1500)
                         }
                       }}

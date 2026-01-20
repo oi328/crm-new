@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { FaChevronDown, FaSearch, FaTimes } from 'react-icons/fa'
 
-export default function SearchableSelect({ options, value, onChange, placeholder, label, isRTL, icon: Icon, multiple = false, className = '' }) {
+export default function SearchableSelect({ options, value, onChange, placeholder, label, isRTL, icon: Icon, multiple = false, className = '', showAllOption = true }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 })
@@ -71,9 +71,9 @@ export default function SearchableSelect({ options, value, onChange, placeholder
           return opt ? (typeof opt === 'object' && 'label' in opt ? opt.label : opt) : v
         }).join(', ')
       }
-      return placeholder || (isRTL ? 'الكل' : 'All')
+      return placeholder || (showAllOption ? (isRTL ? 'الكل' : 'All') : '')
     }
-    if (!value) return placeholder || (isRTL ? 'الكل' : 'All')
+    if (!value) return placeholder || (showAllOption ? (isRTL ? 'الكل' : 'All') : '')
     const opt = options.find(o => (typeof o === 'object' && o !== null && 'value' in o ? o.value : o) === value)
     return opt ? (typeof opt === 'object' && 'label' in opt ? opt.label : opt) : value
   }
@@ -88,16 +88,16 @@ export default function SearchableSelect({ options, value, onChange, placeholder
         width: coords.width,
         zIndex: 9999
       }}
-      className="bg-[var(--panel-bg)] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-hidden flex flex-col"
+      className="rounded-xl shadow-xl bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] backdrop-blur-md max-h-60 overflow-hidden flex flex-col"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-2 border-b border-[var(--dropdown-border)]/70">
         <div className="relative">
-          <FaSearch className={`absolute top-1/2 -translate-y-1/2 text-[var(--muted-text)] ${isRTL ? 'right-3' : 'left-3'}`} size={12} />
+          <FaSearch className={`absolute top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`} size={12} />
           <input
             autoFocus
             type="text"
-            className={`w-full bg-[var(--table-header-bg)] dark:bg-gray-900 rounded-md py-1.5 ${isRTL ? 'pr-8 pl-2' : 'pl-8 pr-2'} text-sm focus:outline-none text-[var(--text-primary)] border border-transparent focus:border-blue-500/30`}
+            className={`input input-sm w-full bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)]/80 text-sm ${isRTL ? 'pr-8 pl-2' : 'pl-8 pr-2'} text-theme-text dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-0 focus:border-[var(--nova-accent)]`}
             placeholder={isRTL ? 'بحث...' : 'Search...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -105,17 +105,19 @@ export default function SearchableSelect({ options, value, onChange, placeholder
           />
         </div>
       </div>
-      <div className="overflow-y-auto max-h-48 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-          <div
-            className={`px-3 py-2 cursor-pointer hover:shadow-md hover:backdrop-blur-sm hover:bg-gray-500/10 text-sm text-[var(--text-primary)] ${(!multiple && value === '') || (multiple && Array.isArray(value) && value.length === 0) ? 'bg-blue-500/10 text-blue-500' : ''}`}
-            onClick={() => {
-              clearValue()
-              if (!multiple) setIsOpen(false)
-              setSearch('')
-            }}
-          >
-            {isRTL ? 'الكل' : 'All'}
-          </div>
+      <div className="overflow-y-auto max-h-48 py-1 scrollbar-thin-blue">
+          {showAllOption && (
+            <div
+              className={`mx-1 rounded-lg px-3 py-2 cursor-pointer text-sm transition-colors ${(!multiple && value === '') || (multiple && Array.isArray(value) && value.length === 0) ? 'bg-[rgba(37,99,235,0.28)] text-white' : 'hover:bg-[rgba(37,99,235,0.18)]'} text-theme-text dark:text-gray-100`}
+              onClick={() => {
+                clearValue()
+                if (!multiple) setIsOpen(false)
+                setSearch('')
+              }}
+            >
+              {isRTL ? 'الكل' : 'All'}
+            </div>
+          )}
         {filteredOptions.length > 0 ? (
           filteredOptions.map((opt, idx) => {
             const label = typeof opt === 'object' && opt !== null && 'label' in opt ? opt.label : opt
@@ -123,7 +125,7 @@ export default function SearchableSelect({ options, value, onChange, placeholder
             return (
               <div
                 key={idx}
-                className={`px-3 py-2 cursor-pointer hover:shadow-md hover:backdrop-blur-sm hover:bg-gray-500/10 text-sm text-[var(--text-primary)] ${isSelected(opt) ? 'bg-blue-500/10 text-blue-500' : ''}`}
+                className={`mx-1 rounded-lg px-3 py-2 cursor-pointer text-sm transition-colors ${isSelected(opt) ? 'bg-[rgba(37,99,235,0.28)] text-white' : 'hover:bg-[rgba(37,99,235,0.18)]'} text-theme-text dark:text-gray-100`}
                 onClick={() => {
                   if (multiple) {
                     const cur = Array.isArray(value) ? value : []
@@ -153,16 +155,16 @@ export default function SearchableSelect({ options, value, onChange, placeholder
   return (
     <div className={`relative ${isOpen ? 'z-50' : ''}`} ref={wrapperRef}>
       <div
-        className={`input dark:bg-gray-800 w-full flex items-center justify-between cursor-pointer bg-[var(--panel-bg)] border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 ${className}`}
+        className={`input w-full flex items-center justify-between cursor-pointer ${className}`}
         onClick={toggleOpen}
       >
-        <span className={`text-sm ${(!multiple && !value) || (multiple && Array.isArray(value) && value.length === 0) ? "text-[var(--muted-text)]" : "text-[var(--text-primary)]"}`}>
+        <span className={`text-sm ${(!multiple && !value) || (multiple && Array.isArray(value) && value.length === 0) ? "text-gray-400 dark:text-gray-500" : "text-gray-700 dark:text-gray-200"}`}>
           {getDisplayValue()}
         </span>
         <div className="flex items-center gap-2">
            {(!multiple && value && value !== 'All' && value !== 'الكل') || (multiple && Array.isArray(value) && value.length > 0) ? (
              <FaTimes 
-               className="text-[var(--muted-text)] hover:text-red-500 z-10" 
+               className="text-gray-400 dark:text-gray-500 hover:text-red-500 z-10" 
                size={12}
                onClick={(e) => {
                  e.stopPropagation()
@@ -170,7 +172,7 @@ export default function SearchableSelect({ options, value, onChange, placeholder
                }}
              />
            ) : null}
-           <FaChevronDown className={`text-[var(--muted-text)] transition-transform ${isOpen ? 'rotate-180' : ''}`} size={10} />
+           <FaChevronDown className={`text-gray-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} size={10} />
         </div>
       </div>
 

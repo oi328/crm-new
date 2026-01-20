@@ -1,7 +1,9 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FaFilter, FaSearch, FaChartLine, FaUsers, FaMousePointer, FaLayerGroup, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import AddLandingPage from './AddLandingPage'
+import SearchableSelect from '../components/SearchableSelect'
 
 function Sparkline({ data = [], color = 'emerald', width = 120, height = 36, padding = 6 }) {
   const w = width
@@ -69,15 +71,18 @@ export default function LandingPages() {
     }
   })
   const [q, setQ] = useState('')
-  const [fSource, setFSource] = useState('All')
-  const [fCampaign, setFCampaign] = useState('All')
-  const [fTheme, setFTheme] = useState('All')
+  const [fSource, setFSource] = useState('')
+  const [fCampaign, setFCampaign] = useState('')
+  const [fTheme, setFTheme] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(6)
 
-  const sourceOptions = useMemo(() => ['All', ...Array.from(new Set(rows.map(r => r.source))).filter(Boolean)], [rows])
-  const campaignOptions = useMemo(() => ['All', ...Array.from(new Set(rows.map(r => r.campaign))).filter(Boolean)], [rows])
-  const themeOptions = ['All', 'theme1', 'theme2']
+  const sourceOptions = useMemo(() => Array.from(new Set(rows.map(r => r.source))).filter(Boolean), [rows])
+  const campaignOptions = useMemo(() => Array.from(new Set(rows.map(r => r.campaign))).filter(Boolean), [rows])
+  const themeOptions = [
+    { value: 'theme1', label: 'LIGHT' },
+    { value: 'theme2', label: 'DARK' }
+  ]
 
   const stats = useMemo(() => {
     const totalPages = rows.length
@@ -129,9 +134,9 @@ export default function LandingPages() {
     const ql = q.trim().toLowerCase()
     return rows.filter(r => {
       const matchesQuery = !ql || r.name.toLowerCase().includes(ql) || r.url.toLowerCase().includes(ql)
-      const matchesSource = fSource === 'All' || r.source === fSource
-      const matchesCampaign = fCampaign === 'All' || r.campaign === fCampaign
-      const matchesTheme = fTheme === 'All' || r.theme === fTheme
+      const matchesSource = !fSource || r.source === fSource
+      const matchesCampaign = !fCampaign || r.campaign === fCampaign
+      const matchesTheme = !fTheme || r.theme === fTheme
       return matchesQuery && matchesSource && matchesCampaign && matchesTheme
     })
   }, [rows, q, fSource, fCampaign, fTheme])
@@ -146,9 +151,9 @@ export default function LandingPages() {
 
   const resetFilters = () => {
     setQ('')
-    setFSource('All')
-    setFCampaign('All')
-    setFTheme('All')
+    setFSource('')
+    setFCampaign('')
+    setFTheme('')
   }
 
   const handleAddPage = (newData) => {
@@ -200,7 +205,7 @@ export default function LandingPages() {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
               <path d="M12 5v14M5 12h14" />
             </svg>
-            <span>{isRTL ? 'إنشاء صفحة هبوط' : 'Create Landing Page'}</span>
+            <span className="text-white">{isRTL ? 'إنشاء صفحة هبوط' : 'Create Landing Page'}</span>
           </button>
         </div> 
 
@@ -284,160 +289,200 @@ export default function LandingPages() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="space-y-1">
                 <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaSearch className="text-blue-500" size={10} /> {t('Search')}</label>
-                <input className="input w-full" value={q} onChange={e => setQ(e.target.value)} placeholder={t('Search by name or URL...')} />
+                <input className="input w-full text-sm" value={q} onChange={e => setQ(e.target.value)} placeholder={t('Search by name or URL...')} />
                 </div>
                 <div className="space-y-1">
                 <label className="text-xs font-medium text-[var(--muted-text)]">{t('Source')}</label>
-                <select className="input w-full" value={fSource} onChange={e => setFSource(e.target.value)}>
-                    {sourceOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                <SearchableSelect
+                    value={fSource}
+                    onChange={(val) => setFSource(val)}
+                    options={sourceOptions}
+                    isRTL={isRTL}
+                    placeholder={isRTL ? 'الكل' : 'All'}
+                />
                 </div>
                 <div className="space-y-1">
                 <label className="text-xs font-medium text-[var(--muted-text)]">{t('Campaign')}</label>
-                <select className="input w-full" value={fCampaign} onChange={e => setFCampaign(e.target.value)}>
-                    {campaignOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                <SearchableSelect
+                    value={fCampaign}
+                    onChange={(val) => setFCampaign(val)}
+                    options={campaignOptions}
+                    isRTL={isRTL}
+                    placeholder={isRTL ? 'الكل' : 'All'}
+                />
                 </div>
                 <div className="space-y-1">
                 <label className="text-xs font-medium text-[var(--muted-text)]">{t('Theme')}</label>
-                <select className="input w-full" value={fTheme} onChange={e => setFTheme(e.target.value)}>
-                    {themeOptions.map(opt => <option key={opt} value={opt}>{opt === 'theme1' ? 'LIGHT' : (opt === 'theme2' ? 'DARK' : opt)}</option>)}
-                </select>
+                <SearchableSelect
+                    value={fTheme}
+                    onChange={(val) => setFTheme(val)}
+                    options={themeOptions}
+                    isRTL={isRTL}
+                    placeholder={isRTL ? 'الكل' : 'All'}
+                />
                 </div>
             </div>
             </div>
         </div>
 
-        {/* Table */}
-        <section className="card glass-card p-4 max-[550px]:p-3">
-          <div className="max-[550px]:-mx-3">
-            {/* Mobile Card View */}
-            <div className="md:hidden space-y-4 mb-4 px-3">
-               {paginatedRows.map((r, idx) => (
-                 <div key={idx} className="card glass-card p-4 space-y-3 bg-white/5">
-                   <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
-                     <div>
-                       <h4 className="font-semibold text-sm">{r.name}</h4>
-                       <a href={r.url} className="text-xs text-blue-500 truncate block max-w-[200px]" target="_blank" rel="noreferrer">{r.url}</a>
-                     </div>
-                     <span className={`px-2 py-1 rounded text-xs font-medium ${r.theme === 'theme2' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                        {r.theme === 'theme1' ? 'LIGHT' : (r.theme === 'theme2' ? 'DARK' : r.theme)}
-                     </span>
-                   </div>
-                   <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--muted-text)] text-xs">{t('Source')}</span>
-                        <span className="text-xs font-medium">{r.source}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--muted-text)] text-xs">{t('Linked Campaign')}</span>
-                        <span className="text-xs font-medium">{r.campaign}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--muted-text)] text-xs">{t('Email')}</span>
-                        <span className="text-xs">{r.email || '-'}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--muted-text)] text-xs">{t('Phone')}</span>
-                        <span className="text-xs">{r.phone || '-'}</span>
-                      </div>
-                   </div>
-                 </div>
-               ))}
-            </div>
+        {/* Table Container */}
+        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden mb-4">
+          <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
+             <h2 className="text-lg font-bold dark:text-white">
+                {isRTL ? 'قائمة صفحات الهبوط' : 'Landing Pages List'}
+             </h2>
+          </div>
 
-            <table className="hidden md:table nova-table w-full table-fixed text-sm">
-              <thead>
-                <tr className="glass-row text-left text-gray-600 dark:text-gray-300">
-                  <th className="py-2 px-4">{t('Title')}</th>
-                  <th className="py-2 px-4">{t('Source')}</th>
-                  <th className="py-2 px-4">{t('Linked Campaign')}</th>
-                  <th className="py-2 px-4">{t('Email')}</th>
-                  <th className="py-2 px-4">{t('Phone')}</th>
-                  <th className="py-2 px-4">URL</th>
-                  <th className="py-2 px-4">{t('Theme')}</th>
+          <div className="grid grid-cols-1 gap-4 md:hidden p-4">
+            {/* Mobile Card View */}
+             {paginatedRows.map((r, idx) => (
+               <div key={idx} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
+                 <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                   <div>
+                     <h4 className="font-semibold text-sm">{r.name}</h4>
+                     <a href={r.url} className="text-xs text-blue-500 truncate block max-w-[200px]" target="_blank" rel="noreferrer">{r.url}</a>
+                   </div>
+                   <span className={`px-2 py-1 rounded text-xs font-medium ${r.theme === 'theme2' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                      {r.theme === 'theme1' ? 'LIGHT' : (r.theme === 'theme2' ? 'DARK' : r.theme)}
+                   </span>
+                 </div>
+                 <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">{t('Source')}</span>
+                      <span className="text-xs font-medium">{r.source}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">{t('Linked Campaign')}</span>
+                      <span className="text-xs font-medium">{r.campaign}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">{t('Email')}</span>
+                      <span className="text-xs">{r.email || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--muted-text)] text-xs">{t('Phone')}</span>
+                      <span className="text-xs">{r.phone || '-'}</span>
+                    </div>
+                 </div>
+               </div>
+             ))}
+             {paginatedRows.length === 0 && (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  {isRTL ? 'لا توجد نتائج' : 'No results'}
+                </div>
+             )}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white">
+                <tr>
+                  <th className="px-4 py-3 border-b border-white/10 dark:border-gray-700/50">{t('Title')}</th>
+                  <th className="px-4 py-3 border-b border-white/10 dark:border-gray-700/50">{t('Source')}</th>
+                  <th className="px-4 py-3 border-b border-white/10 dark:border-gray-700/50">{t('Linked Campaign')}</th>
+                  <th className="px-4 py-3 border-b border-white/10 dark:border-gray-700/50">{t('Email')}</th>
+                  <th className="px-4 py-3 border-b border-white/10 dark:border-gray-700/50">{t('Phone')}</th>
+                  <th className="px-4 py-3 border-b border-white/10 dark:border-gray-700/50">URL</th>
+                  <th className="px-4 py-3 border-b border-white/10 dark:border-gray-700/50">{t('Theme')}</th>
                 </tr>
               </thead>
-              <tbody className="text-gray-800 dark:text-gray-100">
+              <tbody className="divide-y divide-white/10 dark:divide-gray-700/50">
                 {paginatedRows.map((r, idx) => (
-                  <React.Fragment key={idx}>
-                    <tr className="glass-row border-t border-gray-200 dark:border-gray-800">
-                      <td className="py-2 px-4 font-medium">{r.name}</td>
-                      <td className="py-2 px-4">{r.source}</td>
-                      <td className="py-2 px-4">{r.campaign}</td>
-                      <td className="py-2 px-4">{r.email}</td>
-                      <td className="py-2 px-4">{r.phone}</td>
-                      <td className="py-2 px-4"><a href={r.url} className="text-blue-600 hover:underline truncate block" target="_blank" rel="noreferrer">{r.url}</a></td>
-                      <td className="py-2 px-4">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${r.theme === 'theme2' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                          {r.theme === 'theme1' ? 'LIGHT' : (r.theme === 'theme2' ? 'DARK' : r.theme)}
-                        </span>
-                      </td>
-                    </tr>
-                    {idx < paginatedRows.length - 1 && (
-                      <tr className="spacer-row">
-                        <td colSpan={7}>
-                          <div className="h-2"></div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                  <tr key={idx} className="hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                    <td className="px-4 py-3 font-medium">{r.name}</td>
+                    <td className="px-4 py-3">{r.source}</td>
+                    <td className="px-4 py-3">{r.campaign}</td>
+                    <td className="px-4 py-3">{r.email}</td>
+                    <td className="px-4 py-3">{r.phone}</td>
+                    <td className="px-4 py-3"><a href={r.url} className="text-blue-600 hover:underline truncate block" target="_blank" rel="noreferrer">{r.url}</a></td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${r.theme === 'theme2' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                        {r.theme === 'theme1' ? 'LIGHT' : (r.theme === 'theme2' ? 'DARK' : r.theme)}
+                      </span>
+                    </td>
+                  </tr>
                 ))}
+                {paginatedRows.length === 0 && (
+                  <tr>
+                    <td className="px-4 py-3 text-center text-sm text-gray-500" colSpan={7}>
+                      {isRTL ? 'لا توجد نتائج' : 'No results'}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination Footer */}
           {visibleRows.length > 0 && (
-            <div className="mt-2 flex items-center justify-between rounded-xl p-1.5 sm:p-2 glass-panel">
-              <div className="text-[10px] sm:text-xs text-[var(--muted-text)]">
-                {isRTL 
-                  ? `عرض ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, visibleRows.length)} من ${visibleRows.length}` 
-                  : `Showing ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, visibleRows.length)} of ${visibleRows.length}`}
+            <div className="px-4 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex  sm:flex-row items-center justify-between gap-3">
+              <div className="text-[11px] sm:text-xs text-[var(--muted-text)]">
+                {isRTL
+                  ? `إظهار ${Math.min((currentPage - 1) * itemsPerPage + 1, visibleRows.length)}-${Math.min(currentPage * itemsPerPage, visibleRows.length)} من ${visibleRows.length}`
+                  : `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, visibleRows.length)}-${Math.min(currentPage * itemsPerPage, visibleRows.length)} of ${visibleRows.length}`}
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <div className="flex items-center gap-1">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                   <button
-                    className="btn btn-ghost p-1 h-7 w-7 sm:btn-sm sm:h-8 sm:w-8"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
                     title={isRTL ? 'السابق' : 'Prev'}
                   >
-                    <FaChevronLeft className={isRTL ? 'scale-x-[-1]' : ''} size={12} />
+                    {isRTL ? (
+                      <ChevronRight className="w-4 h-4" />
+                    ) : (
+                      <ChevronLeft className="w-4 h-4" />
+                    )}
                   </button>
-                  <span className="text-xs sm:text-sm">{isRTL ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
+                  <span className="text-sm whitespace-nowrap">
+                    {isRTL
+                      ? `الصفحة ${currentPage} من ${totalPages}`
+                      : `Page ${currentPage} of ${totalPages}`}
+                  </span>
                   <button
-                    className="btn btn-ghost p-1 h-7 w-7 sm:btn-sm sm:h-8 sm:w-8"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                     disabled={currentPage === totalPages}
                     title={isRTL ? 'التالي' : 'Next'}
                   >
-                    <FaChevronRight className={isRTL ? 'scale-x-[-1]' : ''} size={12} />
+                    {isRTL ? (
+                      <ChevronLeft className="w-4 h-4" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] sm:text-xs text-[var(--muted-text)]">{isRTL ? 'لكل صفحة:' : 'Per page:'}</span>
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="text-[10px] sm:text-xs text-[var(--muted-text)] whitespace-nowrap">
+                    {isRTL ? 'لكل صفحة:' : 'Per page:'}
+                  </span>
                   <select
-                    className="input w-20 sm:w-24 text-xs sm:text-sm h-7 sm:h-8 min-h-0"
+                    className="input w-24 text-sm py-0 px-2 h-8"
                     value={itemsPerPage}
-                    onChange={e => setItemsPerPage(Number(e.target.value))}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value))
+                      setCurrentPage(1)
+                    }}
                   >
                     <option value={6}>6</option>
-                    <option value={12}>12</option>
-                    <option value={24}>24</option>
-                    <option value={48}>48</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
                   </select>
                 </div>
               </div>
             </div>
           )}
-        </section>
+        </div>
 
         {/* Add Modal */}
         <AddLandingPage 
           isOpen={isAddModalOpen} 
           onClose={() => setAddModalOpen(false)} 
           onAdd={handleAddPage}
+          campaigns={campaignOptions}
         />
       </div>
   )

@@ -31,7 +31,7 @@ export default function EmployeesReportingStats({ list }) {
       </div>
 
       <div className="w-full hidden md:block overflow-x-auto">
-        <table className="min-w-[520px] w-full text-sm">
+        <table className="min-w-[520px] w-full text-sm nova-table nova-table--glass">
           <thead>
             <tr className="text-gray-600 dark:text-gray-300">
               <th className={`text-left py-2 ${isRTL ? 'text-right' : 'text-left'}`}>{t('Employee')}</th>

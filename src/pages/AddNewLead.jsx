@@ -2,9 +2,10 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@shared/context/ThemeProvider';
 import { useNavigate } from 'react-router-dom';
 import { useStages } from '../hooks/useStages';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FaChevronDown, FaChevronUp, FaTimes } from 'react-icons/fa';
 import { projectsData } from '../data/projectsData';
+import SearchableSelect from '../components/SearchableSelect';
 
 const COUNTRY_CODES = [
   // الدول العربية في المقدمة
@@ -175,6 +176,34 @@ export const AddNewLead = () => {
   const [primaryCollapsed, setPrimaryCollapsed] = useState(false);
   const [projectsList, setProjectsList] = useState([]);
 
+  const sourceOptions = useMemo(() => [
+    { value: 'social-media', label: 'Facebook' },
+    { value: 'website', label: 'Website' },
+    { value: 'referral', label: 'Referral' },
+    { value: 'email-campaign', label: 'Campaign' }
+  ], []);
+
+  const projectOptions = useMemo(() => projectsList.map(p => ({
+    value: p.name || p.companyName || p,
+    label: p.name || p.companyName || p
+  })), [projectsList]);
+
+  const typeOptions = useMemo(() => [
+    { value: 'Company', label: t('Company') },
+    { value: 'Individual', label: t('Individual') }
+  ], [t]);
+
+  const stageOptions = useMemo(() => stages.map(s => ({
+    value: s.name,
+    label: i18n.language === 'ar' ? (s.nameAr || s.name) : s.name
+  })), [stages, i18n.language]);
+
+  const priorityOptions = useMemo(() => [
+    { value: 'low', label: t('Low') },
+    { value: 'medium', label: t('Medium') },
+    { value: 'high', label: t('High') }
+  ], [t]);
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem('inventoryProjects');
@@ -340,6 +369,30 @@ export const AddNewLead = () => {
 
     const now = new Date().toISOString();
 
+    // Fetch existing leads for duplicate check
+    const existing = JSON.parse(localStorage.getItem('leadsData') || '[]');
+    
+    // Helper to normalize phone for comparison
+    const cleanPhone = (p) => String(p || '').replace(/[^0-9]/g, '');
+
+    const checkDuplicate = (phones, email) => {
+       const targetPhones = phones.map(p => cleanPhone(p.number)).filter(Boolean);
+       const targetEmail = (email || '').toLowerCase().trim();
+       
+       return existing.some(l => {
+          const lPhones = (l.phone || '').split('/').map(p => cleanPhone(p));
+          const lEmail = (l.email || '').toLowerCase().trim();
+          
+          const phoneMatch = targetPhones.some(tp => lPhones.includes(tp));
+          const emailMatch = targetEmail && lEmail && targetEmail === lEmail;
+          
+          return phoneMatch || emailMatch;
+       });
+    };
+
+    const isDuplicate = checkDuplicate(mobileNumbers, email);
+    const finalStage = isDuplicate ? 'Duplicate' : stage;
+
     const newLead = {
       id: Date.now(),
       name: nameTrimmed,
@@ -351,7 +404,7 @@ export const AddNewLead = () => {
       company: company.trim() || project.trim() || '',
       type: type || ((company.trim() || project.trim()) ? 'Company' : 'Individual'),
       tags: tags.trim() || '',
-      stage: stage,
+      stage: finalStage,
       status: status,
       priority: priority,
       source: source,
@@ -364,18 +417,22 @@ export const AddNewLead = () => {
     };
 
     // تحديث حفظ الهاتف لليدز الإضافية ليشمل عدة أرقام
-    const extraLeadsSaved = extraLeads.map((l, idx) => ({
+    const extraLeadsSaved = extraLeads.map((l, idx) => {
+      const lPhones = Array.isArray(l.mobileNumbers) ? l.mobileNumbers : [];
+      const lIsDuplicate = checkDuplicate(lPhones, l.email);
+      
+      return {
       id: Date.now() + idx + 1,
       name: (l.name || '').trim(),
       email: (l.email || '').trim(),
-      phone: (Array.isArray(l.mobileNumbers) ? l.mobileNumbers : [])
+      phone: lPhones
         .filter((m) => (m.number || '').trim())
         .map((m) => `${m.code} ${m.number}`)
         .join(' / '),
       company: (l.company || l.project || '').trim(),
       type: l.type || ((l.company || l.project) ? 'Company' : 'Individual'),
       tags: (l.tags || '').trim(),
-      stage: l.stage || '',
+      stage: lIsDuplicate ? 'Duplicate' : (l.stage || ''),
       status: l.status || '',
       priority: l.priority || 'medium',
       source: l.source || '',
@@ -385,9 +442,9 @@ export const AddNewLead = () => {
       notes: (l.note || '').trim(),
       estimatedValue: l.expectedRevenue || '',
       probability: 0,
-    }));
+    };
+    });
 
-    const existing = JSON.parse(localStorage.getItem('leadsData') || '[]');
     const updated = [newLead, ...extraLeadsSaved, ...existing];
     localStorage.setItem('leadsData', JSON.stringify(updated));
 
@@ -454,57 +511,42 @@ export const AddNewLead = () => {
                   {/* Source (select) */}
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Source')} <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <select
-                        value={source}
-                        onChange={(e) => setSource(e.target.value)}
-                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
-                        required
-                      >
-                        <option value="">{t('Select')}</option>
-                        <option value="social-media">Facebook</option>
-                        <option value="website">Website</option>
-                        <option value="referral">Referral</option>
-                        <option value="email-campaign">Campaign</option>
-                      </select>
-                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                    </div>
+                    <SearchableSelect
+                      options={sourceOptions}
+                      value={source}
+                      onChange={setSource}
+                      placeholder={t('Select')}
+                      isRTL={isRTL}
+                      required
+                      showAllOption={false}
+                    />
                   </div>
 
                   {/* Project */}
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Project')} <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <select
-                        value={project}
-                        onChange={(e) => setProject(e.target.value)}
-                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
-                        required
-                      >
-                        <option value="">{t('Select')}</option>
-                        {projectsList.map((p, idx) => (
-                          <option key={p.id || idx} value={p.name || p.companyName || p}>{p.name || p.companyName || p}</option>
-                        ))}
-                      </select>
-                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                    </div>
+                    <SearchableSelect
+                      options={projectOptions}
+                      value={project}
+                      onChange={setProject}
+                      placeholder={t('Select')}
+                      isRTL={isRTL}
+                      required
+                      showAllOption={false}
+                    />
                   </div>
 
                   {/* Type */}
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Type')}</label>
-                    <div className="relative">
-                      <select
-                        value={type}
-                        onChange={(e) => setType(e.target.value)}
-                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
-                      >
-                        <option value="">{t('Select')}</option>
-                        <option value="Company">{t('Company')}</option>
-                        <option value="Individual">{t('Individual')}</option>
-                      </select>
-                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                    </div>
+                    <SearchableSelect
+                      options={typeOptions}
+                      value={type}
+                      onChange={setType}
+                      placeholder={t('Select')}
+                      isRTL={isRTL}
+                      showAllOption={false}
+                    />
                   </div>
 
                   {/* Company */}
@@ -536,38 +578,27 @@ export const AddNewLead = () => {
                   {/* Stage */}
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Stage')}</label>
-                    <div className="relative">
-                      <select
-                        value={stage}
-                        onChange={(e) => setStage(e.target.value)}
-                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
-                      >
-                        <option value="">{t('Select')}</option>
-                        {stages.map((s) => (
-                          <option key={s.name} value={s.name}>
-                            {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
-                          </option>
-                        ))}
-                      </select>
-                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                    </div>
+                    <SearchableSelect
+                      options={stageOptions}
+                      value={stage}
+                      onChange={setStage}
+                      placeholder={t('Select')}
+                      isRTL={isRTL}
+                      showAllOption={false}
+                    />
                   </div>
 
                   {/* Priority */}
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Priority')}</label>
-                    <div className="relative">
-                      <select
-                        value={priority}
-                        onChange={(e) => setPriority(e.target.value)}
-                        className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}
-                      >
-                        <option value="low">{t('Low')}</option>
-                        <option value="medium">{t('Medium')}</option>
-                        <option value="high">{t('High')}</option>
-                      </select>
-                      <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                    </div>
+                    <SearchableSelect
+                      options={priorityOptions}
+                      value={priority}
+                      onChange={setPriority}
+                      placeholder={t('Select')}
+                      isRTL={isRTL}
+                      showAllOption={false}
+                    />
                   </div>
                 </div>
 
@@ -715,16 +746,14 @@ export const AddNewLead = () => {
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Source')}</label>
-                          <div className="relative">
-                            <select value={l.source} onChange={(e) => updateExtraLeadField(i, 'source', e.target.value)} className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}>
-                              <option value="">{t('Select')}</option>
-                              <option value="social-media">Facebook</option>
-                              <option value="website">Website</option>
-                              <option value="referral">Referral</option>
-                              <option value="email-campaign">Campaign</option>
-                            </select>
-                            <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                          </div>
+                          <SearchableSelect
+                            options={sourceOptions}
+                            value={l.source}
+                            onChange={(val) => updateExtraLeadField(i, 'source', val)}
+                            placeholder={t('Select')}
+                            isRTL={isRTL}
+                            showAllOption={false}
+                          />
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Project')}</label>
@@ -732,14 +761,14 @@ export const AddNewLead = () => {
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Type')}</label>
-                          <div className="relative">
-                            <select value={l.type || ''} onChange={(e) => updateExtraLeadField(i, 'type', e.target.value)} className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}>
-                              <option value="">{t('Select')}</option>
-                              <option value="Company">{t('Company')}</option>
-                              <option value="Individual">{t('Individual')}</option>
-                            </select>
-                            <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                          </div>
+                          <SearchableSelect
+                            options={typeOptions}
+                            value={l.type || ''}
+                            onChange={(val) => updateExtraLeadField(i, 'type', val)}
+                            placeholder={t('Select')}
+                            isRTL={isRTL}
+                            showAllOption={false}
+                          />
                         </div>
                         <div>
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Company')}</label>
@@ -783,30 +812,27 @@ export const AddNewLead = () => {
                           <input type="text" value={l.assignedTo} onChange={(e) => updateExtraLeadField(i, 'assignedTo', e.target.value)} className={`w-full rounded-md border px-3 py-2 ${inputTone}`} />
                         </div>
                         <div>
-                          <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Stage')}</label>
-                          <div className="relative">
-                            <select value={l.stage} onChange={(e) => updateExtraLeadField(i, 'stage', e.target.value)} className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}>
-                              <option value="">{t('Select')}</option>
-                              {stages.map((s) => (
-                                <option key={s.name} value={s.name}>
-                                  {s.icon} {i18n.language === 'ar' ? (s.nameAr || s.name) : s.name}
-                                </option>
-                              ))}
-                            </select>
-                            <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                          </div>
-                        </div>
-                        <div>
-                          <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Priority')}</label>
-                          <div className="relative">
-                            <select value={l.priority} onChange={(e) => updateExtraLeadField(i, 'priority', e.target.value)} className={`w-full appearance-none rounded-md border pl-3 pr-10 py-2 ${inputTone}`}>
-                              <option value="low">{t('Low')}</option>
-                              <option value="medium">{t('Medium')}</option>
-                              <option value="high">{t('High')}</option>
-                            </select>
-                            <FaChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-600' : 'text-gray-300'}`} />
-                          </div>
-                        </div>
+                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Stage')}</label>
+                           <SearchableSelect
+                             options={stageOptions}
+                             value={l.stage}
+                             onChange={(val) => updateExtraLeadField(i, 'stage', val)}
+                             placeholder={t('Select')}
+                             isRTL={isRTL}
+                             showAllOption={false}
+                           />
+                         </div>
+                         <div>
+                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Priority')}</label>
+                           <SearchableSelect
+                             options={priorityOptions}
+                             value={l.priority}
+                             onChange={(val) => updateExtraLeadField(i, 'priority', val)}
+                             placeholder={t('Select')}
+                             isRTL={isRTL}
+                             showAllOption={false}
+                           />
+                         </div>
                         <div className="md:col-span-2">
                           <label className={`block text-sm font-medium mb-1 ${labelTone}`}>{t('Note')}</label>
                           <textarea rows={3} value={l.note} onChange={(e) => updateExtraLeadField(i, 'note', e.target.value)} className={`w-full rounded-md border px-3 py-2 ${inputTone}`} />

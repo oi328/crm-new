@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import BackButton from '../components/BackButton'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { 
@@ -10,7 +11,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { 
   FaSearch, FaFileExport, FaFacebook, FaGoogle, FaTiktok, FaGlobe, FaFilter, FaArrowUp, FaArrowDown, FaTable, FaChartBar 
 } from 'react-icons/fa'
-import { SiMeta } from 'react-icons/si'
 
 // --- Mock Data ---
 
@@ -92,7 +92,7 @@ const KPICard = ({ title, value, change, trend, isInverse }) => {
 
 const PlatformIcon = ({ platform }) => {
   switch(platform) {
-    case 'meta': return <SiMeta className="text-blue-600" />
+    case 'meta': return <FaFacebook className="text-blue-600" />
     case 'google': return <FaGoogle className="text-yellow-500" />
     case 'tiktok': return <FaTiktok className="text-black dark:text-white" />
     case 'web': return <FaGlobe className="text-green-500" />
@@ -454,6 +454,8 @@ export default function MarketingReports() {
 
   return (
     <div ref={reportRef} className="p-4 space-y-6 pb-24 relative">
+      <BackButton to="/reports" />
+
       {/* 1. Header */}
       <div className="flex items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
         <div>

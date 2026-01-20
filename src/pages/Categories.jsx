@@ -51,7 +51,7 @@ export default function Categories() {
   }), [isArabic])
 
   const appliesToOptions = useMemo(() => (
-    ['All', 'Product', 'Service', 'Subscription', 'Package']
+    [ 'Product', 'Service', 'Subscription', 'Package']
   ), [])
 
   const STORAGE_KEY = 'inventoryCategories'
@@ -78,7 +78,7 @@ export default function Categories() {
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(5)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const [showAllFilters, setShowAllFilters] = useState(false)
   const [isFiltering, setIsFiltering] = useState(false)
@@ -178,7 +178,8 @@ export default function Categories() {
     try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch (e) { void e }
   }
 
-  const appliesToFilterOptions = useMemo(() => ['All', 'Product', 'Service', 'Subscription', 'Package'], [])
+  const appliesToFilterOptions = useMemo(() => [ 'Product', 'Service', 'Subscription', 'Package'], [])
+  const statusFilterOptions = useMemo(() => [ 'Active', 'Inactive'], [])
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -270,15 +271,15 @@ export default function Categories() {
               className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
               onClick={() => setShowImportModal(true)}
             >
-              <FaFileImport /> {isArabic ? 'استيراد' : 'Import'}
+              <FaFileImport  /> <span className="text-white">{isArabic ? 'استيراد' : 'Import'}</span>
             </button>
-            <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => { setShowForm(true); setActiveTab('basic'); }}><FaPlus />{labels.add}</button>
+            <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => { setShowForm(true); setActiveTab('basic'); }}><FaPlus /><span className="text-white">{labels.add}</span></button>
             <div className="relative  dropdown-container w-full lg:w-auto">
               <button 
                 className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
                 onClick={() => setShowExportMenu(!showExportMenu)}
               >
-                <FaFileExport /> {isArabic ? 'تصدير' : 'Export'}
+                <FaFileExport /> <span className="text-white">{isArabic ? 'تصدير' : 'Export'}</span>
               </button>
               {showExportMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 ring-1 ring-black ring-opacity-5">
@@ -326,11 +327,12 @@ export default function Categories() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-[var(--muted-text)]">{labels.status}</label>
-                <select className="input w-full" value={filters.status} onChange={e=>setFilters(prev=>({...prev, status: e.target.value}))}>
-                    <option value="">{isArabic ? 'الكل' : 'All'}</option>
-                    <option value="Active">{labels.active}</option>
-                    <option value="Inactive">{labels.inactive}</option>
-                </select>
+                <SearchableSelect 
+                  options={statusFilterOptions} 
+                  value={filters.status || 'All'} 
+                  onChange={val => setFilters(prev => ({ ...prev, status: val === 'All' ? '' : val }))} 
+                  isRTL={isArabic} 
+                />
               </div>
             </div>
           </div>
@@ -371,14 +373,14 @@ export default function Categories() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-white/10">
-                     <button type="button" className="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50" onClick={() => onEdit(c)}>
-                      <FaEdit size={16} className="mr-1" /> {labels.edit}
-                    </button>
-                    <button type="button" className="btn btn-sm btn-ghost text-red-600 hover:bg-red-50" onClick={() => onDelete(c.id)}>
-                      <FaTrash size={16} className="mr-1" /> {labels.delete}
-                    </button>
-                  </div>
+                <div className="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-white/10">
+                   <button type="button" className="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50" onClick={() => onEdit(item)}>
+                    <FaEdit size={16} className="mr-1" /> {labels.edit}
+                  </button>
+                  <button type="button" className="btn btn-sm btn-ghost text-red-600 hover:bg-red-50" onClick={() => onDelete(item.id)}>
+                    <FaTrash size={16} className="mr-1" /> {labels.delete}
+                  </button>
+                </div>
                 </div>
               ))}
             </div>
@@ -411,14 +413,14 @@ export default function Categories() {
                       <td className="px-3 text-center">{items.filter(i => i.category === c.name).length}</td>
                       <td className="px-3">{c.description}</td>
                       <td className="px-3 text-center">
-                        <div className="flex items-center gap-2 justify-center">
-                          <button type="button" className="btn btn-sm btn-circle btn-ghost text-blue-600 hover:bg-blue-100" title={labels.edit} aria-label={labels.edit} onClick={() => onEdit(c)}>
-                            <FaEdit size={16} />
-                          </button>
-                          <button type="button" className="btn btn-sm btn-circle btn-ghost text-red-600 hover:bg-red-100" title={labels.delete} aria-label={labels.delete} onClick={() => onDelete(c.id)}>
-                            <FaTrash size={16} />
-                          </button>
-                        </div>
+                      <div className="flex items-center gap-2 justify-center">
+                        <button type="button" className="btn btn-sm btn-circle btn-ghost text-blue-600 hover:bg-blue-100" title={labels.edit} onClick={() => onEdit(item)}>
+                          <FaEdit size={16} />
+                        </button>
+                        <button type="button" className="btn btn-sm btn-circle btn-ghost text-red-600 hover:bg-red-100" title={labels.delete} onClick={() => onDelete(item.id)}>
+                          <FaTrash size={16} />
+                        </button>
+                      </div>
                       </td>
                     </tr>
                   ))}
@@ -463,10 +465,10 @@ export default function Categories() {
                     value={itemsPerPage}
                     onChange={e => setItemsPerPage(Number(e.target.value))}
                   >
-                    <option value={4}>4</option>
-                    <option value={6}>6</option>
-                    <option value={8}>8</option>
-                    <option value={12}>12</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
                   </select>
                 </div>
               </div>

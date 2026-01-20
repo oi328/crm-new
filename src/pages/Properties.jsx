@@ -148,9 +148,9 @@ export default function Properties() {
           <tr><th>${isRTL ? 'قيمة القسط' : 'Installment Amount'}</th><td>${currencyFmt(plan.installmentAmount)}</td></tr>
           <tr><th>${isRTL ? 'تكرار القسط' : 'Installment Frequency'}</th><td>${plan.installmentFrequency || '-'}</td></tr>
           <tr><th>${isRTL ? 'السنوات' : 'Years'}</th><td>${plan.years || '-'}</td></tr>
-          <tr><th>${isRTL ? 'دفعة إضافية' : 'Extra Payment'}</th><td>${currencyFmt(plan.extraPayment)}</td></tr>
-          <tr><th>${isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency'}</th><td>${plan.extraPaymentFrequency || '-'}</td></tr>
-          <tr><th>${isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count'}</th><td>${plan.extraPaymentCount || '0'}</td></tr>
+          <tr><th>${isRTL ? 'دفعة إضافية' : 'Additional Payment'}</th><td>${currencyFmt(plan.extraPayment)}</td></tr>
+          <tr><th>${isRTL ? 'تكرار الدفعة الإضافية' : 'Additional Payment Frequency'}</th><td>${plan.extraPaymentFrequency || '-'}</td></tr>
+          <tr><th>${isRTL ? 'عدد الدفعات الإضافية' : 'Additional Payment Count'}</th><td>${plan.extraPaymentCount || '0'}</td></tr>
           <tr><th>${isRTL ? 'الاستلام' : 'Delivery'}</th><td>${plan.deliveryDate || '-'}</td></tr>
         </tbody>
       </table>
@@ -167,15 +167,16 @@ export default function Properties() {
     doc.text(`${isRTL ? 'خطة الدفع' : 'Payment Plan'} #${index+1} - ${title}`, 14, 18)
     const rows = [
       [isRTL ? 'المقدم' : 'Down Payment', `${plan.downPayment || '-'} ${String(plan.downPaymentType||'amount')==='percentage' ? '%' : ''}`],
-      [isRTL ? 'نوع الحجز' : 'Reservation Type', plan.reservationType || '-'],
+      [isRTL ? 'مبلغ الحجز' : 'Reservation Amount', String(plan.reservationAmount ?? p.reservationAmount ?? '0')],
       [isRTL ? 'دفعة الاستلام' : 'Receipt Amount', String(plan.receiptAmount || '0')],
       [isRTL ? 'قيمة القسط' : 'Installment Amount', String(plan.installmentAmount || '0')],
-      [isRTL ? 'تكرار القسط' : 'Installment Frequency', plan.installmentFrequency || '-'],
       [isRTL ? 'السنوات' : 'Years', String(plan.years || '-')],
-      [isRTL ? 'دفعة إضافية' : 'Extra Payment', String(plan.extraPayment || '0')],
-      [isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency', plan.extraPaymentFrequency || '-'],
-      [isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count', String(plan.extraPaymentCount || '0')],
-      [isRTL ? 'الاستلام' : 'Delivery', plan.deliveryDate || '-'],
+      [isRTL ? 'دفعة إضافية' : 'Additional Payment', String(plan.extraPayment || '0')],
+      [isRTL ? 'إجمالي المبلغ' : 'Total Amount', String(p.totalAfterDiscount || p.price || '0')],
+      [isRTL ? 'الاستلام' : 'Delivery Date', plan.deliveryDate || '-'],
+      [isRTL ? 'قيمة الجراج' : 'Garage Amount', String(p.garageAmount || '0')],
+      [isRTL ? 'قيمة الصيانة' : 'Maintenance Amount', String(p.maintenanceAmount || '0')],
+      [isRTL ? 'صافي المبلغ' : 'Net Amount', String(p.netAmount || '0')],
     ]
     autoTable(doc, {
       head: [[isRTL ? 'الحقل' : 'Field', isRTL ? 'القيمة' : 'Value']],
@@ -874,7 +875,7 @@ export default function Properties() {
   }
 
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(6)
+  const [pageSize, setPageSize] = useState(10)
 
   useEffect(() => {
     setPage(1)
@@ -908,11 +909,11 @@ export default function Properties() {
 
             <div className="w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
               <button className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2" onClick={()=>setShowImportModal(true)}>
-                <FaFileImport />{Label.importProperties}
+                <FaFileImport /> <span className='text-white'>{Label.importProperties}</span>
               </button>
 
               <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2" onClick={() => { setIsEdit(false); setShowCreateModal(true); }}>
-                <FaPlus /> {Label.createProperty}
+                <FaPlus /> <span className='text-white'>{Label.createProperty}</span>
               </button>
               
               <div className="relative w-full lg:w-auto">
@@ -921,7 +922,7 @@ export default function Properties() {
                   onClick={() => setShowExportMenu(!showExportMenu)}
                 >
                   <FaFileExport  />
-                  {isRTL ? 'تصدير' : 'Export'}
+                  <span className='text-white'>{isRTL ? 'تصدير' : 'Export'}</span>
                   <FaChevronDown className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} size={10} />
                 </button>
                 
@@ -1279,7 +1280,7 @@ export default function Properties() {
         )}
         {showCreateModal && (
           <CreatePropertyModal 
-            onClose={()=>setShowCreateModal(false)} 
+            onClose={() => { setShowCreateModal(false); setSelected(null); setIsEdit(false) }} 
             isRTL={isRTL} 
             isEdit={isEdit} 
             onSave={handleSaveProperty} 
@@ -1288,7 +1289,7 @@ export default function Properties() {
             initialData={isEdit ? selected : null}
           />
         )}
-        {selected && (<PropertyDetailsModal p={selected} isRTL={isRTL} onClose={()=>setSelected(null)} />)}
+        {selected && !showCreateModal && (<PropertyDetailsModal p={selected} isRTL={isRTL} onClose={()=>setSelected(null)} />)}
       </div>
   )
 }
@@ -1363,7 +1364,7 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
   }
   const [planPreview, setPlanPreview] = useState(null)
   const [isPlanPreviewOpen, setIsPlanPreviewOpen] = useState(false)
-  const openPlanPreview = (plan) => { setPlanPreview(plan); setIsPlanPreviewOpen(true) }
+  const openPlanPreview = (plan) => { setPlanPreview({...plan, reservationAmount: plan.reservationAmount ?? p.reservationAmount, garageAmount: p.garageAmount, maintenanceAmount: p.maintenanceAmount, netAmount: p.netAmount, totalAmount: p.totalAfterDiscount || p.price}); setIsPlanPreviewOpen(true) }
   const closePlanPreview = () => { setIsPlanPreviewOpen(false); setPlanPreview(null) }
   const printPlan = (plan) => {
     const w = window.open('', '_blank')
@@ -1384,15 +1385,16 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
       <table>
         <tbody>
           <tr><th>${isRTL ? 'المقدم' : 'Down Payment'}</th><td>${plan.downPayment || '-' } ${String(plan.downPaymentType||'amount')==='percentage' ? '%' : ''}</td></tr>
-          <tr><th>${isRTL ? 'نوع الحجز' : 'Reservation Type'}</th><td>${plan.reservationType || '-'}</td></tr>
+          <tr><th>${isRTL ? 'مبلغ الحجز' : 'Reservation Amount'}</th><td>${currencyFmt(plan.reservationAmount)}</td></tr>
           <tr><th>${isRTL ? 'دفعة الاستلام' : 'Receipt Amount'}</th><td>${currencyFmt(plan.receiptAmount)}</td></tr>
           <tr><th>${isRTL ? 'قيمة القسط' : 'Installment Amount'}</th><td>${currencyFmt(plan.installmentAmount)}</td></tr>
-          <tr><th>${isRTL ? 'تكرار القسط' : 'Installment Frequency'}</th><td>${plan.installmentFrequency || '-'}</td></tr>
           <tr><th>${isRTL ? 'السنوات' : 'Years'}</th><td>${plan.years || '-'}</td></tr>
-          <tr><th>${isRTL ? 'دفعة إضافية' : 'Extra Payment'}</th><td>${currencyFmt(plan.extraPayment)}</td></tr>
-          <tr><th>${isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency'}</th><td>${plan.extraPaymentFrequency || '-'}</td></tr>
-          <tr><th>${isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count'}</th><td>${plan.extraPaymentCount || '0'}</td></tr>
-          <tr><th>${isRTL ? 'الاستلام' : 'Delivery'}</th><td>${plan.deliveryDate || '-'}</td></tr>
+          <tr><th>${isRTL ? 'دفعة إضافية' : 'Additional Payment'}</th><td>${currencyFmt(plan.extraPayment)}</td></tr>
+          <tr><th>${isRTL ? 'إجمالي المبلغ' : 'Total Amount'}</th><td>${currencyFmt(plan.totalAmount)}</td></tr>
+          <tr><th>${isRTL ? 'الاستلام' : 'Delivery Date'}</th><td>${plan.deliveryDate || '-'}</td></tr>
+          <tr><th>${isRTL ? 'قيمة الجراج' : 'Garage Amount'}</th><td>${currencyFmt(plan.garageAmount)}</td></tr>
+          <tr><th>${isRTL ? 'قيمة الصيانة' : 'Maintenance Amount'}</th><td>${currencyFmt(plan.maintenanceAmount)}</td></tr>
+          <tr><th>${isRTL ? 'صافي المبلغ' : 'Net Amount'}</th><td>${currencyFmt(plan.netAmount)}</td></tr>
         </tbody>
       </table>
       <div class="actions">
@@ -1413,10 +1415,13 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
       [isRTL ? 'قيمة القسط' : 'Installment Amount', String(plan.installmentAmount || '0')],
       [isRTL ? 'تكرار القسط' : 'Installment Frequency', plan.installmentFrequency || '-'],
       [isRTL ? 'السنوات' : 'Years', String(plan.years || '-')],
-      [isRTL ? 'دفعة إضافية' : 'Extra Payment', String(plan.extraPayment || '0')],
-      [isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency', plan.extraPaymentFrequency || '-'],
-      [isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count', String(plan.extraPaymentCount || '0')],
+      [isRTL ? 'دفعة إضافية' : 'Additional Payment', String(plan.extraPayment || '0')],
+      [isRTL ? 'تكرار الدفعة الإضافية' : 'Additional Payment Frequency', plan.extraPaymentFrequency || '-'],
+      [isRTL ? 'عدد الدفعات الإضافية' : 'Additional Payment Count', String(plan.extraPaymentCount || '0')],
       [isRTL ? 'الاستلام' : 'Delivery', plan.deliveryDate || '-'],
+      [isRTL ? 'قيمة الجراج' : 'Garage Amount', String(plan.garageAmount || '0')],
+      [isRTL ? 'قيمة الصيانة' : 'Maintenance Amount', String(plan.maintenanceAmount || '0')],
+      [isRTL ? 'صافي المبلغ' : 'Net Amount', String(plan.netAmount || '0')],
     ]
     autoTable(doc, {
       head: [[isRTL ? 'الحقل' : 'Field', isRTL ? 'القيمة' : 'Value']],
@@ -1655,16 +1660,17 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
                       <thead className=" dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                         <tr>
                           <th className="text-start p-3 min-w-[50px] font-medium text-[var(--muted-text)]">ID</th>
-                           <th className="text-start p-3 min-w-[100px] font-medium text-[var(--muted-text)]">{isRTL ? 'المقدم' : 'Down Payment'}</th>
-                           <th className="text-start p-3 min-w-[130px] font-medium text-[var(--muted-text)]">{isRTL ? 'مبلغ الحجز' : 'Reservation Amount'}</th>
+                          <th className="text-start p-3 min-w-[100px] font-medium text-[var(--muted-text)]">{isRTL ? 'المقدم' : 'Down Payment'}</th>
+                          <th className="text-start p-3 min-w-[130px] font-medium text-[var(--muted-text)]">{isRTL ? 'مبلغ الحجز' : 'Reservation Amount'}</th>
                           <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'دفعة الاستلام' : 'Receipt Amount'}</th>
                           <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'قيمة القسط' : 'Installment Amount'}</th>
-                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'تكرار القسط' : 'Installment Frequency'}</th>
                           <th className="text-start p-3 font-medium text-[var(--muted-text)]">{isRTL ? 'السنوات' : 'Years'}</th>
-                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'دفعة إضافية' : 'Extra Payment'}</th>
-                          <th className="text-start p-3 min-w-[160px] font-medium text-[var(--muted-text)]">{isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency'}</th>
-                          <th className="text-start p-3 min-w-[160px] font-medium text-[var(--muted-text)]">{isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count'}</th>
-                          <th className="text-start p-3 font-medium text-[var(--muted-text)]">{isRTL ? 'الاستلام' : 'Delivery'}</th>
+                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'دفعة إضافية' : 'Additional Payment'}</th>
+                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'إجمالي المبلغ' : 'Total Amount'}</th>
+                          <th className="text-start p-3 font-medium text-[var(--muted-text)]">{isRTL ? 'الاستلام' : 'Delivery Date'}</th>
+                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'قيمة الجراج' : 'Garage Amount'}</th>
+                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'قيمة الصيانة' : 'Maintenance Amount'}</th>
+                          <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'صافي المبلغ' : 'Net Amount'}</th>
                           <th className="text-start p-3 min-w-[140px] font-medium text-[var(--muted-text)]">{isRTL ? 'إجراءات' : 'Actions'}</th>
                         </tr>
                       </thead>
@@ -1689,14 +1695,23 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
                             <td className="p-3">
                                 <div className="font-semibold">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number(r.installmentAmount || 0))}</div>
                             </td>
-                            <td className="p-3">{r.installmentFrequency || '-'}</td>
                             <td className="p-3">{r.years}</td>
                             <td className="p-3">
                               {new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number(r.extraPayment || 0))}
                             </td>
-                            <td className="p-3">{r.extraPaymentFrequency || '-'}</td>
-                            <td className="p-3">{r.extraPaymentCount || '0'}</td>
+                            <td className="p-3">
+                              {new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number(p.netAmount || 0))}
+                            </td>
                             <td className="p-3">{r.deliveryDate}</td>
+                            <td className="p-3">
+                              {new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number(p.garageAmount || 0))}
+                            </td>
+                            <td className="p-3">
+                              {new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number(p.maintenanceAmount || 0))}
+                            </td>
+                            <td className="p-3">
+                              {new Intl.NumberFormat('en-EG', { style: 'currency', currency: p.currency || 'EGP', maximumFractionDigits: 0 }).format(Number(p.netAmount || 0))}
+                            </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
                                 <button onClick={() => openPlanPreview(r)} className="btn btn-xs bg-blue-600 hover:bg-blue-700 text-white border-none shadow-sm">{isRTL ? 'عرض' : 'View'}</button>
@@ -1775,7 +1790,7 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
         {isPlanPreviewOpen && planPreview && (
           <div className="absolute inset-0 z-[220] flex items-center justify-center">
             <div className="absolute inset-0 bg-black/70" onClick={closePlanPreview} />
-            <div className="relative z-[230] w-[90vw] max-w-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl p-4 bg-[var(--content-bg)]">
+            <div className="relative z-[230] w-[90vw] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl p-4 bg-[var(--content-bg)]">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold">{isRTL ? 'معاينة خطة الدفع' : 'Payment Plan Preview'}</h3>
                 <div className="flex items-center gap-2">
@@ -1787,15 +1802,16 @@ function PropertyDetailsModal({ p, isRTL, onClose }) {
                 <table className="w-full text-sm">
                   <tbody>
                     <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'المقدم' : 'Down Payment'}</td><td className="p-3">{planPreview.downPayment} {String(planPreview.downPaymentType||'amount')==='percentage' ? '%' : ''}</td></tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'نوع الحجز' : 'Reservation Type'}</td><td className="p-3">{planPreview.reservationType || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'مبلغ الحجز' : 'Reservation Amount'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.reservationAmount||0))}</td></tr>
                     <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'دفعة الاستلام' : 'Receipt Amount'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.receiptAmount||0))}</td></tr>
                     <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'قيمة القسط' : 'Installment Amount'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.installmentAmount||0))}</td></tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'تكرار القسط' : 'Installment Frequency'}</td><td className="p-3">{planPreview.installmentFrequency || '-'}</td></tr>
                     <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'السنوات' : 'Years'}</td><td className="p-3">{planPreview.years || '-'}</td></tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'دفعة إضافية' : 'Extra Payment'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.extraPayment||0))}</td></tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'تكرار الدفعة الإضافية' : 'Extra Payment Frequency'}</td><td className="p-3">{planPreview.extraPaymentFrequency || '-'}</td></tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'عدد الدفعات الإضافية' : 'Extra Payment Count'}</td><td className="p-3">{planPreview.extraPaymentCount || '0'}</td></tr>
-                    <tr><td className="p-3">{isRTL ? 'الاستلام' : 'Delivery'}</td><td className="p-3">{planPreview.deliveryDate || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'دفعة إضافية' : 'Additional Payment'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.extraPayment||0))}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'إجمالي المبلغ' : 'Total Amount'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.totalAmount||0))}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'الاستلام' : 'Delivery Date'}</td><td className="p-3">{planPreview.deliveryDate || '-'}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'قيمة الجراج' : 'Garage Amount'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.garageAmount||0))}</td></tr>
+                    <tr className="border-b border-gray-100 dark:border-gray-700"><td className="p-3">{isRTL ? 'قيمة الصيانة' : 'Maintenance Amount'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.maintenanceAmount||0))}</td></tr>
+                    <tr><td className="p-3">{isRTL ? 'صافي المبلغ' : 'Net Amount'}</td><td className="p-3">{new Intl.NumberFormat('en-EG').format(Number(planPreview.netAmount||0))}</td></tr>
                   </tbody>
                 </table>
               </div>

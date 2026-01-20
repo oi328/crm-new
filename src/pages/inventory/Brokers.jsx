@@ -127,6 +127,16 @@ export default function Brokers() {
 
   // Filtering
   const agencyOptions = useMemo(() => Array.from(new Set(brokers.map(b => b.agencyName).filter(Boolean))), [brokers]);
+  
+  const brokerTypeOptions = useMemo(() => [
+    { value: 'individual', label: isArabic ? 'فرد' : 'Individual' },
+    { value: 'company', label: isArabic ? 'شركة' : 'Company' }
+  ], [isArabic]);
+
+  const statusOptions = useMemo(() => [
+    { value: 'Active', label: isArabic ? 'نشط' : 'Active' },
+    { value: 'Inactive', label: isArabic ? 'غير نشط' : 'Inactive' }
+  ], [isArabic]);
 
   const filteredBrokers = useMemo(() => {
     return brokers.filter(b => {
@@ -160,7 +170,7 @@ export default function Brokers() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(6);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -304,7 +314,7 @@ export default function Brokers() {
               onClick={() => setShowImportModal(true)}
            >
               <FaFileImport />
-              {isArabic ? 'استيراد' : 'Import'}
+              <span className='text-white'>{isArabic ? 'استيراد' : 'Import'}</span>
            </button>
 
 
@@ -313,7 +323,7 @@ export default function Brokers() {
              onClick={() => { resetForm(); setShowForm(true); }}
              className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2"
            >
-             <FaPlus /> {isArabic ? 'إضافة وسيط' : 'Add Broker'}
+             <FaPlus /> <span className='text-white'>{isArabic ? 'إضافة وسيط' : 'Add Broker'}</span>
            </button>
            <div className="relative w-full lg:w-auto">
               <button 
@@ -322,7 +332,7 @@ export default function Brokers() {
               >
                   <span className="flex items-center gap-2">
                     <FaFileExport  />
-                    {isArabic ? 'تصدير' : 'Export'}
+                    <span className='text-white'>{isArabic ? 'تصدير' : 'Export'}</span>
                   </span>
                   <FaChevronDown className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} size={12} />
               </button>
@@ -379,51 +389,32 @@ export default function Brokers() {
           
           <div className={`space-y-1 ${!showAllFilters && 'hidden md:block'}`}>
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'اسم الشركة' : 'Company Name'}</label>
-            <div className="relative">
-              <select 
-                className="input w-full appearance-none" 
-                value={filters.agencyName} 
-                onChange={e => setFilters(prev => ({...prev, agencyName: e.target.value}))}
-              >
-                <option value="">{isArabic ? 'الكل' : 'All Companies'}</option>
-                {agencyOptions.map(agency => (
-                  <option key={agency} value={agency}>{agency}</option>
-                ))}
-              </select>
-              <ChevronDown className={`absolute top-1/2 -translate-y-1/2 text-[var(--muted-text)] pointer-events-none ${isArabic ? 'left-3' : 'right-3'}`} size={14} />
-            </div>
+            <SearchableSelect 
+              options={agencyOptions} 
+              value={filters.agencyName} 
+              onChange={val => setFilters(prev => ({...prev, agencyName: val}))} 
+              isRTL={isArabic} 
+            />
           </div>
 
           <div className={`space-y-1 ${!showAllFilters && 'hidden md:block'}`}>
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'النوع' : 'Type'}</label>
-            <div className="relative">
-              <select 
-                className="input w-full appearance-none" 
-                value={filters.brokerType} 
-                onChange={e => setFilters(prev => ({...prev, brokerType: e.target.value}))}
-              >
-                <option value="">{isArabic ? 'الكل' : 'All Types'}</option>
-                <option value="individual">{isArabic ? 'فرد' : 'Individual'}</option>
-                <option value="company">{isArabic ? 'شركة' : 'Company'}</option>
-              </select>
-              <ChevronDown className={`absolute top-1/2 -translate-y-1/2 text-[var(--muted-text)] pointer-events-none ${isArabic ? 'left-3' : 'right-3'}`} size={14} />
-            </div>
+            <SearchableSelect 
+              options={brokerTypeOptions} 
+              value={filters.brokerType} 
+              onChange={val => setFilters(prev => ({...prev, brokerType: val}))} 
+              isRTL={isArabic} 
+            />
           </div>
 
           <div className={`space-y-1 ${!showAllFilters && 'hidden md:block'}`}>
             <label className="text-xs font-medium text-[var(--muted-text)]">{isArabic ? 'الحالة' : 'Status'}</label>
-            <div className="relative">
-              <select 
-                className="input w-full appearance-none" 
-                value={filters.status} 
-                onChange={e => setFilters(prev => ({...prev, status: e.target.value}))}
-              >
-                <option value="">{isArabic ? 'الكل' : 'All Statuses'}</option>
-                <option value="Active">{isArabic ? 'نشط' : 'Active'}</option>
-                <option value="Inactive">{isArabic ? 'غير نشط' : 'Inactive'}</option>
-              </select>
-              <ChevronDown className={`absolute top-1/2 -translate-y-1/2 text-[var(--muted-text)] pointer-events-none ${isArabic ? 'left-3' : 'right-3'}`} size={14} />
-            </div>
+            <SearchableSelect 
+              options={statusOptions} 
+              value={filters.status} 
+              onChange={val => setFilters(prev => ({...prev, status: val}))} 
+              isRTL={isArabic} 
+            />
           </div>
         </div>
       </div>
@@ -594,10 +585,10 @@ export default function Brokers() {
                 value={itemsPerPage}
                 onChange={e => setItemsPerPage(Number(e.target.value))}
               >
-                <option value={6}>6</option>
-                <option value={12}>12</option>
-                <option value={24}>24</option>
-                <option value={48}>48</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
               </select>
             </div>
           </div>

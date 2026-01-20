@@ -361,7 +361,7 @@ const getMarketingItemIcon = (key) => {
           <path d="M8 13h8" />
         </svg>
       )
-    case 'Integration':
+    case 'Integrations':
       return (
         <svg {...common} aria-hidden="true">
           <path d="M6 12c0-3 2-5 5-5s5 2 5 5-2 5-5 5-5-2-5-5z" />
@@ -442,16 +442,14 @@ export const Sidebar = ({ isOpen, onClose = () => {}, className, collapsed, setC
   }, [isLeadMgmtActive])
   const [stagesOpen, setStagesOpen] = useState(true)
   const isMarketingActive = location.pathname.startsWith('/marketing') || location.pathname.startsWith('/reports/marketing')
-  const isMarketingReportsActive = location.pathname.startsWith('/reports/marketing')
-const isRecycleActive = location.pathname.startsWith('/recycle')
+  const isRecycleActive = location.pathname.startsWith('/recycle')
 
 // Sidebar expandable sections: open states
 const [customersOpen, setCustomersOpen] = useState(false)
-const [reportsOpen, setReportsOpen] = useState(false)
-const [salesReportsOpen, setSalesReportsOpen] = useState(false)
 const [usersOpen, setUsersOpen] = useState(false)
-  const [supportOpen, setSupportOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+const [reportsOpen, setReportsOpen] = useState(false)
+const [supportOpen, setSupportOpen] = useState(false)
+const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Settings subsections open states
 const [profileCompanyOpen, setProfileCompanyOpen] = useState(false)
@@ -510,9 +508,6 @@ const isCustomersActive = location.pathname.startsWith('/customers') || location
 const _isReportsActive = location.pathname.startsWith('/reports') || location.pathname.startsWith('/marketing/reports')
 const isUsersActive = location.pathname.startsWith('/user-management')
   const isSupportActive = location.pathname.startsWith('/support')
-  const isCoreReportsActive = location.pathname.startsWith('/reports') && !location.pathname.startsWith('/reports/marketing')
-  const isSalesReportsActive = location.pathname.startsWith('/reports/sales')
-  
     // Restore missing Marketing submenu state with persistence and route-aware default
    const [marketingOpen, setMarketingOpen] = useState(() => {
      try {
@@ -539,7 +534,6 @@ const isUsersActive = location.pathname.startsWith('/user-management')
       setLeadMgmtOpen(false)
       setInventoryOpen(false)
       setCustomersOpen(false)
-      setReportsOpen(false)
       setUsersOpen(false)
       setSupportOpen(false)
       setSettingsOpen(false)
@@ -555,28 +549,7 @@ useEffect(() => { if (isNotificationsTemplatesActive) { openOnly('notifications'
 useEffect(() => { if (isBillingActiveFlag) { openOnly('billing') } else { setBillingOpen(false) } }, [isBillingActiveFlag])
 useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setDataMgmtOpen(false) } }, [isDataMgmtActiveFlag])
 
-  const isSectionViewOpen = leadMgmtOpen || inventoryOpen || marketingOpen || customersOpen || reportsOpen || settingsOpen || usersOpen || supportOpen
-
-  // Ensure Reports-only mode on core reports routes: close other module menus
-  useEffect(() => {
-    if (isCoreReportsActive) {
-      setLeadMgmtOpen(false)
-      setInventoryOpen(false)
-      setCustomersOpen(false)
-      setUsersOpen(false)
-      setSupportOpen(false)
-      setSettingsOpen(false)
-      setMarketingOpen(false)
-      setMarketingReportsOpen(false)
-      try {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem('leadMgmtOpen', 'false')
-          window.localStorage.setItem('marketingOpen', 'false')
-          window.localStorage.setItem('marketingReportsOpen', 'false')
-        }
-      } catch {}
-    }
-  }, [isCoreReportsActive])
+  const isSectionViewOpen = leadMgmtOpen || inventoryOpen || marketingOpen || customersOpen || settingsOpen || usersOpen || supportOpen || reportsOpen
 
   // Auto-open Settings submenu when on any /settings route; close when leaving
   useEffect(() => {
@@ -608,7 +581,6 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
       setInventoryOpen(false)
       setMarketingOpen(false)
       setCustomersOpen(false)
-      setReportsOpen(false)
       setUsersOpen(false)
       setSettingsOpen(false)
     }
@@ -619,40 +591,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
     setUsersOpen(!!isUsersActive)
   }, [isUsersActive])
 
-  // Auto-open Reports submenu when on core reports routes, close when leaving
-  useEffect(() => {
-    if (isCoreReportsActive) {
-      setReportsOpen(true)
-    } else {
-      setReportsOpen(false)
-    }
-  }, [isCoreReportsActive])
 
-  // Keep Sales Report list open while on any of its child routes
-  useEffect(() => {
-    if (isSalesReportsActive) {
-      setSalesReportsOpen(true)
-    } else {
-      setSalesReportsOpen(false)
-    }
-  }, [isSalesReportsActive])
-
-  // Nested submenu state for Marketing Reports
-  const [marketingReportsOpen, setMarketingReportsOpen] = useState(() => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const saved = window.localStorage.getItem('marketingReportsOpen')
-        if (saved === 'true') return true
-        if (saved === 'false') return false
-      }
-    } catch {}
-    return false
-  })
-  useEffect(() => {
-    if (!isMarketingReportsActive) {
-      try { if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem('marketingReportsOpen', String(marketingReportsOpen)) } } catch {}
-    }
-  }, [isMarketingReportsActive, marketingReportsOpen])
    
    const { stages } = useStages()
    const _safeStages = Array.isArray(stages) ? stages.map(s => typeof s === 'string' ? { name: s, nameAr: '', color: '#3B82F6', icon: '📊' } : s) : []
@@ -755,15 +694,15 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
     }
   }, []);
 
-  const asideTone = isLight ? 'bg-gray-100 border-gray-200 text-gray-800' : 'bg-gray-900 border-gray-800 text-gray-100'
+  const asideTone = isLight ? 'bg-theme-sidebar border-theme-border text-theme-text' : 'bg-gray-900 border-gray-800 text-gray-100'
   const baseLink = isLight
-    ? 'group flex items-center gap-3 px-4 py-2.5 rounded-md text-gray-700 hover:bg-blue-50 transition overflow-hidden'
+    ? 'group flex items-center gap-3 px-4 py-2.5 rounded-md text-theme-text hover:bg-blue-50 transition overflow-hidden'
     : 'group flex items-center gap-3 px-4 py-2.5 rounded-md text-gray-200 hover:bg-gray-800 transition overflow-hidden'
   const iconContainer = 'flex-shrink-0 nova-icon flex items-center justify-center'
   const activeLink = isLight
-    ? `bg-blue-100 text-blue-700 ${isRTL ? 'active-link-indicator' : 'border-l-4'} border-blue-500 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]`
+    ? `bg-theme-sidebar-active text-theme-sidebar-active-text ${isRTL ? 'active-link-indicator' : 'border-l-4'} border-blue-500 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]`
     : `bg-gray-800 text-blue-400 ${isRTL ? 'active-link-indicator' : 'border-l-4'} border-blue-500 font-bold`
-  const iconTone = isLight ? 'text-gray-500 group-hover:text-blue-600' : 'text-gray-400 group-hover:text-blue-400'
+  const iconTone = isLight ? 'text-theme-text group-hover:text-blue-600' : 'text-gray-400 group-hover:text-blue-400'
   const backLabel = langCode.startsWith('ar') ? 'رجوع' : 'Back'
 
   const _items = [
@@ -787,7 +726,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
         children: [
           { to: '/inventory/categories', key: 'Categories' },
           { to: '/inventory/items', key: 'Items' },
-          { to: '/inventory/requests', key: 'Requests (General)' },
+          { to: '/inventory/requests', key: 'Requests' },
         ]
       },
       { 
@@ -798,7 +737,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
           { to: '/inventory/properties', key: 'Properties' },
           { to: '/inventory/developers', key: 'Developers' },
           { to: '/inventory/brokers', key: 'Brokers' },
-          { to: '/inventory/real-estate-requests', key: 'Requests (Real Estate)' },
+          { to: '/inventory/real-estate-requests', key: 'Requests' },
         ]
       },
     ]
@@ -808,7 +747,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
     { to: '/marketing', key: 'Dashboard' },
     { to: '/marketing/campaigns', key: 'Campaigns' },
     { to: '/marketing/landing-pages', key: 'Landing Pages' },
-    { to: '/marketing/meta-integration', key: 'Integration' },
+    { to: '/marketing/meta-integration', key: 'Integrations' },
   ]
 
   const [integrationOpen, setIntegrationOpen] = useState(false)
@@ -883,7 +822,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
       
         <nav ref={navRef} className={`flex-1 pt-2 md:pt-3 overflow-y-auto overflow-x-hidden mt-0 pb-3 ${inventoryOpen ? 'inventory-open' : ''} ${isCollapsed ? 'hidden' : ''}`}>
         {/* Dashboard */}
-        {!isSectionViewOpen && !isMarketingActive && !isCoreReportsActive && (
+        {!isSectionViewOpen && !isMarketingActive && (
           <NavLink
             to="/dashboard"
             className={({ isActive }) => `${baseLink} !py-4 ${isActive ? activeLink : ''}`}
@@ -899,12 +838,12 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
         )}
 
         {/* Lead Management (gated by activeModules) */}
-        {!isMarketingActive && !isCoreReportsActive && (!isSectionViewOpen || leadMgmtOpen) && activeModules.includes('leads') && (
+        {!isMarketingActive && (!isSectionViewOpen || leadMgmtOpen) && activeModules.includes('leads') && (
           <div className="w-full">
           {leadMgmtOpen && (
-            <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-gray-100' : 'bg-gray-900'} px-2 py-1`}>
+            <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-theme-sidebar' : 'bg-gray-900'} px-2 py-1`}>
               <span className="text-sm font-bold link-label">{t('Lead Management')}</span>
-              <button type="button" onClick={() => setLeadMgmtOpen(false)} className={`close-btn text-sm font-semibold ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}>
+              <button type="button" onClick={() => setLeadMgmtOpen(false)} className={`close-btn text-sm font-semibold ${isLight ? 'text-theme-text hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M15 18l-6-6 6-6" />
                 </svg>
@@ -923,7 +862,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 <span className={`${iconContainer} ${iconTone}`}>{getIcon('Lead Management')}</span>
                 <span className="link-label text-[16px]">{t('Lead Management')}</span>
               </span>
-              <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{transform: leadMgmtOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
+              <span className={`link-label ${isLight ? 'text-theme-text' : 'text-gray-400'} transition-transform`} style={{transform: leadMgmtOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M6 9l6 6 6-6" />
                 </svg>
@@ -932,7 +871,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
           )}
 
           <div
-            className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
+            className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-theme-border dark:border-gray-700 space-y-0.5 transition-all`}
             style={{ maxHeight: leadMgmtOpen ? '800px' : '0', overflow: 'hidden', opacity: leadMgmtOpen ? 1 : 0 }}
           >
             <NavLink
@@ -974,7 +913,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                   <span className={`${iconContainer} ${iconTone}`}>🗂️</span>
                   <span className="text-[15px] link-label">{t('Stages')}</span>
                 </span>
-                <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{transform: stagesOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
+                <span className={`link-label ${isLight ? 'text-theme-text' : 'text-gray-400'} transition-transform`} style={{transform: stagesOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                     <path d="M6 9l6 6 6-6" />
                   </svg>
@@ -1009,7 +948,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
         )}
 
         {/* Inventory section with full-view submenu */}
-        {!isMarketingActive && !isCoreReportsActive && (!isSectionViewOpen || inventoryOpen) && (
+        {!isMarketingActive && (!isSectionViewOpen || inventoryOpen) && (
         <div className="w-full">
           {inventoryOpen ? (
             <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-gray-100' : 'bg-gray-900'} px-2 py-1`}>
@@ -1020,9 +959,8 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                   setInventoryOpen(false)
                   setCustomersOpen(false)
                   setSettingsOpen(false)
-                  setReportsOpen(false)
                 }}
-                className={`close-btn text-sm font-semibold ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
+                className={`close-btn text-sm font-semibold ${isLight ? 'text-theme-text hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M15 18l-6-6 6-6" />
@@ -1037,7 +975,6 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 setInventoryOpen(true)
                 setCustomersOpen(false)
                 setSettingsOpen(false)
-                setReportsOpen(false)
               }}
               className={`${baseLink} w-full justify-between ${isInventoryActive ? 'active-parent' : ''}`}
               aria-expanded={inventoryOpen}
@@ -1046,7 +983,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 <span className={`${iconContainer} ${iconTone}`}>{getIcon('Inventory')}</span>
                 <span className="link-label text-[16px]">{t('Inventory')}</span>
               </span>
-              <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{transform: inventoryOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
+              <span className={`link-label ${isLight ? 'text-theme-text' : 'text-gray-400'} transition-transform`} style={{transform: inventoryOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M6 9l6 6 6-6" />
                 </svg>
@@ -1055,7 +992,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
           )}
 
           <div
-            className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
+            className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-theme-border dark:border-gray-700 space-y-0.5 transition-all`}
             style={{ maxHeight: inventoryOpen ? '1000px' : '0', overflow: 'hidden', opacity: inventoryOpen ? 1 : 0 }}
           >
             {/** extra indent for all sub items */}
@@ -1104,10 +1041,10 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
         )}
  
         {/* Marketing section with subsections (gated by activeModules) */}
-        {!isCoreReportsActive && (!isSectionViewOpen || marketingOpen) && activeModules.includes('campaigns') && (
+        {(!isSectionViewOpen || marketingOpen) && activeModules.includes('campaigns') && (
         <div className="w-full">
           {(isMarketingActive || marketingOpen) && (
-            <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-gray-100' : 'bg-gray-900'} px-2 py-1`}>
+            <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-theme-sidebar' : 'bg-gray-900'} px-2 py-1`}>
               <span className="text-sm font-bold link-label">{t('Marketing Modules')}</span>
               <button
                 type="button"
@@ -1118,7 +1055,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                     navigate('/dashboard')
                   } catch {}
                 }}
-                className={`close-btn text-sm font-semibold ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
+                className={`close-btn text-sm font-semibold ${isLight ? 'text-theme-text hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M15 18l-6-6 6-6" />
@@ -1146,7 +1083,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 <span className={`${iconContainer} ${iconTone}`}>{getIcon('Marketing Modules')}</span>
                 <span className="text-[15px] link-label whitespace-nowrap truncate">{t('Marketing Modules')}</span>
               </span>
-              <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{transform: marketingOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
+              <span className={`link-label ${isLight ? 'text-theme-text' : 'text-gray-400'} transition-transform`} style={{transform: marketingOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M6 9l6 6 6-6" />
                 </svg>
@@ -1155,7 +1092,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
           )}
 
           <div
-            className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
+            className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-theme-border dark:border-gray-700 space-y-0.5 transition-all`}
             style={{ maxHeight: marketingOpen ? '1500px' : '0', overflow: 'hidden', opacity: marketingOpen ? 1 : 0 }}
           >
             {marketingChildren.map(child => (
@@ -1174,53 +1111,16 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
               </NavLink>
             ))}
             
-            {/* Marketing Reports (Nested) */}
-            <div className="w-full">
-              <button
-                type="button"
-                onClick={() => setMarketingReportsOpen(v => !v)}
-                className={`${baseLink} w-full justify-between ${isRTL ? '!pr-10' : '!pl-10'}`}
-                aria-expanded={marketingReportsOpen}
-              >
-                <span className="nova-icon-label">
-                  <span className={`${iconContainer} ${iconTone}`}>📣</span>
-                  <span className="text-[15px] link-label">{t('Marketing Reports')}</span>
-                </span>
-                <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{transform: marketingReportsOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
-                </span>
-              </button>
-              <div
-                className={`${isRTL ? '!pr-0' : '!pl-0'} space-y-0.5 transition-all`}
-                style={{ maxHeight: marketingReportsOpen ? '900px' : '0', overflow: 'hidden', opacity: marketingReportsOpen ? 1 : 0 }}
-              >
-                 <div className="mt-1 space-y-0.5">
-                  <NavLink to="/marketing/reports" end className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-12' : '!pl-12'} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📈</span><span className="text-[15px] link-label">{t('Marketing Pulse')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/marketing/analysis/duration" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-12' : '!pl-12'} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🧠</span><span className="text-[15px] link-label">{t('Campaign Duration')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/marketing/analysis/ab" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-12' : '!pl-12'} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🧪</span><span className="text-[15px] link-label">{t('A/B Campaign Comparison')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/marketing/operational/response-time" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-12' : '!pl-12'} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>⏱️</span><span className="text-[15px] link-label">{t('Response Time')}</span></span>
-                  </NavLink>
-                 </div>
-              </div>
-            </div>
+
           </div>
         </div>
         )}
  
         {/* Customers section with full-view submenu */}
-        {!isMarketingActive && !isCoreReportsActive && (!isSectionViewOpen || customersOpen) && (
+        {!isMarketingActive && (!isSectionViewOpen || customersOpen) && (
           <div className="w-full">
             {customersOpen ? (
-              <div className={`sticky top-0 z-10 section-header flex items-center mb-2 glass-header glass-neon px-2 py-1`}>
+              <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-theme-sidebar' : 'bg-gray-900'} px-2 py-1`}>
                 <span className="text-sm font-bold link-label">{t('Customers')}</span>
                 <button
                   type="button"
@@ -1228,9 +1128,8 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                     setCustomersOpen(false)
                     setInventoryOpen(false)
                     setSettingsOpen(false)
-                    setReportsOpen(false)
                   }}
-                  className={`close-btn text-sm font-semibold ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
+                  className={`close-btn text-sm font-semibold ${isLight ? 'text-theme-text hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                     <path d="M15 18l-6-6 6-6" />
@@ -1245,7 +1144,6 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                   setCustomersOpen(true)
                   setInventoryOpen(false)
                   setSettingsOpen(false)
-                  setReportsOpen(false)
                 }}
                 className={({ isActive }) => `${baseLink} w-full justify-between ${isActive ? `glass-neon border ${isLight ? 'border-blue-200' : 'border-blue-900'} active-parent` : ''}`}
               >
@@ -1254,7 +1152,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                   <span className="link-label">{t('Customers')}</span>
                 </span>
                 <span className="ml-auto nova-badge link-label">12</span>
-                <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{transform: customersOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
+                <span className={`link-label ${isLight ? 'text-theme-text' : 'text-gray-400'} transition-transform`} style={{transform: customersOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                     <path d="M6 9l6 6 6-6" />
                   </svg>
@@ -1262,7 +1160,7 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
               </NavLink>
             )}
             <div
-              className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all glass-neon`}
+              className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-theme-border dark:border-gray-700 space-y-0.5 transition-all glass-neon`}
               style={{ maxHeight: customersOpen ? '800px' : '0', overflow: 'hidden', opacity: customersOpen ? 1 : 0 }}
             >
               <NavLink
@@ -1301,26 +1199,26 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
           </div>
         )}
 
-        {!isMarketingActive && !isCoreReportsActive && (!isSectionViewOpen || supportOpen) && (
+        {!isMarketingActive && (!isSectionViewOpen || supportOpen) && (
           <div className="w-full">
             {supportOpen && (
-              <div className={`${isLight ? 'bg-gray-100' : 'bg-gray-900'} sticky top-0 z-10 section-header flex items-center mb-2 px-2 py-1`}>
+              <div className={`${isLight ? 'bg-theme-sidebar' : 'bg-gray-900'} sticky top-0 z-10 section-header flex items-center mb-2 px-2 py-1`}>
                 <span className="text-sm font-bold link-label">{t('Support')}</span>
-                <button type="button" onClick={() => setSupportOpen(false)} className={`close-btn text-sm font-semibold ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}>
+                <button type="button" onClick={() => setSupportOpen(false)} className={`close-btn text-sm font-semibold ${isLight ? 'text-theme-text hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M15 18l-6-6 6-6" /></svg>
                   <span>{backLabel}</span>
                 </button>
               </div>
             )}
             {!supportOpen && (
-              <button type="button" onClick={() => { setSupportOpen(true); setLeadMgmtOpen(false); setInventoryOpen(false); setMarketingOpen(false); setCustomersOpen(false); setReportsOpen(false); setUsersOpen(false); setSettingsOpen(false); }} className={`${baseLink} w-full justify-between ${isSupportActive ? 'active-parent' : ''}`} aria-expanded={supportOpen}>
+              <button type="button" onClick={() => { setSupportOpen(true); setLeadMgmtOpen(false); setInventoryOpen(false); setMarketingOpen(false); setCustomersOpen(false); setUsersOpen(false); setSettingsOpen(false); }} className={`${baseLink} w-full justify-between ${isSupportActive ? 'active-parent' : ''}`} aria-expanded={supportOpen}>
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>{getIcon('Support')}</span><span className="link-label">{t('Support')}</span></span>
-                <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{transform: supportOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
+                <span className={`link-label ${isLight ? 'text-theme-text' : 'text-gray-400'} transition-transform`} style={{transform: supportOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M6 9l6 6 6-6" /></svg>
                 </span>
               </button>
             )}
-            <div className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`} style={{ maxHeight: supportOpen ? '800px' : '0', overflow: 'hidden', opacity: supportOpen ? 1 : 0 }}>
+            <div className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-theme-border dark:border-gray-700 space-y-0.5 transition-all`} style={{ maxHeight: supportOpen ? '800px' : '0', overflow: 'hidden', opacity: supportOpen ? 1 : 0 }}>
               <NavLink to="/support" end className={({ isActive }) => `${baseLink} !py-3 ${isRTL ? '!pr-10' : '!pl-10'} ${isActive ? activeLink : ''}`}>
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🛟</span><span className="text-[15px] link-label">{t('Dashboard')}</span></span>
               </NavLink>
@@ -1343,134 +1241,24 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
           </div>
         )}
 
-        {/* Reports section with submenu */}
-        {!isMarketingActive && (!isSectionViewOpen || reportsOpen) && (
-          <div className="w-full">
-            {reportsOpen && (
-              <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-gray-100' : 'bg-gray-900'} px-2 py-1`}>
-                <span className="text-sm font-bold link-label">{t('Reports')}</span>
-                <button
-                  type="button"
-                  onClick={() => setReportsOpen(false)}
-                  className={`close-btn text-sm font-semibold ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                    <path d="M15 18l-6-6 6-6" />
-                  </svg>
-                  <span>{backLabel}</span>
-                </button>
-              </div>
-            )}
-            {!reportsOpen && (
-              <button
-                type="button"
-                onClick={() => setReportsOpen(v => !v)}
-                className={`${baseLink} w-full justify-between`}
-                aria-expanded={reportsOpen}
-              >
-                <span className="nova-icon-label">
-                  <span className={`${iconContainer} ${iconTone}`}>{getIcon('Reports')}</span>
-                  <span className="link-label">{t('Reports')}</span>
-                </span>
-                <span className="ml-auto nova-badge link-label">8</span>
-                <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{transform: reportsOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
-                </span>
-              </button>
-            )}
-            <div
-              className={`${isRTL ? 'mr-0 pr-0 border-r' : 'ml-0 pl-0 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
-              style={{ maxHeight: reportsOpen ? '800px' : '0', overflow: 'hidden', opacity: reportsOpen ? 1 : 0 }}
-            >
-              <NavLink
-                to="/reports"
-                end
-                className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}
-              >
-                <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📊</span><span className="text-[15px] link-label">{t('Reports Dashboard')}</span></span>
-              </NavLink>
-              <div className="w-full">
-                <button
-                  type="button"
-                  onClick={() => setSalesReportsOpen(v => !v)}
-                  className={`${baseLink} w-full justify-between ${isRTL ? '!pr-0' : '!pl-0'}`}
-                  aria-expanded={salesReportsOpen}
-                >
-                  <span className="nova-icon-label">
-                    <span className={`${iconContainer} ${iconTone}`}>💼</span>
-                    <span className="text-[15px] link-label">{t('Sales Report')}</span>
-                  </span>
-                  <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{transform: salesReportsOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
-                  </span>
-                </button>
-                <div
-                  className={`${isRTL ? '!pr-0' : '!pl-0'} space-y-0.5 transition-all`}
-                  style={{ maxHeight: salesReportsOpen ? '800px' : '0', overflow: 'hidden', opacity: salesReportsOpen ? 1 : 0 }}
-                >
-                  <NavLink to="/reports/sales/activities" className={({ isActive }) => `${baseLink} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📞</span><span className="text-[15px] link-label">{t('Sales Activities')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/sales/pipeline" className={({ isActive }) => `${baseLink} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📈</span><span className="text-[15px] link-label">{t('Leads pipeline')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/sales/meetings" className={({ isActive }) => `${baseLink} ${isActive ? activeLink : ''}`}> 
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🗓️</span><span className="text-[15px] link-label">{t('Meetings Report')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/sales/reservations" className={({ isActive }) => `${baseLink} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📌</span><span className="text-[15px] link-label">{t('Reservations')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/sales/closed-deals" className={({ isActive }) => `${baseLink} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>✅</span><span className="text-[15px] link-label">{t('Closed Deals')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/sales/rent" className={({ isActive }) => `${baseLink} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🏠</span><span className="text-[15px] link-label">{t('Rent')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/sales/check-in" className={({ isActive }) => `${baseLink} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>✔️</span><span className="text-[15px] link-label">{t('Check in Report')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/sales/customers" className={({ isActive }) => `${baseLink} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>👥</span><span className="text-[15px] link-label">{t('Customers Report')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/sales/imports" className={({ isActive }) => `${baseLink} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📥</span><span className="text-[15px] link-label">{t('Import')}</span></span>
-                  </NavLink>
-                  <NavLink to="/reports/sales/exports" className={({ isActive }) => `${baseLink} ${isActive ? activeLink : ''}`}>
-                    <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>📤</span><span className="text-[15px] link-label">{t('Export')}</span></span>
-                  </NavLink>
-                </div>
-              </div>
-              <NavLink
-                to="/reports/leads"
-                className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-10' : '!pl-10'} ${isActive ? activeLink : ''}`}
-              >
-                <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🎯</span><span className="text-[15px] link-label">{t('Lead Report')}</span></span>
-              </NavLink>
-
-              
-              
-              <NavLink
-                to="/reports/team"
-                className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-10' : '!pl-10'} ${isActive ? activeLink : ''}`}
-              >
-                <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>👥</span><span className="text-[15px] link-label">{t('Team Report')}</span></span>
-              </NavLink>
-              
-              
-              
-            </div>
-          </div>
+        {/* Reports section - Single Link */}
+        {!isMarketingActive && !isSectionViewOpen && (
+          <NavLink
+            to="/reports"
+            className={({ isActive }) => `${baseLink} !py-4 ${isActive ? activeLink : ''}`}
+          >
+            <span className="nova-icon-label">
+              <span className={`${iconContainer} ${iconTone}`}>{getIcon('Reports')}</span>
+              <span className="link-label">{t('Reports')}</span>
+            </span>
+          </NavLink>
         )}
 
         {/* User Management section with full-view submenu (same style as Inventory/Marketing) */}
-        {!isMarketingActive && !isCoreReportsActive && (!isSectionViewOpen || usersOpen) && (
+        {!isMarketingActive && (!isSectionViewOpen || usersOpen) && (
           <div className="w-full">
           {usersOpen ? (
-              <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-gray-100' : 'bg-gray-900'} px-2 py-1`}>
+              <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-theme-sidebar' : 'bg-gray-900'} px-2 py-1`}>
                 <span className="text-sm font-bold link-label">{t('User Management')}</span>
                 <button
                   type="button"
@@ -1481,9 +1269,8 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                     setMarketingOpen(false)
                     setCustomersOpen(false)
                     setSettingsOpen(false)
-                    setReportsOpen(false)
                   }}
-                  className={`close-btn text-sm font-semibold ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
+                  className={`close-btn text-sm font-semibold ${isLight ? 'text-theme-text hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                     <path d="M15 18l-6-6 6-6" />
@@ -1501,7 +1288,6 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                   setMarketingOpen(false)
                   setCustomersOpen(false)
                   setSettingsOpen(false)
-                  setReportsOpen(false)
                 }}
                 className={`${baseLink} w-full justify-between ${isUsersActive ? 'active-parent' : ''}`}
                 aria-expanded={usersOpen}
@@ -1567,11 +1353,11 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
        </nav>
 
       {/* Settings moved near bottom, above Contact us */}
-      {!isMarketingActive && !isCoreReportsActive && (!isSectionViewOpen || settingsOpen) && activeModules.includes('settings') && (
+      {!isMarketingActive && (!isSectionViewOpen || settingsOpen) && activeModules.includes('settings') && (
         <div className="pt-2 w-full">
-          <div className={`border-t ${isLight ? 'border-gray-200' : 'border-gray-800'} mb-3`}></div>
+          <div className={`border-t ${isLight ? 'border-theme-border' : 'border-gray-800'} mb-3`}></div>
             {settingsOpen ? (
-              <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-gray-100' : 'bg-gray-900'} px-2 py-1`}>
+              <div className={`sticky top-0 z-10 section-header flex items-center mb-2 ${isLight ? 'bg-theme-sidebar' : 'bg-gray-900'} px-2 py-1`}>
                 <span className="text-sm font-bold link-label">{t('Settings')}</span>
                 <button
                   type="button"
@@ -1579,9 +1365,8 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                     setSettingsOpen(false)
                     setInventoryOpen(false)
                     setCustomersOpen(false)
-                    setReportsOpen(false)
                   }}
-                  className={`close-btn text-sm font-semibold ${isLight ? 'text-gray-700 hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
+                  className={`close-btn text-sm font-semibold ${isLight ? 'text-theme-text hover:text-gray-900' : 'text-gray-200 hover:text-white'} flex items-center gap-2`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                     <path d="M15 18l-6-6 6-6" />
@@ -1596,7 +1381,6 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                   setSettingsOpen(true)
                   setInventoryOpen(false)
                   setCustomersOpen(false)
-                  setReportsOpen(false)
                 }}
                 className={() => `${baseLink} group/settings w-full justify-between ${isSettingsActive ? 'active-parent' : ''} bg-indigo-50 dark:bg-gray-800 border border-indigo-200 dark:border-gray-700`}
               >
@@ -1658,14 +1442,14 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 <span className={`${iconContainer} ${iconTone}`}>⚙️</span>
                 <span className="link-label">{t('System Settings')}</span>
               </span>
-              <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{ transform: systemSettingsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+              <span className={`link-label ${isLight ? 'text-theme-text' : 'text-gray-400'} transition-transform`} style={{ transform: systemSettingsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               </span>
             </button>
             <div
-              className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
+              className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-theme-border dark:border-gray-700 space-y-0.5 transition-all`}
               style={{ maxHeight: systemSettingsOpen ? '400px' : '0', overflow: 'hidden', opacity: systemSettingsOpen ? 1 : 0 }}
             >
               <NavLink to="/settings/system/preferences" className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
@@ -1738,14 +1522,14 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 <span className="block">{t('Templates')}</span>
               </span>
               </span>
-              <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{ transform: notificationsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+              <span className={`link-label ${isLight ? 'text-theme-text' : 'text-gray-400'} transition-transform`} style={{ transform: notificationsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               </span>
             </button>
             <div
-              className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
+              className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-theme-border dark:border-gray-700 space-y-0.5 transition-all`}
               style={{ maxHeight: notificationsOpen ? '360px' : '0', overflow: 'hidden', opacity: notificationsOpen ? 1 : 0 }}
             >
               <NavLink end to="/settings/notifications" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
@@ -1807,14 +1591,14 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 <span className={`${iconContainer} ${iconTone}`}>🔗</span>
                 <span className="link-label">{t('Integrations')}</span>
               </span>
-              <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{ transform: integrationOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+              <span className={`link-label ${isLight ? 'text-theme-text' : 'text-gray-400'} transition-transform`} style={{ transform: integrationOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               </span>
             </button>
             <div
-              className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
+              className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-theme-border dark:border-gray-700 space-y-0.5 transition-all`}
               style={{ maxHeight: integrationOpen ? '400px' : '0', overflow: 'hidden', opacity: integrationOpen ? 1 : 0 }}
             >
               <NavLink to="/settings/integrations/api-keys" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 
@@ -1877,14 +1661,14 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 <span className={`${iconContainer} ${iconTone}`}>🛠️</span>
               <span className="link-label">{t('Configuration')}</span>
               </span>
-              <span className={`link-label ${isLight ? 'text-gray-500' : 'text-gray-400'} transition-transform`} style={{ transform: operationsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+              <span className={`link-label ${isLight ? 'text-theme-text' : 'text-gray-400'} transition-transform`} style={{ transform: operationsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               </span>
             </button>
             <div
-              className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-gray-300 dark:border-gray-700 space-y-0.5 transition-all`}
+              className={`${isRTL ? 'mr-4 pr-2 border-r' : 'ml-4 pl-2 border-l'} border-theme-border dark:border-gray-700 space-y-0.5 transition-all`}
               style={{ maxHeight: operationsOpen ? 'none' : '0', overflow: 'hidden', opacity: operationsOpen ? 1 : 0 }}
             >
               <NavLink end to="/settings/configuration" onClick={onSidebarItemClick} className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}> 

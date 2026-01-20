@@ -1421,23 +1421,13 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
                      </td>
                      <td className="py-2">
                        <div className="flex gap-2">
-                        <select
-                          className="input dark:bg-gray-800 w-36 text-sm border border-black dark:border-gray-700"
-                          value={plan.downPaymentSource || 'reservation'}
-                          onChange={e => updateInstallmentPlan(index, 'downPaymentSource', e.target.value)}
-                        >
-                          <option value="reservation">{inputLanguage === 'ar' ? 'من الحجز' : 'From Reservation'}</option>
-                          <option value="custom">{inputLanguage === 'ar' ? 'مخصص' : 'Custom'}</option>
-                        </select>
-                        {plan.downPaymentSource === 'custom' ? (
-                          <>
                            <input 
-                             type="text"
-                             className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
-                             value={(plan.downPaymentType || 'amount') === 'amount' ? formatWithCommas(plan.downPayment) : plan.downPayment}
-                             onChange={e => updateInstallmentPlan(index, 'downPayment', unformatNumber(e.target.value))}
-                             placeholder={plan.downPaymentType === 'percentage' ? '10' : '0.00'}
-                           />
+                            type="text"
+                            className="input dark:bg-gray-800 w-full text-sm border border-black dark:border-gray-700"
+                            value={(plan.downPaymentType || 'amount') === 'amount' ? formatWithCommas(plan.downPayment) : plan.downPayment}
+                            onChange={e => updateInstallmentPlan(index, 'downPayment', unformatNumber(e.target.value))}
+                            placeholder={plan.downPaymentType === 'percentage' ? '10' : '0.00'}
+                          />
                             <select
                               className="input dark:bg-gray-800 w-28 text-sm border border-black dark:border-gray-700"
                               value={plan.downPaymentType || 'amount'}
@@ -1446,21 +1436,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
                               <option value="amount">{inputLanguage === 'ar' ? 'مبلغ' : 'Amount'}</option>
                               <option value="percentage">{inputLanguage === 'ar' ? 'نسبة %' : 'Percentage %'}</option>
                             </select>
-                          </>
-                        ) : (
-                          <input
-                            type="text"
-                            readOnly
-                            className="input bg-gray-100 dark:bg-gray-700 w-full text-sm border border-gray-600"
-                            value={
-                              (plan.reservationType === 'percentage'
-                                ? ((parseFloat(formData.totalAfterDiscount)||0) * (parseFloat(formData.reservationAmount)||0) / 100)
-                                : (parseFloat(formData.reservationAmount)||0)
-                              ).toString()
-                            }
-                          />
-                        )}
-                       </div>
+                      </div>
                      </td>
                    </tr>
                    <tr>
@@ -1528,7 +1504,7 @@ export default function CreatePropertyModal({ onClose, isRTL, onSave, isEdit, bu
                    </tr>
                    <tr>
                      <td className="w-1/3 py-2 align-middle">
-                       <span className="label m-0">{inputLanguage === 'ar' ? 'دفعة إضافية' : 'Extra Payment'}</span>
+                       <span className="label m-0">{inputLanguage === 'ar' ? 'دفعة إضافية' : 'Additional Payment'}</span>
                      </td>
                      <td className="py-2">
                        <div className="flex gap-2">

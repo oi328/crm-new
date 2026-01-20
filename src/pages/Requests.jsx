@@ -135,6 +135,7 @@ export default function Requests() {
   const paymentPlanSelectOptions = useMemo(() => [{ value: 'All', label: localizedAll }, ...paymentPlanOptions.filter(Boolean).map(p => ({ value: p, label: p }))], [localizedAll, paymentPlanOptions]);
   const assignedSelectOptions = useMemo(() => [{ value: 'All', label: localizedAll }, ...assignedOptions.filter(Boolean).map(u => ({ value: u, label: u }))], [localizedAll, assignedOptions]);
   const propertyUnitSelectOptions = useMemo(() => [{ value: 'All', label: localizedAll }, ...propertyUnitOptions.filter(Boolean).map(u => ({ value: u, label: u }))], [localizedAll, propertyUnitOptions]);
+  const productSelectOptions = useMemo(() => [{ value: 'All', label: localizedAll }, ...productOptions.filter(Boolean).map(p => ({ value: p, label: p }))], [localizedAll, productOptions]);
 
   const [visibleColumns, setVisibleColumns] = useState({
     id: true,
@@ -460,11 +461,11 @@ export default function Requests() {
             <>
               <div>
                 <label className="text-xs  dark:text-white">{t('Product')}</label>
-                <input
-                  value={productFilter}
-                  onChange={(e) => setProductFilter(e.target.value)}
-                  className="w-full rounded border p-2  dark:text-white placeholder-gray-500 dark:placeholder-white  dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                  placeholder="اسم المنتج"
+                <SearchableSelect
+                  options={productSelectOptions}
+                  value={productFilter || 'All'}
+                  onChange={(val) => setProductFilter(val === 'All' ? '' : val)}
+                  className="rounded border p-2 dark:text-white"
                 />
               </div>
             </>

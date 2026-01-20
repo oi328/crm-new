@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import BackButton from '../components/BackButton'
 import { toPng } from 'html-to-image'
 import { jsPDF } from 'jspdf'
 import { 
@@ -122,6 +123,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const ResponseTimeReport = () => {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const [timeRange, setTimeRange] = useState('30d')
   const printRef = useRef(null)
   
@@ -199,6 +201,7 @@ const ResponseTimeReport = () => {
 
   return (
     <div ref={printRef} className="p-4 max-w-7xl mx-auto pb-20 space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+      <BackButton to="/reports" />
       
       {/* 1. Header with Marketing Hook */}
       <div className="flex flex-row items-center justify-between gap-4">

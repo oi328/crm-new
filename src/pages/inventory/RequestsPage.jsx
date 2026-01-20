@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FaFilter, FaSearch, FaTimes, FaEdit, FaTrash, FaCheck, FaBan, FaFileContract, FaShoppingCart, FaQuestionCircle, FaFileInvoice, FaSync, FaPlus, FaChevronLeft, FaChevronRight, FaFileExport, FaFileImport } from 'react-icons/fa'
 import RequestsImportModal from './RequestsImportModal'
+import SearchableSelect from '../../components/SearchableSelect'
 
 export default function RequestsPage() {
   const { t, i18n } = useTranslation()
@@ -37,6 +38,22 @@ export default function RequestsPage() {
     rejected: isArabic ? 'مرفوض' : 'Rejected',
     converted: isArabic ? 'تم التحويل' : 'Converted',
   }), [isArabic])
+
+  const typeOptions = useMemo(() => [
+    
+    { value: 'Purchase Order', label: 'Purchase Order' },
+    { value: 'Inquiry', label: 'Inquiry' },
+    { value: 'Quote', label: 'Quote' },
+    { value: 'Subscription', label: 'Subscription' }
+  ], [isArabic])
+
+  const statusOptions = useMemo(() => [
+    
+    { value: 'Pending', label: labels.pending },
+    { value: 'Approved', label: labels.approved },
+    { value: 'Rejected', label: labels.rejected },
+    { value: 'Converted', label: labels.converted }
+  ], [isArabic, labels])
 
   const STORAGE_KEY = 'inventoryRequests'
 
@@ -332,7 +349,7 @@ export default function RequestsPage() {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const paginatedRequests = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -348,42 +365,42 @@ export default function RequestsPage() {
           <h1 className="page-title text-2xl font-semibold">{labels.title}</h1>
           <span aria-hidden className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent" style={{ width: 'calc(100% + 8px)', left: isArabic ? 'auto' : '-4px', right: isArabic ? '-4px' : 'auto', bottom: '-4px' }}></span>
         </div>
-        <div className="w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+          <div className=" w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
 
             <button 
               className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
               onClick={() => setShowImportModal(true)}
             >
-              <FaFileImport />
-              {isArabic ? 'استيراد' : 'Import'}
+              <FaFileImport  /> <span className="text-white">{isArabic ? 'استيراد' : 'Import'}</span>
             </button>
-           <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => {
-              resetForm();
-              setShowForm(true);
-          }}>
-              <FaPlus />
-              {labels.add}
-          </button>
-          <div className="relative dropdown-container w-full lg:w-auto">
+            <button className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none gap-2" onClick={() => { setShowForm(true); setActiveTab('basic'); }}><FaPlus /><span className="text-white">{labels.add}</span></button>
+            <div className="relative  dropdown-container w-full lg:w-auto">
               <button 
                 className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none flex items-center justify-center gap-2"
                 onClick={() => setShowExportMenu(!showExportMenu)}
               >
-                <FaFileExport />
-                {isArabic ? 'تصدير' : 'Export'}
+                <FaFileExport /> <span className="text-white">{isArabic ? 'تصدير' : 'Export'}</span>
               </button>
               {showExportMenu && (
-                <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
-                  <button onClick={exportRequestsCsv} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2">
-                    <span className="text-green-600 font-bold">CSV</span> Export as CSV
-                  </button>
-                  <button onClick={exportRequestsPdf} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2">
-                    <span className="text-red-600 font-bold">PDF</span> Export as PDF
-                  </button>
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 ring-1 ring-black ring-opacity-5">
+                  <div className="py-1">
+                    <button
+                      onClick={exportCategoriesCsv}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                    >
+                      <FaFileCsv className="mr-3 text-green-600" /> CSV
+                    </button>
+                    <button
+                      onClick={exportCategoriesPdf}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                    >
+                      <FaFilePdf className="mr-3 text-red-600" /> PDF
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
-        </div>
+          </div>
       </div>
 
       <div className="card p-4 sm:p-6 bg-transparent" style={{ backgroundColor: 'transparent' }}>
@@ -402,23 +419,21 @@ export default function RequestsPage() {
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{labels.type}</label>
-            <select className="input w-full" value={filters.type} onChange={e => setFilters(prev => ({...prev, type: e.target.value}))}>
-                <option value="all">{isArabic ? 'الكل' : 'All'}</option>
-                <option value="Purchase Order">Purchase Order</option>
-                <option value="Inquiry">Inquiry</option>
-                <option value="Quote">Quote</option>
-                <option value="Subscription">Subscription</option>
-            </select>
+            <SearchableSelect 
+                options={typeOptions} 
+                value={filters.type} 
+                onChange={val => setFilters(prev => ({...prev, type: val}))} 
+                isRTL={isRTL} 
+            />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--muted-text)]">{labels.status}</label>
-            <select className="input w-full" value={filters.status} onChange={e => setFilters(prev => ({...prev, status: e.target.value}))}>
-                <option value="all">{isArabic ? 'الكل' : 'All'}</option>
-                <option value="Pending">{labels.pending}</option>
-                <option value="Approved">{labels.approved}</option>
-                <option value="Rejected">{labels.rejected}</option>
-                <option value="Converted">{labels.converted}</option>
-            </select>
+            <SearchableSelect 
+                options={statusOptions} 
+                value={filters.status} 
+                onChange={val => setFilters(prev => ({...prev, status: val}))} 
+                isRTL={isRTL} 
+            />
           </div>
         </div>
       </div>
@@ -539,10 +554,10 @@ export default function RequestsPage() {
                     value={itemsPerPage}
                     onChange={e => setItemsPerPage(Number(e.target.value))}
                   >
-                    <option value={4}>4</option>
-                    <option value={6}>6</option>
-                    <option value={8}>8</option>
-                    <option value={12}>12</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
                   </select>
                 </div>
               </div>

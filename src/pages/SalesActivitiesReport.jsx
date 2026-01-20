@@ -1,316 +1,625 @@
-import React, { useMemo, useState } from 'react'
-// Layout removed per app-level layout usage
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import * as XLSX from 'xlsx'
-import { Bar } from 'react-chartjs-2'
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
+import { useNavigate } from 'react-router-dom'
+import BackButton from '../components/BackButton'
 import { PieChart } from '@shared/components/PieChart'
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
+import { FaFile, FaFilter, FaChevronDown, FaUser, FaUserTie, FaChartLine, FaGlobe, FaBuilding, FaCalendarAlt, FaFileExcel, FaFilePdf, FaFileExport } from 'react-icons/fa'
+import { Phone, Activity, DollarSign, Target, Filter, ChevronDown, User, Users, Layers, Tag, Briefcase, Calendar, Clock, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import SearchableSelect from '../components/SearchableSelect'
+import * as XLSX from 'xlsx'
 
 export default function SalesActivitiesReport() {
   const { t, i18n } = useTranslation()
-  const isRTL = (i18n?.language || '').toLowerCase().startsWith('ar')
+  const navigate = useNavigate()
+  const isRTL = i18n.language === 'ar'
 
-  // Sample dashboard dataset per salesperson
-  const raw = [
-    {
-      name: 'Ahmed Ali',
-      calls: 45,
-      actions: 30,
-      delayed: 3,
-      stages: { lead: 10, qualified: 12, proposal: 0, closed: 8 },
-      revenue: 82000,
-      target: 100000
-    },
-    {
-      name: 'Sara Hassan',
-      calls: 58,
-      actions: 40,
-      delayed: 1,
-      stages: { lead: 14, qualified: 18, proposal: 0, closed: 8 },
-      revenue: 105000,
-      target: 100000
-    },
-    {
-      name: 'Omar Mostafa',
-      calls: 32,
-      actions: 22,
-      delayed: 5,
-      stages: { lead: 8, qualified: 9, proposal: 3, closed: 2 },
-      revenue: 54000,
-      target: 90000
-    },
-    {
-      name: 'Mona Adel',
-      calls: 40,
-      actions: 27,
-      delayed: 2,
-      stages: { lead: 12, qualified: 10, proposal: 4, closed: 6 },
-      revenue: 76000,
-      target: 110000
-    }
+  // Mock Data
+  const kpiData = {
+    totalCalls: 176,
+    totalAction: 1179,
+    totalRevenue: 1000000,
+    achievementFromTarget: 80
+  }
+
+  // Updated Mock Data with more realistic numbers
+  const whatsAppData = [
+    { name: isRTL ? 'إجراءات واتساب' : 'WhatsApp Actions', value: 770, color: '#22c55e' },
   ]
 
-  const [salesperson, setSalesperson] = useState('all')
-  const [period, setPeriod] = useState('month') // 'day' | 'week' | 'month'
+  const emailsData = [
+    { name: isRTL ? 'مرسلة' : 'Sent', value: 580, color: '#ea580c' },
+    { name: isRTL ? 'مستلمة' : 'Received', value: 335, color: '#ffedd5' },
+  ]
 
-  const filtered = useMemo(() => {
-    return salesperson === 'all' ? raw : raw.filter(r => r.name === salesperson)
-  }, [salesperson])
+  const googleMeetData = [
+    { name: isRTL ? 'إجراءات جوجل ميت' : 'Google Meet Actions', value: 233, color: '#0ea5e9' },
+  ]
 
-  const totals = useMemo(() => {
-    const calls = filtered.reduce((s, r) => s + r.calls, 0)
-    const actions = filtered.reduce((s, r) => s + r.actions, 0)
-    const delayed = filtered.reduce((s, r) => s + r.delayed, 0)
-    const revenue = filtered.reduce((s, r) => s + r.revenue, 0)
-    const target = filtered.reduce((s, r) => s + r.target, 0)
-    const avgPct = filtered.length
-      ? Math.round((filtered.reduce((s, r) => s + (r.revenue / r.target) * 100, 0) / filtered.length))
-      : 0
-    return { calls, actions, delayed, revenue, target, avgPct }
-  }, [filtered])
+  // Define Next Actions as Stages
+  const actionDefs = [
+      { name: isRTL ? 'متابعة' : 'Follow Up', color: '#0ea5e9' },
+      { name: isRTL ? 'اجتماع' : 'Meeting', color: '#38bdf8' },
+      { name: isRTL ? 'عرض سعر' : 'Proposal', color: '#0284c7' },
+      { name: isRTL ? 'حجز' : 'Reservation', color: '#0369a1' },
+      { name: isRTL ? 'إغلاق صفقات' : 'Closing Deals', color: '#0f766e' },
+      { name: isRTL ? 'إيجار' : 'Rent', color: '#22c55e' },
+      { name: isRTL ? 'إلغاء' : 'Cancel', color: '#f97316' }
+  ];
 
-  const stageSegments = useMemo(() => {
-    const agg = filtered.reduce(
-      (acc, r) => {
-        acc.lead += r.stages.lead
-        acc.qualified += r.stages.qualified
-        acc.proposal += r.stages.proposal
-        acc.closed += r.stages.closed
-        return acc
-      },
-      { lead: 0, qualified: 0, proposal: 0, closed: 0 }
-    )
-    const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-    return [
-      { label: t('Lead'), value: agg.lead, color: '#3b82f6' },
-      { label: t('Qualified'), value: agg.qualified, color: '#22c55e' },
-      { label: t('Proposal'), value: agg.proposal, color: isDark ? '#f59e0b' : '#f59e0b' },
-      { label: t('Closed'), value: agg.closed, color: '#8b5cf6' }
-    ]
-  }, [filtered, t])
+  const tableData = useMemo(() => {
+    const baseData = [
+      { id: 1, salesperson: 'Ahmed Ali', totalLeads: 120, delayed: 5, actions: 340, calls: 50, revenue: 85000, target: 100000 },
+      { id: 2, salesperson: 'Sara Hassan', totalLeads: 150, delayed: 2, actions: 410, calls: 65, revenue: 92000, target: 100000 },
+      { id: 3, salesperson: 'Omar Mostafa', totalLeads: 90, delayed: 8, actions: 220, calls: 35, revenue: 70000, target: 100000 },
+      { id: 4, salesperson: 'Mona Adel', totalLeads: 110, delayed: 4, actions: 300, calls: 45, revenue: 88000, target: 100000 },
+      { id: 5, salesperson: 'Khaled Ibrahim', totalLeads: 85, delayed: 10, actions: 180, calls: 25, revenue: 65000, target: 100000 },
+      { id: 6, salesperson: 'Nour El-Din', totalLeads: 130, delayed: 3, actions: 360, calls: 55, revenue: 95000, target: 100000 },
+      { id: 7, salesperson: 'Layla Mahmoud', totalLeads: 105, delayed: 6, actions: 290, calls: 40, revenue: 80000, target: 100000 },
+      { id: 8, salesperson: 'Youssef Kamal', totalLeads: 140, delayed: 1, actions: 390, calls: 60, revenue: 90000, target: 100000 },
+    ];
 
-  const tickColor = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-    ? '#e5e7eb'
-    : '#374151'
+    return baseData.map((row, index) => ({
+      ...row,
+      actionByStage: actionDefs[index % actionDefs.length].name
+    }));
+  }, []);
 
-  const callsActionsBarData = {
-    labels: filtered.map(r => r.name),
-    datasets: [
-      {
-        label: t('Calls'),
-        data: filtered.map(r => r.calls),
-        backgroundColor: '#2563eb',
-        borderRadius: 6,
-        barThickness: 24
-      },
-      {
-        label: t('Actions'),
-        data: filtered.map(r => r.actions),
-        backgroundColor: '#22c55e',
-        borderRadius: 6,
-        barThickness: 24
+  // State for filters
+  const [salesPersonFilter, setSalesPersonFilter] = useState([])
+  const [managerFilter, setManagerFilter] = useState([])
+  const [stageFilter, setStageFilter] = useState([])
+  const [sourceFilter, setSourceFilter] = useState([])
+  const [projectFilter, setProjectFilter] = useState([])
+  
+  const [assignDateFilter, setAssignDateFilter] = useState('')
+  const [creationDateFilter, setCreationDateFilter] = useState('')
+  const [lastActionDateFilter, setLastActionDateFilter] = useState('')
+  const [closeDealsDateFilter, setCloseDealsDateFilter] = useState('')
+  const [proposalDateFilter, setProposalDateFilter] = useState('')
+  const [showAllFilters, setShowAllFilters] = useState(false)
+
+  // Mock Options
+  const salesPersonOptions = [
+    { value: 'Ahmed Ali', label: 'Ahmed Ali' },
+    { value: 'Sara Hassan', label: 'Sara Hassan' },
+    { value: 'Omar Mostafa', label: 'Omar Mostafa' },
+    { value: 'Mona Adel', label: 'Mona Adel' },
+    { value: 'Khaled Ibrahim', label: 'Khaled Ibrahim' },
+    { value: 'Nour El-Din', label: 'Nour El-Din' },
+    { value: 'Layla Mahmoud', label: 'Layla Mahmoud' },
+    { value: 'Youssef Kamal', label: 'Youssef Kamal' },
+  ]
+  const managerOptions = [{ value: 'Manager 1', label: isRTL ? 'مدير 1' : 'Manager 1' }, { value: 'Manager 2', label: isRTL ? 'مدير 2' : 'Manager 2' }]
+  const stageOptions = useMemo(() => actionDefs.map(s => ({ value: s.name, label: s.name })), [isRTL])
+  const sourceOptions = [{ value: 'Facebook', label: isRTL ? 'فيسبوك' : 'Facebook' }, { value: 'Website', label: isRTL ? 'الموقع' : 'Website' }]
+  const projectOptions = [{ value: 'Project A', label: isRTL ? 'مشروع أ' : 'Project A' }, { value: 'Project B', label: isRTL ? 'مشروع ب' : 'Project B' }]
+
+  const filteredData = useMemo(() => {
+     return tableData;
+  }, [salesPersonFilter, managerFilter, stageFilter, sourceFilter, projectFilter, assignDateFilter, creationDateFilter, lastActionDateFilter, closeDealsDateFilter, proposalDateFilter, tableData])
+
+  const [entriesPerPage, setEntriesPerPage] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const pageCount = Math.max(1, Math.ceil(filteredData.length / entriesPerPage))
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * entriesPerPage
+    return filteredData.slice(start, start + entriesPerPage)
+  }, [filteredData, currentPage, entriesPerPage])
+
+  // Aggregate Actions by Stage from filteredData
+  const actionsByStageData = useMemo(() => {
+    const stageCounts = filteredData.reduce((acc, row) => {
+      const stage = row.actionByStage;
+      acc[stage] = (acc[stage] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.keys(stageCounts).map(stage => {
+      const actionDef = actionDefs.find(s => s.name === stage);
+      return {
+        name: stage,
+        value: stageCounts[stage],
+        color: actionDef ? actionDef.color : '#cccccc'
+      };
+    });
+  }, [filteredData]);
+
+  const [expandedRows, setExpandedRows] = useState({});
+
+  const toggleRow = (id) => {
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const exportMenuRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+        setShowExportMenu(false)
       }
-    ]
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  const exportToPdf = async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const autoTable = await import('jspdf-autotable')
+      const doc = new jsPDF()
+      
+      const tableColumn = [
+        isRTL ? 'مسؤول المبيعات' : 'Salesperson',
+        isRTL ? 'إجمالي العملاء' : 'Total Leads',
+        isRTL ? 'المتأخرة' : 'Delayed',
+        isRTL ? 'الإجراءات' : 'Actions',
+        isRTL ? 'المكالمات' : 'Calls',
+        isRTL ? 'الإجراء حسب المرحلة' : 'Action by Stage',
+        isRTL ? 'الإيرادات' : 'Revenue',
+        isRTL ? 'الهدف' : 'Target'
+      ]
+      const tableRows = []
+
+      filteredData.forEach(row => {
+        const rowData = [
+          row.salesperson,
+          row.totalLeads,
+          row.delayed,
+          row.actions,
+          row.calls,
+          row.actionByStage,
+          row.revenue.toLocaleString(),
+          row.target.toLocaleString()
+        ]
+        tableRows.push(rowData)
+      })
+
+      doc.text(isRTL ? 'تقرير نشاطات المبيعات' : 'Sales Activities Report', 14, 15)
+      autoTable.default(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { font: 'helvetica', fontSize: 8 },
+        headStyles: { fillColor: [66, 139, 202] }
+      })
+      doc.save("sales_activities_report.pdf")
+      setShowExportMenu(false)
+    } catch (error) {
+      console.error("Export PDF Error:", error)
+    }
   }
 
-  const callsActionsBarOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: { grid: { display: false }, ticks: { font: { size: 12 }, color: tickColor } },
-      y: { grid: { display: false }, ticks: { font: { size: 12 }, color: tickColor } }
-    },
-    plugins: { legend: { display: true } }
-  }
-
-  const achievementColor = (pct) => {
-    if (pct >= 90) return 'bg-emerald-500'
-    if (pct >= 60) return 'bg-yellow-500'
-    return 'bg-red-500'
-  }
-
-  const exportExcel = () => {
-    const rows = filtered.map(r => ({
-      Salesperson: r.name,
-      Calls: r.calls,
-      Actions: r.actions,
-      Delayed: r.delayed,
-      Lead: r.stages.lead,
-      Qualified: r.stages.qualified,
-      Proposal: r.stages.proposal,
-      Closed: r.stages.closed,
-      RevenueAchieved: r.revenue,
-      TargetPercent: Math.round((r.revenue / r.target) * 100)
-    }))
-
-    const ws = XLSX.utils.json_to_sheet(rows)
+  const handleExport = () => {
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'SalesActivities')
-    XLSX.writeFile(wb, 'sales-activities-dashboard.xlsx')
+    const ws = XLSX.utils.json_to_sheet(filteredData)
+    XLSX.utils.book_append_sheet(wb, ws, 'Sales Activities')
+    XLSX.writeFile(wb, 'Sales_Activities_Report.xlsx')
+    setShowExportMenu(false)
   }
 
-  const exportPdf = () => {
-    // Uses browser print dialog; users can select "Save as PDF"
-    window.print()
+  const clearFilters = () => {
+    setSalesPersonFilter([])
+    setManagerFilter([])
+    setStageFilter([])
+    setSourceFilter([])
+    setProjectFilter([])
+    setAssignDateFilter('')
+    setCreationDateFilter('')
+    setLastActionDateFilter('')
+    setCloseDealsDateFilter('')
+    setProposalDateFilter('')
   }
 
-  return (
-    <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">{t('Sales Activities')}</h1>
-        </div>
-        <div className="h-2" aria-hidden="true"></div>
-        {/* Export Actions */}
-        <div className="flex justify-end">
-          <div className="flex gap-2">
-            <button
-              onClick={exportPdf}
-              className="btn btn-primary"
-            >
-              {t('Download PDF')}
-            </button>
-            <button
-              onClick={exportExcel}
-              className="btn btn-secondary"
-            >
-              {t('Download Excel')}
-            </button>
-          </div>
-        </div>
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div>
-              <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('Salesperson')}</label>
-              <select
-                value={salesperson}
-                onChange={(e) => setSalesperson(e.target.value)}
-                className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-              >
-                <option value="all">{t('All')}</option>
-                {raw.map(r => (
-                  <option key={r.name} value={r.name}>{r.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">{t('Date Range')}</label>
-              <div className="flex gap-2">
-                {['day','week','month'].map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setPeriod(p)}
-                    className={`px-3 py-2 rounded-md border text-sm ${period === p ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700'}`}
-                  >
-                    {t(p.charAt(0).toUpperCase() + p.slice(1))}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-          </div>
-        </div>
-        <div className="h-4" aria-hidden="true"></div>
+  const renderPieChart = (title, data) => {
+    const segments = data.map(item => ({
+      label: item.label || item.name,
+      value: item.value,
+      color: item.color
+    }))
+    const total = segments.reduce((sum, item) => sum + (item.value || 0), 0)
 
-        {/* Total Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: t('Total Calls'), value: totals.calls, accent: 'bg-blue-500' },
-            { label: t('Total Actions'), value: totals.actions, accent: 'bg-emerald-500' },
-            { label: t('Total Revenue'), value: `${totals.revenue.toLocaleString()} EGP`, accent: 'bg-purple-500' },
-            { label: t('Average Achievement %'), value: `${totals.avgPct}%`, accent: 'bg-indigo-500' }
-          ].map((k) => (
-            <div key={k.label} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-              <div className="flex items-center gap-3">
-                <span className={`inline-block w-2 h-6 rounded ${k.accent}`} />
-                <div>
-                  <div className="text-xs text-gray-600 dark:text-gray-300">{k.label}</div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{k.value}</div>
-                </div>
-              </div>
+    return (
+      <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="text-sm font-semibold mb-2 dark:text-white text-center md:text-left">
+          {title}
+        </div>
+        <div className="h-48 flex items-center justify-center">
+          <PieChart
+            segments={segments}
+            size={170}
+            centerValue={total}
+            centerLabel={isRTL ? 'الإجمالي' : 'Total'}
+          />
+        </div>
+        <div className="mt-4 flex flex-wrap justify-center gap-3">
+          {segments.map(segment => (
+            <div key={segment.label} className="flex items-center gap-1.5 text-xs">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: segment.color }}
+              />
+              <span className="dark:text-white">
+                {segment.label}: {segment.value.toLocaleString()}
+              </span>
             </div>
           ))}
         </div>
-        <div className="h-4" aria-hidden="true"></div>
+      </div>
+    )
+  }
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <div className="flex items-center justify-between mb-3">
-              <div className={`flex items-center gap-2`}> 
-                <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
-                <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold text-gray-900 dark:text-gray-100`}>{t('Calls & Actions')}</h3>
-              </div>
-              <span className="text-xs text-[var(--muted-text)]">{t('Per Salesperson')}</span>
-            </div>
-            <div style={{ height: '260px' }}>
-              <Bar data={callsActionsBarData} options={callsActionsBarOptions} />
-            </div>
+  return (
+    <div className="p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-hidden min-w-0">
+      {/* Back Btn & Header */}
+      <div className="mb-6">
+        <BackButton to="/reports" />
+        <h1 className="text-2xl font-bold  dark:text-white mb-2">{isRTL ? 'تقرير نشاطات المبيعات' : 'Sales Activities Report'}</h1>
+        <p className=" dark:text-white text-sm">{isRTL ? 'متابعة نشاطات وأداء فريق المبيعات' : 'Monitor your sales team activities and performance'}</p>
+      </div>
+
+      {/* Filter Panel */}
+      <div className=" backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-8">
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2 dark:text-white font-semibold">
+            <Filter size={20} className="text-blue-500 dark:text-blue-400" />
+            <h3>{t('Filter')}</h3>
           </div>
-          <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <div className="flex items-center justify-between mb-3">
-              <div className={`flex items-center gap-2`}> 
-                <div className={`${isRTL ? 'border-r-4' : 'border-l-4'} border-primary h-full`}></div>
-                <h3 className={`${isRTL ? 'text-right' : ''} text-lg font-semibold text-gray-900 dark:text-gray-100`}>{t('Actions by Stage')}</h3>
-              </div>
-            </div>
-            <PieChart segments={stageSegments} size={180} centerLabel={t('Stages')} />
+          
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setShowAllFilters(prev => !prev)} 
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            >
+              {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')}
+              <ChevronDown size={12} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
+            </button>
+            <button 
+              onClick={clearFilters} 
+              className="px-3 py-1.5 text-sm dark:text-white hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              {t('Reset')}
+            </button>
           </div>
         </div>
-        <div className="h-4" aria-hidden="true"></div>
 
-        {/* Table */}
-        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left border-b border-gray-200 dark:border-gray-700">
-                  {[
-                    t('Salesperson'), t('Calls'), t('Actions'), t('Delayed'), t('Actions by Stage'), t('Revenue Achieved'), t('Target %')
-                  ].map((h, idx) => (
-                    <th key={idx} className="px-3 py-2 text-gray-700 dark:text-gray-200 font-medium">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((r, idx) => {
-                  const pct = Math.round((r.revenue / r.target) * 100)
-                  return (
-                    <React.Fragment key={r.name}>
-                      <tr className="border-b border-gray-100 dark:border-gray-700">
-                        <td className="px-3 py-2 text-gray-800 dark:text-gray-100">{r.name}</td>
-                        <td className="px-3 py-2 text-gray-800 dark:text-gray-100">{r.calls}</td>
-                        <td className="px-3 py-2 text-gray-800 dark:text-gray-100">{r.actions}</td>
-                        <td className="px-3 py-2 text-gray-800 dark:text-gray-100">{r.delayed}</td>
-                        <td className="px-3 py-2 text-gray-800 dark:text-gray-100">
-                          {`${r.stages.lead} ${t('Lead')} / ${r.stages.qualified} ${t('Qualified')} / ${r.stages.closed} ${t('Closed')}`}
-                        </td>
-                        <td className="px-3 py-2 text-gray-800 dark:text-gray-100">{`${r.revenue.toLocaleString()} EGP`}</td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                              <div className={`h-2 ${achievementColor(pct)}`} style={{ width: `${Math.min(100, pct)}%` }} />
-                            </div>
-                            <span className="text-xs text-gray-700 dark:text-gray-200 w-10 text-right">{pct}%</span>
-                          </div>
-                        </td>
-                      </tr>
-                      {idx !== filtered.length - 1 && (
-                        <tr>
-                          <td colSpan={7} className="py-2"></td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  )
-                })}
-              </tbody>
-            </table>
+        <div className="space-y-4">
+          {/* First Row (Always Visible) - Selects */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <User size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'مسؤول المبيعات' : 'Sales Person'}
+              </label>
+              <SearchableSelect options={salesPersonOptions} value={salesPersonFilter} onChange={setSalesPersonFilter} placeholder={isRTL ? 'اختر' : 'Select'} multiple isRTL={isRTL} icon={<User size={16} />} />
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Users size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'المدير أو الفريق' : 'Manager or team'}
+              </label>
+              <SearchableSelect options={managerOptions} value={managerFilter} onChange={setManagerFilter} placeholder={isRTL ? 'اختر' : 'Select'} multiple isRTL={isRTL} icon={<Users size={16} />} />
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Layers size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'مرحلة البيع' : 'Stage pipeline'}
+              </label>
+              <SearchableSelect options={stageOptions} value={stageFilter} onChange={setStageFilter} placeholder={isRTL ? 'اختر' : 'Select'} multiple isRTL={isRTL} icon={<Layers size={16} />} />
+            </div>
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                <Tag size={12} className="text-blue-500 dark:text-blue-400" />
+                {isRTL ? 'المصدر' : 'Source'}
+              </label>
+              <SearchableSelect options={sourceOptions} value={sourceFilter} onChange={setSourceFilter} placeholder={isRTL ? 'اختر' : 'Select'} multiple isRTL={isRTL} icon={<Tag size={16} />} />
+            </div>
+          </div>
+
+          {/* Collapsible Section (Dates) */}
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-500 ease-in-out overflow-hidden ${showAllFilters ? 'max-h-[1000px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
+             <div className="space-y-1">
+               <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                 <Briefcase size={12} className="text-blue-500 dark:text-blue-400" />
+                 {isRTL ? 'المشروع أو المنتج' : 'Project or product'}
+               </label>
+              <SearchableSelect options={projectOptions} value={projectFilter} onChange={setProjectFilter} placeholder={isRTL ? 'اختر' : 'Select'} multiple isRTL={isRTL} icon={<Briefcase size={16} />} />
+            </div>           
+             
+             <div className="space-y-1">
+               <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                 {isRTL ? 'تاريخ التعيين' : 'Assign Date'}
+               </label>
+               <input type="date" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" value={assignDateFilter} onChange={(e) => setAssignDateFilter(e.target.value)} />
+             </div>
+             <div className="space-y-1">
+               <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                 {isRTL ? 'تاريخ الإنشاء' : 'Creation Date'}
+               </label>
+               <input type="date" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" value={creationDateFilter} onChange={(e) => setCreationDateFilter(e.target.value)} />
+             </div>
+             <div className="space-y-1">
+               <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                 <Clock size={12} className="text-blue-500 dark:text-blue-400" />
+                 {isRTL ? 'تاريخ آخر إجراء' : 'Last Action Date'}
+               </label>
+               <input type="date" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" value={lastActionDateFilter} onChange={(e) => setLastActionDateFilter(e.target.value)} />
+             </div>
+             <div className="space-y-1">
+               <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                 <CheckCircle size={12} className="text-blue-500 dark:text-blue-400" />
+                 {isRTL ? 'تاريخ إغلاق الصفقات' : 'Close Deals Date'}
+               </label>
+               <input type="date" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" value={closeDealsDateFilter} onChange={(e) => setCloseDealsDateFilter(e.target.value)} />
+             </div>
+             <div className="space-y-1">
+               <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                 {isRTL ? 'تاريخ العرض' : 'Proposal Date'}
+               </label>
+               <input type="date" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" value={proposalDateFilter} onChange={(e) => setProposalDateFilter(e.target.value)} />
+             </div>
           </div>
         </div>
       </div>
-    </>
+
+      {/* KPI Cards - Moved to top in one row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {[
+          {
+            title: isRTL ? 'إجمالي المكالمات' : 'Total calls',
+            value: kpiData.totalCalls,
+            icon: Phone,
+            color: 'text-blue-600 dark:text-blue-400',
+            bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+          },
+          {
+            title: isRTL ? 'إجمالي الإجراءات' : 'Total Action',
+            value: kpiData.totalAction,
+            icon: Activity,
+            color: 'text-purple-600 dark:text-purple-400',
+            bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+          },
+          {
+            title: isRTL ? 'إجمالي الإيرادات' : 'Total Revenue',
+            value: kpiData.totalRevenue.toLocaleString(),
+            icon: DollarSign,
+            color: 'text-green-600 dark:text-green-400',
+            bgColor: 'bg-green-50 dark:bg-green-900/20',
+          },
+          {
+            title: isRTL ? 'تحقيق الهدف' : 'Total Achievement From Target',
+            value: `${kpiData.achievementFromTarget}%`,
+            icon: Target,
+            color: 'text-orange-600 dark:text-orange-400',
+            bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+          },
+        ].map((card, idx) => {
+          const Icon = card.icon
+          return (
+            <div 
+              key={idx}
+              className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
+            >
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110">
+                <Icon size={80} className={card.color} />
+              </div>
+
+              <div className="flex flex-col justify-between h-full relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl ${card.bgColor} ${card.color}`}>
+                    <Icon size={20} />
+                  </div>
+                  <h3 className="dark:text-white text-sm font-semibold opacity-80">
+                    {card.title}
+                  </h3>
+                </div>
+
+                <div className="flex items-baseline space-x-2 rtl:space-x-reverse pl-1">
+                  <span className={`text-2xl font-bold ${card.color}`}>
+                    {card.value}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Charts Section - Full width */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+           {renderPieChart(isRTL ? 'واتساب' : 'WhatsApp', whatsAppData)}
+           {renderPieChart(isRTL ? 'البريد الإلكتروني' : 'Emails', emailsData)}
+           {renderPieChart(isRTL ? 'جوجل ميت' : 'Google Meet', googleMeetData)}
+           {renderPieChart(isRTL ? 'الإجراءات حسب المرحلة' : 'Actions by Stage', actionsByStageData)}
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold dark:text-white">{isRTL ? 'نظرة عامة على نشاطات المبيعات' : 'Sales Activities Overview'}</h2>
+          <div className="relative" ref={exportMenuRef}>
+            <button 
+              onClick={() => setShowExportMenu(!showExportMenu)} 
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+            >
+              <FaFileExport /> {isRTL ? 'تصدير' : 'Export'}
+              <FaChevronDown className={`transform transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} size={12} />
+            </button>
+            
+            {showExportMenu && (
+              <div className={`absolute top-full ${isRTL ? 'left-0' : 'right-0'} mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-48`}>
+                <button 
+                  onClick={handleExport}
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                >
+                  <FaFileExcel className="text-green-600" /> {isRTL ? 'تصدير كـ Excel' : 'Export to Excel'}
+                </button>
+                <button 
+                  onClick={exportToPdf}
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                >
+                  <FaFilePdf className="text-red-600" /> {isRTL ? 'تصدير كـ PDF' : 'Export to PDF'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Responsive Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white">
+              <tr>
+                <th className="md:hidden px-4 py-3 border-b border-white/10 dark:border-gray-700/50"></th>
+                <th className="px-4 py-3 border-b border-white/10 dark:border-gray-700/50 text-start">{isRTL ? 'مسؤول المبيعات' : 'Salesperson'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'إجمالي العملاء' : 'Total Leads'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'المتأخرة' : 'Delayed'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'الإجراءات' : 'Actions'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'المكالمات' : 'Calls'}</th>
+                <th className="hidden md:table-cell px-4 py-3 border-b border-white/10 dark:border-gray-700/50 text-start">{isRTL ? 'الإجراء حسب المرحلة' : 'Action by Stage'}</th>
+                <th className="px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'الإيرادات' : 'Revenue'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'الهدف' : 'Target'}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10 dark:divide-gray-700/50">
+              {filteredData.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={9}
+                    className="px-4 py-6 text-center text-[var(--muted-text)]"
+                  >
+                    {isRTL ? 'لا توجد بيانات' : 'No data'}
+                  </td>
+                </tr>
+              )}
+              {filteredData.length > 0 && paginatedRows.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={9}
+                    className="px-4 py-6 text-center text-[var(--muted-text)]"
+                  >
+                    {isRTL ? 'لا توجد نتائج' : 'No results'}
+                  </td>
+                </tr>
+              )}
+              {paginatedRows.map((row) => (
+                <React.Fragment key={row.id}>
+                  <tr className="hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                    <td className="md:hidden px-4 py-3">
+                      <button onClick={() => toggleRow(row.id)} className="p-1 rounded-full hover:bg-white/10 text-[var(--muted-text)]">
+                        {expandedRows[row.id] ? <ChevronDown size={16} className="transform rotate-180" /> : <ChevronDown size={16} />}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 font-medium dark:text-white">{row.salesperson}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-center dark:text-white">{row.totalLeads}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-center text-red-500 font-medium">{row.delayed}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-center dark:text-white">{row.actions}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-center dark:text-white">{row.calls}</td>
+                    <td className="hidden md:table-cell px-4 py-3 dark:text-white">{row.actionByStage}</td>
+                    <td className="px-4 py-3 text-center font-bold text-green-600">{row.revenue.toLocaleString()}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-center font-bold text-blue-600">{row.target.toLocaleString()}</td>
+                  </tr>
+                  {expandedRows[row.id] && (
+                    <tr className="md:hidden bg-white/5 dark:bg-white/5">
+                      <td colSpan={3} className="px-4 py-3">
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-[var(--muted-text)]">{isRTL ? 'إجمالي العملاء' : 'Total Leads'}:</span>
+                              <span className="dark:text-white">{row.totalLeads}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[var(--muted-text)]">{isRTL ? 'المتأخرة' : 'Delayed'}:</span>
+                              <span className="text-red-500">{row.delayed}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[var(--muted-text)]">{isRTL ? 'الإجراءات' : 'Actions'}:</span>
+                              <span className="dark:text-white">{row.actions}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[var(--muted-text)]">{isRTL ? 'المكالمات' : 'Calls'}:</span>
+                              <span className="dark:text-white">{row.calls}</span>
+                            </div>
+                            <div className="col-span-2 flex justify-between">
+                              <span className="text-[var(--muted-text)]">{isRTL ? 'الإجراء حسب المرحلة' : 'Action by Stage'}:</span>
+                              <span className="dark:text-white">{row.actionByStage}</span>
+                            </div>
+                            <div className="col-span-2 flex justify-between">
+                              <span className="text-[var(--muted-text)]">{isRTL ? 'الهدف' : 'Target'}:</span>
+                              <span className="text-blue-600 font-bold">{row.target.toLocaleString()}</span>
+                            </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-4 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex sm:flex-row items-center justify-between gap-3">
+          <div className="text-[11px] sm:text-xs text-[var(--muted-text)]">
+            {isRTL
+              ? `إظهار ${Math.min((currentPage - 1) * entriesPerPage + 1, filteredData.length)}-${Math.min(currentPage * entriesPerPage, filteredData.length)} من ${filteredData.length}`
+              : `Showing ${Math.min((currentPage - 1) * entriesPerPage + 1, filteredData.length)}-${Math.min(currentPage * entriesPerPage, filteredData.length)} of ${filteredData.length}`}
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                title={isRTL ? 'السابق' : 'Prev'}
+              >
+                {isRTL ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <ChevronLeft className="w-4 h-4" />
+                )}
+              </button>
+              <span className="text-sm whitespace-nowrap">
+                {isRTL
+                  ? `الصفحة ${currentPage} من ${pageCount}`
+                  : `Page ${currentPage} of ${pageCount}`}
+              </span>
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setCurrentPage(p => Math.min(p + 1, pageCount))}
+                disabled={currentPage === pageCount}
+                title={isRTL ? 'التالي' : 'Next'}
+              >
+                {isRTL ? (
+                  <ChevronLeft className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] sm:text-xs text-[var(--muted-text)] whitespace-nowrap">
+                {isRTL ? 'لكل صفحة:' : 'Per page:'}
+              </span>
+              <select
+                className="input w-24 text-sm py-0 px-2 h-8"
+                value={entriesPerPage}
+                onChange={(e) => {
+                  setEntriesPerPage(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

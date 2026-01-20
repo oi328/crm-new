@@ -6,6 +6,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Lege
 import * as XLSX from 'xlsx'
 import { RiFilePdfLine, RiFileExcelLine } from 'react-icons/ri'
 import AdvancedDateFilter from '../components/AdvancedDateFilter'
+import BackButton from '../components/BackButton'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
@@ -92,6 +93,8 @@ export default function CostVsRevenueReport() {
   return (
     <>
       <div id="report-root" className="space-y-6">
+        <BackButton to="/reports" />
+
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">{t('Cost vs Revenue by Platform')}</h1>
           <div className={`flex items-center gap-2`}>

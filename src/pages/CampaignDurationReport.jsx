@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import BackButton from '../components/BackButton'
 import { toPng } from 'html-to-image'
 import { jsPDF } from 'jspdf'
 import { 
@@ -8,9 +9,8 @@ import {
   BarChart, Bar, AreaChart, Area, ComposedChart, LabelList
 } from 'recharts'
 import { 
-  FaArrowUp, FaArrowDown, FaCalendarAlt, FaClock, FaChartLine, FaExclamationTriangle, FaDownload 
+  FaArrowUp, FaArrowDown, FaCalendarAlt, FaClock, FaChartLine, FaExclamationTriangle, FaDownload, FaFacebook 
 } from 'react-icons/fa'
-import { SiMeta } from 'react-icons/si'
 import { FaGoogle, FaTiktok, FaGlobe } from 'react-icons/fa'
 
 // --- Mock Data Generators ---
@@ -117,7 +117,7 @@ const KPICard = ({ title, value, change, trend, isInverse, note }) => {
 
 const PlatformIcon = ({ platform }) => {
   switch(platform) {
-    case 'meta': return <SiMeta className="text-blue-600" />
+    case 'meta': return <FaFacebook className="text-blue-600" />
     case 'google': return <FaGoogle className="text-yellow-500" />
     case 'tiktok': return <FaTiktok className="text-black dark:text-white" />
     case 'web': return <FaGlobe className="text-green-500" />
@@ -256,6 +256,8 @@ const CampaignDurationReport = () => {
 
   return (
     <div ref={printRef} className="p-4 space-y-6 min-h-screen pb-20">
+      <BackButton to="/reports" />
+
       {/* Header */}
       <div className="flex flex-row items-center justify-between gap-4">
         <div className="min-w-0">

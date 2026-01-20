@@ -145,7 +145,7 @@ export default function Developers() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(6)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -240,7 +240,7 @@ export default function Developers() {
                 onClick={()=>setShowImportModal(true)}
               >
                 <FaFileImport  />
-                {isArabic ? 'استيراد' : 'Import'}
+                <span className='text-white'>{isArabic ? 'استيراد' : 'Import'}</span>
               </button>
 
 
@@ -249,7 +249,7 @@ export default function Developers() {
                 className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 text-white border-none flex items-center justify-center gap-2" 
                 onClick={() => setShowForm(true)}
               >
-                <FaPlus /> {labels.add}
+                <FaPlus /> <span className='text-white'>{labels.add}</span>
               </button>
                             <div className="relative w-full lg:w-auto">
                 <button 
@@ -258,7 +258,7 @@ export default function Developers() {
                 >
                   <span className="flex items-center gap-2">
                     <FaFileExport  />
-                    {isArabic ? 'تصدير' : 'Export'}
+                    <span className='text-white'>{isArabic ? 'تصدير' : 'Export'}</span>
                   </span>
                   <FaChevronDown className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} size={12} />
                 </button>
@@ -340,10 +340,12 @@ export default function Developers() {
           <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 transition-all duration-300 overflow-hidden ${showAllFilters ? 'max-h-[300px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
             <div className="space-y-1">
               <label className="text-xs font-medium text-[var(--muted-text)]">{labels.status}</label>
-              <select className="input w-full" value={filters.status} onChange={e=>setFilters(prev=>({...prev, status: e.target.value}))}>
-                <option value="">{isArabic ? 'الكل' : 'All'}</option>
-                {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
+              <SearchableSelect 
+                options={statusOptions} 
+                value={filters.status} 
+                onChange={val => setFilters(prev => ({...prev, status: val}))} 
+                isRTL={isArabic} 
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-[var(--muted-text)]">{labels.phone}</label>
@@ -472,10 +474,10 @@ export default function Developers() {
                   value={itemsPerPage}
                   onChange={e => setItemsPerPage(Number(e.target.value))}
                 >
-                  <option value={6}>6</option>
-                  <option value={12}>12</option>
-                  <option value={24}>24</option>
-                  <option value={48}>48</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
                 </select>
               </div>
             </div>

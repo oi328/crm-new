@@ -21,7 +21,7 @@ function App() {
 
   // 3. أزل كلاسات الخلفية من هنا لتجنب التكرار
   return (
-    <div className={`${directionClass} min-h-screen text-gray-900 dark:text-gray-100`}>
+    <div className={`${directionClass} min-h-screen text-theme-text dark:text-gray-100`}>
       <AppRouter />
     </div>
   );
