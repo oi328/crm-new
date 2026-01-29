@@ -915,7 +915,7 @@ export const Leads = () => {
       {/* Leads Table Filters & Controls */}
       <div className={`glass-panel rounded-2xl p-3 mb-6 filters-compact`}>
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-lg font-semibold  dark:text-white flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-theme-text dark:text-white flex items-center gap-2">
             <FaFilter size={16} className="text-blue-500 dark:text-blue-400" /> {t('Filters')}
           </h2>
           <div className="flex items-center gap-2">
@@ -962,7 +962,7 @@ export const Leads = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Search */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <FaSearch size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Search')}
               </label>
@@ -979,7 +979,7 @@ export const Leads = () => {
 
             {/* Source Filter */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 4l-4 4 4 4" />
                 </svg>
@@ -1001,7 +1001,7 @@ export const Leads = () => {
 
             {/* Priority Filter */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -1025,7 +1025,7 @@ export const Leads = () => {
 
             {/* Project Filter */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
@@ -1054,7 +1054,7 @@ export const Leads = () => {
 
               {/* Stage Filter (using sidebar stages for options) */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                   </svg>
@@ -1080,7 +1080,7 @@ export const Leads = () => {
 
               {/* Manager Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
@@ -1102,7 +1102,7 @@ export const Leads = () => {
 
               {/* Sales Person Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
@@ -1124,7 +1124,7 @@ export const Leads = () => {
 
               {/* Created By Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20h18" />
                   </svg>
@@ -1374,7 +1374,7 @@ export const Leads = () => {
       </div>
 
       <div className={`flex items-center justify-between mb-3`}>
-        <h2 className="text-xl font-bold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Deleted Leads')}</h2>
+        <h2 className="text-xl font-bold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Deleted Leads')}</h2>
         <ColumnToggle
           columns={allColumns}
           visibleColumns={visibleColumns}
@@ -1410,7 +1410,7 @@ export const Leads = () => {
         <div className="flex justify-between items-center p-3 border-b border-theme-border dark:border-gray-700">
           {selectedLeads.length > 0 ? (
             <div className="flex items-center gap-4 flex-wrap">
-              <span className="text-sm font-medium  dark:text-gray-300">
+              <span className="text-sm font-medium text-theme-text dark:text-gray-300">
                 {t('Selected')}: {selectedLeads.length} {t('Leads')}
               </span>
               <button onClick={applyPermanentDelete} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg text-sm transition-colors">
@@ -1421,15 +1421,15 @@ export const Leads = () => {
               </button>
             </div>
           ) : (
-            <span className="text-sm font-medium  dark:text-gray-400">{t('No leads selected for bulk actions')}</span>
+            <span className="text-sm font-medium text-theme-text dark:text-gray-400">{t('No leads selected for bulk actions')}</span>
           )}
         </div>
         <div ref={scrollXRef} className="overflow-x-auto relative backdrop-blur-lg" style={{ '--table-header-bg': theme === 'dark' ? 'transparent' : undefined, '--scroll-bg': theme === 'dark' ? '#0f172a' : '#f9fafb' }}>
-          <table className="w-max min-w-full divide-y divide-theme-border dark:divide-gray-700 dark:text-white" style={{ tableLayout: 'auto' }}>
+          <table className="w-max min-w-full divide-y divide-theme-border dark:divide-gray-700 text-theme-text dark:text-white" style={{ tableLayout: 'auto' }}>
             <thead className={` ${tableHeaderBgClass} backdrop-blur-md sticky top-0 z-30 shadow-md`} style={{ backgroundColor: 'var(--table-header-bg)' }}>
               <tr>
                 {/* Checkbox Column */}
-                <th scope="col" className="w-10 px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white" style={{ backgroundColor: 'var(--table-header-bg)' }}>
+                <th scope="col" className="w-10 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-theme-text dark:text-white" style={{ backgroundColor: 'var(--table-header-bg)' }}>
                   <input
                     type="checkbox"
                     checked={selectedLeads.length === paginatedLeads.length && paginatedLeads.length > 0}
@@ -1443,7 +1443,7 @@ export const Leads = () => {
                   <th
                     key="lead"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white w-40 cursor-pointer`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-theme-text dark:text-white w-40 cursor-pointer`}
                     style={{ backgroundColor: 'var(--table-header-bg)' }}
                     onClick={() => {
                       if (sortBy === 'lead') {
@@ -1467,7 +1467,7 @@ export const Leads = () => {
                   <th
                     key="contact"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white w-48`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-theme-text dark:text-white w-48`}
                     style={{ backgroundColor: 'var(--table-header-bg)' }}
                   >
                     <div className="flex items-center gap-1">{allColumns.contact}</div>
@@ -1478,7 +1478,7 @@ export const Leads = () => {
                   <th
                     key="actions"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-30`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-theme-text dark:text-white sticky ${i18n.language === 'ar' ? 'right-0' : 'left-0'} z-30`}
                     style={{ minWidth: '160px', backgroundColor: 'var(--table-header-bg)' }}
                   >
                     {t('Actions')}
@@ -1490,7 +1490,7 @@ export const Leads = () => {
                     <th
                       key={key}
                       scope="col"
-                      className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider dark:text-white ${['lead','contact'].includes(key) ? '' : ''} ${['source','stage','priority','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
+                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-theme-text dark:text-white ${['lead','contact'].includes(key) ? '' : ''} ${['source','stage','priority','expectedRevenue'].includes(key) ? 'cursor-pointer' : 'cursor-default'}`}
                       style={{ backgroundColor: 'var(--table-header-bg)' }}
                       onClick={['source','stage','priority','expectedRevenue'].includes(key) ? () => {
                         if (sortBy === key) {
@@ -1537,17 +1537,17 @@ export const Leads = () => {
 
                   {/* Lead Info */}
                   {visibleColumns.lead && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium  dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text dark:text-white">
                       <div className="font-semibold text-base">{lead.name}</div>
-                      <div className=" dark:text-gray-400 text-xs mt-0.5">{lead.company}</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{lead.company}</div>
                     </td>
                   )}
 
                   {/* Contact Info */}
                   {visibleColumns.contact && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
-                      <div className="font-normal dark:text-white">{lead.email}</div>
-                      <div className="font-normal dark:text-white">{lead.phone}</div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white">
+                      <div className="font-normal text-theme-text dark:text-white">{lead.email}</div>
+                      <div className="font-normal text-theme-text dark:text-white">{lead.phone}</div>
                     </td>
                   )}
 
@@ -1603,35 +1603,35 @@ export const Leads = () => {
 
                   {/* Source */}
                   {visibleColumns.source && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white">
                       <span className="text-base">{getSourceIcon(lead.source)}</span> {lead.source}
                     </td>
                   )}
 
                   {/* Project */}
                   {visibleColumns.project && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white">
                       {lead.project || '-'}
                     </td>
                   )}
 
                   {/* Sales Person */}
                   {visibleColumns.salesPerson && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white">
                       {lead.assignedTo || '-'}
                     </td>
                   )}
 
                   {/* Last Comment */}
                   {visibleColumns.lastComment && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white max-w-xs overflow-hidden text-ellipsis">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white max-w-xs overflow-hidden text-ellipsis">
                       {lead.notes || '-'}
                     </td>
                   )}
 
                   {/* Stage */}
                   {visibleColumns.stage && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white">
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold leading-5 rounded-full ${getStatusColor(lead.stage)}`}>
                         {t(lead.stage || 'N/A')}
                       </span>
@@ -1640,14 +1640,14 @@ export const Leads = () => {
 
                   {/* Expected Revenue */}
                   {visibleColumns.expectedRevenue && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white">
                       {lead.estimatedValue ? `${lead.estimatedValue.toLocaleString()} ${t('SAR')}` : '-'}
                     </td>
                   )}
 
                   {/* Priority */}
                   {visibleColumns.priority && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white">
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold leading-5 rounded-full ${getPriorityColor(lead.priority)}`}>
                         {t(lead.priority || 'N/A')}
                       </span>
@@ -1663,12 +1663,12 @@ export const Leads = () => {
           </table>
           
           {paginatedLeads.length === 0 && (
-            <div className="text-center py-10  dark:text-gray-400">
+            <div className="text-center py-10 text-theme-text dark:text-gray-400">
               <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium  dark:text-white">{t('No Leads Found')}</h3>
-              <p className="mt-1 text-sm  dark:text-gray-400">{t('Try adjusting your filters or adding new leads.')}</p>
+              <h3 className="mt-2 text-sm font-medium text-theme-text dark:text-white">{t('No Leads Found')}</h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('Try adjusting your filters or adding new leads.')}</p>
             </div>
           )}
         </div>
@@ -1679,15 +1679,15 @@ export const Leads = () => {
         {/* Row 1: Show Entries & Page Navigation */}
         <div className="flex  lg:flex-row justify-between items-center gap-3">
           {/* Show Entries */}
-          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium  dark:text-white">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium text-theme-text dark:text-white">
             <span style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Show')}</span>
-            <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs">
+            <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }} className="px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md bg-white dark:bg-transparent backdrop-blur-sm text-theme-text dark:text-white text-xs">
               <option value={10}>10</option>
               <option value={20}>20</option>
               <option value={50}>50</option>
               <option value={100}>100</option>
             </select>
-            <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('entries')}</span>
+            <span className="text-xs font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('entries')}</span>
             <label htmlFor="page-search" className="sr-only">{t('Search Page')}</label>
             <input
               id="page-search"
@@ -1704,7 +1704,7 @@ export const Leads = () => {
                   }
                 }
               }}
-              className="ml-2 px-3 py-1.5 border border-theme-border dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
+              className="ml-2 px-3 py-1.5 border border-theme-border dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm text-theme-text dark:text-white text-xs w-full sm:w-64 lg:w-28 placeholder:text-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
               style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
           </div>
@@ -1714,20 +1714,20 @@ export const Leads = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="block px-3 py-2 text-white focus:text-white leading-tight text-gray-500  border border-theme-border rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+              className="block px-3 py-2 text-theme-text focus:text-theme-text leading-tight border border-theme-border rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
             >
-              <span className="sr-only text-white focus:text-white">{t('Previous')}</span>
+              <span className="sr-only text-theme-text dark:text-white focus:text-white">{t('Previous')}</span>
               <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
             </button>
-            <span className="text-sm font-medium  dark:text-white">
-              {t('Page')} <span className="font-semibold  dark:text-white">{currentPage}</span> {t('of')} <span className="font-semibold  dark:text-white">{Math.ceil(filteredLeads.length / itemsPerPage)}</span>
+            <span className="text-sm font-medium text-theme-text dark:text-white">
+              {t('Page')} <span className="font-semibold text-theme-text dark:text-white">{currentPage}</span> {t('of')} <span className="font-semibold text-theme-text dark:text-white">{Math.ceil(filteredLeads.length / itemsPerPage)}</span>
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}
               disabled={currentPage === Math.ceil(filteredLeads.length / itemsPerPage)}
-              className="block px-3 py-2 leading-tight  border border-theme-border rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+              className="block px-3 py-2 leading-tight text-theme-text border border-theme-border rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
             >
-              <span className="sr-only text-white focus:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Next')}</span>
+              <span className="sr-only text-theme-text dark:text-white focus:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Next')}</span>
               <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path></svg>
             </button>
           </div>
@@ -1736,7 +1736,7 @@ export const Leads = () => {
         {/* Row 2: Export Controls */}
         <div className="flex justify-center items-center">
           <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-theme-border dark:border-gray-600  dark:bg-gray-700 justify-center">
-            <span className="text-xs font-semibold  dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Export Pages')}</span>
+            <span className="text-xs font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Export Pages')}</span>
             <input
               type="number"
               min="1"
@@ -1744,10 +1744,10 @@ export const Leads = () => {
               placeholder="From"
               value={exportFrom}
               onChange={(e) => setExportFrom(e.target.value)}
-              className="w-16 px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
+              className="w-16 px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm text-theme-text dark:text-white text-xs focus:border-blue-500"
               style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
-            <span className="text-xs font-semibold  dark:text-white   style={{ color: theme === 'dark' ? '#ffffff' : undefined }}">{t('to')}</span>
+            <span className="text-xs font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('to')}</span>
             <input
               type="number"
               min="1"
@@ -1755,7 +1755,7 @@ export const Leads = () => {
               placeholder="To"
               value={exportTo}
               onChange={(e) => setExportTo(e.target.value)}
-              className="w-16 px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md  dark:bg-transparent backdrop-blur-sm  dark:text-white text-xs focus:border-blue-500"
+              className="w-16 px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md  dark:bg-transparent backdrop-blur-sm text-theme-text dark:text-white text-xs focus:border-blue-500"
               style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
             />
             <button

@@ -1,7 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FaPlus, FaFilter, FaSearch, FaEdit, FaTrash, FaTimes, FaChevronLeft, FaChevronRight, FaChevronDown } from 'react-icons/fa'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { FaPlus, FaFilter, FaSearch, FaEdit, FaTrash, FaTimes, FaChevronLeft, FaChevronRight, FaChevronDown, FaFileExport, FaFileExcel, FaFilePdf } from 'react-icons/fa'
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 import SearchableSelect from '../components/SearchableSelect'
 
 const MOCK_CAMPAIGNS = [
@@ -93,6 +96,8 @@ export default function Campaigns() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [showAllFilters, setShowAllFilters] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const exportMenuRef = useRef(null)
 
   const [form, setForm] = useState({
     id: null,
@@ -352,6 +357,64 @@ export default function Campaigns() {
       setSaving(false)
     }
   }
+
+  const exportExcel = () => {
+    const rows = filteredCampaigns.map(c => ({
+      [isArabic ? 'اسم الحملة' : 'Campaign Name']: c.name,
+      [isArabic ? 'المصدر' : 'Source']: c.source,
+      [isArabic ? 'نوع الميزانية' : 'Budget Type']: c.budgetType,
+      [isArabic ? 'الميزانية' : 'Budget']: c.totalBudget,
+      [isArabic ? 'تاريخ البدء' : 'Start Date']: c.startDate,
+      [isArabic ? 'تاريخ الانتهاء' : 'End Date']: c.endDate,
+      [isArabic ? 'الحالة' : 'Status']: c.status,
+      [isArabic ? 'صفحة الهبوط' : 'Landing Page']: c.landingPage,
+      [isArabic ? 'تم الإنشاء بواسطة' : 'Created By']: c.createdBy,
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Campaigns')
+    XLSX.writeFile(wb, 'campaigns_report.xlsx')
+    setShowExportMenu(false)
+  }
+
+  const exportPDF = () => {
+    const doc = new jsPDF(isArabic ? 'p' : 'p', 'mm', 'a4')
+    
+    const tableColumn = [
+        isArabic ? 'اسم الحملة' : 'Campaign Name',
+        isArabic ? 'المصدر' : 'Source',
+        isArabic ? 'نوع الميزانية' : 'Budget Type',
+        isArabic ? 'الميزانية' : 'Budget',
+        isArabic ? 'تاريخ البدء' : 'Start Date',
+        isArabic ? 'تاريخ الانتهاء' : 'End Date',
+        isArabic ? 'الحالة' : 'Status',
+    ]
+    
+    const tableRows = filteredCampaigns.map(c => [
+        c.name,
+        c.source,
+        c.budgetType,
+        c.totalBudget,
+        c.startDate,
+        c.endDate,
+        c.status
+    ])
+
+    doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: {
+            halign: isArabic ? 'right' : 'left'
+        },
+        headStyles: {
+            halign: isArabic ? 'right' : 'left'
+        }
+    })
+    
+    doc.save('campaigns_report.pdf')
+    setShowExportMenu(false)
+  }
   
   return (
     <div className="space-y-6 pt-4 px-4 sm:px-6">
@@ -362,16 +425,20 @@ export default function Campaigns() {
           <span className="absolute block h-[1px] rounded bg-gradient-to-r from-blue-500 via-purple-500 to-transparent w-full bottom-[-4px]"></span>
         </div>
         
-        <button 
-          className="btn btn-sm bg-green-600 hover:bg-blue-700 text-white border-none gap-2 flex items-center" 
-          onClick={() => {
-            setForm({ id: null, name: '', source: '', budgetType: 'daily', totalBudget: '', currency: 'EGP', startDate: '', endDate: '', landingPage: '', notes: '', status: 'Active' })
-            setShowForm(true)
-            setMessage(null)
-          }}
-        >
-          <FaPlus /> <span className="text-white">{isArabic ? 'إضافة حملة' : 'Create Campaign'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+
+          
+          <button 
+            className="btn btn-sm bg-green-600 hover:bg-blue-700 text-white border-none gap-2 flex items-center" 
+            onClick={() => {
+              setForm({ id: null, name: '', source: '', budgetType: 'daily', totalBudget: '', currency: 'EGP', startDate: '', endDate: '', landingPage: '', notes: '', status: 'Active' })
+              setShowForm(true)
+              setMessage(null)
+            }}
+          >
+            <FaPlus /> <span className="text-white">{isArabic ? 'إضافة حملة' : 'Create Campaign'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter Section */}
@@ -533,6 +600,36 @@ export default function Campaigns() {
           <h2 className="text-lg font-bold dark:text-white">
             {isArabic ? 'قائمة الحملات' : 'Campaigns List'}
           </h2>
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+            >
+              <FaFileExport /> {isArabic ? 'تصدير' : 'Export'}
+              <ChevronDown
+                className={`transform transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`}
+                size={12}
+              />
+            </button>
+            {showExportMenu && (
+              <div
+                className={`absolute top-full ${isArabic ? 'left-0' : 'right-0'} mt-1 bg-[var(--dropdown-bg)] rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-48`}
+              >
+                <button
+                  onClick={exportExcel}
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-blue-900/30 flex items-center gap-2 dark:text-white transition-colors"
+                >
+                  <FaFileExcel className="text-green-600" /> {isArabic ? 'تصدير كـ Excel' : 'Export to Excel'}
+                </button>
+                <button
+                  onClick={exportPDF}
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-blue-900/30 flex items-center gap-2 dark:text-white transition-colors"
+                >
+                  <FaFilePdf className="text-red-600" /> {isArabic ? 'تصدير كـ PDF' : 'Export to PDF'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         
         {filteredCampaigns.length === 0 ? (
@@ -556,9 +653,9 @@ export default function Campaigns() {
             {/* Mobile Card View */}
             <div className="grid grid-cols-1 md:hidden gap-4 p-4">
               {paginatedCampaigns.map(campaign => (
-                <div key={campaign.id} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
+                <div key={campaign.id} className="card glass-card p-4 space-y-3 bg-white/5 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white">
                   {/* Header */}
-                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
                     <div>
                       <h4 className="font-semibold text-sm">{campaign.name}</h4>
                       <p className="text-xs text-[var(--muted-text)]">{campaign.source || '-'}</p>
@@ -638,8 +735,8 @@ export default function Campaigns() {
 
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm text-left rtl:text-right">
-                <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white border-b border-white/10">
+              <table className="w-full text-sm text-left rtl:text-right dark:text-white">
+                <thead className="text-xs uppercase bg-white/5 dark:bg-gray-700/50 dark:text-white border-b border-white/10 dark:border-gray-700/50">
                   <tr>
                     <th className="px-4 py-3">{isArabic ? 'اسم الحملة' : 'Campaign Name'}</th>
                     <th className="px-4 py-3">{isArabic ? 'المصدر' : 'Source'}</th>
@@ -655,9 +752,9 @@ export default function Campaigns() {
                     <th className="px-4 py-3 text-center">{isArabic ? 'الإجراءات' : 'Actions'}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-white/5 dark:divide-gray-700/50">
                   {paginatedCampaigns.map(campaign => (
-                    <tr key={campaign.id} className="hover:bg-white/5 transition-colors">
+                    <tr key={campaign.id} className="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors border-b border-white/5 dark:border-gray-700/50">
                       <td className="px-4 py-3 font-medium">{campaign.name}</td>
                       <td className="px-4 py-3 opacity-80">{campaign.source || '-'}</td>
                       <td className="px-4 py-3 text-xs">{campaign.startDate || '-'}</td>

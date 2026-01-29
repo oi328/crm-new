@@ -232,8 +232,8 @@ export default function ProposalsReport() {
   const renderPieCard = (title, data) => {
     const total = data.reduce((sum, item) => sum + (item.value || 0), 0)
     return (
-      <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-        <div className="text-sm font-semibold mb-2 dark:text-white text-center md:text-left">{title}</div>
+      <div className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="text-sm font-semibold mb-2 text-theme-text dark:text-white text-center md:text-left">{title}</div>
         <div className="h-48 flex items-center justify-center">
           <PieChart
             segments={data}
@@ -268,7 +268,7 @@ export default function ProposalsReport() {
         </p>
       </div>
 
-      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-4">
+      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-theme-border dark:border-gray-700/50 p-6 mb-4">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 dark:text-white font-semibold">
             <Filter size={20} className="text-blue-500 dark:text-blue-400" />
@@ -297,7 +297,7 @@ export default function ProposalsReport() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <User size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'مسؤول المبيعات' : 'Sales Person'}
               </label>
@@ -310,7 +310,7 @@ export default function ProposalsReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Users size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'المدير' : 'Manager'}
               </label>
@@ -323,7 +323,7 @@ export default function ProposalsReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Tag size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'المصدر' : 'Source'}
               </label>
@@ -336,7 +336,7 @@ export default function ProposalsReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Briefcase size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'المشروع' : 'Project'}
               </label>
@@ -356,7 +356,7 @@ export default function ProposalsReport() {
             }`}
           >
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'تاريخ العرض' : 'Proposal Date'}
               </label>
@@ -379,10 +379,10 @@ export default function ProposalsReport() {
         ].map(card => (
           <div
             key={card.label}
-            className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex items-center justify-between"
+            className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex items-center justify-between"
           >
             <div>
-              <div className="text-xs dark:text-white">{card.label}</div>
+              <div className="text-xs text-theme-text dark:text-white">{card.label}</div>
               <div className="text-lg font-semibold">{card.value}</div>
             </div>
             <div className={`w-8 h-8 rounded-lg ${card.accent}`}></div>
@@ -390,44 +390,44 @@ export default function ProposalsReport() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {renderPieCard(isRTL ? 'العروض حسب القناة' : 'Proposals by channel', proposalsByChannelSegments)}
         {renderPieCard(isRTL ? 'العروض حسب المشروع' : 'Proposals by project', proposalsByProjectSegments)}
-        <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg text-yellow-600 dark:text-yellow-400">
-              <Trophy size={20} />
+        <div className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col">
+            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100 dark:border-gray-700/50">
+              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg text-yellow-600 dark:text-yellow-400">
+                <Trophy size={20} />
+              </div>
+              <div className="text-sm font-semibold text-theme-text dark:text-white">{isRTL ? 'الأفضل أداءً' : 'Top Performers'}</div>
             </div>
-            <div className="text-sm font-semibold dark:text-white">{isRTL ? 'الأفضل أداءً' : 'Top Performers'}</div>
-          </div>
 
-          <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-            <ul className="space-y-3">
-              {leaderboard.length === 0 && (
-                <li className="text-xs dark:text-white text-center py-4">{isRTL ? 'لا توجد بيانات' : 'No data'}</li>
-              )}
-              {leaderboard.map((item, index) => {
-                let rankColor = 'bg-gray-100 dark:bg-gray-700 dark:text-white'
-                let rankIcon = null
+            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+              <ul className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                {leaderboard.length === 0 && (
+                  <li className="text-xs dark:text-white text-center py-4">{isRTL ? 'لا توجد بيانات' : 'No data'}</li>
+                )}
+                {leaderboard.map((item, index) => {
+                  let rankColor = 'bg-gray-100 dark:bg-gray-700 dark:text-white'
+                  let rankIcon = null
 
-                if (index === 0) {
-                  rankColor =
-                    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-700'
-                  rankIcon = <Trophy size={12} />
-                } else if (index === 1) {
-                  rankColor =
-                    'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600'
-                } else if (index === 2) {
-                  rankColor =
-                    'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-700'
-                }
+                  if (index === 0) {
+                    rankColor =
+                      'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-700'
+                    rankIcon = <Trophy size={12} />
+                  } else if (index === 1) {
+                    rankColor =
+                      'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600'
+                  } else if (index === 2) {
+                    rankColor =
+                      'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-700'
+                  }
 
-                return (
-                  <li
-                    key={item.name}
-                    className="flex items-center justify-between p-2 rounded-xl hover:bg-white/5 dark:hover:bg-white/5 transition-colors group/item"
-                  >
-                    <div className="flex items-center gap-3">
+                  return (
+                    <li
+                      key={item.name}
+                      className="flex items-center justify-between p-3 hover:bg-gray-700/50 transition-colors group/item"
+                    >
+                      <div className="flex items-center gap-3">
                       <div
                         className={`w-8 h-8 flex items-center justify-center rounded-full font-bold text-xs shadow-sm ${rankColor}`}
                       >
@@ -450,9 +450,9 @@ export default function ProposalsReport() {
         </div>
       </div>
 
-      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
-          <h2 className="text-lg font-bold dark:text-white">{isRTL ? 'نظرة عامة على العروض' : 'Proposals Overview'}</h2>
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-theme-border dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-theme-text dark:text-white">{isRTL ? 'نظرة عامة على العروض' : 'Proposals Overview'}</h2>
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(prev => !prev)}
@@ -485,7 +485,7 @@ export default function ProposalsReport() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white hidden md:table-header-group">
+            <thead className="text-xs uppercase bg-theme-bg dark:bg-gray-800 text-theme-text dark:text-white hidden md:table-header-group">
               <tr>
                 <th className="px-4 py-3">{isRTL ? 'اسم العميل' : 'Lead Name'}</th>
                 <th className="px-4 py-3">{isRTL ? 'رقم الهاتف' : 'Contact'}</th>
@@ -497,14 +497,14 @@ export default function ProposalsReport() {
                 <th className="px-4 py-3 text-center">{isRTL ? 'إجراءات' : 'Actions'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-theme-border dark:divide-gray-700/50">
               {paginatedData.map(proposal => (
                 <React.Fragment key={proposal.id}>
-                  <tr className="hover:bg-white/5 dark:hover:bg-white/5 transition-colors border-b border-white/5 dark:border-gray-700/50 last:border-0">
-                    <td className="px-4 py-3 font-medium dark:text-white">
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors border-b border-theme-border dark:border-gray-700/50 last:border-0">
+                    <td className="px-4 py-3 font-medium text-theme-text dark:text-white">
                       <div className="flex items-center gap-2">
                         <button 
-                          className="md:hidden p-1 hover:bg-white/10 rounded"
+                          className="md:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-theme-text dark:text-white"
                           onClick={() => toggleRow(proposal.id)}
                         >
                           {expandedRows[proposal.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -512,18 +512,18 @@ export default function ProposalsReport() {
                         {proposal.leadName}
                       </div>
                       {/* Mobile-only info preview */}
-                      <div className="md:hidden text-xs text-[var(--muted-text)] mt-1">
+                      <div className="md:hidden text-xs text-theme-text dark:text-gray-400 mt-1">
                         {proposal.value.toLocaleString()} EGP • {proposal.salesperson}
                       </div>
                     </td>
-                    <td className="px-4 py-3 dark:text-white hidden md:table-cell">{proposal.contact}</td>
-                    <td className="px-4 py-3 dark:text-white hidden md:table-cell">{proposal.source}</td>
-                    <td className="px-4 py-3 dark:text-white hidden md:table-cell">{proposal.project}</td>
-                    <td className="px-4 py-3 text-center font-semibold dark:text-white hidden md:table-cell">
+                    <td className="px-4 py-3 text-theme-text dark:text-white hidden md:table-cell">{proposal.contact}</td>
+                    <td className="px-4 py-3 text-theme-text dark:text-white hidden md:table-cell">{proposal.source}</td>
+                    <td className="px-4 py-3 text-theme-text dark:text-white hidden md:table-cell">{proposal.project}</td>
+                    <td className="px-4 py-3 text-center font-semibold text-theme-text dark:text-white hidden md:table-cell">
                       {proposal.value.toLocaleString()} EGP
                     </td>
-                    <td className="px-4 py-3 dark:text-white hidden md:table-cell">{proposal.salesperson}</td>
-                    <td className="px-4 py-3 dark:text-white hidden md:table-cell">{proposal.proposalDate}</td>
+                    <td className="px-4 py-3 text-theme-text dark:text-white hidden md:table-cell">{proposal.salesperson}</td>
+                    <td className="px-4 py-3 text-theme-text dark:text-white hidden md:table-cell">{proposal.proposalDate}</td>
                     <td className="px-4 py-3 text-center">
                       <div className="inline-flex items-center gap-2">
                         <button
@@ -589,8 +589,8 @@ export default function ProposalsReport() {
             </tbody>
           </table>
         </div>
-        <div className="px-6 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex items-center justify-between gap-3">
-          <div className="text-[11px] sm:text-xs text-[var(--muted-text)]">
+        <div className="px-6 py-3 bg-theme-bg border-t border-theme-border dark:border-gray-700/60 flex items-center justify-between gap-3">
+          <div className="text-[11px] sm:text-xs text-theme-text dark:text-gray-400">
             {isRTL
               ? `إظهار ${Math.min((currentPage - 1) * entriesPerPage + 1, totalRecords)}-${Math.min(currentPage * entriesPerPage, totalRecords)} من ${totalRecords}`
               : `Showing ${Math.min((currentPage - 1) * entriesPerPage + 1, totalRecords)}-${Math.min(currentPage * entriesPerPage, totalRecords)} of ${totalRecords}`}

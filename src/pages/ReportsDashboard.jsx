@@ -174,10 +174,10 @@ const ReportsDashboard = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold dark:text-white tracking-tight">
+          <h1 className="text-3xl font-bold text-theme-text dark:text-white tracking-tight">
             {t('Reports Dashboard')}
           </h1>
-          <p className="text-base  dark:text-white mt-2">
+          <p className="text-base text-theme-text dark:text-white mt-2">
             {t('Welcome to Reports Module')}
           </p>
         </div>
@@ -190,7 +190,7 @@ const ReportsDashboard = () => {
             <Link 
               key={index} 
               to={report.route}
-              className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-6 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+              className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-6 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110">
                 <Icon size={80} className={report.color} />

@@ -46,7 +46,8 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
     rentAmount: '',
     rentAttachment: null,
     closingRevenue: '',
-    cancelReason: ''
+    cancelReason: '',
+    doneMeeting: false
   });
 
   const [cancelReasons, setCancelReasons] = useState([]);
@@ -66,6 +67,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
   const actionTypes = [
     { value: 'call', label: isArabic ? 'مكالمة' : 'Call', icon: FaPhone, color: 'bg-blue-500' },
     { value: 'whatsapp', label: 'WhatsApp', icon: FaComments, color: 'bg-green-500' },
+    { value: 'meeting', label: isArabic ? 'اجتماع' : 'Meeting', icon: FaHandshake, color: 'bg-purple-500' },
     { value: 'email', label: isArabic ? 'بريد' : 'Email', icon: FaEnvelope, color: 'bg-yellow-500' },
     { value: 'google_meet', label: 'Google Meet', icon: FaCalendarAlt, color: 'bg-purple-500' },
     { value: 'sms', label: isArabic ? 'إرسال عرض سعر' : 'Sms', icon: FaFileAlt, color: 'bg-teal-500' }
@@ -321,6 +323,16 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
     }
   }, [inline, isOpen]);
 
+  const isMeetingStage = lead?.stage && (
+    String(lead.stage).toLowerCase().includes('meeting') || 
+    String(lead.stage).includes('اجتماع')
+  );
+
+  const isMeetingAction = 
+    actionData.nextAction === 'meeting' || 
+    actionData.actionType === 'meeting' || 
+    actionData.actionType === 'google_meet';
+
   const content = (
     <div className={overlayWrapper}>
       <div className={containerClasses}>
@@ -449,7 +461,7 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
 
           {/* Answer Status Toggle */}
           {actionData.type && (
-            <div className={`flex ${isArabic ? 'justify-start' : 'justify-end'}`}>
+            <div className={`flex items-center gap-4 ${isArabic ? 'justify-between' : 'justify-between'}`}>
               <button
                 type="button"
                 onClick={() => setActionData(prev => ({
@@ -477,6 +489,50 @@ const AddActionModal = ({ isOpen, onClose, onSave, lead, inline = false, initial
                    </>
                  )}
                </button>
+
+              {/* Done Meeting Toggle */}
+               {isMeetingAction && (
+                 <button
+                   type="button"
+                  onClick={() => setActionData(prev => {
+                    const newDone = !prev.doneMeeting;
+                    const noteText = isArabic ? 'تم الاجتماع' : 'Done Meeting';
+                    let newNotes = prev.notes || '';
+                    
+                    if (newDone) {
+                       if (!newNotes.includes(noteText)) {
+                          newNotes = newNotes ? `${newNotes} - ${noteText}` : noteText;
+                       }
+                    } else {
+                       newNotes = newNotes.replace(new RegExp(` - ${noteText}|${noteText}`, 'g'), '').trim();
+                       if (newNotes.startsWith('- ')) newNotes = newNotes.substring(2);
+                    }
+  
+                    return {
+                      ...prev,
+                      doneMeeting: newDone,
+                      notes: newNotes
+                    };
+                  })}
+                  className={`flex items-center gap-3 px-6 py-4 rounded-xl transition-all font-medium backdrop-blur-md bg-white/10 hover:bg-white/20 shadow-2xl shadow-black/30 hover:shadow-black/50 border ${
+                    actionData.doneMeeting
+                      ? 'text-purple-300 hover:text-purple-200 shadow-purple-500/20 border-purple-400/40'
+                      : 'text-gray-300 hover:text-gray-200 shadow-gray-500/20 border-gray-400/40'
+                  }`}
+                >
+                   {actionData.doneMeeting ? (
+                     <>
+                       <FaToggleOn className="text-lg text-purple-400" />
+                       <span>{isArabic ? 'تم الاجتماع' : 'Meeting Done'}</span>
+                     </>
+                   ) : (
+                     <>
+                       <FaToggleOff className="text-lg text-gray-400" />
+                       <span>{isArabic ? 'لم يتم الاجتماع' : 'Meeting Not Done'}</span>
+                     </>
+                   )}
+                </button>
+              )}
             </div>
           )}
 

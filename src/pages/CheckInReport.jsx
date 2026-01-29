@@ -23,6 +23,7 @@ export default function CheckInReport() {
       id: 1,
       salesPerson: 'Abdelhamid',
       checkInDate: '2026-01-12T15:59:00',
+      checkOutDate: '2026-01-12T17:00:00',
       location: { lat: 30.0444, lng: 31.2357, address: 'Cairo, Egypt' },
       status: 'pending',
       type: 'task'
@@ -31,6 +32,7 @@ export default function CheckInReport() {
       id: 2,
       salesPerson: 'Sara Kamal',
       checkInDate: '2026-01-13T09:30:00',
+      checkOutDate: null,
       location: { lat: 30.0444, lng: 31.2357, address: 'Giza, Egypt' },
       status: 'pending',
       type: 'lead',
@@ -174,6 +176,7 @@ export default function CheckInReport() {
       ID: item.id,
       'Sales Person': item.salesPerson,
       'Check In Date': formatDateTime(item.checkInDate),
+      'Check Out Date': item.checkOutDate ? formatDateTime(item.checkOutDate) : '-',
       'Location': item.location.address,
       'Status': item.status
     }))
@@ -270,7 +273,7 @@ export default function CheckInReport() {
       </div>
 
       {/* Filters Section */}
-      <div className="backdrop-blur-md border border-white/50 dark:border-gray-700/50 p-4 rounded-2xl shadow-sm mb-6 ">
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 p-4 rounded-2xl shadow-sm mb-6 ">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 dark:text-white font-semibold">
             <Filter size={20} className="text-blue-500 dark:text-blue-400" />
@@ -296,7 +299,7 @@ export default function CheckInReport() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Sales Person */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <User size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Sales Person')}
               </label>
@@ -313,7 +316,7 @@ export default function CheckInReport() {
 
             {/* Action Date Filter */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Action Date')}
               </label>
@@ -336,7 +339,7 @@ export default function CheckInReport() {
 
             {/* Type Filter */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Filter size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Type')}
               </label>
@@ -399,7 +402,7 @@ export default function CheckInReport() {
           return (
             <div 
               key={idx}
-              className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
+              className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
             >
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110">
                 <Icon size={80} className={card.color} />
@@ -410,7 +413,7 @@ export default function CheckInReport() {
                   <div className={`p-2 rounded-xl ${card.bgColor} ${card.color}`}>
                     <Icon size={20} />
                   </div>
-                  <h3 className="dark:text-white text-sm font-semibold opacity-80">
+                  <h3 className="text-theme-text dark:text-white text-sm font-semibold opacity-80">
                     {card.title}
                   </h3>
                 </div>
@@ -419,7 +422,7 @@ export default function CheckInReport() {
                   <span className={`text-2xl font-bold ${card.color}`}>
                     {card.value}
                   </span>
-                  <span className="text-xs dark:text-white font-medium">
+                  <span className="text-xs text-theme-text dark:text-white font-medium">
                     {card.sub}
                   </span>
                 </div>
@@ -430,9 +433,9 @@ export default function CheckInReport() {
       </div>
 
       {/* Check-In List Table */}
-      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-white/10 dark:border-gray-700/50 flex flex-wrap gap-4 justify-between items-center">
-          <h2 className="font-semibold text-lg dark:text-white">
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-theme-border dark:border-gray-700/50 flex flex-wrap gap-4 justify-between items-center">
+          <h2 className="font-semibold text-lg text-theme-text dark:text-white">
             {t('Check In List')}
           </h2>
           <div className="relative">
@@ -471,36 +474,133 @@ className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile View - Cards */}
+        <div className="md:hidden space-y-4 p-4">
+          {paginatedData.map(item => (
+            <div key={item.id} className=" rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-theme-text dark:text-white text-lg">{item.salesPerson}</h3>
+                  <div className="flex flex-col gap-1 mt-1">
+                    <div className="flex items-center gap-2 text-sm text-theme-text dark:text-white">
+                        <span className="opacity-70 text-xs">{t('Check In')}:</span>
+                        <span className="dir-ltr">{formatDateTime(item.checkInDate)}</span>
+                    </div>
+                    {item.checkOutDate && (
+                        <div className="flex items-center gap-2 text-sm text-theme-text dark:text-white">
+                            <span className="opacity-70 text-xs">{t('Check Out')}:</span>
+                            <span className="dir-ltr">{formatDateTime(item.checkOutDate)}</span>
+                        </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
+                        item.status === 'accepted' 
+                          ? 'bg-green-100/80 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+                          : item.status === 'rejected'
+                            ? 'bg-red-100/80 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                            : 'bg-yellow-100/80 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                      }`}>
+                        {item.status === 'accepted' ? t('Accepted') : 
+                         item.status === 'rejected' ? t('Rejected') : 
+                         t('Pending')}
+                      </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 text-sm">
+                <div className="flex justify-between items-center">
+                    <span className="text-theme-text dark:text-white">{t('Type')}</span>
+                    <span className="font-medium text-theme-text dark:text-white">
+                        {item.type === 'task' ? (
+                          t('Task')
+                        ) : item.type === 'lead' ? (
+                          <button 
+                            onClick={() => handleLeadClick(item)}
+                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline font-medium transition-colors"
+                          >
+                            {t('Lead')}
+                          </button>
+                        ) : (
+                          t('Lead')
+                        )}
+                    </span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                    <span className="text-theme-text dark:text-white">{t('Location')}</span>
+                    <button 
+                      onClick={() => window.open(`https://www.google.com/maps?q=${item.location.lat},${item.location.lng}`, '_blank')}
+                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100/50 rounded-full hover:bg-blue-200/50 dark:bg-blue-900/30 dark:text-blue-300 transition-colors"
+                    >
+                      <Eye size={12} />
+                      {t('Preview')}
+                    </button>
+                </div>
+              </div>
+
+              {(item.status !== 'accepted' && item.status !== 'rejected') && (
+                <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
+                  <button
+                    onClick={() => handleAccept(item.id)}
+                    className="flex-1 inline-flex justify-center items-center gap-1 px-3 py-2 text-sm font-medium text-green-700 bg-green-100/50 rounded-lg hover:bg-green-200/50 dark:bg-green-900/30 dark:text-green-300 transition-colors"
+                  >
+                    <Check size={16} />
+                    {t('Accept')}
+                  </button>
+                  <button
+                    onClick={() => handleReject(item.id)}
+                    className="flex-1 inline-flex justify-center items-center gap-1 px-3 py-2 text-sm font-medium text-red-700 bg-red-100/50 rounded-lg hover:bg-red-200/50 dark:bg-red-900/30 dark:text-red-300 transition-colors"
+                  >
+                    <X size={16} />
+                    {t('Reject')}
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          {paginatedData.length === 0 && (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                {isRTL ? 'لا توجد بيانات' : 'No check-ins found'}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View - Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-white/5 dark:bg-white/5 dark:text-white">
+            <thead className="bg-gray-50/50 dark:bg-gray-900/50">
               <tr>
-                <th className="px-6 py-4 text-left dark:text-right text-xs font-medium dark:text-white uppercase tracking-wider w-1/4">
+                <th className="px-6 py-4 text-left dark:text-right text-xs font-medium text-theme-text dark:text-white uppercase tracking-wider w-1/4">
                   <div className="flex items-center gap-3">
   
                     {t('sales  person ')}
                   </div>
                 </th>
-                <th className="px-6 py-4 text-left dark:text-right text-xs font-medium dark:text-whiteuppercase tracking-wider">
+                <th className="px-6 py-4 text-left dark:text-right text-xs font-medium text-theme-text dark:text-white uppercase tracking-wider">
                   {t('Check-In Date')}
                 </th>
-                <th className="px-6 py-4 text-center text-xs font-medium dark:text-white uppercase tracking-wider">
+                <th className="px-6 py-4 text-left dark:text-right text-xs font-medium text-theme-text dark:text-white uppercase tracking-wider">
+                  {isRTL ? 'تاريخ الخروج' : 'Check-Out Date'}
+                </th>
+                <th className="px-6 py-4 text-center text-xs font-medium text-theme-text dark:text-white uppercase tracking-wider">
                   {t('Location')}
                 </th>
-                <th className="px-6 py-4 text-center text-xs font-medium dark:text-white uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-medium text-theme-text dark:text-white uppercase tracking-wider">
                   {t('Type')}
                 </th>
-                <th className="px-6 py-4 text-center text-xs font-medium dark:text-white uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-medium text-theme-text dark:text-white uppercase tracking-wider">
                   {t('Status')}
                 </th>
-                <th className="px-6 py-4 text-center text-xs font-medium dark:text-whiteuppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-medium text-theme-text dark:text-white uppercase tracking-wider">
                   {t('Action')}
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200/50 dark:divide-gray-700/50">
               {paginatedData.map((item) => (
-                <tr key={item.id} className="hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                <tr key={item.id} className=" hover:bg-gray-700/50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                     
@@ -516,6 +616,9 @@ className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm dark:text-white dir-ltr">
                     {formatDateTime(item.checkInDate)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm dark:text-white dir-ltr">
+                    {item.checkOutDate ? formatDateTime(item.checkOutDate) : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <button 
@@ -546,22 +649,16 @@ className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-
                           ? 'bg-green-100/80 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
                           : item.status === 'rejected'
                             ? 'bg-red-100/80 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                            : item.status === 'Check In'
-                              ? 'bg-blue-100/80 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                              : item.status === 'Check Out'
-                                ? 'bg-purple-100/80 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                                : 'bg-yellow-100/80 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                            : 'bg-yellow-100/80 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                       }`}>
                         {item.status === 'accepted' ? t('Accepted') : 
                          item.status === 'rejected' ? t('Rejected') : 
-                         item.status === 'Check In' ? t('Check In') : 
-                         item.status === 'Check Out' ? t('Check Out') : 
                          t('Pending')}
                       </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
-                      {(item.status === 'pending' || item.status === 'Check In' || item.status === 'Check Out') && (
+                      {(item.status !== 'accepted' && item.status !== 'rejected') && (
                         <>
                           <button
                             onClick={() => handleAccept(item.id)}
@@ -585,7 +682,7 @@ className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-
               ))}
               {paginatedData.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center dark:text-white">
+                  <td colSpan={7} className="px-6 py-8 text-center dark:text-white">
                     {isRTL ? 'لا توجد بيانات' : 'No check-ins found'}
                   </td>
                 </tr>

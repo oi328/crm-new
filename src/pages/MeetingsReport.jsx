@@ -16,51 +16,142 @@ export default function MeetingsReport() {
   const isRTL = i18n.language === 'ar'
   const { theme } = useTheme()
 
-  // Mock Data
-  const kpiData = {
-    totalMeetings: 124,
-    totalLeads: 850,
-    arrangeMeetings: 45,
-    doneMeetings: 79
-  }
+  const [allLeads, setAllLeads] = useState([])
+  const [meetings, setMeetings] = useState([])
 
-  const channelData = [
-    { label: 'Facebook', value: 3, color: '#3b82f6' },
-    { label: 'Google', value: 1, color: '#10b981' },
-    { label: 'Referral', value: 2, color: '#f97316' },
-    { label: 'Website', value: 1, color: '#a855f7' },
-    { label: 'Instagram', value: 1, color: '#ef4444' }
-  ]
+  useEffect(() => {
+    const loadData = () => {
+      try {
+        const savedLeads = JSON.parse(localStorage.getItem('leadsData') || '[]');
+        setAllLeads(savedLeads);
 
-  const bestPerformers = [
-    { id: 1, name: 'Abdel hamid', score: 78 },
-    { id: 2, name: 'Mohamed Ahmed', score: 58 },
-    { id: 3, name: 'Sara Ali', score: 45 },
-    { id: 4, name: 'Omar Khaled', score: 32 },
-  ]
+        // Calculate per-lead stats
+        const leadStats = {};
+        savedLeads.forEach(lead => {
+          let arrangedCount = 0;
+          let doneCount = 0;
+          if (lead.actions && Array.isArray(lead.actions)) {
+            lead.actions.forEach(action => {
+              const isMeeting = action.nextAction === 'meeting' || 
+                                action.actionType === 'meeting' || 
+                                action.actionType === 'google_meet';
+              if (isMeeting) {
+                arrangedCount++;
+                if (action.doneMeeting) doneCount++;
+              }
+            });
+          }
+          leadStats[lead.id] = { arrangedCount, doneCount };
+        });
 
-  const initialMeetings = [
-    { id: 1, leadName: 'Ahmed Mahmoud', mobile: '01012345678', status: 'arranged', source: 'Facebook', project: 'Project A', salesPerson: 'Abdel hamid', meetingDate: '2023-10-25', lastActionDate: '2023-10-20' },
-    { id: 2, leadName: 'Mona Said', mobile: '01198765432', status: 'done', source: 'Website', project: 'Project B', salesPerson: 'Mohamed Ahmed', meetingDate: '2023-10-24', lastActionDate: '2023-10-22' },
-    { id: 3, leadName: 'Khaled Omar', mobile: '01234567890', status: 'arranged', source: 'Referral', project: 'Project A', salesPerson: 'Abdel hamid', meetingDate: '2023-10-26', lastActionDate: '2023-10-23' },
-    { id: 4, leadName: 'Nour Hassan', mobile: '01555555555', status: 'done', source: 'Instagram', project: 'Project C', salesPerson: 'Sara Ali', meetingDate: '2023-10-20', lastActionDate: '2023-10-18' },
-    { id: 5, leadName: 'Eslam Gamal', mobile: '01000000000', status: 'done', source: 'Facebook', project: 'Project A', salesPerson: 'Abdel hamid', meetingDate: '2023-10-15', lastActionDate: '2023-10-10' },
-  ]
+        const extractedMeetings = [];
+        savedLeads.forEach(lead => {
+          if (lead.actions && Array.isArray(lead.actions)) {
+            lead.actions.forEach(action => {
+              // Check if action is related to meeting
+              const isMeeting = action.nextAction === 'meeting' || 
+                                action.actionType === 'meeting' || 
+                                action.actionType === 'google_meet';
+              
+              if (isMeeting) {
+                extractedMeetings.push({
+                  id: action.id || Math.random(),
+                  leadId: lead.id,
+                  leadName: lead.name || lead.fullName || 'Unknown',
+                  mobile: lead.mobile || lead.phone || '',
+                  status: action.doneMeeting ? 'done' : 'arranged',
+                  source: lead.source || '',
+                  project: lead.project || action.projectName || '',
+                  salesPerson: lead.assignedTo || lead.salesPerson || '',
+                  meetingDate: action.date || '',
+                  lastActionDate: action.createdAt || '',
+                  doneMeeting: action.doneMeeting,
+                  leadArrangedCount: leadStats[lead.id]?.arrangedCount || 0,
+                  leadDoneCount: leadStats[lead.id]?.doneCount || 0
+                });
+              }
+            });
+          }
+        });
 
-  // State for filters
-  const [salesPersonFilter, setSalesPersonFilter] = useState([])
-  const [managerFilter, setManagerFilter] = useState([])
-  const [sourceFilter, setSourceFilter] = useState([])
-  const [projectFilter, setProjectFilter] = useState([])
-  const [lastActionDateFilter, setLastActionDateFilter] = useState('')
-  const [meetingDateFilter, setMeetingDateFilter] = useState('')
-  const [showAllFilters, setShowAllFilters] = useState(false)
+        // Sort by date desc
+        extractedMeetings.sort((a, b) => new Date(b.meetingDate) - new Date(a.meetingDate));
+        setMeetings(extractedMeetings);
+      } catch (e) {
+        console.error('Failed to load leads', e);
+      }
+    };
 
-  const [meetings, setMeetings] = useState(initialMeetings)
+    loadData();
+    
+    // Listen for updates
+    const handleStorageChange = (e) => {
+      if (e.key === 'leadsData') loadData();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('leadsDataUpdated', loadData);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('leadsDataUpdated', loadData);
+    };
+  }, []);
+
+  const kpiData = useMemo(() => {
+    const totalMeetings = meetings.length;
+    const totalLeads = allLeads.length;
+    const arrangeMeetings = totalMeetings;
+    const doneMeetings = meetings.filter(m => m.status === 'done').length;
+
+    return {
+      totalMeetings,
+      totalLeads,
+      arrangeMeetings,
+      doneMeetings
+    };
+  }, [meetings, allLeads]);
+
+  const channelData = useMemo(() => {
+    const map = new Map();
+    meetings.forEach(m => {
+      const source = m.source || 'Unknown';
+      map.set(source, (map.get(source) || 0) + 1);
+    });
+    const colors = ['#3b82f6', '#10b981', '#f97316', '#a855f7', '#ef4444'];
+    return Array.from(map.entries()).map(([label, value], i) => ({
+      label,
+      value,
+      color: colors[i % colors.length]
+    }));
+  }, [meetings]);
+
+  const bestPerformers = useMemo(() => {
+    const map = new Map();
+    meetings.forEach(m => {
+      if (m.status === 'done') {
+        const person = m.salesPerson || 'Unknown';
+        map.set(person, (map.get(person) || 0) + 1);
+      }
+    });
+    return Array.from(map.entries())
+      .map(([name, score], id) => ({ id, name, score }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  }, [meetings]);
+
   const [showLeadModal, setShowLeadModal] = useState(false)
   const [selectedLead, setSelectedLead] = useState(null)
   const [showExportMenu, setShowExportMenu] = useState(false)
+  const [showAllFilters, setShowAllFilters] = useState(false)
   const [expandedRows, setExpandedRows] = useState({})
+  
+  // Filter States
+  const [salesPersonFilter, setSalesPersonFilter] = useState([])
+  const [projectFilter, setProjectFilter] = useState([])
+  const [sourceFilter, setSourceFilter] = useState([])
+  const [managerFilter, setManagerFilter] = useState([])
+  const [meetingDateFilter, setMeetingDateFilter] = useState('')
+  const [lastActionDateFilter, setLastActionDateFilter] = useState('')
 
   const toggleRow = (id) => {
     setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
@@ -208,8 +299,8 @@ export default function MeetingsReport() {
     const total = data.reduce((sum, item) => sum + (item.value || 0), 0)
 
     return (
-      <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-        <div className="text-sm font-semibold mb-2 dark:text-white text-center md:text-left">{title}</div>
+      <div className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="text-sm font-semibold mb-2 text-theme-text dark:text-white text-center md:text-left">{title}</div>
         <div className="h-48 flex items-center justify-center">
           <PieChart
             segments={data}
@@ -244,11 +335,11 @@ export default function MeetingsReport() {
         </p>
       </div>
 
-      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-4">
+      <div className="bg-theme-bg backdrop-blur-md rounded-2xl shadow-sm border border-theme-border dark:border-gray-700/50 p-6 mb-4">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 dark:text-white font-semibold">
             <Filter size={20} className="text-blue-500 dark:text-blue-400" />
-            <h3>{isRTL ? 'تصفية' : 'Filter'}</h3>
+            <h3 className="text-theme-text">{isRTL ? 'تصفية' : 'Filter'}</h3>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -273,7 +364,7 @@ export default function MeetingsReport() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <User size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'مسؤول المبيعات' : 'Sales Person'}
               </label>
@@ -288,7 +379,7 @@ export default function MeetingsReport() {
               />
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Users size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'المدير' : 'Manager'}
               </label>
@@ -303,7 +394,7 @@ export default function MeetingsReport() {
               />
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Tag size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'المصدر' : 'Source'}
               </label>
@@ -318,7 +409,7 @@ export default function MeetingsReport() {
               />
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Briefcase size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'المشروع' : 'Project'}
               </label>
@@ -341,7 +432,7 @@ export default function MeetingsReport() {
           >
 
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'تاريخ الاجتماع' : 'Meeting Date'}
               </label>
@@ -358,40 +449,40 @@ export default function MeetingsReport() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
-          <h3 className="dark:text-white  font-medium mb-2">{isRTL ? 'إجمالي الاجتماعات' : 'Total of Meetings'}</h3>
+        <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
+          <h3 className="text-theme-text dark:text-white font-medium mb-2">{isRTL ? 'إجمالي الاجتماعات' : 'Total of Meetings'}</h3>
           <span className="text-3xl font-bold text-blue-600">{kpiData.totalMeetings}</span>
         </div>
-        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
-          <h3 className="dark:text-white  font-medium mb-2">{isRTL ? 'إجمالي العملاء' : 'Total of Leads'}</h3>
+        <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
+          <h3 className="text-theme-text dark:text-white font-medium mb-2">{isRTL ? 'إجمالي العملاء' : 'Total of Leads'}</h3>
           <span className="text-3xl font-bold text-purple-600">{kpiData.totalLeads}</span>
         </div>
-        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
-          <h3 className="dark:text-white  font-medium mb-2">{isRTL ? 'ترتيب اجتماعات' : 'Arrange Meetings'}</h3>
+        <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
+          <h3 className="text-theme-text dark:text-white font-medium mb-2">{isRTL ? 'ترتيب اجتماعات' : 'Arrange Meetings'}</h3>
           <span className="text-3xl font-bold text-orange-600">{kpiData.arrangeMeetings}</span>
         </div>
-        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
-          <h3 className="dark:text-white  font-medium mb-2">{isRTL ? 'اجتماعات تمت' : 'Done Meetings'}</h3>
+        <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1">
+          <h3 className="text-theme-text dark:text-white font-medium mb-2">{isRTL ? 'اجتماعات تمت' : 'Done Meetings'}</h3>
           <span className="text-3xl font-bold text-green-600">{kpiData.doneMeetings}</span>
         </div>
       </div>
 
       {/* Charts & Best Performers */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {renderPieChart(isRTL ? 'تحليل الاجتماعات حسب القناة' : 'Meeting by Channel Analysis', channelData)}
         {renderPieChart(isRTL ? 'تحليل الاجتماعات حسب المشروع' : 'Meetings by Project Analysis', projectSegments)}
 
         {/* The Best */}
-        <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col">
+          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100 dark:border-gray-700/50">
             <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg text-yellow-600 dark:text-yellow-400">
               <Trophy size={20} />
             </div>
-            <div className="text-sm font-semibold dark:text-white">{isRTL ? 'الأفضل' : 'The Best'}</div>
+            <div className="text-sm font-semibold text-theme-text dark:text-white">{isRTL ? 'الأفضل' : 'The Best'}</div>
           </div>
 
           <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-            <ul className="space-y-3">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-700/50">
               {bestPerformers.length === 0 && (
                 <li className="text-xs dark:text-white text-center py-4">{isRTL ? 'لا توجد بيانات' : 'No data'}</li>
               )}
@@ -414,7 +505,7 @@ export default function MeetingsReport() {
                 return (
                   <li
                     key={performer.id}
-                    className="flex items-center justify-between p-2 rounded-xl hover:bg-white/5 dark:hover:bg-white/5 transition-colors group/item"
+                    className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group/item"
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -444,9 +535,9 @@ export default function MeetingsReport() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
-          <h2 className="text-lg font-bold dark:text-white">{isRTL ? 'نظرة عامة على الاجتماعات' : 'Meetings Overview'}</h2>
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-theme-border dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-theme-text dark:text-white">{isRTL ? 'نظرة عامة على الاجتماعات' : 'Meetings Overview'}</h2>
           <div className="relative" ref={exportMenuRef}>
             <button 
               onClick={() => setShowExportMenu(!showExportMenu)} 
@@ -477,20 +568,20 @@ export default function MeetingsReport() {
         
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white">
+            <thead className="text-xs uppercase bg-theme-bg dark:bg-white/5 text-theme-text dark:text-white">
               <tr>
-                <th className="px-4 py-3">{isRTL ? 'اسم العميل' : 'Lead Name'}</th>
-                <th className="hidden md:table-cell px-4 py-3">{isRTL ? 'رقم الهاتف' : 'Mobile Contact'}</th>
-                <th className="hidden md:table-cell px-4 py-3 text-center">{isRTL ? 'ترتيب اجتماعات' : 'Arrange Meetings'}</th>
-                <th className="hidden md:table-cell px-4 py-3 text-center">{isRTL ? 'اجتماعات تمت' : 'Done Meetings'}</th>
-                <th className="hidden md:table-cell px-4 py-3">{isRTL ? 'المصدر' : 'Source'}</th>
-                <th className="hidden md:table-cell px-4 py-3">{isRTL ? 'المشروع' : 'Project'}</th>
-                <th className="hidden md:table-cell px-4 py-3">{isRTL ? 'مسؤول المبيعات' : 'Sales Person'}</th>
-                <th className="hidden md:table-cell px-4 py-3">{isRTL ? 'تاريخ الاجتماع' : 'Meeting Date'}</th>
-                <th className="px-4 py-3 text-center">{isRTL ? 'الإجراءات' : 'Actions'}</th>
+                <th className="px-4 py-3 border-b border-theme-border dark:border-gray-700/50">{isRTL ? 'اسم العميل' : 'Lead Name'}</th>
+                <th className="hidden md:table-cell px-4 py-3 border-b border-theme-border dark:border-gray-700/50">{isRTL ? 'رقم الهاتف' : 'Mobile Contact'}</th>
+                <th className="hidden md:table-cell px-4 py-3 border-b border-theme-border dark:border-gray-700/50 text-center">{isRTL ? 'ترتيب اجتماعات' : 'Arrange Meetings'}</th>
+                <th className="hidden md:table-cell px-4 py-3 border-b border-theme-border dark:border-gray-700/50 text-center">{isRTL ? 'اجتماعات تمت' : 'Done Meetings'}</th>
+                <th className="hidden md:table-cell px-4 py-3 border-b border-theme-border dark:border-gray-700/50">{isRTL ? 'المصدر' : 'Source'}</th>
+                <th className="hidden md:table-cell px-4 py-3 border-b border-theme-border dark:border-gray-700/50">{isRTL ? 'المشروع' : 'Project'}</th>
+                <th className="hidden md:table-cell px-4 py-3 border-b border-theme-border dark:border-gray-700/50">{isRTL ? 'مسؤول المبيعات' : 'Sales Person'}</th>
+                <th className="hidden md:table-cell px-4 py-3 border-b border-theme-border dark:border-gray-700/50">{isRTL ? 'تاريخ الاجتماع' : 'Meeting Date'}</th>
+                <th className="px-4 py-3 border-b border-theme-border dark:border-gray-700/50 text-center">{isRTL ? 'الإجراءات' : 'Actions'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-theme-border dark:divide-gray-700/50">
               {paginatedMeetings.map((meeting) => (
                 <React.Fragment key={meeting.id}>
                   <tr className="hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
@@ -508,14 +599,14 @@ export default function MeetingsReport() {
                     </td>
                     <td className="hidden md:table-cell px-4 py-3 dark:text-white ">{meeting.mobile}</td>
                     <td className="hidden md:table-cell px-4 py-3 text-center">
-                      {meeting.status === 'arranged' && (
-                        <span className="inline-block w-3 h-3 rounded-full bg-orange-500"></span>
-                      )}
+                      <span className="font-bold text-orange-600 dark:text-orange-400">
+                        {meeting.leadArrangedCount}
+                      </span>
                     </td>
                     <td className="hidden md:table-cell px-4 py-3 text-center">
-                      {meeting.status === 'done' && (
-                        <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
-                      )}
+                      <span className="font-bold text-green-600 dark:text-green-400">
+                        {meeting.leadDoneCount}
+                      </span>
                     </td>
                     <td className="hidden md:table-cell px-4 py-3 dark:text-white ">{meeting.source}</td>
                     <td className="hidden md:table-cell px-4 py-3 dark:text-white ">{meeting.project}</td>
@@ -554,16 +645,12 @@ export default function MeetingsReport() {
                           <div className="flex flex-col gap-1">
                              <span className="text-[var(--muted-text)]">{isRTL ? 'الحالة' : 'Status'}</span>
                              <div className="flex items-center gap-2">
-                               {meeting.status === 'arranged' && (
-                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
-                                   {isRTL ? 'ترتيب اجتماعات' : 'Arrange Meetings'}
-                                 </span>
-                               )}
-                               {meeting.status === 'done' && (
-                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                                   {isRTL ? 'اجتماعات تمت' : 'Done Meetings'}
-                                 </span>
-                               )}
+                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                                 {isRTL ? 'ترتيب: ' : 'Arranged: '} {meeting.leadArrangedCount}
+                               </span>
+                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                 {isRTL ? 'تمت: ' : 'Done: '} {meeting.leadDoneCount}
+                               </span>
                              </div>
                           </div>
                           <div className="flex flex-col gap-1">
@@ -598,8 +685,8 @@ export default function MeetingsReport() {
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex sm:flex-row items-center justify-between gap-3">
-          <div className="text-[11px] sm:text-xs text-[var(--muted-text)] dark:text-white">
+        <div className="px-4 py-3 bg-theme-bg border-t border-theme-border dark:border-gray-700/60 flex sm:flex-row items-center justify-between gap-3">
+          <div className="text-[11px] sm:text-xs text-theme-text dark:text-white">
             {isRTL
               ? `إظهار ${Math.min((currentPage - 1) * entriesPerPage + 1, filteredMeetings.length)}-${Math.min(currentPage * entriesPerPage, filteredMeetings.length)} من ${filteredMeetings.length}`
               : `Showing ${Math.min((currentPage - 1) * entriesPerPage + 1, filteredMeetings.length)}-${Math.min(currentPage * entriesPerPage, filteredMeetings.length)} of ${filteredMeetings.length}`}
@@ -607,7 +694,7 @@ export default function MeetingsReport() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <button
-                className="btn btn-sm btn-ghost"
+                className="btn btn-sm btn-ghost text-theme-text dark:text-white"
                 onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
                 title={isRTL ? 'السابق' : 'Prev'}
@@ -618,13 +705,13 @@ export default function MeetingsReport() {
                   <ChevronLeft className="w-4 h-4" />
                 )}
               </button>
-              <span className="text-sm whitespace-nowrap dark:text-white">
+              <span className="text-sm whitespace-nowrap text-theme-text dark:text-white">
                 {isRTL
                   ? `الصفحة ${currentPage} من ${pageCount}`
                   : `Page ${currentPage} of ${pageCount}`}
               </span>
               <button
-                className="btn btn-sm btn-ghost"
+                className="btn btn-sm btn-ghost text-theme-text dark:text-white"
                 onClick={() => setCurrentPage(p => Math.min(p + 1, pageCount))}
                 disabled={currentPage === pageCount}
                 title={isRTL ? 'التالي' : 'Next'}
@@ -637,11 +724,11 @@ export default function MeetingsReport() {
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-1">
-              <span className="text-[10px] sm:text-xs text-[var(--muted-text)] whitespace-nowrap dark:text-white">
+              <span className="text-[10px] sm:text-xs text-theme-text dark:text-white whitespace-nowrap">
                 {isRTL ? 'لكل صفحة:' : 'Per page:'}
               </span>
               <select
-                className="input w-24 text-sm py-0 px-2 h-8"
+                className="input w-24 text-sm py-0 px-2 h-8 bg-theme-bg border-theme-border text-theme-text dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 value={entriesPerPage}
                 onChange={(e) => {
                   setEntriesPerPage(Number(e.target.value))

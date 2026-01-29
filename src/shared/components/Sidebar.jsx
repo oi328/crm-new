@@ -1171,12 +1171,6 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
               </NavLink>
               {/* Sales workflow pages under Customers (Sales Customers removed per request) */}
               <NavLink
-                to="/sales/opportunities"
-                className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}
-              >
-                <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>💼</span><span className="text-[15px] link-label">{t('Opportunities')}</span></span>
-              </NavLink>
-              <NavLink
                 to="/sales/quotations"
                 className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-0' : '!pl-0'} ${isActive ? activeLink : ''}`}
               >
@@ -1314,22 +1308,10 @@ useEffect(() => { if (isDataMgmtActiveFlag) { openOnly('dataMgmt') } else { setD
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>👥</span><span className="text-[15px] link-label">{t('Users')}</span></span>
               </NavLink>
               <NavLink
-                to="/user-management/teams"
-                className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-10' : '!pl-10'} ${isActive ? activeLink : ''}`}
-              >
-                <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🧑‍🤝‍🧑</span><span className="text-[15px] link-label">{t('Teams')}</span></span>
-              </NavLink>
-              <NavLink
                 to="/user-management/departments"
                 className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-10' : '!pl-10'} ${isActive ? activeLink : ''}`}
               >
                 <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🏢</span><span className="text-[15px] link-label">{t('Departments')}</span></span>
-              </NavLink>
-              <NavLink
-                to="/user-management/roles"
-                className={({ isActive }) => `${baseLink} ${isRTL ? '!pr-10' : '!pl-10'} ${isActive ? activeLink : ''}`}
-              >
-                <span className="nova-icon-label"><span className={`${iconContainer} ${iconTone}`}>🔑</span><span className="text-[15px] link-label">{t('Roles')}</span></span>
               </NavLink>
               <NavLink
                 to="/user-management/activity-logs"

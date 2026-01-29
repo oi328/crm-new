@@ -1,255 +1,203 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import Layout from '@shared/layouts/Layout'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import SearchableSelect from '@shared/components/SearchableSelect'
-import { getTeamsForDept } from '../../data/orgStructure'
+import { Building2, X, AlertCircle } from 'lucide-react'
 
 const MOCK_MANAGERS = [
   { id: 'u-1003', fullName: 'Mohamed Salem', role: 'Manager' },
   { id: 'u-1004', fullName: 'Omar Tarek', role: 'Manager' },
   { id: 'u-1005', fullName: 'Mona Farid', role: 'Manager' },
 ]
-const MOCK_TEAMS = [
-  { id: 't-2001', name: 'Support' },
-  { id: 't-2002', name: 'Sales' },
-  { id: 't-2003', name: 'Technical' },
-]
 
-// Department-level role options
-const ROLE_OPTIONS = [
-  { key: 'Manager', labelAr: 'المدير', labelEn: 'Manager' },
-  { key: 'Team Leader', labelAr: 'قائد الفريق', labelEn: 'Team Leader' },
-  { key: 'Agent', labelAr: 'الموظف', labelEn: 'Agent' },
-  { key: 'Viewer', labelAr: 'مراقب', labelEn: 'Viewer' },
-]
 
-// Permission groups and actions for a department
-const PERMISSIONS_DEPT = [
-  { key: 'Department', labelAr: 'القسم', labelEn: 'Department', actions: ['view', 'update', 'delete', 'assignManager'] },
-  { key: 'Teams', labelAr: 'الفرق', labelEn: 'Teams', actions: ['view', 'create', 'update', 'delete', 'assignUsers', 'assignTasks'] },
-  { key: 'Employees', labelAr: 'الموظفون', labelEn: 'Employees', actions: ['view', 'assign', 'remove'] },
-  { key: 'TicketsLeads', labelAr: 'التذاكر/الليدز', labelEn: 'Tickets / Leads', actions: ['view', 'create', 'update', 'delete', 'assign', 'close'] },
-  { key: 'Tasks', labelAr: 'المهام', labelEn: 'Tasks', actions: ['view', 'create', 'update', 'delete', 'assign', 'complete'] },
-  { key: 'Reports', labelAr: 'التقارير', labelEn: 'Reports', actions: ['view', 'export'] },
-]
 
-const ACTION_LABELS_EN = {
-  view: 'View',
-  create: 'Create',
-  update: 'Update',
-  delete: 'Delete',
-  assign: 'Assign',
-  close: 'Close',
-  export: 'Export',
-  complete: 'Complete',
-  assignManager: 'Assign Manager',
-}
-
-const ACTION_LABELS_AR = {
-  view: 'عرض',
-  create: 'إنشاء',
-  update: 'تعديل',
-  delete: 'حذف',
-  assign: 'تعيين',
-  close: 'إغلاق',
-  export: 'تصدير',
-  complete: 'إكمال',
-  assignManager: 'تعيين مدير',
-}
-
-export default function UserManagementDepartmentForm() {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const mode = (searchParams.get('mode') || 'create').toLowerCase()
+export default function UserManagementDepartmentForm({ onClose, onSuccess, initialData = null }) {
   const { i18n } = useTranslation()
   const isArabic = i18n.language === 'ar'
-  const [name, setName] = useState('')
-  const [code, setCode] = useState('')
-  const [description, setDescription] = useState('')
-  const [status, setStatus] = useState('Active')
-  const [managerId, setManagerId] = useState('')
-  const [selectedTeamIds, setSelectedTeamIds] = useState([])
-  const [rolePermissions, setRolePermissions] = useState(() => {
-    const initial = {}
-    ROLE_OPTIONS.forEach(r => { initial[r.key] = {} })
-    return initial
-  })
+  const mode = initialData ? 'edit' : 'create'
 
-  const toggleTeam = (id) => {
-    setSelectedTeamIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  const [form, setForm] = useState({
+    name: '',
+    code: '',
+    description: '',
+    status: 'Active',
+    managerId: '',
+  })
+  
+
+
+  const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (initialData) {
+      setForm({
+        name: initialData.name || '',
+        code: initialData.id || '', // Assuming id is used as code or similar
+        description: initialData.description || '',
+        status: initialData.status || 'Active',
+        managerId: initialData.managerId || '',
+      })
+
+    }
+  }, [initialData])
+
+
+
+  const validate = () => {
+    const e = {}
+    if (!form.name?.trim()) e.name = isArabic ? 'اسم القسم مطلوب' : 'Department Name is required'
+    setErrors(e)
+    return Object.keys(e).length === 0
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    const payload = { name, code, description, status, managerId, teamIds: selectedTeamIds, permissions: rolePermissions }
+    if (!validate()) return
+
+    setLoading(true)
     
-    alert(mode === 'edit' ? (isArabic ? 'تم تحديث القسم' : 'Department updated') : (isArabic ? 'تم حفظ القسم بنجاح' : 'Department saved'))
-    try { localStorage.removeItem('editDept') } catch {}
-    navigate('/user-management/departments')
+    // Simulate API call
+    setTimeout(() => {
+      setLoading(false)
+      const payload = { ...form }
+      
+      if (onSuccess) {
+        onSuccess(payload)
+      }
+
+      // Dispatch toast
+      const evt = new CustomEvent('app:toast', { 
+        detail: { 
+          type: 'success', 
+          message: mode === 'edit' 
+            ? (isArabic ? 'تم تحديث القسم بنجاح' : 'Department updated successfully')
+            : (isArabic ? 'تم إضافة القسم بنجاح' : 'Department created successfully')
+        } 
+      })
+      window.dispatchEvent(evt)
+
+      if (onClose) onClose()
+    }, 1000)
   }
 
-  const isChecked = (roleKey, groupKey, action) => {
-    return !!(rolePermissions?.[roleKey]?.[groupKey]?.[action])
-  }
-
-  const toggleRolePerm = (roleKey, groupKey, action) => {
-    setRolePermissions(prev => {
-      const next = { ...prev }
-      const roleObj = { ...(next[roleKey] || {}) }
-      const groupObj = { ...(roleObj[groupKey] || {}) }
-      groupObj[action] = !groupObj[action]
-      roleObj[groupKey] = groupObj
-      next[roleKey] = roleObj
-      return next
-    })
-  }
-
-  useEffect(() => {
-    if (mode === 'edit') {
-      try {
-        const raw = localStorage.getItem('editDept')
-        if (raw) {
-          const d = JSON.parse(raw)
-          if (d?.name) setName(d.name)
-          if (d?.id) setCode(d.id)
-          if (d?.manager) setDescription(`${isArabic ? 'مدير:' : 'Manager:'} ${d.manager}`)
-          if (d?.status) setStatus(d.status)
-        }
-      } catch {}
-    }
-  }, [mode, isArabic])
-
-  // Teams available for the current department name
-  const availableTeams = useMemo(() => {
-    const teams = name ? getTeamsForDept(name) : []
-    return Array.isArray(teams) ? teams : []
-  }, [name])
-
-  // Navigate to create team page prefilled with department name
-  const goCreateTeam = () => {
-    const deptParam = name ? `?departmentName=${encodeURIComponent(name)}` : ''
-    navigate(`/user-management/teams/create${deptParam}`)
-  }
+  const inputStyle = "input input-bordered w-full bg-[rgba(255,255,255,0.06)] border-base-content/10 focus:border-primary focus:bg-[rgba(255,255,255,0.1)] transition-all placeholder:text-base-content/30"
 
   return (
-    <Layout title={mode==='edit' ? (isArabic ? 'تعديل قسم' : 'Edit Department') : (isArabic ? 'إضافة قسم' : 'Add Department')}>
-      <div className="container mx-auto px-4 py-4">
-        <h1 className="text-xl font-semibold mb-3">{mode==='edit' ? (isArabic ? 'تعديل قسم' : 'Edit Department') : (isArabic ? 'إضافة قسم' : 'Add Department')}</h1>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Basic Information */}
-          <div className="glass-panel rounded-xl p-4">
-            <h2 className="text-lg font-semibold mb-3">{isArabic ? 'المعلومات الأساسية' : 'Basic Information'}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <input className="input-soft" placeholder={isArabic ? 'اسم القسم' : 'Department Name'} value={name} onChange={e=>setName(e.target.value)} required />
-              <input className="input-soft" placeholder={isArabic ? 'كود القسم (اختياري)' : 'Department Code (optional)'} value={code} onChange={e=>setCode(e.target.value)} />
-              <textarea className="input-soft md:col-span-2" placeholder={isArabic ? 'الوصف' : 'Description'} value={description} onChange={e=>setDescription(e.target.value)} />
+    <div className="card bg-base-100 shadow-xl w-full p-4 md:p-6 space-y-6 pb-5 h-full overflow-y-auto custom-scrollbar">
+      
+      {/* Header */}
+      <div className="flex justify-between items-center border-b border-base-content/10 pb-5">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-primary/10 rounded-xl text-primary">
+            <Building2 size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">
+              {mode === 'edit' ? (isArabic ? 'تعديل القسم' : 'Edit Department') : (isArabic ? 'إضافة قسم جديد' : 'Add New Department')}
+            </h1>
+            <p className="text-sm text-base-content/60 mt-1">
+              {isArabic ? 'أدخل تفاصيل القسم' : 'Enter department details'}
+            </p>
+          </div>
+        </div>
+        {onClose && (
+          <button onClick={onClose} className="btn btn-circle btn-ghost btn-sm">
+            <X size={20} />
+          </button>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        
+        {/* Basic Info Section */}
+        <div className="glass-panel rounded-xl p-6 border border-base-content/5 shadow-sm">
+          <div className="flex items-center gap-2 mb-6 border-b border-base-content/10 pb-4">
+            <div className="w-1 h-6 bg-primary rounded-full"></div>
+            <h2 className="card-title text-lg">{isArabic ? 'المعلومات الأساسية' : 'Basic Information'}</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="label pt-0"><span className="label-text font-medium text-base-content/80">{isArabic ? 'اسم القسم' : 'Department Name'} <span className="text-[#FF6B6B]">*</span></span></label>
+              <input 
+                className={inputStyle} 
+                value={form.name} 
+                onChange={e => setForm({...form, name: e.target.value})} 
+                placeholder={isArabic ? 'مثال: المبيعات' : 'e.g. Sales'} 
+              />
+              {errors.name && <div className="flex items-center gap-1 mt-1.5 text-[#FF6B6B] text-xs"><AlertCircle size={12}/> {errors.name}</div>}
+            </div>
+
+            <div>
+              <label className="label pt-0"><span className="label-text font-medium text-base-content/80">{isArabic ? 'كود القسم' : 'Department Code'}</span></label>
+              <input 
+                className={inputStyle} 
+                value={form.code} 
+                onChange={e => setForm({...form, code: e.target.value})} 
+                placeholder={isArabic ? 'مثال: SALES-01' : 'e.g. SALES-01'} 
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="label pt-0"><span className="label-text font-medium text-base-content/80">{isArabic ? 'المدير' : 'Manager'}</span></label>
+              <SearchableSelect
+                className="w-full"
+                options={MOCK_MANAGERS.map(m=>({ value: m.id, label: m.fullName }))}
+                value={form.managerId}
+                onChange={(val)=>setForm({...form, managerId: val})}
+                placeholder={isArabic ? 'اختر مديرًا' : 'Select a manager'}
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="label pt-0"><span className="label-text font-medium text-base-content/80">{isArabic ? 'الحالة' : 'Status'}</span></label>
               <SearchableSelect
                 className="w-full"
                 options={[
                   { value: 'Active', label: isArabic ? 'نشط' : 'Active' },
                   { value: 'Inactive', label: isArabic ? 'غير نشط' : 'Inactive' },
                 ]}
-                value={status}
-                onChange={(val)=>setStatus(val)}
+                value={form.status}
+                onChange={(val)=>setForm({...form, status: val})}
                 placeholder={isArabic ? 'اختر الحالة' : 'Select status'}
               />
             </div>
-          </div>
 
-          {/* Manager Assignment */}
-          <div className="glass-panel rounded-xl p-4">
-            <h2 className="text-lg font-semibold mb-3">{isArabic ? 'تعيين المدير' : 'Manager Assignment'}</h2>
-            <SearchableSelect
-              className="w-full"
-              options={MOCK_MANAGERS.map(m=>({ value: m.id, label: m.fullName }))}
-              value={managerId}
-              onChange={(val)=>setManagerId(val)}
-              placeholder={isArabic ? 'اختر مديرًا' : 'Select a manager'}
-            />
-          </div>
-
-          {/* Team Structure Setup */}
-          <div className="glass-panel rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold">{isArabic ? 'هيكلة الفرق (اختياري)' : 'Team Structure Setup (Optional)'}</h2>
-              <button
-                type="button"
-                className="btn btn-ghost btn-square p-1"
-                title={isArabic ? 'إنشاء فريق' : 'Create Team'}
-                aria-label={isArabic ? 'إنشاء فريق' : 'Create Team'}
-                onClick={goCreateTeam}
-              >
-                {/* plus-user icon */}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <line x1="19" y1="8" x2="19" y2="14"></line>
-                  <line x1="16" y1="11" x2="22" y2="11"></line>
-                </svg>
-              </button>
-            </div>
-            {availableTeams.length === 0 ? (
-              <p className="text-sm text-[var(--muted-text)]">
-                {isArabic
-                  ? 'لا توجد فرق مرتبطة بهذا الاسم بعد. يمكنك إنشاء فريق جديد.'
-                  : 'No teams linked to this department name yet. You can create a new team.'}
-            </p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {availableTeams.map(teamName => (
-                  <label key={teamName} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="checkbox"
-                      checked={selectedTeamIds.includes(teamName)}
-                      onChange={()=>toggleTeam(teamName)}
-                    />
-                    <span>{teamName}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Permissions (Optional) */}
-          <div className="glass-panel rounded-xl p-4">
-            <h2 className="text-lg font-semibold mb-3">{isArabic ? 'الصلاحيات (اختياري)' : 'Permissions (Optional)'}</h2>
-            <p className="text-sm text-[var(--muted-text)]">{isArabic ? 'إعداد صلاحيات الدور لهذا القسم' : 'Configure role permissions for this department'}
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-              {ROLE_OPTIONS.map(role => (
-                <div key={role.key} className="glass-panel rounded-lg p-3">
-                  <h3 className="font-medium mb-2">{isArabic ? role.labelAr : role.labelEn}</h3>
-                  {(role.key === 'Agent' || role.key === 'Viewer' ? PERMISSIONS_DEPT.filter(g => g.key !== 'Department') : PERMISSIONS_DEPT).map(group => (
-                    <div key={group.key} className="mb-3">
-                      <div className="text-sm font-medium mb-1">{isArabic ? group.labelAr : group.labelEn}</div>
-                      <div className="flex flex-wrap gap-2">
-                        {group.actions.map(action => (
-                          <label key={action} className="inline-flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              className="checkbox"
-                              checked={isChecked(role.key, group.key, action)}
-                              onChange={() => toggleRolePerm(role.key, group.key, action)}
-                            />
-                            <span>{isArabic ? ACTION_LABELS_AR[action] : ACTION_LABELS_EN[action]}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <div className="md:col-span-2">
+              <label className="label pt-0"><span className="label-text font-medium text-base-content/80">{isArabic ? 'الوصف' : 'Description'}</span></label>
+              <textarea 
+                className={`${inputStyle} min-h-[100px] py-3`} 
+                value={form.description} 
+                onChange={e => setForm({...form, description: e.target.value})} 
+                placeholder={isArabic ? 'وصف مختصر للقسم...' : 'Brief description of the department...'} 
+              />
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <button type="submit" className="btn btn-primary">{isArabic ? 'حفظ' : 'Save'}</button>
-            <button type="button" className="btn btn-ghost" onClick={()=>navigate('/user-management/departments')}>{isArabic ? 'إلغاء' : 'Cancel'}</button>
-          </div>
-        </form>
-      </div>
-    </Layout>
+
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-base-content/10">
+          <button 
+            type="button" 
+            className="btn btn-ghost" 
+            onClick={onClose}
+          >
+            {isArabic ? 'إلغاء' : 'Cancel'}
+          </button>
+          <button 
+            type="submit" 
+            className="btn btn-primary px-8"
+            disabled={loading}
+          >
+            {loading && <span className="loading loading-spinner loading-xs"></span>}
+            {mode === 'edit' ? (isArabic ? 'تحديث' : 'Update') : (isArabic ? 'إنشاء' : 'Create')}
+          </button>
+        </div>
+
+      </form>
+    </div>
   )
 }

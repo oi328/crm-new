@@ -243,7 +243,58 @@ export default function Marketing() {
             <h3 className="text-lg font-semibold mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
               {t('Cost & Revenue')}
             </h3>
-            <div className="overflow-x-auto">
+            {/* Mobile View (Cards) */}
+            <div className="md:hidden space-y-4">
+              {costRevenueData.map((row, idx) => (
+                <div key={idx} className="  p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-between mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    <div className="flex items-center gap-2 font-medium dark:text-white">
+                      {row.channel === 'Facebook' && <FaFacebook className="text-blue-600" />}
+                      {row.channel === 'WhatsApp' && <FaWhatsapp className="text-green-500" />}
+                      {row.channel === 'Google' && <FaGoogle className="text-red-500" />}
+                      {row.channel}
+                    </div>
+                    <div className={`font-semibold ${row.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      {row.profit}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-[var(--muted-text)] block text-xs mb-1">{t('Spend')}</span>
+                      <span className="font-mono font-medium dark:text-gray-200">{row.spend}</span>
+                    </div>
+                    <div>
+                      <span className="text-[var(--muted-text)] block text-xs mb-1">{t('Revenue')}</span>
+                      <span className="font-mono font-medium dark:text-gray-200">{row.revenue}</span>
+                    </div>
+                    <div>
+                      <span className="text-[var(--muted-text)] block text-xs mb-1">{t('ROI')}</span>
+                      <span className="text-green-600 font-semibold">{row.roi}</span>
+                    </div>
+                    <div>
+                      <span className="text-[var(--muted-text)] block text-xs mb-1">{t('Profit/Lose')}</span>
+                       <span className={`font-semibold ${row.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        {row.profit}
+                      </span>
+                    </div>
+                     <div className="col-span-2 grid grid-cols-2 gap-3 pt-2 border-t border-gray-200 dark:border-gray-700/50 mt-1">
+                        <div>
+                            <span className="text-[var(--muted-text)] block text-xs">{t('Spend %')}</span>
+                            <span className="text-sm dark:text-gray-300">{row.spendPct}</span>
+                        </div>
+                         <div>
+                            <span className="text-[var(--muted-text)] block text-xs">{t('Revenue %')}</span>
+                            <span className="text-sm dark:text-gray-300">{row.revenuePct}</span>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View (Table) */}
+            <div className="hidden md:block overflow-x-auto">
                <table className="w-full text-sm text-left rtl:text-right">
                 <thead className="text-xs uppercase   text-[var(--muted-text)]">
                   <tr>
@@ -259,14 +310,14 @@ export default function Marketing() {
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                   {costRevenueData.map((row, idx) => (
                     <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                      <td className="px-3 py-3 font-medium flex items-center gap-2">
+                      <td className="px-3 py-3 font-medium flex items-center gap-2 dark:text-white">
                         {row.channel === 'Facebook' && <FaFacebook className="text-blue-600" />}
                         {row.channel === 'WhatsApp' && <FaWhatsapp className="text-green-500" />}
                         {row.channel === 'Google' && <FaGoogle className="text-red-500" />}
                         {row.channel}
                       </td>
-                      <td className="px-3 py-3 font-mono">{row.spend}</td>
-                      <td className="px-3 py-3 font-mono">{row.revenue}</td>
+                      <td className="px-3 py-3 font-mono dark:text-gray-300">{row.spend}</td>
+                      <td className="px-3 py-3 font-mono dark:text-gray-300">{row.revenue}</td>
                       <td className="px-3 py-3 text-green-600 font-semibold">{row.roi}</td>
                       <td className={`px-3 py-3 font-semibold ${row.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                         {row.profit}
@@ -284,7 +335,52 @@ export default function Marketing() {
       {/* Bottom Section: Monthly Marketing Overview */}
       <section className="card glass-card p-4 overflow-hidden">
         <h3 className="text-lg font-semibold mb-4">{t('Monthly Marketing Overview')}</h3>
-        <div className="overflow-x-auto">
+        
+        {/* Mobile View (Cards) */}
+        <div className="md:hidden space-y-4">
+          {monthlyOverviewData.map((row, idx) => (
+            <div key={idx} className=" p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <div className="flex flex-col">
+                    <span className="font-semibold text-primary">{row.campaign}</span>
+                    <span className="text-xs text-[var(--muted-text)]">{row.month}</span>
+                </div>
+                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium
+                  ${row.channel === 'Facebook' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 
+                    row.channel === 'WhatsApp' ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400' :
+                    'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'}`}>
+                  {row.channel}
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                 <div className="flex justify-between items-center">
+                   <span className="text-[var(--muted-text)] text-xs">{t('Spend')}</span>
+                   <span className="font-mono font-medium dark:text-gray-200">{row.spend}</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                   <span className="text-[var(--muted-text)] text-xs">{t('Revenue')}</span>
+                   <span className="font-mono font-medium dark:text-gray-200">{row.revenue}</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                   <span className="text-[var(--muted-text)] text-xs">{t('Leads')}</span>
+                   <span className="font-mono font-medium dark:text-gray-200">{row.leads}</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                   <span className="text-[var(--muted-text)] text-xs">{t('CPL')}</span>
+                   <span className="font-mono font-medium dark:text-gray-200">{row.cpl}</span>
+                 </div>
+                 <div className="flex justify-between items-center col-span-2 border-t border-gray-200 dark:border-gray-700/50 pt-2 mt-1">
+                   <span className="text-[var(--muted-text)] text-xs">{t('CPA')}</span>
+                   <span className="font-mono font-medium dark:text-gray-200">{row.cpa}</span>
+                 </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View (Table) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right">
             <thead className=" text-[var(--muted-text)] font-medium">
               <tr>
@@ -301,7 +397,7 @@ export default function Marketing() {
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
               {monthlyOverviewData.map((row, idx) => (
                 <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                  <td className="px-4 py-3 font-medium">{row.month}</td>
+                  <td className="px-4 py-3 font-medium dark:text-gray-300">{row.month}</td>
                   <td className="px-4 py-3 font-semibold text-primary">{row.campaign}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -311,11 +407,11 @@ export default function Marketing() {
                       {row.channel}
                     </span>
                   </td>
-                  <td className="px-4 py-3">{row.spend}</td>
-                  <td className="px-4 py-3">{row.revenue}</td>
-                  <td className="px-4 py-3">{row.leads}</td>
-                  <td className="px-4 py-3">{row.cpl}</td>
-                  <td className="px-4 py-3">{row.cpa}</td>
+                  <td className="px-4 py-3 dark:text-gray-300">{row.spend}</td>
+                  <td className="px-4 py-3 dark:text-gray-300">{row.revenue}</td>
+                  <td className="px-4 py-3 dark:text-gray-300">{row.leads}</td>
+                  <td className="px-4 py-3 dark:text-gray-300">{row.cpl}</td>
+                  <td className="px-4 py-3 dark:text-gray-300">{row.cpa}</td>
                 </tr>
               ))}
             </tbody>

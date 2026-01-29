@@ -1,95 +1,474 @@
 import React, { useMemo, useState } from 'react';
 import SearchableSelect from '@shared/components/SearchableSelect';
-import Layout from '@shared/layouts/Layout';
+import { useTheme } from '../shared/context/ThemeProvider';
+import { Filter, Search, Calendar, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FaFileExport } from 'react-icons/fa';
+import * as XLSX from 'xlsx';
+import { useTranslation } from 'react-i18next';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import { createPortal } from 'react-dom';
 
 const mockLogs = [
-  { type: 'Created', user: 'Ibrahim', target: 'Ticket #4531', description: 'Created new ticket', ts: '2025-11-18 10:24', ip: '192.168.1.12', module: 'Tickets' },
-  { type: 'Updated', user: 'Sara', target: 'Customer #100', description: 'Updated address', ts: '2025-11-17 12:05', ip: '192.168.1.18', module: 'Customers' },
-  { type: 'Login', user: 'Ibrahim', target: '-', description: 'Successful login', ts: '2025-11-17 08:12', ip: '192.168.1.12', module: 'User Management' },
-  { type: 'Failed Login', user: 'Unknown', target: '-', description: 'Failed login attempt', ts: '2025-11-16 23:51', ip: '192.168.1.99', module: 'User Management' },
+  { id: 1, type: 'Created', user: 'Ibrahim', target: 'Ticket #4531', description: 'Created new ticket', ts: '2025-11-18 10:24', ip: '192.168.1.12', module: 'Tickets' },
+  { id: 2, type: 'Updated', user: 'Sara', target: 'Customer #100', description: 'Updated address', ts: '2025-11-17 12:05', ip: '192.168.1.18', module: 'Customers' },
+  { id: 3, type: 'Login', user: 'Ibrahim', target: '-', description: 'Successful login', ts: '2025-11-17 08:12', ip: '192.168.1.12', module: 'User Management' },
+  { id: 4, type: 'Failed Login', user: 'Unknown', target: '-', description: 'Failed login attempt', ts: '2025-11-16 23:51', ip: '192.168.1.99', module: 'User Management' },
 ];
 
 const actionTypes = ['Created', 'Updated', 'Deleted', 'Login', 'Failed Login', 'Permission Change'];
 const modules = ['Tickets', 'Customers', 'SLA', 'Reports', 'User Management', 'Settings', 'Integrations', 'Custom Modules'];
 
 export default function UserManagementActivityLogs() {
-  const [userFilter, setUserFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [moduleFilter, setModuleFilter] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
+
   const [q, setQ] = useState('');
+  const [filters, setFilters] = useState({
+    type: [],
+    module: [],
+    dateFrom: '',
+    dateTo: '',
+    datePeriod: ''
+  });
+
+  // Pagination & Sorting
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [sortBy, setSortBy] = useState('ts');
+  const [sortOrder, setSortOrder] = useState('desc');
+
+  const [logs] = useState(mockLogs);
 
   const filtered = useMemo(() => {
-    return mockLogs.filter((l) => {
-      const matchesUser = userFilter ? l.user.toLowerCase().includes(userFilter.toLowerCase()) : true;
-      const matchesType = typeFilter ? l.type === typeFilter : true;
-      const matchesModule = moduleFilter ? l.module === moduleFilter : true;
-      const matchesSearch = q ? `${l.description} ${l.target}`.toLowerCase().includes(q.toLowerCase()) : true;
-      const matchesFrom = from ? l.ts >= from : true;
-      const matchesTo = to ? l.ts <= to : true;
-      return matchesUser && matchesType && matchesModule && matchesSearch && matchesFrom && matchesTo;
+    return logs.filter((l) => {
+      // Search
+      if (q) {
+        const query = q.toLowerCase();
+        const matchesSearch = [l.description, l.target, l.user, l.ip]
+          .join(' ')
+          .toLowerCase()
+          .includes(query);
+        if (!matchesSearch) return false;
+      }
+
+      // Filters
+      if (filters.type && filters.type.length > 0 && !filters.type.includes(l.type)) return false;
+      if (filters.module && filters.module.length > 0 && !filters.module.includes(l.module)) return false;
+
+      // Date Filters
+      if (filters.dateFrom) {
+         if ((l.ts || '') < filters.dateFrom) return false;
+      }
+      if (filters.dateTo) {
+         if ((l.ts || '') > filters.dateTo) return false;
+      }
+
+      return true;
     });
-  }, [userFilter, typeFilter, moduleFilter, from, to, q]);
+  }, [logs, q, filters]);
+
+  // Sorting
+  const handleSort = (key) => {
+    if (sortBy === key) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(key);
+      setSortOrder('asc');
+    }
+  };
+
+  const sortedAndPaginated = useMemo(() => {
+    let result = [...filtered];
+
+    // Sort
+    if (sortBy) {
+      result.sort((a, b) => {
+        let valA = a[sortBy] || '';
+        let valB = b[sortBy] || '';
+        
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+
+        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    // Pagination
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return result.slice(startIndex, startIndex + itemsPerPage);
+  }, [filtered, sortBy, sortOrder, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+  const clearFilters = () => {
+    setQ('');
+    setFilters({
+      type: [],
+      module: [],
+      dateFrom: '',
+      dateTo: '',
+      datePeriod: ''
+    });
+  };
+
+  const handleDatePeriodChange = (period) => {
+    const now = new Date();
+    let from = '';
+    let to = '';
+
+    if (period === 'today') {
+      from = now.toISOString().split('T')[0];
+      to = now.toISOString().split('T')[0];
+    } else if (period === 'week') {
+      const first = new Date(now.setDate(now.getDate() - now.getDay()));
+      const last = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+      from = first.toISOString().split('T')[0];
+      to = last.toISOString().split('T')[0];
+    } else if (period === 'month') {
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      from = first.toISOString().split('T')[0];
+      to = last.toISOString().split('T')[0];
+    }
+
+    setFilters(prev => ({
+      ...prev,
+      datePeriod: period,
+      dateFrom: from,
+      dateTo: to
+    }));
+  };
+
+  const exportToExcel = () => {
+    const rows = filtered.map(l => ({
+      'Action Type': l.type,
+      'Performed By': l.user,
+      'Target': l.target,
+      'Description': l.description,
+      'Timestamp': l.ts,
+      'IP Address': l.ip,
+      'Module': l.module
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Activity Logs");
+    XLSX.writeFile(workbook, "activity-logs.xlsx");
+  };
 
   return (
-    <Layout title="User Management — Activity Logs">
-      <div className="container mx-auto px-4 py-4">
-        <h1 className="text-xl font-semibold mb-4">Activity Logs</h1>
+    <div className="container mx-auto px-4 py-4 space-y-6">
+        
+        {/* Header */}
+        <div className="rounded-xl p-4 md:p-6 relative mb-6">
+            <div className="flex flex-wrap lg:flex-row lg:items-center justify-between gap-4">
+            <div className="w-full lg:w-auto flex items-center justify-between lg:justify-start gap-3">
+                <div className="relative flex flex-col items-start gap-1">
+                <h1 className="text-xl md:text-2xl font-bold text-start text-theme-text dark:text-white flex items-center gap-2">
+                    {isArabic ? 'سجل النشاطات' : 'Activity Logs'}
+                    <span className="text-sm font-normal text-[var(--muted-text)] bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">
+                    {filtered.length}
+                    </span>
+                </h1>
+                <span aria-hidden="true" className="inline-block h-[2px] w-full rounded bg-gradient-to-r from-blue-500 to-purple-600" />
+                </div>
+            </div>
 
-        <div className="glass-panel rounded-xl p-3 mb-3 grid grid-cols-1 md:grid-cols-6 gap-3">
-          <input className="input-soft" placeholder="Filter by user" value={userFilter} onChange={(e) => setUserFilter(e.target.value)} />
-          <SearchableSelect
-            className="w-full"
-            options={actionTypes}
-            value={typeFilter}
-            onChange={(val)=>setTypeFilter(val)}
-            placeholder="Action Type"
-          />
-          <SearchableSelect
-            className="w-full"
-            options={modules}
-            value={moduleFilter}
-            onChange={(val)=>setModuleFilter(val)}
-            placeholder="Module"
-          />
-          <input type="date" className="input-soft" value={from} onChange={(e) => setFrom(e.target.value)} />
-          <input type="date" className="input-soft" value={to} onChange={(e) => setTo(e.target.value)} />
-          <input className="input-soft" placeholder="Search description/target" value={q} onChange={(e) => setQ(e.target.value)} />
+            </div>
         </div>
 
-        <div className="flex gap-2 mb-3">
-          <button className="btn btn-ghost">Export PDF</button>
-          <button className="btn btn-ghost">Export Excel</button>
+        {/* Filter Section */}
+        <div className="glass-panel p-4 rounded-xl mb-6">
+            <div className="flex justify-between items-center mb-3">
+            <h2 className="text-sm font-semibold flex items-center gap-2 text-theme-text ">
+                <Filter className="text-blue-500" size={16} /> {isArabic ? 'تصفية' : 'Filter'}
+            </h2>
+            <div className="flex items-center gap-2">
+                <button 
+                onClick={clearFilters} 
+                className="px-3 py-1.5 text-sm text-theme-text hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                >
+                {isArabic ? 'إعادة تعيين' : 'Reset'}
+                </button>
+            </div>
+            </div>
+
+            {/* Primary Filters Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* 1. SEARCH */}
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
+                    <Search className="text-blue-500" size={10} /> {isArabic ? 'بحث عام' : 'Search All Data'}
+                    </label>
+                    <input
+                    className="input w-full"
+                    value={q}
+                    onChange={e => setQ(e.target.value)}
+                    placeholder={isArabic ? 'بحث (وصف، هدف، مستخدم)...' : 'Search (desc, target, user)...'}
+                    />
+                </div>
+
+                {/* 2. MODULE */}
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-[var(--muted-text)]">
+                    {isArabic ? 'الموديول' : 'Module'}
+                    </label>
+                    <SearchableSelect
+                    options={modules.map(o => ({ value: o, label: o }))}
+                    value={filters.module}
+                    onChange={(v) => setFilters(prev => ({ ...prev, module: v }))}
+                    placeholder={isArabic ? 'اختر الموديول' : 'Select Module'}
+                    className="w-full"
+                    isRTL={isArabic}
+                    multiple={true}
+                    />
+                </div>
+
+                {/* 3. TYPE */}
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-[var(--muted-text)]">
+                    {isArabic ? 'نوع النشاط' : 'Action Type'}
+                    </label>
+                    <SearchableSelect
+                    options={actionTypes.map(o => ({ value: o, label: o }))}
+                    value={filters.type}
+                    onChange={(v) => setFilters(prev => ({ ...prev, type: v }))}
+                    placeholder={isArabic ? 'اختر النوع' : 'Select Type'}
+                    className="w-full"
+                    isRTL={isArabic}
+                    multiple={true}
+                    />
+                </div>
+
+                 {/* 4. DATE RANGE */}
+                 <div className="col-span-1 md:col-span-1 space-y-1">
+                    <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
+                    <Calendar className="text-blue-500" size={10} /> {isArabic ? 'التاريخ' : 'Date'}
+                    </label>
+                    <div className="w-full">
+                        <DatePicker
+                            popperContainer={({ children }) => createPortal(children, document.body)}
+                            selectsRange={true}
+                            startDate={filters.dateFrom ? new Date(filters.dateFrom) : null}
+                            endDate={filters.dateTo ? new Date(filters.dateTo) : null}
+                            onChange={(update) => {
+                            const [start, end] = update;
+                            const formatDate = (date) => {
+                                if (!date) return '';
+                                const offset = date.getTimezoneOffset();
+                                const localDate = new Date(date.getTime() - (offset*60*1000));
+                                return localDate.toISOString().split('T')[0];
+                            };
+
+                            setFilters(prev => ({
+                                ...prev,
+                                datePeriod: '',
+                                dateFrom: formatDate(start),
+                                dateTo: formatDate(end)
+                            }));
+                            }}
+                            isClearable={true}
+                            placeholderText={isArabic ? "من - إلى" : "From - To"}
+                            className="input w-full"
+                            wrapperClassName="w-full"
+                            dateFormat="yyyy-MM-dd"
+                        />
+                        <div className="flex items-center gap-2 mt-2">
+                            <button 
+                            onClick={() => handleDatePeriodChange('today')} 
+                            className={`text-[10px] px-2 py-1 rounded-full transition-colors ${filters.datePeriod === 'today' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-theme-bg   text-theme-text hover:bg-gray-700/50 dark:hover:bg-gray-700'}`}
+                            >
+                            {isArabic ? 'اليوم' : 'Today'}
+                            </button>
+                            <button 
+                            onClick={() => handleDatePeriodChange('week')} 
+                            className={`text-[10px] px-2 py-1 rounded-full transition-colors ${filters.datePeriod === 'week' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-theme-bg   text-theme-text hover:bg-gray-700/50 dark:hover:bg-gray-700'}`}
+                            >
+                            {isArabic ? 'أسبوع' : 'Week'}
+                            </button>
+                            <button 
+                            onClick={() => handleDatePeriodChange('month')} 
+                            className={`text-[10px] px-2 py-1 rounded-full transition-colors ${filters.datePeriod === 'month' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-theme-bg   text-theme-text hover:bg-gray-700/50 dark:hover:bg-gray-700'}`}
+                            >
+                            {isArabic ? 'شهر' : 'Month'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div className="glass-panel rounded-xl overflow-x-auto">
-          <table className="nova-table w-full">
+        <div className="glass-panel rounded-xl overflow-hidden w-full">
+          <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
+             <h3 className="font-semibold text-lg">{isArabic ? 'سجل النشاطات' : 'Activity Logs'}</h3>
+             <button
+               onClick={exportToExcel}
+               className="btn btn-sm bg-blue-600 hover:bg-green-500 !text-white border-none flex items-center justify-center gap-2"
+             >
+               <FaFileExport />
+               {isArabic ? 'تصدير' : 'Export'}
+             </button>
+          </div>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+             <table className="table w-full text-xs sm:text-sm">
             <thead>
-              <tr className="thead-soft">
-                <th>Action Type</th>
-                <th>Performed By</th>
-                <th>Target</th>
-                <th>Description</th>
-                <th>Timestamp</th>
-                <th>IP Address</th>
+              <tr>
+                <th className="p-3 rounded-l-lg cursor-pointer hover:text-blue-500 transition-colors" onClick={() => handleSort('type')}>
+                   <div className="flex items-center gap-1">
+                    {isArabic ? 'نوع النشاط' : 'Action Type'}
+                    <ArrowUpDown size={12} className={sortBy === 'type' ? 'text-blue-500' : 'opacity-30'} />
+                   </div>
+                </th>
+                <th className="p-3 cursor-pointer hover:text-blue-500 transition-colors" onClick={() => handleSort('user')}>
+                   <div className="flex items-center gap-1">
+                    {isArabic ? 'المستخدم' : 'Performed By'}
+                    <ArrowUpDown size={12} className={sortBy === 'user' ? 'text-blue-500' : 'opacity-30'} />
+                   </div>
+                </th>
+                <th className="p-3 cursor-pointer hover:text-blue-500 transition-colors" onClick={() => handleSort('target')}>
+                   <div className="flex items-center gap-1">
+                    {isArabic ? 'الهدف' : 'Target'}
+                    <ArrowUpDown size={12} className={sortBy === 'target' ? 'text-blue-500' : 'opacity-30'} />
+                   </div>
+                </th>
+                <th className="p-3 cursor-pointer hover:text-blue-500 transition-colors" onClick={() => handleSort('description')}>
+                   <div className="flex items-center gap-1">
+                    {isArabic ? 'الوصف' : 'Description'}
+                    <ArrowUpDown size={12} className={sortBy === 'description' ? 'text-blue-500' : 'opacity-30'} />
+                   </div>
+                </th>
+                <th className="p-3 cursor-pointer hover:text-blue-500 transition-colors" onClick={() => handleSort('ts')}>
+                   <div className="flex items-center gap-1">
+                    {isArabic ? 'الوقت' : 'Timestamp'}
+                    <ArrowUpDown size={12} className={sortBy === 'ts' ? 'text-blue-500' : 'opacity-30'} />
+                   </div>
+                </th>
+                <th className="p-3 rounded-r-lg cursor-pointer hover:text-blue-500 transition-colors" onClick={() => handleSort('ip')}>
+                   <div className="flex items-center gap-1">
+                    {isArabic ? 'عنوان IP' : 'IP Address'}
+                    <ArrowUpDown size={12} className={sortBy === 'ip' ? 'text-blue-500' : 'opacity-30'} />
+                   </div>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((l, i) => (
-                <tr key={i}>
-                  <td>{l.type}</td>
-                  <td>{l.user}</td>
-                  <td>{l.target}</td>
-                  <td>{l.description}</td>
-                  <td>{l.ts}</td>
-                  <td>{l.ip}</td>
+              {sortedAndPaginated.map((l, i) => (
+                <tr key={i} className="hover:backdrop-blur-lg hover:shadow-sm transition-all border-b border-gray-100 dark:border-gray-800 last:border-0">
+                  <td className="p-3 text-sm">{l.type}</td>
+                  <td className="p-3 text-sm">{l.user}</td>
+                  <td className="p-3 text-sm">{l.target}</td>
+                  <td className="p-3 text-sm">{l.description}</td>
+                  <td className="p-3 text-sm text-[var(--muted-text)]" dir="ltr">{l.ts}</td>
+                  <td className="p-3 text-sm font-mono">{l.ip}</td>
                 </tr>
               ))}
+              {sortedAndPaginated.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="text-center py-8 text-[var(--muted-text)]">
+                    {isArabic ? 'لا توجد بيانات' : 'No data found'}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Mobile List View */}
+        <div className="md:hidden">
+          {sortedAndPaginated.length > 0 ? (
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              {sortedAndPaginated.map((l, i) => (
+                <div key={i} className="p-4 space-y-2 hover:bg-gray-700/50 dark:hover:bg-gray-800/50 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                         l.type === 'Created' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                         l.type === 'Deleted' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                         l.type === 'Updated' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                         'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                       }`}>
+                         {l.type}
+                       </span>
+                       <span className="text-xs text-theme-text font-mono" dir="ltr">{l.ts}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-theme-text text-sm">{l.description}</h4>
+                    <div className="flex items-center gap-2 text-xs text-theme-text dark:text-gray-400">
+                       <span className="font-medium text-theme-text dark:text-gray-300">{l.user}</span>
+                       <span>•</span>
+                       <span>{l.target}</span>
+                    </div>
+                     <div className="flex items-center gap-2 text-[10px] text-theme-text">
+                       <span className="font-mono">{l.ip}</span>
+                       {l.module && (
+                         <>
+                           <span>•</span>
+                           <span>{l.module}</span>
+                         </>
+                       )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-[var(--muted-text)]">
+              {isArabic ? 'لا توجد بيانات' : 'No data found'}
+            </div>
+          )}
+        </div>
       </div>
-    </Layout>
+
+        {/* Pagination */}
+        <div className="mt-2 flex items-center justify-between rounded-xl p-1.5 sm:p-2 glass-panel">
+          <div className="text-[10px] sm:text-xs text-[var(--muted-text)]">
+            {isArabic 
+              ? `عرض ${Math.min(filtered.length, (currentPage - 1) * itemsPerPage + 1)}–${Math.min(filtered.length, currentPage * itemsPerPage)} من ${filtered.length}`
+              : `Showing ${Math.min(filtered.length, (currentPage - 1) * itemsPerPage + 1)}–${Math.min(filtered.length, currentPage * itemsPerPage)} of ${filtered.length}`
+            }
+          </div>
+          
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1">
+              <button
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-30"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                title={isArabic ? 'السابق' : 'Prev'}
+              >
+                <ChevronLeft className={`w-5 h-5 block text-theme-text ${isArabic ? 'rotate-180' : ''}`} />
+              </button>
+              <span className="text-xs sm:text-sm px-2">{isArabic ? `الصفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}</span>
+              <button
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-30"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                title={isArabic ? 'التالي' : 'Next'}
+              >
+                <ChevronRight className={`w-5 h-5 block text-theme-text ${isArabic ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+            
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value))
+                setCurrentPage(1)
+              }}
+              className="select select-bordered select-sm h-8 min-h-0 w-16 sm:w-20 text-xs bg-[var(--bg-primary)]"
+            >
+              {[5, 10, 20, 50].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
   );
 }

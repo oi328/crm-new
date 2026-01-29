@@ -217,8 +217,8 @@ export default function ClosedDealsReport() {
   const renderPieCard = (title, data) => {
     const total = data.reduce((sum, item) => sum + (item.value || 0), 0)
     return (
-      <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-        <div className="text-sm font-semibold mb-2 dark:text-white text-center md:text-left">{title}</div>
+      <div className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="text-sm font-semibold mb-2 text-theme-text dark:text-white text-center md:text-left">{title}</div>
         <div className="h-48 flex items-center justify-center">
           <PieChart
             segments={data}
@@ -254,11 +254,11 @@ export default function ClosedDealsReport() {
         </p>
       </div>
 
-      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-4">
+      <div className="bg-theme-bg backdrop-blur-md rounded-2xl shadow-sm border border-theme-border dark:border-gray-700/50 p-6 mb-4">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 dark:text-white font-semibold">
             <Filter size={20} className="text-blue-500 dark:text-blue-400" />
-            <h3>{t('Filter')}</h3>
+            <h3 className="text-theme-text">{t('Filter')}</h3>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -283,7 +283,7 @@ export default function ClosedDealsReport() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <User size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Sales Person')}
               </label>
@@ -296,7 +296,7 @@ export default function ClosedDealsReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Users size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Manager')}
               </label>
@@ -378,10 +378,10 @@ export default function ClosedDealsReport() {
         ].map(card => (
           <div
             key={card.label}
-            className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex items-center justify-between"
+            className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex items-center justify-between"
           >
             <div>
-              <div className="text-xs dark:text-white">{card.label}</div>
+              <div className="text-xs text-theme-text dark:text-white">{card.label}</div>
               <div className="text-lg font-semibold">{card.value}</div>
             </div>
             <div className={`w-8 h-8 rounded-lg ${card.accent}`}></div>
@@ -392,12 +392,12 @@ export default function ClosedDealsReport() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {renderPieCard(t('Closed Deals by Channels'), closedByChannelSegments)}
         {renderPieCard(t('Closed Deals by Project'), closedByProjectSegments)}
-        <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col">
+        <div className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col">
           <div className="flex items-center gap-2 mb-4">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
               <Trophy size={20} />
             </div>
-            <div className="text-sm font-semibold dark:text-white">{t('Deal Value for each Person')}</div>
+            <div className="text-sm font-semibold text-theme-text dark:text-white">{t('Deal Value for each Person')}</div>
           </div>
           <div className="flex-1 mt-2 w-full min-h-[220px]">
             <Bar data={barData} options={barOptions} />
@@ -405,9 +405,9 @@ export default function ClosedDealsReport() {
         </div>
       </div>
 
-      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
-          <h2 className="text-lg font-bold dark:text-white">{t('Closed Deals Overview')}</h2>
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-theme-border dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-theme-text dark:text-white">{t('Closed Deals Overview')}</h2>
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(prev => !prev)}
@@ -438,7 +438,69 @@ export default function ClosedDealsReport() {
             )}
           </div>
         </div>
-        <div className="overflow-x-auto">
+        {/* Mobile View - Cards */}
+        <div className="md:hidden space-y-4 p-4">
+          {paginatedData.map(deal => (
+            <div key={deal.id} className=" rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-theme-text dark:text-white text-lg">{deal.leadName}</h3>
+                  <p className="text-sm text-theme-text dark:text-white">{deal.contact}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-blue-600 dark:text-blue-400">{deal.value.toLocaleString()} EGP</p>
+                  <span className="inline-block px-2 py-1 text-xs rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 mt-1">
+                    {deal.dealType}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="space-y-1">
+                  <p className="text-xs text-theme-text dark:text-white">{t('Project')}</p>
+                  <p className="font-medium dark:text-gray-200">{deal.project}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-theme-text dark:text-white">{t('Source')}</p>
+                  <p className="font-medium text-theme-text dark:text-white">{deal.source}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-theme-text dark:text-white">{t('Sales Person')}</p>
+                  <p className="font-medium text-theme-text dark:text-white">{deal.salesperson}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-theme-text dark:text-white">{t('Closed Date')}</p>
+                  <p className="font-medium text-theme-text dark:text-white">{deal.closedDate}</p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
+                <button
+                  onClick={() => handlePreview(deal)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                >
+                  <Eye size={14} />
+                  {t('Preview')}
+                </button>
+                <button
+                  onClick={() => handleDelete(deal.id)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                >
+                  <Trash2 size={14} />
+                  {t('Delete')}
+                </button>
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              {t('No closed deals found')}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View - Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white">
               <tr>

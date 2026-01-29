@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Layout from '@shared/layouts/Layout'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { X } from 'lucide-react'
 import SearchableSelect from '@shared/components/SearchableSelect'
+import UserManagementDepartmentForm from '../features/Users/DepartmentForm'
 
 // Mock data for demo purposes
 const MOCK_DEPT = {
@@ -34,8 +37,28 @@ export default function UserManagementDepartmentDetails() {
   const { i18n } = useTranslation()
   const isArabic = i18n.language === 'ar'
   const [tab, setTab] = useState('overview')
+  const [showEditModal, setShowEditModal] = useState(false)
   const dept = useMemo(() => ({ ...MOCK_DEPT, id }), [id])
   const navigate = useNavigate()
+
+  const [ticketFilters, setTicketFilters] = useState({
+    type: [],
+    status: [],
+    priority: []
+  })
+
+  const filteredTickets = useMemo(() => {
+    return MOCK_TICKETS.filter(t => {
+      if (ticketFilters.type.length > 0 && !ticketFilters.type.includes(t.type)) return false
+      if (ticketFilters.status.length > 0 && !ticketFilters.status.includes(t.status)) return false
+      if (ticketFilters.priority.length > 0 && !ticketFilters.priority.includes(t.priority)) return false
+      return true
+    })
+  }, [ticketFilters])
+
+  const ticketTypes = ["Ticket", "Lead"]
+  const ticketStatuses = ["Open", "Pending", "Closed"]
+  const ticketPriorities = ["High", "Medium", "Low"]
 
   const closePage = () => {
     navigate('/user-management/departments')
@@ -49,16 +72,10 @@ export default function UserManagementDepartmentDetails() {
   }
 
   const editDepartment = () => {
-    try {
-      // Pass current department data to the form via localStorage (mock prefill)
-      localStorage.setItem('editDept', JSON.stringify(dept))
-    } catch {}
-    navigate(`/user-management/departments/new?mode=edit&id=${encodeURIComponent(id)}`)
+    setShowEditModal(true)
   }
 
-  const addTeam = () => {
-    navigate(`/user-management/teams/new?departmentId=${encodeURIComponent(id)}`)
-  }
+
 
   const renderTabIcon = (key) => {
     switch (key) {
@@ -70,16 +87,7 @@ export default function UserManagementDepartmentDetails() {
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
         )
-      case 'teams':
-        // users icon
-        return (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-        )
+
       case 'employees':
         // user icon
         return (
@@ -126,17 +134,7 @@ export default function UserManagementDepartmentDetails() {
       <div className="container mx-auto px-4 py-4">
         {/* Top-right actions */}
         <div className="flex justify-end items-center gap-2 mb-2">
-          {/* Add Team (next to Delete) */}
-          <button className="btn btn-ghost btn-square p-1" title={isArabic ? 'إضافة فريق' : 'Add Team'} aria-label={isArabic ? 'إضافة فريق' : 'Add Team'} onClick={addTeam}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              <line x1="20" y1="8" x2="20" y2="14"></line>
-              <line x1="17" y1="11" x2="23" y2="11"></line>
-            </svg>
-          </button>
+
           {/* Delete (first on the right) */}
           <button className="btn btn-ghost btn-square p-1" title={isArabic ? 'حذف' : 'Delete'} aria-label={isArabic ? 'حذف' : 'Delete'} onClick={deleteDepartment}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -174,10 +172,7 @@ export default function UserManagementDepartmentDetails() {
                 <div className="text-xs text-[var(--muted-text)]">{isArabic ? 'إجمالي الموظفين' : 'Total Employees'}</div>
                 <div className="text-lg font-bold">{dept.employees}</div>
               </div>
-              <div>
-                <div className="text-xs text-[var(--muted-text)]">{isArabic ? 'إجمالي الفرق' : 'Total Teams'}</div>
-                <div className="text-lg font-bold">{dept.teams}</div>
-              </div>
+
             </div>
           </div>
           {/* KPIs */}
@@ -193,7 +188,7 @@ export default function UserManagementDepartmentDetails() {
         <div className="flex items-center gap-6 mb-3">
           {[
             { key: 'overview', label: isArabic ? 'نظرة عامة' : 'Overview' },
-            { key: 'teams', label: isArabic ? 'الفرق' : 'Teams' },
+
             { key: 'employees', label: isArabic ? 'الموظفون' : 'Employees' },
             { key: 'tickets', label: isArabic ? 'التذاكر/الليدز' : 'Tickets / Leads' },
             { key: 'tasks', label: isArabic ? 'المهام' : 'Tasks' },
@@ -274,24 +269,48 @@ export default function UserManagementDepartmentDetails() {
         {tab === 'tickets' && (
           <div className="glass-panel rounded-xl overflow-x-auto">
             <div className="p-3 flex flex-wrap items-center gap-2">
-              <SearchableSelect className="w-40" options={["Tickets","Leads"]} value={"Tickets"} onChange={()=>{}} placeholder="Type" />
-              <SearchableSelect className="w-44" options={["All Statuses","Open","Pending","Closed"]} value={"All Statuses"} onChange={()=>{}} placeholder="Status" />
-              <SearchableSelect className="w-44" options={["All Priorities","High","Medium","Low"]} value={"All Priorities"} onChange={()=>{}} placeholder="Priority" />
+              <SearchableSelect
+                className="w-40"
+                options={ticketTypes.map(o => ({ value: o, label: o }))}
+                value={ticketFilters.type}
+                onChange={(v) => setTicketFilters(prev => ({ ...prev, type: v }))}
+                placeholder={isArabic ? "النوع" : "Type"}
+                multiple={true}
+                isRTL={isArabic}
+              />
+              <SearchableSelect
+                className="w-44"
+                options={ticketStatuses.map(o => ({ value: o, label: o }))}
+                value={ticketFilters.status}
+                onChange={(v) => setTicketFilters(prev => ({ ...prev, status: v }))}
+                placeholder={isArabic ? "الحالة" : "Status"}
+                multiple={true}
+                isRTL={isArabic}
+              />
+              <SearchableSelect
+                className="w-44"
+                options={ticketPriorities.map(o => ({ value: o, label: o }))}
+                value={ticketFilters.priority}
+                onChange={(v) => setTicketFilters(prev => ({ ...prev, priority: v }))}
+                placeholder={isArabic ? "الأولوية" : "Priority"}
+                multiple={true}
+                isRTL={isArabic}
+              />
             </div>
             <table className="nova-table w-full">
               <thead>
                 <tr className="thead-soft">
                   <th>ID</th>
-                  <th>Type</th>
-                  <th>Priority</th>
-                  <th>Assigned To</th>
-                  <th>Status</th>
-                  <th>SLA Deadline</th>
-                  <th>Actions</th>
+                  <th>{isArabic ? "النوع" : "Type"}</th>
+                  <th>{isArabic ? "الأولوية" : "Priority"}</th>
+                  <th>{isArabic ? "تم تعيينه لـ" : "Assigned To"}</th>
+                  <th>{isArabic ? "الحالة" : "Status"}</th>
+                  <th>{isArabic ? "موعد SLA" : "SLA Deadline"}</th>
+                  <th>{isArabic ? "إجراءات" : "Actions"}</th>
                 </tr>
               </thead>
               <tbody>
-                {MOCK_TICKETS.map(t => (
+                {filteredTickets.map(t => (
                   <tr key={t.id}>
                     <td>{t.id}</td>
                     <td>{t.type}</td>
@@ -377,69 +396,7 @@ export default function UserManagementDepartmentDetails() {
           </div>
         )}
 
-        {tab === 'teams' && (
-          <div className="glass-panel rounded-xl overflow-x-auto">
-            <table className="nova-table w-full">
-              <thead>
-                <tr className="thead-soft">
-                  <th>Team ID</th>
-                  <th>Team Name</th>
-                  <th>Team Leader</th>
-                  <th>No. of Members</th>
-                  <th>Assigned Tasks</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {MOCK_TEAMS.map(t => (
-                  <tr key={t.id}>
-                    <td>{t.id}</td>
-                    <td>{t.name}</td>
-                    <td>{t.leader}</td>
-                    <td>{t.members}</td>
-                    <td>{t.assignedTasks}</td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <button className="btn btn-ghost btn-square p-1" title={isArabic ? 'عرض' : 'View'} aria-label={isArabic ? 'عرض' : 'View'}>
-                          {/* eye icon */}
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                          </svg>
-                        </button>
-                        <button className="btn btn-ghost btn-square p-1" title={isArabic ? 'تعيين مستخدمين' : 'Assign Users'} aria-label={isArabic ? 'تعيين مستخدمين' : 'Assign Users'}>
-                          {/* users-plus icon */}
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            <line x1="20" y1="8" x2="20" y2="14"></line>
-                            <line x1="17" y1="11" x2="23" y2="11"></line>
-                          </svg>
-                        </button>
-                        <button className="btn btn-ghost btn-square p-1" title={isArabic ? 'تعيين مهام' : 'Assign Tasks'} aria-label={isArabic ? 'تعيين مهام' : 'Assign Tasks'}>
-                          {/* clipboard-list icon */}
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="9" y="2" width="6" height="4" rx="1" ry="1"></rect>
-                            <path d="M9 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"></path>
-                            <line x1="9" y1="8" x2="15" y2="8"></line>
-                            <line x1="9" y1="12" x2="15" y2="12"></line>
-                            <line x1="9" y1="16" x2="13" y2="16"></line>
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="flex items-center gap-2 p-3">
-              <button className="btn btn-primary">{isArabic ? 'إضافة فريق للقسم' : 'Add Team to Department'}</button>
-              <button className="btn btn-ghost">{isArabic ? 'إزالة فريق' : 'Remove Team'}</button>
-            </div>
-          </div>
-        )}
+
 
         {tab === 'analytics' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -462,6 +419,22 @@ export default function UserManagementDepartmentDetails() {
           </div>
         )}
       </div>
+
+      {showEditModal && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-hidden">
+           <div className="w-full max-w-5xl h-[90vh] flex flex-col relative animate-in fade-in zoom-in-95 duration-200">
+             <UserManagementDepartmentForm 
+               onClose={() => setShowEditModal(false)} 
+               onSuccess={(updatedDept) => {
+                 // update local state if needed, for now just close
+                 setShowEditModal(false);
+               }}
+               initialData={dept}
+             />
+           </div>
+        </div>,
+        document.body
+      )}
     </Layout>
   )
 }

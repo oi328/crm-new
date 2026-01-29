@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx'
 import { Bar } from 'react-chartjs-2'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { FaFilter, FaShareAlt, FaEllipsisV, FaPlus, FaMapMarkerAlt, FaBuilding, FaTimes, FaEye, FaEdit, FaTrash, FaUpload, FaSearch, FaChevronDown, FaChevronUp, FaImage, FaFilePdf, FaVideo, FaPaperclip, FaTags, FaCity, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaDownload, FaFileExcel, FaFileImport, FaFileExport, FaFileCsv } from 'react-icons/fa'
+import { FaFilter, FaUser, FaShareAlt, FaEllipsisV, FaPlus, FaMapMarkerAlt, FaBuilding, FaTimes, FaEye, FaEdit, FaTrash, FaUpload, FaSearch, FaChevronDown, FaChevronUp, FaImage, FaFilePdf, FaVideo, FaPaperclip, FaTags, FaCity, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaDownload, FaFileExcel, FaFileImport, FaFileExport, FaFileCsv } from 'react-icons/fa'
 
 
 const REAL_IMAGES = [
@@ -28,6 +28,111 @@ import CreateProjectModal from '../components/CreateProjectModal'
 import CreatePropertyModal from '../components/CreatePropertyModal'
 import { useCompanySetup } from './settings/company-setup/store/CompanySetupContext.jsx'
 import { projectsData } from '../data/projectsData'
+
+// Range Slider Component
+const RangeSlider = ({ min, max, value, onChange, label, isRTL, unit = '' }) => {
+  const [minVal, maxVal] = value
+  
+  // Handlers
+  const handleMinChange = (e) => {
+    const val = Math.min(Number(e.target.value), maxVal - 1)
+    onChange([val, maxVal])
+  }
+  const handleMaxChange = (e) => {
+    const val = Math.max(Number(e.target.value), minVal + 1)
+    onChange([minVal, val])
+  }
+
+  // Percentages for track
+  const minPercent = ((minVal - min) / (max - min)) * 100
+  const maxPercent = ((maxVal - min) / (max - min)) * 100
+
+  return (
+    <div className="w-full p-1">
+      <h3 className="text-xs font-medium text-[var(--muted-text)] mb-4">{label}</h3>
+      
+      <div className="relative w-full h-4 mb-4 group">
+        {/* Track Background */}
+        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 dark:bg-gray-700 -translate-y-1/2 rounded-full"></div>
+        
+        {/* Active Range Track */}
+        <div 
+          className="absolute top-1/2 h-1 bg-gray-800 dark:bg-gray-200 -translate-y-1/2 rounded-full"
+          style={{ 
+            left: isRTL ? `${100 - maxPercent}%` : `${minPercent}%`, 
+            right: isRTL ? `${minPercent}%` : `${100 - maxPercent}%` 
+          }}
+        ></div>
+
+        {/* Inputs */}
+        <style>{`
+          .range-slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            pointer-events: auto;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #333;
+            cursor: pointer;
+            margin-top: -5px; /* centers thumb on track */
+          }
+          .range-slider-thumb::-moz-range-thumb {
+            pointer-events: auto;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #333;
+            cursor: pointer;
+            border: none;
+          }
+        `}</style>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={minVal}
+          onChange={handleMinChange}
+          className="range-slider-thumb absolute top-1/2 -translate-y-1/2 left-0 w-full appearance-none bg-transparent pointer-events-none z-20"
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={maxVal}
+          onChange={handleMaxChange}
+          className="range-slider-thumb absolute top-1/2 -translate-y-1/2 left-0 w-full appearance-none bg-transparent pointer-events-none z-20"
+        />
+      </div>
+      
+      <div className="flex items-center gap-3 mt-4">
+        <div className="flex items-center gap-1.5">
+           <span className="text-xs text-gray-500 font-medium">{isRTL ? 'من' : 'From'}</span>
+           <div className="relative">
+             <input 
+               type="number" 
+               value={minVal} 
+               onChange={handleMinChange}
+               className="input py-0.5 px-2 w-20 text-center text-xs font-bold border border-gray-300 dark:border-gray-600 rounded-lg"
+             />
+           </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+           <span className="text-xs text-gray-500 font-medium">{isRTL ? 'إلى' : 'To'}</span>
+           <div className="relative">
+             <input 
+               type="number" 
+               value={maxVal} 
+               onChange={handleMaxChange}
+               className="input py-0.5 px-2 w-20 text-center text-xs font-bold border border-gray-300 dark:border-gray-600 rounded-lg"
+             />
+           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function Projects() {
   const { i18n } = useTranslation()
@@ -170,7 +275,12 @@ export default function Projects() {
        setProjects(prev => prev.map(p => p === editProject ? { ...p, ...newP } : p))
        addToast('success', isRTL ? 'تم تحديث المشروع' : 'Project updated')
     } else {
-       setProjects(prev => [newP, ...prev])
+       const projectWithMeta = {
+         ...newP,
+         createdBy: 'Current User', // In a real app, this would come from auth context
+         createdDate: new Date().toISOString().slice(0, 10)
+       }
+       setProjects(prev => [projectWithMeta, ...prev])
        addToast('success', isRTL ? 'تم إضافة المشروع' : 'Project added')
     }
   }
@@ -195,6 +305,7 @@ export default function Projects() {
   }
 
   const allCities = useMemo(() => Array.from(new Set(projects.map(p => p.city))), [projects])
+  const allCountries = useMemo(() => Array.from(new Set(projects.map(p => p.country || 'Egypt'))).sort(), [projects])
   const allDevelopers = useMemo(() => Array.from(new Set(projects.map(p => p.developer))), [projects])
   const allProjects = useMemo(() => Array.from(new Set(projects.map(p => p.name))).sort(), [projects])
   const allCategories = useMemo(() => Array.from(new Set(projects.map(p => p.category).filter(Boolean))).sort(), [projects])
@@ -206,8 +317,8 @@ export default function Projects() {
     return { min: Math.min(...prices, 0), max: Math.max(...prices, 10000000) }
   }, [projects])
   const spaceLimits = useMemo(() => {
-    // Mock space limits since data might be missing
-    return { min: 0, max: 1000 } 
+    const spaces = projects.flatMap(p => [p.minSpace, p.maxSpace].filter(x => x != null))
+    return { min: Math.min(...spaces, 0), max: Math.max(...spaces, 1000) }
   }, [projects])
   const allStatuses = ['Planning','Active','Sales','Completed']
 
@@ -243,6 +354,10 @@ export default function Projects() {
       if (filters.minPrice && (p.maxPrice || 0) < Number(filters.minPrice)) return false
       if (filters.maxPrice && (p.minPrice || 0) > Number(filters.maxPrice)) return false
       
+      // Space Range
+      if (filters.minSpace && (p.maxSpace || 0) < Number(filters.minSpace)) return false
+      if (filters.maxSpace && (p.minSpace || 0) > Number(filters.maxSpace)) return false
+
       return true
     })
   }, [projects, filters])
@@ -308,7 +423,11 @@ export default function Projects() {
     clearFilters: isRTL ? 'اعادة تعيين' : 'reset',
     exportPdf: isRTL ? 'تصدير PDF' : 'Export PDF',
     createdBy: isRTL ? 'بواسطة' : 'Created By',
-    createdDate: isRTL ? 'تاريخ الإنشاء' : 'Created Date'
+    createdDate: isRTL ? 'تاريخ الإنشاء' : 'Created Date',
+    category: isRTL ? 'التصنيف' : 'Category',
+    country: isRTL ? 'الدولة' : 'Country',
+    priceRange: isRTL ? 'نطاق السعر' : 'Price Range',
+    spaceRange: isRTL ? 'نطاق المساحة' : 'Space Range'
   }
 
   return (
@@ -373,6 +492,149 @@ export default function Projects() {
                   </>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Filter Panel */}
+          <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-sm font-semibold flex items-center gap-2">
+                <FaFilter className="text-blue-500" /> {Label.filter}
+              </h2>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowAllFilters(prev => !prev)} className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+                  {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')}
+                  <FaChevronDown size={10} className={`transform transition-transform duration-300 ${showAllFilters ? 'rotate-180' : 'rotate-0'}`} />
+                </button>
+                <button onClick={clearFilters} className="flex-1 sm:flex-none px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-center">
+                  {Label.clearFilters}
+                </button>
+              </div>
+            </div>
+
+            {/* First Row (Always Visible) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-3">
+                {/* 1. Search */}
+                <div className="space-y-1">
+                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaSearch className="text-blue-500" size={10} /> {Label.search}</label>
+                   <input className="input w-full" value={filters.search} onChange={e=>setFilters({...filters, search: e.target.value})} placeholder={isRTL ? 'بحث...' : 'Search...'} />
+                </div>
+
+                {/* 2. Developer */}
+                <div className="space-y-1">
+                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaBuilding className="text-blue-500" size={10} /> {Label.developer}</label>
+                   <SearchableSelect 
+                     options={allDevelopers} 
+                     value={filters.developer} 
+                     onChange={val => setFilters({...filters, developer: val})} 
+                     isRTL={isRTL} 
+                   />
+                </div>
+
+                {/* 3. City */}
+                <div className="space-y-1">
+                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaCity className="text-blue-500" size={10} /> {Label.city}</label>
+                   <SearchableSelect 
+                     options={allCities} 
+                     value={filters.city} 
+                     onChange={val => setFilters({...filters, city: val})} 
+                     isRTL={isRTL} 
+                   />
+                </div>
+
+                {/* 4. Status */}
+                <div className="space-y-1">
+                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaTags className="text-blue-500" size={10} /> {Label.status}</label>
+                   <SearchableSelect 
+                     options={allStatuses} 
+                     value={filters.status} 
+                     onChange={val => setFilters({...filters, status: val})} 
+                     isRTL={isRTL} 
+                   />
+                </div>
+            </div>
+
+            {/* Collapsible Section (Rest of the filters) */}
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 transition-all duration-300 overflow-hidden ${showAllFilters ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+
+                {/* 5. Project Name */}
+                <div className="space-y-1">
+                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaBuilding className="text-blue-500" size={10} /> {Label.title}</label>
+                   <SearchableSelect 
+                     options={allProjects} 
+                     value={filters.project} 
+                     onChange={val => setFilters({...filters, project: val})} 
+                     isRTL={isRTL} 
+                   />
+                </div>
+
+                {/* 6. Country */}
+                <div className="space-y-1">
+                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaMapMarkerAlt className="text-blue-500" size={10} /> {Label.country}</label>
+                   <SearchableSelect 
+                     options={allCountries} 
+                     value={filters.country} 
+                     onChange={val => setFilters({...filters, country: val})} 
+                     isRTL={isRTL} 
+                   />
+                </div>
+
+                {/* 7. Category */}
+                <div className="space-y-1">
+                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaTags className="text-blue-500" size={10} /> {Label.category}</label>
+                   <SearchableSelect 
+                     options={allCategories} 
+                     value={filters.category} 
+                     onChange={val => setFilters({...filters, category: val})} 
+                     isRTL={isRTL} 
+                   />
+                </div>
+
+                {/* 8. Created By */}
+                <div className="space-y-1">
+                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaUser className="text-blue-500" size={10} /> {Label.createdBy}</label>
+                   <SearchableSelect 
+                     options={allUsers} 
+                     value={filters.createdBy} 
+                     onChange={val => setFilters({...filters, createdBy: val})} 
+                     isRTL={isRTL} 
+                   />
+                </div>
+
+                {/* 9. Created Date */}
+                <div className="space-y-1">
+                   <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1"><FaFilter className="text-blue-500" size={10} /> {Label.createdDate}</label>
+                   <input 
+                     type="date"
+                     className="input w-full"
+                     value={filters.createdDate}
+                     onChange={e => setFilters({...filters, createdDate: e.target.value})}
+                   />
+                </div>
+
+                {/* 10. Price Range */}
+                <div className="col-span-1 md:col-span-2">
+                   <RangeSlider 
+                     min={priceLimits.min} 
+                     max={priceLimits.max} 
+                     value={[Number(filters.minPrice) || priceLimits.min, Number(filters.maxPrice) || priceLimits.max]} 
+                     onChange={([min, max]) => setFilters({...filters, minPrice: min, maxPrice: max})}
+                     label={Label.priceRange}
+                     isRTL={isRTL}
+                   />
+                </div>
+
+                {/* 11. Space Range */}
+                <div className="col-span-1 md:col-span-2">
+                   <RangeSlider 
+                     min={spaceLimits.min} 
+                     max={spaceLimits.max} 
+                     value={[Number(filters.minSpace) || spaceLimits.min, Number(filters.maxSpace) || spaceLimits.max]} 
+                     onChange={([min, max]) => setFilters({...filters, minSpace: min, maxSpace: max})}
+                     label={Label.spaceRange}
+                     isRTL={isRTL}
+                   />
+                </div>
             </div>
           </div>
 
@@ -482,110 +744,7 @@ export default function Projects() {
   )
 }
 
-// Range Slider Component
-const RangeSlider = ({ min, max, value, onChange, label, isRTL, unit = '' }) => {
-  const [minVal, maxVal] = value
-  
-  // Handlers
-  const handleMinChange = (e) => {
-    const val = Math.min(Number(e.target.value), maxVal - 1)
-    onChange([val, maxVal])
-  }
-  const handleMaxChange = (e) => {
-    const val = Math.max(Number(e.target.value), minVal + 1)
-    onChange([minVal, val])
-  }
 
-  // Percentages for track
-  const minPercent = ((minVal - min) / (max - min)) * 100
-  const maxPercent = ((maxVal - min) / (max - min)) * 100
-
-  return (
-    <div className="w-full p-1">
-      <h3 className="text-xs font-medium text-[var(--muted-text)] mb-4">{label}</h3>
-      
-      <div className="relative w-full h-4 mb-4 group">
-        {/* Track Background */}
-        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 dark:bg-gray-700 -translate-y-1/2 rounded-full"></div>
-        
-        {/* Active Range Track */}
-        <div 
-          className="absolute top-1/2 h-1 bg-gray-800 dark:bg-gray-200 -translate-y-1/2 rounded-full"
-          style={{ 
-            left: isRTL ? `${100 - maxPercent}%` : `${minPercent}%`, 
-            right: isRTL ? `${minPercent}%` : `${100 - maxPercent}%` 
-          }}
-        ></div>
-
-        {/* Inputs */}
-        <style>{`
-          .range-slider-thumb::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            pointer-events: auto;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: white;
-            border: 2px solid #333;
-            cursor: pointer;
-            margin-top: -5px; /* centers thumb on track */
-          }
-          .range-slider-thumb::-moz-range-thumb {
-            pointer-events: auto;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: white;
-            border: 2px solid #333;
-            cursor: pointer;
-            border: none;
-          }
-        `}</style>
-        <input
-          type="range"
-          min={min}
-          max={max}
-          value={minVal}
-          onChange={handleMinChange}
-          className="range-slider-thumb absolute top-1/2 -translate-y-1/2 left-0 w-full appearance-none bg-transparent pointer-events-none z-20"
-        />
-        <input
-          type="range"
-          min={min}
-          max={max}
-          value={maxVal}
-          onChange={handleMaxChange}
-          className="range-slider-thumb absolute top-1/2 -translate-y-1/2 left-0 w-full appearance-none bg-transparent pointer-events-none z-20"
-        />
-      </div>
-      
-      <div className="flex items-center gap-3 mt-4">
-        <div className="flex items-center gap-1.5">
-           <span className="text-xs text-gray-500 font-medium">{isRTL ? 'من' : 'From'}</span>
-           <div className="relative">
-             <input 
-               type="number" 
-               value={minVal} 
-               onChange={handleMinChange}
-               className="input py-0.5 px-2 w-20 text-center text-xs font-bold border border-gray-300 dark:border-gray-600 rounded-lg"
-             />
-           </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-           <span className="text-xs text-gray-500 font-medium">{isRTL ? 'إلى' : 'To'}</span>
-           <div className="relative">
-             <input 
-               type="number" 
-               value={maxVal} 
-               onChange={handleMaxChange}
-               className="input py-0.5 px-2 w-20 text-center text-xs font-bold border border-gray-300 dark:border-gray-600 rounded-lg"
-             />
-           </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // Import Modal Component
 function ProjectsImportModal({ onClose, isRTL, addToast, addLog }) {

@@ -9,7 +9,6 @@ import Customers from '../pages/Customers'
 import Leads from '../pages/Leads'
 import Recycle from '../pages/Recycle'
 import AddNewLead from '../pages/AddNewLead'
-import SalesOpportunities from '../pages/SalesOpportunities'
 import SalesQuotations from '../pages/SalesQuotations'
 import SalesOrders from '../pages/SalesOrders'
 import SalesInvoices from '../pages/SalesInvoices'
@@ -120,10 +119,12 @@ import Pricing from '../pages/Pricing'
 import Layout from '../components/Layout'
 import UserManagementUsers from '../features/Users/Users'
 import UserManagementUserCreate from '../features/Users/UserForm'
+import UserManagementUserProfile from '../pages/UserManagementUserProfile'
 import UserManagementActivityLogs from '../pages/UserManagementActivityLogs'
 import UserManagementAccessLogs from '../pages/UserManagementAccessLogs'
-import UserManagementRoles from '../pages/UserManagementRoles'
-import UserManagementRoleEdit from '../pages/UserManagementRoleEdit'
+import UserManagementDepartments from '../features/Users/Departments'
+import UserManagementDepartmentForm from '../features/Users/DepartmentForm'
+import UserManagementDepartmentDetails from '../pages/UserManagementDepartmentDetails'
 import LandingPagePreview from '../pages/landing-themes/LandingPagePreview'
 import LandingPageViewer from '../pages/landing-themes/LandingPageViewer'
 
@@ -157,8 +158,6 @@ export default function AppRouter() {
             <Route path="/support/sla" element={<SupportSLA />} />
             <Route path="/support/reports" element={<SupportReports />} />
             <Route path="/support/feedbacks" element={<SupportFeedbacks />} />
-            <Route path="/sales" element={<Navigate to="/sales/opportunities" replace />} />
-            <Route path="/sales/opportunities" element={<SalesOpportunities />} />
             <Route path="/sales/quotations" element={<SalesQuotations />} />
             <Route path="/sales/orders" element={<SalesOrders />} />
             <Route path="/sales/invoices" element={<SalesInvoices />} />
@@ -280,11 +279,15 @@ export default function AppRouter() {
             {/* User Management */}
             <Route path="/user-management/users" element={<UserManagementUsers />} />
             <Route path="/user-management/users/new" element={<UserManagementUserCreate />} />
+            <Route path="/user-management/users/:id" element={<UserManagementUserProfile />} />
+            
+            <Route path="/user-management/departments" element={<UserManagementDepartments />} />
+            {/* <Route path="/user-management/departments/new" element={<UserManagementDepartmentForm />} /> */}
+            <Route path="/user-management/departments/:id" element={<UserManagementDepartmentDetails />} />
+            {/* <Route path="/user-management/departments/:id/edit" element={<UserManagementDepartmentForm />} /> */}
+
             <Route path="/user-management/activity-logs" element={<UserManagementActivityLogs />} />
             <Route path="/user-management/access-logs" element={<UserManagementAccessLogs />} />
-            <Route path="/user-management/roles" element={<UserManagementRoles />} />
-            <Route path="/user-management/roles/:name" element={<UserManagementRoleEdit />} />
-
 
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/tasks" element={<Tasks />} />

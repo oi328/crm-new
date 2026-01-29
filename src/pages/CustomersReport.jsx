@@ -245,12 +245,7 @@ export default function CustomersReport() {
   const [actionDate, setActionDate] = useState('')
   const [showAllFilters, setShowAllFilters] = useState(true)
   const [showExportMenu, setShowExportMenu] = useState(false)
-  const [expandedRows, setExpandedRows] = useState({})
   const exportMenuRef = useRef(null)
-
-  const toggleRow = (id) => {
-    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
-  };
 
   const filtered = useMemo(() => {
     return customers.filter(c => {
@@ -515,7 +510,7 @@ export default function CustomersReport() {
         </p>
       </div>
 
-      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-8">
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm border border-theme-border dark:border-gray-700/50 p-6 mb-8">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 dark:text-white font-semibold">
             <Filter size={20} className="text-blue-500 dark:text-blue-400" />
@@ -542,7 +537,7 @@ export default function CustomersReport() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-text)]">
+              <label className="text-xs font-medium text-theme-text">
                 {isRTL ? 'مسؤول المبيعات' : 'Salesperson'}
               </label>
               <SearchableSelect
@@ -560,7 +555,7 @@ export default function CustomersReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-text)]">
+              <label className="text-xs font-medium text-theme-text">
                 {isRTL ? 'المدير' : 'Manager'}
               </label>
               <SearchableSelect
@@ -578,7 +573,7 @@ export default function CustomersReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-text)]">
+              <label className="text-xs font-medium text-theme-text">
                 {isRTL ? 'المصدر' : 'Source'}
               </label>
               <SearchableSelect
@@ -596,7 +591,7 @@ export default function CustomersReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-text)]">
+              <label className="text-xs font-medium text-theme-text">
                 {isRTL ? 'المشروع' : 'Project'}
               </label>
               <SearchableSelect
@@ -617,7 +612,7 @@ export default function CustomersReport() {
 
           <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-500 ease-in-out overflow-hidden ${showAllFilters ? 'max-h-[200px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-text)]">
+              <label className="text-xs font-medium text-theme-text">
                 {isRTL ? 'تاريخ التحويل' : 'Convert Date'}
               </label>
               <input
@@ -631,7 +626,7 @@ export default function CustomersReport() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-text)]">
+              <label className="text-xs font-medium text-theme-text">
                 {isRTL ? 'نوع العميل' : 'Customer Type'}
               </label>
               <SearchableSelect
@@ -648,7 +643,7 @@ export default function CustomersReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-text)]">
+              <label className="text-xs font-medium text-theme-text">
                 {isRTL ? 'تاريخ الإجراء' : 'Action Date'}
               </label>
               <input
@@ -671,7 +666,7 @@ export default function CustomersReport() {
           return (
             <div
               key={idx}
-              className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
+              className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
             >
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110">
                 <Icon size={80} className={card.color} />
@@ -719,7 +714,7 @@ export default function CustomersReport() {
         ].map(card => (
           <div
             key={card.title}
-            className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+            className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
           >
             <div className="text-sm font-semibold mb-2 dark:text-white text-center md:text-left">
               {card.title}
@@ -749,9 +744,9 @@ export default function CustomersReport() {
         ))}
       </div>
 
-      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
-          <h2 className="text-lg font-bold dark:text-white">
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-theme-border dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-theme-text dark:text-white">
             {isRTL ? 'العملاء' : 'Customers'}
           </h2>
           <div className="relative" ref={exportMenuRef}>
@@ -783,9 +778,64 @@ export default function CustomersReport() {
         </div>
 
         <div className="p-4">
-          <div className="overflow-x-auto">
+          {/* Mobile View - Cards */}
+          <div className="md:hidden space-y-4">
+            {paginatedRows.map(c => (
+              <div key={c.id} className=" rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-theme-text dark:text-white  text-lg">{c.name}</h3>
+                    <span className="text-xs text-theme-text dark:text-white">{c.type}</span>
+                  </div>
+                  <div>{statusBadge(isActive(c))}</div>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-2 text-sm">
+                  {/* Contact Info */}
+                  <div className="flex flex-col gap-1 p-2  rounded-lg">
+                    <div className="flex items-center gap-2 text-theme-text dark:text-white">
+                        <span className="text-xs">{isRTL ? 'الهاتف' : 'Phone'}:</span>
+                        <span className="font-medium dir-ltr">{c.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-theme-text dark:text-white ">
+                        <span className="text-xs">{isRTL ? 'البريد' : 'Email'}:</span>
+                        <span className="font-medium break-all">{c.email}</span>
+                    </div>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-3 mt-1">
+                      <div className="flex flex-col">
+                          <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'إجمالي الإيرادات' : 'Total Revenue'}</span>
+                          <span className="font-medium text-theme-text dark:text-white">{c.totalRevenue.toLocaleString()} EGP</span>
+                      </div>
+                      <div className="flex flex-col">
+                          <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'الطلبات' : 'Orders'}</span>
+                          <span className="font-medium text-theme-text dark:text-white">{c.orders}</span>
+                      </div>
+                      <div className="flex flex-col">
+                          <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'آخر نشاط' : 'Last Activity'}</span>
+                          <span className="font-medium text-theme-text dark:text-white">{new Date(c.lastActivity).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex flex-col">
+                          <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'مسؤول المبيعات' : 'Salesperson'}</span>
+                          <span className="font-medium text-theme-text dark:text-white">{c.salesperson}</span>
+                      </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {filtered.length === 0 && (
+                <div className="text-center py-8 text-theme-text dark:text-white">
+                    {isRTL ? 'لا توجد بيانات' : 'No data'}
+                </div>
+            )}
+          </div>
+
+          {/* Desktop View - Table */}
+          <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm nova-table nova-table--glass">
-            <thead className="bg-white/5 dark:bg-white/5 dark:text-white">
+            <thead className="bg-gray-50 dark:bg-gray-700/50 dark:text-white">
               <tr className="text-left bg-[var(--table-header-bg)]">
                 <th className="px-3 py-2">{isRTL ? 'اسم العميل' : 'Customer Name'}</th>
                 <th className="px-3 py-2">{isRTL ? 'النوع' : 'Type'}</th>
@@ -797,7 +847,7 @@ export default function CustomersReport() {
                 <th className="px-3 py-2">{isRTL ? 'مسؤول المبيعات' : 'Salesperson'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-theme-border dark:divide-gray-700/50">
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-3 py-6 text-center text-[var(--muted-text)]">{isRTL ? 'لا توجد بيانات' : 'No data'}</td>
@@ -814,76 +864,30 @@ export default function CustomersReport() {
                 </tr>
               )}
               {paginatedRows.map(c => (
-                <React.Fragment key={c.id}>
-                <tr className="border-t border-[var(--table-row-border)] odd:bg-[var(--table-row-bg)] hover:bg-[var(--table-row-hover)] transition-colors">
+                <tr key={c.id} className="border-t border-[var(--table-row-border)] odd:bg-[var(--table-row-bg)] hover:bg-[var(--table-row-hover)] transition-colors">
                   <td className="px-3 py-2 font-medium dark:text-white">
-                    <div className="flex items-center gap-2">
-                      <button 
-                        className="md:hidden p-1 hover:bg-white/10 rounded"
-                        onClick={() => toggleRow(c.id)}
-                      >
-                        {expandedRows[c.id] ? <ChevronUp size={16} /> : <LucideChevronDown size={16} />}
-                      </button>
-                      {c.name}
-                    </div>
-                    <div className="md:hidden text-xs text-[var(--muted-text)] mt-1">
-                        {statusBadge(isActive(c))}
-                    </div>
+                    {c.name}
                   </td>
-                  <td className="px-3 py-2 hidden md:table-cell">{c.type}</td>
-                  <td className="px-3 py-2 hidden md:table-cell">
+                  <td className="px-3 py-2">{c.type}</td>
+                  <td className="px-3 py-2">
                     <div className="flex flex-col">
                       <span>{c.phone}</span>
                       <span className="text-[var(--muted-text)]">{c.email}</span>
                     </div>
                   </td>
-                  <td className="px-3 py-2 hidden md:table-cell">{c.totalRevenue.toLocaleString()} EGP</td>
-                  <td className="px-3 py-2 hidden md:table-cell">{c.orders}</td>
-                  <td className="px-3 py-2 hidden md:table-cell">{new Date(c.lastActivity).toLocaleDateString()}</td>
-                  <td className="px-3 py-2 hidden md:table-cell">{statusBadge(isActive(c))}</td>
-                  <td className="px-3 py-2 hidden md:table-cell">{c.salesperson}</td>
+                  <td className="px-3 py-2">{c.totalRevenue.toLocaleString()} EGP</td>
+                  <td className="px-3 py-2">{c.orders}</td>
+                  <td className="px-3 py-2">{new Date(c.lastActivity).toLocaleDateString()}</td>
+                  <td className="px-3 py-2">{statusBadge(isActive(c))}</td>
+                  <td className="px-3 py-2">{c.salesperson}</td>
                 </tr>
-                {expandedRows[c.id] && (
-                    <tr className="md:hidden bg-white/5 dark:bg-white/5">
-                      <td colSpan={8} className="px-4 py-3">
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[var(--muted-text)]">{isRTL ? 'النوع' : 'Type'}</span>
-                            <span className="dark:text-white font-medium">{c.type}</span>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[var(--muted-text)]">{isRTL ? 'جهة الاتصال' : 'Contact'}</span>
-                            <span className="dark:text-white font-medium">{c.phone}</span>
-                            <span className="text-[var(--muted-text)]">{c.email}</span>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[var(--muted-text)]">{isRTL ? 'إجمالي الإيرادات' : 'Total Revenue'}</span>
-                            <span className="dark:text-white font-medium">{c.totalRevenue.toLocaleString()} EGP</span>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[var(--muted-text)]">{isRTL ? 'الطلبات' : 'Orders'}</span>
-                            <span className="dark:text-white font-medium">{c.orders}</span>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[var(--muted-text)]">{isRTL ? 'آخر نشاط' : 'Last Activity'}</span>
-                            <span className="dark:text-white font-medium">{new Date(c.lastActivity).toLocaleDateString()}</span>
-                          </div>
-                           <div className="flex flex-col gap-1">
-                            <span className="text-[var(--muted-text)]">{isRTL ? 'مسؤول المبيعات' : 'Salesperson'}</span>
-                            <span className="dark:text-white font-medium">{c.salesperson}</span>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
               ))}
             </tbody>
           </table>
           </div>
         </div>
-        <div className="px-4 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex sm:flex-row items-center justify-between gap-3">
-          <div className="text-[11px] sm:text-xs text-[var(--muted-text)]">
+          <div className="px-6 py-3 bg-theme-bg border-t border-theme-border dark:border-gray-700/60 flex sm:flex-row items-center justify-between gap-3">
+            <div className="text-[11px] sm:text-xs text-theme-text dark:text-gray-400">
             {isRTL
               ? `إظهار ${Math.min((currentPage - 1) * entriesPerPage + 1, filtered.length)}-${Math.min(currentPage * entriesPerPage, filtered.length)} من ${filtered.length}`
               : `Showing ${Math.min((currentPage - 1) * entriesPerPage + 1, filtered.length)}-${Math.min(currentPage * entriesPerPage, filtered.length)} of ${filtered.length}`}

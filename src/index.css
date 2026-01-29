@@ -2515,3 +2515,9 @@ html[dir="ltr"] .section-header { flex-direction: row; }
   justify-content: flex-start;
   margin-right: auto;
 }
+
+svg.lucide {
+  display: block !important;
+  min-width: 1em;
+  min-height: 1em;
+}

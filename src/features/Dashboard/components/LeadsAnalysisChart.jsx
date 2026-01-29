@@ -6,7 +6,6 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineEleme
 import { PieChart } from '@shared/components/PieChart'
 import { useTheme } from '@shared/context/ThemeProvider'
 import { FaSlidersH, FaSearch, FaUser, FaCalendar, FaDollarSign, FaTimes, FaFilter } from 'react-icons/fa';
-import { BiSlider } from 'react-icons/bi';
 import { 
   RiSearchLine,
   RiUserLine,

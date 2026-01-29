@@ -457,7 +457,7 @@ export default function MarketingReports() {
       <BackButton to="/reports" />
 
       {/* 1. Header */}
-      <div className="flex items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
+      <div className="flex items-center justify-between gap-4 border-b border-theme-border pb-4">
         <div>
           <h1 className="text-2xl font-bold">{t('Marketing Pulse')}</h1>
           <p className="text-sm ">{t('Overview of your marketing performance across all channels')}</p>
@@ -473,7 +473,7 @@ export default function MarketingReports() {
       </div>
 
       {/* Filter Section */}
-      <div className="card p-4 sm:p-6 bg-transparent rounded-2xl border border-white/10" style={{ backgroundColor: 'transparent' }}>
+      <div className="card p-4 sm:p-6 bg-transparent rounded-2xl border border-theme-border" style={{ backgroundColor: 'transparent' }}>
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <FaFilter className="text-blue-500" /> {t('Filter')}
@@ -600,89 +600,151 @@ export default function MarketingReports() {
           </div>
         </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="table w-full text-sm text-left">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700 ">
-                  <th className="p-3 font-semibold">{t('Platform')}</th>
-                  <th className="p-3 font-semibold text-right">💰 {t('Spend (EGP)')}</th>
-                  <th className="p-3 font-semibold text-right">💵 {t('Revenue (EGP)')}</th>
-                  <th className="p-3 font-semibold text-center">{t('ROI')}</th>
-                  <th className="p-3 font-semibold text-right">{t('Profit / Loss')}</th>
-                  <th className="p-3 font-semibold text-center">{t('Cost %')}</th>
-                  <th className="p-3 font-semibold text-center">{t('Revenue %')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {platformTableData.map((row, i) => (
-                  <tr 
-                    key={i} 
-                    className={`border-b border-gray-100 dark:border-gray-800 transition-colors ${
-                      row.isTotal 
-                        ? ' font-bold border-t-2 border-gray-300 dark:border-gray-600  dark:text-white' 
-                        : 'hover:bg-black/5 dark:hover:bg-white/5 dark:text-white'
-                    }`}
-                  >
-                    <td className="p-3 flex items-center gap-2">
+          <>
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-4">
+              {platformTableData.map((row, i) => (
+                <div key={i} className={`p-4 rounded-xl border ${row.isTotal ? 'bg-theme-bg/50 border-theme-border' : 'bg-theme-bg border-theme-border'} shadow-sm`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
                       {!row.isTotal && (
-                        <span 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: row.fill }}
-                        />
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: row.fill }} />
                       )}
-                      <span className={row.isTotal ? 'text-base' : ''}>
+                      <span className={`font-medium ${row.isTotal ? 'text-base' : 'text-sm'}`}>
                         {row.isTotal ? t('Total') : row.name}
                       </span>
-                    </td>
-                    <td className="p-3 text-right">{Number(row.spend).toLocaleString()} EGP</td>
-                    <td className="p-3 text-right">{Number(row.revenue).toLocaleString()} EGP</td>
-                    <td className="p-3 text-center">
-                      <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                    </div>
+                    <div className={`text-xs font-bold px-2 py-1 rounded-lg ${
                         row.roi >= 2 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                         row.roi >= 1 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
                         'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                      }`}>
-                        {row.roi.toFixed(1)}x
-                      </span>
-                    </td>
-                    <td className={`p-3 text-right font-medium ${row.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                      {row.profit >= 0 ? '+' : ''}{Number(row.profit).toLocaleString()} EGP
-                    </td>
-                    <td className="p-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-xs">{row.costPct.toFixed(0)}%</span>
-                        <div className="w-12 h-1.5  rounded-full overflow-hidden">
-                          <div className="h-full " style={{ width: `${row.costPct}%` }} />
-                        </div>
+                    }`}>
+                      ROI: {row.roi.toFixed(1)}x
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                    <div>
+                      <div className="text-[var(--muted-text)] text-xs mb-1">💰 {t('Spend')}</div>
+                      <div className="font-medium">{Number(row.spend).toLocaleString()} EGP</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[var(--muted-text)] text-xs mb-1">💵 {t('Revenue')}</div>
+                      <div className="font-medium">{Number(row.revenue).toLocaleString()} EGP</div>
+                    </div>
+                    <div>
+                      <div className="text-[var(--muted-text)] text-xs mb-1">{t('Profit / Loss')}</div>
+                      <div className={`font-medium ${row.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                        {row.profit >= 0 ? '+' : ''}{Number(row.profit).toLocaleString()} EGP
                       </div>
-                    </td>
-                    <td className="p-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-xs">{row.revenuePct.toFixed(0)}%</span>
-                        <div className="w-12 h-1.5 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500" style={{ width: `${row.revenuePct}%` }} />
-                        </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs w-16">{t('Cost %')}</span>
+                      <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500" style={{ width: `${row.costPct}%` }} />
                       </div>
-                    </td>
+                      <span className="text-xs w-8 text-right">{row.costPct.toFixed(0)}%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs w-16">{t('Rev %')}</span>
+                      <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500" style={{ width: `${row.revenuePct}%` }} />
+                      </div>
+                      <span className="text-xs w-8 text-right">{row.revenuePct.toFixed(0)}%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="table w-full text-sm text-left">
+                <thead>
+                  <tr className="border-b border-theme-border ">
+                    <th className="p-3 font-semibold">{t('Platform')}</th>
+                    <th className="p-3 font-semibold text-right">💰 {t('Spend (EGP)')}</th>
+                    <th className="p-3 font-semibold text-right">💵 {t('Revenue (EGP)')}</th>
+                    <th className="p-3 font-semibold text-center">{t('ROI')}</th>
+                    <th className="p-3 font-semibold text-right">{t('Profit / Loss')}</th>
+                    <th className="p-3 font-semibold text-center">{t('Cost %')}</th>
+                    <th className="p-3 font-semibold text-center">{t('Revenue %')}</th>
                   </tr>
-                ))}
-                {platformTableData.length === 1 && ( // Only Total row exists means no data
-                  <tr>
-                    <td colSpan={7} className="p-4 text-center dark:text-white">
-                      {t('No data available')}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {platformTableData.map((row, i) => (
+                    <tr 
+                      key={i} 
+                      className={`border-b border-gray-100 dark:border-gray-800 transition-colors ${
+                        row.isTotal 
+                          ? ' font-bold border-t-2 border-gray-300 dark:border-gray-600  dark:text-white' 
+                          : 'hover:bg-black/5 dark:hover:bg-white/5 dark:text-white'
+                      }`}
+                    >
+                      <td className="p-3 flex items-center gap-2">
+                        {!row.isTotal && (
+                          <span 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: row.fill }}
+                          />
+                        )}
+                        <span className={row.isTotal ? 'text-base' : ''}>
+                          {row.isTotal ? t('Total') : row.name}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">{Number(row.spend).toLocaleString()} EGP</td>
+                      <td className="p-3 text-right">{Number(row.revenue).toLocaleString()} EGP</td>
+                      <td className="p-3 text-center">
+                        <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                          row.roi >= 2 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                          row.roi >= 1 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                          'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        }`}>
+                          {row.roi.toFixed(1)}x
+                        </span>
+                      </td>
+                      <td className={`p-3 text-right font-medium ${row.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                        {row.profit >= 0 ? '+' : ''}{Number(row.profit).toLocaleString()} EGP
+                      </td>
+                      <td className="p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-xs">{row.costPct.toFixed(0)}%</span>
+                          <div className="w-12 h-1.5  rounded-full overflow-hidden">
+                            <div className="h-full " style={{ width: `${row.costPct}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-xs">{row.revenuePct.toFixed(0)}%</span>
+                          <div className="w-12 h-1.5 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500" style={{ width: `${row.revenuePct}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {platformTableData.length === 1 && ( // Only Total row exists means no data
+                    <tr>
+                      <td colSpan={7} className="p-4 text-center dark:text-white">
+                        {t('No data available')}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
       {/* 4. Campaign & Source Performance (Tabs) */}
       <div className="card glass-card overflow-visible">
         {/* Tabs Header */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className="border-b border-theme-border">
           <div className="flex">
             <button 
               className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'monthly' ? 'border-primary text-primary' : 'border-transparent  hover:text-gray-700'}`}
@@ -710,13 +772,13 @@ export default function MarketingReports() {
           {activeTab === 'monthly' && (
             <div>
               {/* Mobile Cards */}
-              <div className="md:hidden space-y-4 mb-4">
+              <div className="lg:hidden space-y-4 mb-4">
                 {monthlyData.length > 0 ? (
                   monthlyData
                     .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                     .map((m, idx) => (
-                      <div key={`${m.month}-${idx}`} className="card glass-card p-4 space-y-3 bg-white/5 border border-gray-800 rounded-lg">
-                        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3">
+                      <div key={`${m.month}-${idx}`} className="card glass-card p-4 space-y-3 bg-theme-bg border border-theme-border rounded-lg">
+                        <div className="flex items-center justify-between border-b border-theme-border pb-3">
                           <h4 className="font-semibold text-sm">{m.month}</h4>
                           <span className="text-xs px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
                             ROAS: {m.roas}x
@@ -850,7 +912,7 @@ export default function MarketingReports() {
                             <span className="font-mono font-medium">${campaign.cpl}</span>
                           </div>
                           
-                          <div className="col-span-2 space-y-1 pt-2 border-t border-gray-100 dark:border-gray-800 mt-1">
+                          <div className="col-span-2 space-y-1 pt-2 border-t border-theme-border mt-1">
                             <div className="flex justify-between items-center">
                               <span className="text-[var(--muted-text)] text-xs">{t('Qual. Leads %')}</span>
                               <span className="text-xs font-medium">{campaign.qualifiedLeadsPct}%</span>
@@ -870,7 +932,7 @@ export default function MarketingReports() {
               </div>
 
               {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="table w-full text-xs sm:text-sm">
                   <thead>
                     <tr>

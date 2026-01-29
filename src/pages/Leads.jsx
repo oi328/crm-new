@@ -24,6 +24,9 @@ export const Leads = () => {
   const navigate = useNavigate()
   const { stages, statuses } = useStages()
   const isRtl = String(i18n.language || '').startsWith('ar')
+
+  const userRole = (user?.role || '').toLowerCase();
+  const isManagerOrAdmin = ['admin', 'manager', 'sales director', 'operations manager', 'super admin'].some(r => userRole.includes(r));
   const MEET_ICON_URL = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'><rect x='2' y='4' width='12' height='16' rx='3' fill='%23ffffff'/><rect x='2' y='4' width='12' height='4' rx='2' fill='%234285F4'/><rect x='2' y='4' width='4' height='16' rx='2' fill='%2334A853'/><rect x='10' y='4' width='4' height='16' rx='2' fill='%23FBBC05'/><rect x='2' y='16' width='12' height='4' rx='2' fill='%23EA4335'/><polygon points='14,9 22,5 22,19 14,15' fill='%2334A853'/></svg>"
   
   const [leads, setLeads] = useState([])
@@ -183,9 +186,9 @@ export const Leads = () => {
       const params = new URLSearchParams(location.search || '')
       const s = params.get('stage')
       if (s) {
-        setStageFilter(s)
+        setStageFilter([s])
       } else {
-        setStageFilter('all')
+        setStageFilter([])
       }
     } catch (e) {
       console.error('Error parsing URL for stage filter:', e) // FIX 4: Added console.error
@@ -609,8 +612,6 @@ export const Leads = () => {
     let filtered = leads.filter(lead => {
       // VISIBILITY CONTROL: Duplicate leads only visible to managers
       const isDuplicateStage = String(lead.stage || '').toLowerCase() === 'duplicate';
-      const userRole = (user?.role || '').toLowerCase();
-      const isManagerOrAdmin = ['admin', 'manager', 'sales director', 'operations manager', 'super admin'].some(r => userRole.includes(r));
       
       if (isDuplicateStage && !isManagerOrAdmin) {
         return false;
@@ -703,7 +704,7 @@ export const Leads = () => {
       projectFilter, stageFilter, managerFilter, salesPersonFilter, createdByFilter,
       assignDateFilter, actionDateFilter, creationDateFilter, oldStageFilter, closedDateFilter,
       campaignFilter, countryFilter, expectedRevenueFilter, emailFilter, whatsappIntentsFilter,
-      actionTypeFilter, duplicateStatusFilter, user])
+      actionTypeFilter, duplicateStatusFilter, user, isManagerOrAdmin])
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -1136,7 +1137,7 @@ export const Leads = () => {
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2">
             {/* Search */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <FaSearch size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Search')}
               </label>
@@ -1151,7 +1152,7 @@ export const Leads = () => {
 
             {/* Source Filter */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 4l-4 4 4 4" />
                 </svg>
@@ -1171,7 +1172,7 @@ export const Leads = () => {
 
             {/* Priority Filter */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -1193,7 +1194,7 @@ export const Leads = () => {
 
             {/* Project Filter */}
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
@@ -1219,7 +1220,7 @@ export const Leads = () => {
 
               {/* Stage Filter (using sidebar stages for options) */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                   </svg>
@@ -1243,7 +1244,7 @@ export const Leads = () => {
 
               {/* Manager Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
@@ -1263,7 +1264,7 @@ export const Leads = () => {
 
               {/* Sales Person Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
@@ -1282,7 +1283,7 @@ export const Leads = () => {
 
               {/* Created By Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20h18" />
                   </svg>
@@ -1302,7 +1303,7 @@ export const Leads = () => {
 
               {/* Old Stage Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c1.657 0 3 1.343 3 3v1h1a2 2 0 012 2v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5a2 2 0 012-2h1v-1c0-1.657 1.343-3 3-3z" />
                   </svg>
@@ -1321,7 +1322,7 @@ export const Leads = () => {
 
               {/* Campaign Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m0 0a2 2 0 104 0m-4 0h4" />
                   </svg>
@@ -1341,7 +1342,7 @@ export const Leads = () => {
 
               {/* Country Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v10a2 2 0 01-2 2H3.055L3 11zM11 5h2m-2 0V3m0 2v2m0-2h-2m2 0h2m-2 0V3a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2z" />
                   </svg>
@@ -1361,7 +1362,7 @@ export const Leads = () => {
 
               {/* Expected Revenue Filter (Text/Number Input) */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .343-3 .768V11a.5.5 0 00.5.5h5a.5.5 0 00.5-.5V8.768C15 8.343 13.657 8 12 8z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11.5v6.5m-3-6.5h6m-3 0V5m0 0h3m-3 0H9" />
@@ -1379,7 +1380,7 @@ export const Leads = () => {
 
               {/* Email Filter (Text Input) */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <FaEnvelope size={12} className="text-blue-500 dark:text-blue-400" />
                   {t('Email')}
                 </label>
@@ -1396,7 +1397,7 @@ export const Leads = () => {
 
               {/* action Type Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
@@ -1443,7 +1444,7 @@ export const Leads = () => {
 
               {/* Assign Date Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
@@ -1459,7 +1460,7 @@ export const Leads = () => {
 
               {/* Action Date Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
@@ -1475,7 +1476,7 @@ export const Leads = () => {
 
               {/* Creation Date Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
@@ -1491,7 +1492,7 @@ export const Leads = () => {
 
               {/* Closed Date Filter */}
               <div className="space-y-1">
-                <label className="flex items-center gap-1 text-xs font-medium  dark:text-white">
+                <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                   <svg className="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
@@ -1532,6 +1533,22 @@ export const Leads = () => {
           <span className="flex items-center gap-2"><span>Σ</span><span>{t('total leads')}</span></span>
           <span className="font-bold">{stageCounts.total}</span>
         </button>
+
+        {isManagerOrAdmin && (
+          <button
+            onClick={() => {
+              if (salesPersonFilter.includes(user?.name)) {
+                setSalesPersonFilter([])
+              } else {
+                setSalesPersonFilter([user?.name])
+              }
+            }}
+            className={`btn btn-glass text-sm inline-flex items-center justify-between gap-2 px-3 py-2 ${textColor} ${salesPersonFilter.includes(user?.name) ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/30' : ''}`}
+          >
+            <span className="flex items-center gap-2"><span>👤</span><span>{t('My Leads')}</span></span>
+          </button>
+        )}
+
         {sidebarStages.map((s) => (
           <button
             key={s.key}
@@ -1549,7 +1566,7 @@ export const Leads = () => {
         <div className="flex justify-between items-center p-3 border-b border-theme-border dark:border-gray-700">
           {selectedLeads.length > 0 ? (
             <div className="flex items-center gap-4 flex-wrap">
-              <span className="text-sm font-medium  dark:text-white">
+              <span className="text-sm font-medium text-theme-text dark:text-white">
                 {t('Selected')}: {selectedLeads.length} {t('Leads')}
               </span>
 
@@ -1596,15 +1613,15 @@ export const Leads = () => {
               </button>
             </div>
           ) : (
-            <span className="text-sm font-medium  dark:text-white">{t('No leads selected for bulk actions')}</span>
+            <span className="text-sm font-medium text-theme-text dark:text-white">{t('No leads selected for bulk actions')}</span>
           )}
         </div>
         <div ref={scrollXRef} className="mt-4 w-full overflow-x-auto rounded-lg shadow-md backdrop-blur-lg" style={{ '--table-header-bg': theme === 'dark' ? 'transparent' : undefined, '--scroll-bg': theme === 'dark' ? '#0f172a' : '#f9fafb' }}>
-          <table className="w-max min-w-full divide-y divide-theme-border dark:divide-gray-700 dark:text-white" style={{ tableLayout: 'auto' }}>
+          <table className="w-max min-w-full divide-y divide-theme-border dark:divide-gray-700 text-theme-text dark:text-white" style={{ tableLayout: 'auto' }}>
             <thead className={` ${tableHeaderBgClass} backdrop-blur-md sticky top-0 z-30 shadow-md`} style={{ backgroundColor: 'var(--table-header-bg)' }}>
               <tr>
                 {/* Checkbox Column */}
-                <th scope="col" className="w-10 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white whitespace-nowrap" style={{ backgroundColor: 'var(--table-header-bg)' }}>
+                <th scope="col" className="w-10 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-theme-text dark:text-white whitespace-nowrap" style={{ backgroundColor: 'var(--table-header-bg)' }}>
                   <input
                     type="checkbox"
                     checked={selectedLeads.length === paginatedLeads.length && paginatedLeads.length > 0}
@@ -1642,7 +1659,7 @@ export const Leads = () => {
                   <th
                     key="contact"
                     scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider dark:text-white w-48 whitespace-nowrap`}
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-theme-text dark:text-white w-48 whitespace-nowrap`}
                     style={{ backgroundColor: 'var(--table-header-bg)' }}
                   >
                     <div className="flex items-center gap-1">{allColumns.contact}</div>
@@ -1712,23 +1729,23 @@ export const Leads = () => {
 
                   {/* Lead Info */}
                   {visibleColumns.lead && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium  dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text dark:text-white">
                       <div className="font-semibold text-base flex items-center gap-1">
                         {lead.name}
                         {String(lead.stage || lead.status || '').toLowerCase().includes('duplicate') && (
                           <FaClone className="text-red-500" size={12} title={t('Duplicate Lead')} />
                         )}
                       </div>
-                      <div className=" dark:text-white text-xs mt-0.5">{lead.company}</div>
+                      <div className="text-gray-500 dark:text-white text-xs mt-0.5">{lead.company}</div>
                     </td>
                   )}
 
                   {/* Contact Info */}
                   {visibleColumns.contact && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white">
-                      <div className="font-normal dark:text-white">{lead.email}</div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white">
+                      <div className="font-normal text-theme-text dark:text-white">{lead.email}</div>
                       <div 
-                        className="font-normal dark:text-white hover:text-[#25D366] cursor-pointer transition-colors duration-200 flex items-center gap-1"
+                        className="font-normal text-theme-text dark:text-white hover:text-[#25D366] cursor-pointer transition-colors duration-200 flex items-center gap-1"
                         onClick={(e) => {
                           e.stopPropagation();
                           const raw = lead.phone || lead.mobile || '';
@@ -1804,7 +1821,7 @@ export const Leads = () => {
 
                   {/* Source */}
                   {visibleColumns.source && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  dark:text-white" style={{ minWidth: `${columnMinWidths.source}px` }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text dark:text-white" style={{ minWidth: `${columnMinWidths.source}px` }}>
                       <span className="text-base">{getSourceIcon(lead.source)}</span> {lead.source}
                     </td>
                   )}

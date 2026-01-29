@@ -9,7 +9,7 @@ import { PieChart } from '@shared/components/PieChart'
 import { Bar } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
 import SearchableSelect from '@shared/components/SearchableSelect'
-import { ArrowLeft, ArrowRight, Filter, User, Users, Tag, Briefcase, Calendar, Target, Trophy, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Filter, User, Users, Tag, Briefcase, Calendar, Target, Trophy, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { FaFileExport, FaFileExcel, FaFilePdf } from 'react-icons/fa'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
@@ -93,7 +93,6 @@ export default function RevenueReport() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const isRTL = i18n.language === 'ar'
-  const [expandedRows, setExpandedRows] = useState(new Set())
   const [salesPersonFilter, setSalesPersonFilter] = useState('all')
   const [managerFilter, setManagerFilter] = useState('all')
   const [sourceFilter, setSourceFilter] = useState('all')
@@ -109,16 +108,6 @@ export default function RevenueReport() {
   const [revenuePieMode, setRevenuePieMode] = useState('project')
   const salesMenuRef = useRef(null)
   const timeMenuRef = useRef(null)
-
-  const toggleRow = id => {
-    const newExpanded = new Set(expandedRows)
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id)
-    } else {
-      newExpanded.add(id)
-    }
-    setExpandedRows(newExpanded)
-  }
 
   useEffect(() => {
     const handleClickOutside = event => {
@@ -576,7 +565,7 @@ export default function RevenueReport() {
   const renderPieCard = (title, data, headerRight) => {
     const total = data.reduce((sum, item) => sum + (item.value || 0), 0)
     return (
-      <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+      <div className="group relative  dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm font-semibold dark:text-white">{title}</div>
           {headerRight}
@@ -604,7 +593,7 @@ export default function RevenueReport() {
   }
 
   return (
-    <div className="p-4 md:p-6 bg-[var(--content-bg)] text-[var(--content-text)] overflow-hidden min-w-0 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-4 md:p-6 bg-theme-bg text-theme-text overflow-hidden min-w-0 max-w-[1600px] mx-auto space-y-6">
       <div>
         <BackButton to="/reports" />
         <h1 className="text-2xl font-bold dark:text-white mb-1 flex items-center gap-2">
@@ -618,7 +607,7 @@ export default function RevenueReport() {
         </p>
       </div>
 
-      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-4">
+      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-theme-border dark:border-gray-700/50 p-6 mb-4">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 dark:text-white font-semibold">
             <Filter size={20} className="text-blue-500 dark:text-blue-400" />
@@ -768,10 +757,10 @@ export default function RevenueReport() {
         ].map(card => (
           <div
             key={card.label}
-            className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex items-center justify-between"
+            className="group relative  backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex items-center justify-between"
           >
             <div>
-              <div className="text-xs dark:text-white">{card.label}</div>
+              <div className="text-xs text-theme-text dark:text-white">{card.label}</div>
               <div className="text-lg font-semibold">{card.value}</div>
             </div>
             <div className={`w-8 h-8 rounded-lg ${card.accent}`}></div>
@@ -780,7 +769,7 @@ export default function RevenueReport() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="group relative   dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div className="text-sm font-semibold dark:text-white flex items-center gap-2">
               <Target size={18} className="text-blue-500" />
@@ -804,10 +793,10 @@ export default function RevenueReport() {
                     onClick={() => {
                       setChartMode('salesperson')
                     }}
-                    className={`px-3 py-1 text-xs rounded-l-full transition-colors border-r border-white/30 dark:border-gray-700/50 ${
+                    className={`px-3 py-1 text-xs rounded-l-full transition-colors border-r border-theme-border dark:border-gray-700/50 ${
                       chartMode === 'salesperson'
                         ? 'bg-blue-600 text-white'
-                        : 'text-[var(--content-text)] dark:text-white'
+                        : 'text-theme-text dark:text-white'
                     }`}
                   >
                     {salesGrouping === 'team' ? (isRTL ? 'الفريق' : 'Team') : (isRTL ? 'موظف المبيعات' : 'Sales Person')}
@@ -820,7 +809,7 @@ export default function RevenueReport() {
                     className={`px-2 py-1 text-xs rounded-r-full transition-colors ${
                       chartMode === 'salesperson'
                         ? 'bg-blue-600 text-white'
-                        : 'text-[var(--content-text)] dark:text-white'
+                        : 'text-theme-text dark:text-white'
                     }`}
                   >
                     <ChevronDown
@@ -841,7 +830,7 @@ export default function RevenueReport() {
                         className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[rgba(37,99,235,0.28)] dark:hover:bg-gray-700/60 ${
                           salesGrouping === 'salesperson'
                             ? 'text-blue-600 dark:text-blue-400'
-                            : 'text-[var(--content-text)] dark:text-white'
+                            : 'text-theme-text dark:text-white'
                         }`}
                       >
                         {isRTL ? 'موظف المبيعات' : 'Sales Person'}
@@ -855,7 +844,7 @@ export default function RevenueReport() {
                         className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[rgba(37,99,235,0.28)] dark:hover:bg-gray-700/60 ${
                           salesGrouping === 'team'
                             ? 'text-blue-600 dark:text-blue-400'
-                            : 'text-[var(--content-text)] dark:text-white'
+                            : 'text-theme-text dark:text-white'
                         }`}
                       >
                         {isRTL ? 'الفريق' : 'Team'}
@@ -870,10 +859,10 @@ export default function RevenueReport() {
                     onClick={() => {
                       setChartMode('month')
                     }}
-                    className={`px-3 py-1 text-xs rounded-l-full transition-colors border-r border-white/30 dark:border-gray-700/50 ${
+                    className={`px-3 py-1 text-xs rounded-l-full transition-colors border-r border-theme-border dark:border-gray-700/50 ${
                       chartMode === 'month'
                         ? 'bg-blue-600 text-white'
-                        : 'text-[var(--content-text)] dark:text-white'
+                        : 'text-theme-text dark:text-white'
                     }`}
                   >
                     {timeGrouping === 'monthly'
@@ -892,7 +881,7 @@ export default function RevenueReport() {
                     className={`px-2 py-1 text-xs rounded-r-full transition-colors ${
                       chartMode === 'month'
                         ? 'bg-blue-600 text-white'
-                        : 'text-[var(--content-text)] dark:text-white'
+                        : 'text-theme-text dark:text-white'
                     }`}
                   >
                     <ChevronDown
@@ -980,7 +969,7 @@ export default function RevenueReport() {
             ? (isRTL ? 'الإيرادات حسب المشروع' : 'Revenue by project')
             : (isRTL ? 'الإيرادات حسب المصدر' : 'Revenue by source'),
           revenuePieMode === 'project' ? revenueByProjectSegments : revenueBySourceSegments,
-          <div className="inline-flex items-center gap-1 bg-black/5 dark:bg-white/5 rounded-full p-0.5">
+          <div className="inline-flex items-center gap-1 bg-black/5 dark:bg-gray-800/30 rounded-full p-0.5">
             <button
               type="button"
               onClick={() => setRevenuePieMode('project')}
@@ -1006,7 +995,7 @@ export default function RevenueReport() {
           </div>
         )}
 
-        <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="group relative   dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Trophy size={18} className="text-yellow-400" />
@@ -1040,9 +1029,9 @@ export default function RevenueReport() {
         </div>
       </div>
 
-      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
-          <h2 className="text-lg font-bold dark:text-white">{isRTL ? 'نظرة عامة على الأهداف والإيرادات' : 'Targets & Revenue Overview'}</h2>
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-theme-border dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-theme-text dark:text-white">{isRTL ? 'نظرة عامة على الأهداف والإيرادات' : 'Targets & Revenue Overview'}</h2>
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(prev => !prev)}
@@ -1077,18 +1066,109 @@ export default function RevenueReport() {
             )}
           </div>
         </div>
-        <div className="overflow-x-auto">
+        {/* Mobile View - Cards */}
+        <div className="md:hidden space-y-4 p-4">
+          {paginatedData.map(row => {
+              const achievement = row.target ? Math.round((row.revenue / row.target) * 100) : 0
+              
+              const dealTypeLabel = {
+                'Reservation': isRTL ? 'حجز' : 'Reservation',
+                'Contract': isRTL ? 'عقد' : 'Contract',
+                'Proposal': isRTL ? 'عرض سعر' : 'Proposal'
+              }[row.dealType] || row.dealType
+
+              const statusLabel = {
+                'Closed Won': isRTL ? 'مغلق (فوز)' : 'Closed Won',
+                'Closed Lost': isRTL ? 'مغلق (خسارة)' : 'Closed Lost',
+                'In Progress': isRTL ? 'قيد التنفيذ' : 'In Progress'
+              }[row.status] || row.status
+
+              const statusColors = {
+                  'Closed Won': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+                  'Closed Lost': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+                  'In Progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+              }[row.status] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+
+            return (
+              <div key={row.id} className=" rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+                {/* Header */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-theme-text dark:text-white text-lg">{row.salesperson}</h3>
+                    <p className="text-xs text-theme-text dark:text-white mt-1">{row.manager}</p>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusColors}`}>
+                    {statusLabel}
+                  </span>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'المشروع' : 'Project'}</span>
+                    <span className="font-medium text-theme-text dark:text-white">{row.project}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'المصدر' : 'Source'}</span>
+                    <span className="font-medium text-theme-text dark:text-white">{row.source}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'نوع الصفقة' : 'Deal Type'}</span>
+                    <span className="font-medium text-theme-text dark:text-white">{dealTypeLabel}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'التاريخ' : 'Date'}</span>
+                    <span className="font-medium text-theme-text dark:text-white">{row.date}</span>
+                  </div>
+                </div>
+
+                {/* Financials & Achievement */}
+                <div className=" rounded-lg p-3 space-y-3">
+                  <div className="flex justify-between items-center">
+                      <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'الهدف' : 'Target'}</span>
+                      <span className="font-semibold text-theme-text dark:text-white">{row.target.toLocaleString()} EGP</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                      <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'الإيرادات' : 'Revenue'}</span>
+                      <span className="font-semibold text-theme-text dark:text-white">{row.revenue.toLocaleString()} EGP</span>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="space-y-1 pt-1">
+                      <div className="flex justify-between text-xs">
+                          <span className="text-theme-text dark:text-white">{isRTL ? 'نسبة الإنجاز' : 'Achievement'}</span>
+                          <span className={`${achievement >= 100 ? 'text-emerald-600' : 'text-blue-600'} font-medium`}>{achievement}%</span>
+                      </div>
+                      <div className="w-full  rounded-full h-1.5 overflow-hidden">
+                          <div 
+                              className={`h-full rounded-full ${achievement >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                              style={{ width: `${Math.min(achievement, 100)}%` }}
+                          />
+                      </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+            {paginatedData.length === 0 && (
+              <div className="text-center py-8 text-theme-text dark:text-white">
+                  {isRTL ? 'لا توجد بيانات' : 'No data'}
+              </div>
+          )}
+        </div>
+
+        {/* Desktop View - Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-xs text-left rtl:text-right">
             <thead className="text-[0.68rem] uppercase  bg-white/5 dark:bg-white/5 dark:te text-[var(--muted-text)] dark:text-white">
               <tr>
-                <th className="px-4 py-3 font-medium md:hidden w-8"></th>
                 <th className="px-4 py-3 font-medium">{isRTL ? 'موظف المبيعات' : 'Sales Person'}</th>
-                <th className="px-4 py-3 font-medium hidden md:table-cell">{isRTL ? 'المدير' : 'Manager'}</th>
-                <th className="px-4 py-3 font-medium hidden md:table-cell">{isRTL ? 'المشروع' : 'Project'}</th>
-                <th className="px-4 py-3 font-medium hidden md:table-cell">{isRTL ? 'المصدر' : 'Source'}</th>
-                <th className="px-4 py-3 font-medium hidden md:table-cell">{isRTL ? 'نوع الصفقة' : 'Deal Type'}</th>
-                <th className="px-4 py-3 font-medium hidden md:table-cell">{isRTL ? 'الحالة' : 'Status'}</th>
-                <th className="px-4 py-3 font-medium hidden md:table-cell">{isRTL ? 'التاريخ' : 'Date'}</th>
+                <th className="px-4 py-3 font-medium">{isRTL ? 'المدير' : 'Manager'}</th>
+                <th className="px-4 py-3 font-medium">{isRTL ? 'المشروع' : 'Project'}</th>
+                <th className="px-4 py-3 font-medium">{isRTL ? 'المصدر' : 'Source'}</th>
+                <th className="px-4 py-3 font-medium">{isRTL ? 'نوع الصفقة' : 'Deal Type'}</th>
+                <th className="px-4 py-3 font-medium">{isRTL ? 'الحالة' : 'Status'}</th>
+                <th className="px-4 py-3 font-medium">{isRTL ? 'التاريخ' : 'Date'}</th>
                 <th className="px-4 py-3 font-medium text-right rtl:text-left">{isRTL ? 'الهدف' : 'Target'}</th>
                 <th className="px-4 py-3 font-medium text-right rtl:text-left">{isRTL ? 'الإيرادات' : 'Revenue'}</th>
                 <th className="px-4 py-3 font-medium text-right rtl:text-left">{isRTL ? 'نسبة الإنجاز' : 'Achievement %'}</th>
@@ -1097,7 +1177,6 @@ export default function RevenueReport() {
             <tbody className="divide-y divide-white/30 dark:divide-gray-800">
               {paginatedData.map(row => {
                 const achievement = row.target ? Math.round((row.revenue / row.target) * 100) : 0
-                const isExpanded = expandedRows.has(row.id)
                 
                 const dealTypeLabel = {
                   'Reservation': isRTL ? 'حجز' : 'Reservation',
@@ -1112,72 +1191,30 @@ export default function RevenueReport() {
                 }[row.status] || row.status
 
                 return (
-                  <React.Fragment key={row.id}>
-                    <tr className="hover:bg-white/30 dark:hover:bg-gray-900/40 transition-colors">
-                      <td className="px-4 py-3 md:hidden">
-                        <button
-                          onClick={() => toggleRow(row.id)}
-                          className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors"
-                        >
-                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap dark:text-white">{row.salesperson}</td>
-                      <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell dark:text-white">{row.manager}</td>
-                      <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell dark:text-white">{row.project}</td>
-                      <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell dark:text-white">{row.source}</td>
-                      <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell dark:text-white">{dealTypeLabel}</td>
-                      <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell dark:text-white">{statusLabel}</td>
-                      <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell dark:text-white">{row.date}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right rtl:text-left dark:text-white">
+                    <tr key={row.id} className="hover:bg-white/30 dark:hover:bg-gray-900/40 transition-colors">
+                      <td className="px-4 py-3 whitespace-nowrap text-theme-text dark:text-white">{row.salesperson}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-theme-text dark:text-white">{row.manager}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-theme-text dark:text-white">{row.project}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-theme-text dark:text-white">{row.source}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-theme-text dark:text-white">{dealTypeLabel}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-theme-text dark:text-white">{statusLabel}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-theme-text dark:text-white">{row.date}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right rtl:text-left text-theme-text dark:text-white">
                         {row.target.toLocaleString()} EGP
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right rtl:text-left dark:text-white">
+                      <td className="px-4 py-3 whitespace-nowrap text-right rtl:text-left text-theme-text dark:text-white">
                         {row.revenue.toLocaleString()} EGP
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right rtl:text-left dark:text-white">
+                      <td className="px-4 py-3 whitespace-nowrap text-right rtl:text-left text-theme-text dark:text-white">
                         {achievement}%
                       </td>
                     </tr>
-                    {isExpanded && (
-                      <tr className="md:hidden bg-white/10 dark:bg-gray-800/20">
-                        <td colSpan={11} className="px-4 py-3">
-                          <div className="space-y-2 text-xs">
-                            <div className="flex justify-between">
-                              <span className="text-[var(--muted-text)]">{isRTL ? 'المدير' : 'Manager'}:</span>
-                              <span className="dark:text-white">{row.manager}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-[var(--muted-text)]">{isRTL ? 'المشروع' : 'Project'}:</span>
-                              <span className="dark:text-white">{row.project}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-[var(--muted-text)]">{isRTL ? 'المصدر' : 'Source'}:</span>
-                              <span className="dark:text-white">{row.source}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-[var(--muted-text)]">{isRTL ? 'نوع الصفقة' : 'Deal Type'}:</span>
-                              <span className="dark:text-white">{dealTypeLabel}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-[var(--muted-text)]">{isRTL ? 'الحالة' : 'Status'}:</span>
-                              <span className="dark:text-white">{statusLabel}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-[var(--muted-text)]">{isRTL ? 'التاريخ' : 'Date'}:</span>
-                              <span className="dark:text-white">{row.date}</span>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
                 )
               })}
               {filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan={11}
+                    colSpan={10}
                     className="px-4 py-6 text-center text-xs text-[var(--muted-text)]"
                   >
                     {isRTL ? 'لا توجد سجلات تطابق الفلاتر الحالية' : 'No records match current filters'}

@@ -34,6 +34,8 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
   const [composeText, setComposeText] = useState('');
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [showAssignMenu, setShowAssignMenu] = useState(false);
+  const [assignStep, setAssignStep] = useState('teams');
+  const [selectedTeam, setSelectedTeam] = useState(null);
   const [historyDateFilter, setHistoryDateFilter] = useState('');
   const [checkInHistory, setCheckInHistory] = useState([]);
 
@@ -737,28 +739,28 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
   const isLight = theme === 'light';
   return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-0">
-      <div className={`${isLight ? 'bg-white/70 backdrop-blur-md text-slate-800' : 'bg-slate-800 text-white'} w-full sm:max-w-5xl max-h-[85vh] h-auto sm:rounded-3xl overflow-y-auto shadow-2xl p-3 sm:p-4`}>
+      <div className={`${isLight ? 'bg-white/70 backdrop-blur-md text-slate-800' : 'bg-slate-800 text-white'} w-full sm:max-w-5xl max-h-[95vh] sm:max-h-[85vh] h-auto sm:rounded-3xl overflow-y-auto shadow-2xl p-2 sm:p-4`}>
         {/* Header */}
-        <div className={`${isLight ? 'bg-white/60 border-gray-200' : 'bg-slate-800 border-slate-700'} p-3 sm:p-4 border-b`}>
+        <div className={`${isLight ? 'bg-white/60 border-gray-200' : 'bg-slate-800 border-slate-700'} p-2 sm:p-4 border-b`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 rtl:space-x-reverse">
+            <div className="flex items-center space-x-2 sm:space-x-4 rtl:space-x-reverse">
               {/* Profile Picture */}
-              <div className="w-12 h-12 bg-slate-600 rounded-full flex items-center justify-center">
-                <FaUser className="text-2xl text-slate-300" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-600 rounded-full flex items-center justify-center">
+                <FaUser className="text-xl sm:text-2xl text-slate-300" />
               </div>
               
               {/* Lead Info */}
               <div className="flex-1">
-                <h2 className={`text-lg font-semibold mb-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>{leadData.name}</h2>
+                <h2 className={`text-base sm:text-lg font-semibold mb-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>{leadData.name}</h2>
                 <p className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs mb-0.5`}>{leadData.phone}</p>
-                <p className={`${isLight ? 'text-slate-500' : 'text-slate-400'} text-xs`}>{leadData.email}</p>
+                <p className={`${isLight ? 'text-slate-500' : 'text-slate-400'} text-[10px] sm:text-xs`}>{leadData.email}</p>
               </div>
             </div>
             
               {/* Actions Section */}
-            <div className="flex flex-col items-end space-y-3">
+            <div className="flex flex-col items-end space-y-2 sm:space-y-3">
               {/* Action Buttons Row */}
-              <div className="flex items-center justify-between gap-2 w-[220px] sm:w-[280px] relative">
+              <div className="flex items-center justify-end gap-1 sm:gap-2 w-auto relative">
                 {/* Removed Check-In Button from here */}
                 {/* Removed preview toggle button */}
                 {/* Add Action (icon-only) */}
@@ -920,14 +922,14 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
               <div className="w-full h-px"></div>
               
               {/* Status Badges Row */}
-              <div className="flex space-x-6 rtl:space-x-reverse">
-                <span className="px-3 py-1 bg-emerald-500 text-white text-sm rounded-full font-medium">
+              <div className="flex flex-wrap justify-end gap-1 sm:gap-6 rtl:space-x-reverse">
+                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-emerald-500 text-white text-[10px] sm:text-sm rounded-full font-medium">
                   qualified
                 </span>
-                <span className="px-3 py-1 bg-orange-500 text-white text-sm rounded-full font-medium">
+                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-orange-500 text-white text-[10px] sm:text-sm rounded-full font-medium">
                   high
                 </span>
-                <span className={stageBadgeClass} style={stageColorStyle}>
+                <span className={`${stageBadgeClass} text-[10px] sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1`} style={stageColorStyle}>
                   {leadData.stage}
                 </span>
               </div>
@@ -983,13 +985,13 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
         />
 
         {/* Tabs */}
-        <div className={`${isLight ? 'bg-white/60 border-gray-200' : 'bg-slate-800 border-slate-700'} px-6 border-b ${showAddActionModal ? 'hidden' : ''}`}>
+        <div className={`${isLight ? 'bg-white/60 border-gray-200' : 'bg-slate-800 border-slate-700'} px-0 sm:px-6 border-b ${showAddActionModal ? 'hidden' : ''}`}>
           <div className="flex justify-between w-full">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-4 px-4 text-sm font-medium border-b-2 transition-all duration-200 text-center ${
+                className={`flex-1 py-2 sm:py-4 px-2 sm:px-4 text-[10px] sm:text-sm font-medium border-b-2 transition-all duration-200 text-center ${
                   activeTab === tab.id
                     ? `${isLight ? 'border-emerald-500 text-slate-900 bg-emerald-50 rounded-t-lg shadow-lg shadow-emerald-200/50 font-semibold' : 'border-emerald-400 text-white bg-emerald-500/20 rounded-t-lg shadow-lg shadow-emerald-500/10 font-semibold'}`
                     : `${isLight ? 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-100' : 'border-transparent text-slate-400 hover:text-white hover:border-slate-500 hover:bg-slate-700/30'}`
@@ -1002,67 +1004,67 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
         </div>
 
         {/* Content */}
-        <div className={`flex-1 overflow-y-auto p-6 ${isLight ? 'bg-white/70' : 'bg-slate-800'} ${showAddActionModal ? 'hidden' : ''}`}>
+        <div className={`flex-1 overflow-y-auto p-2 sm:p-6 ${isLight ? 'bg-white/70' : 'bg-slate-800'} ${showAddActionModal ? 'hidden' : ''}`}>
           {activeTab === 'overview' && (
-            <div className="space-y-8">
+            <div className="space-y-3 sm:space-y-8">
               {/* Two Column: Current Status (left) and Lead Information (right) */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-8">
                 {/* Left: Current Status */}
                 <div>
                   <h3 className={`${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'} font-semibold mb-3 border-b pb-2 text-left`}>Current Status</h3>
-                  <div className="flex justify-start items-center gap-16 mb-6">
+                  <div className="flex justify-around sm:justify-start items-center gap-2 sm:gap-16 mb-4 sm:mb-6">
                     {/* Stat 1 - Dark circle with 3 and "Total Actions" label */}
                     <div className="flex flex-col items-center">
-                      <div className="relative w-24 h-24 rounded-full mb-2 bg-[conic-gradient(#34d399_0_12%,_#334155_12%)]">
+                      <div className="relative w-14 h-14 sm:w-24 sm:h-24 rounded-full mb-1 sm:mb-2 bg-[conic-gradient(#34d399_0_12%,_#334155_12%)]">
                         <div className={`absolute inset-2 rounded-full flex items-center justify-center ${isLight ? 'bg-white border border-gray-300' : 'bg-slate-700 border border-slate-600'}`}>
-                          <span className={`text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>3</span>
+                          <span className={`text-base sm:text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>3</span>
                         </div>
                       </div>
-                      <span className={`text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Total Actions</span>
+                      <span className={`text-[10px] sm:text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Total Actions</span>
                     </div>
                     
                     {/* Stat 2 - Green circle with 2 and "Completed" label */}
                     <div className="flex flex-col items-center">
-                      <div className="relative w-24 h-24 rounded-full mb-2 bg-[conic-gradient(#10b981_0_100%)]">
+                      <div className="relative w-14 h-14 sm:w-24 sm:h-24 rounded-full mb-1 sm:mb-2 bg-[conic-gradient(#10b981_0_100%)]">
                         <div className={`absolute inset-2 rounded-full flex items-center justify-center ${isLight ? 'bg-white border border-emerald-300' : 'bg-slate-700 border border-emerald-400'}`}>
-                          <span className={`text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>2</span>
+                          <span className={`text-base sm:text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>2</span>
                         </div>
                       </div>
-                      <span className={`text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Completed</span>
+                      <span className={`text-[10px] sm:text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Completed</span>
                     </div>
                     
                     {/* Stat 3 - Orange circle with 1 and "Pending" label */}
                     <div className="flex flex-col items-center">
-                      <div className="relative w-24 h-24 rounded-full mb-2 bg-[conic-gradient(#f59e0b_0_100%)]">
+                      <div className="relative w-14 h-14 sm:w-24 sm:h-24 rounded-full mb-1 sm:mb-2 bg-[conic-gradient(#f59e0b_0_100%)]">
                         <div className={`absolute inset-2 rounded-full flex items-center justify-center ${isLight ? 'bg-white border border-orange-300' : 'bg-slate-700 border border-orange-400'}`}>
-                          <span className={`text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>1</span>
+                          <span className={`text-base sm:text-2xl font-bold ${isLight ? 'text-black' : 'text-white'}`}>1</span>
                         </div>
                       </div>
-                      <span className={`text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Pending</span>
+                      <span className={`text-[10px] sm:text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Pending</span>
                     </div>
                   </div>
 
                   {/* Quick Actions */}
-                  <div className="space-y-4 mt-6">
-                    <h4 className={`${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'} font-semibold mb-3 border-b pb-2`}>Quick Actions</h4>
-                    <div className="flex flex-wrap items-center gap-3 rtl:flex-row-reverse">
+                  <div className="space-y-3 mt-4 sm:mt-6">
+                    <h4 className={`${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'} font-semibold mb-2 sm:mb-3 border-b pb-2`}>Quick Actions</h4>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 rtl:flex-row-reverse">
                       <button 
                         onClick={() => setShowAddActionModal(true)}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 flex-grow sm:flex-grow-0"
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white py-1.5 sm:py-2 px-3 sm:px-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 flex-grow sm:flex-grow-0"
                       >
-                        <span className="w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center">
-                          <FaPlus className="text-xs" />
+                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-400 flex items-center justify-center">
+                          <FaPlus className="text-[10px] sm:text-xs" />
                         </span>
-                        <span className="text-sm whitespace-nowrap">+ Add New Action</span>
+                        <span className="text-xs sm:text-sm whitespace-nowrap">+ Add New Action</span>
                       </button>
                       <button 
                         onClick={() => setShowAttachmentsModal(true)}
-                        className={`${isLight ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'} text-white py-2 px-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 flex-grow sm:flex-grow-0`}
+                        className={`${isLight ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'} text-white py-1.5 sm:py-2 px-3 sm:px-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 flex-grow sm:flex-grow-0`}
                       >
-                        <span className="w-5 h-5 rounded-full bg-blue-400 flex items-center justify-center">
-                          <FaPaperclip className="text-xs" />
+                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-400 flex items-center justify-center">
+                          <FaPaperclip className="text-[10px] sm:text-xs" />
                         </span>
-                        <span className="text-sm whitespace-nowrap">{isArabic ? 'المرفقات' : 'Attachments'}</span>
+                        <span className="text-xs sm:text-sm whitespace-nowrap">{isArabic ? 'المرفقات' : 'Attachments'}</span>
                       </button>
                       <button 
                         onClick={() => {
@@ -1071,44 +1073,44 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                             console.log(isArabic ? 'تم التحويل إلى عميل' : 'Converted to customer');
                           }
                         }}
-                        className={`${isLight ? 'bg-white text-slate-700 border border-gray-300 hover:bg-slate-100' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600'} py-2 px-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 flex-grow sm:flex-grow-0`}
+                        className={`${isLight ? 'bg-white text-slate-700 border border-gray-300 hover:bg-slate-100' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600'} py-1.5 sm:py-2 px-3 sm:px-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 flex-grow sm:flex-grow-0`}
                       >
-                        <span className="w-5 h-5 rounded-full bg-yellow-600 flex items-center justify-center">
-                          <FaUserCheck className="text-xs text-white" />
+                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-yellow-600 flex items-center justify-center">
+                          <FaUserCheck className="text-[10px] sm:text-xs text-white" />
                         </span>
-                        <span className="text-sm whitespace-nowrap">{isArabic ? 'تحويل لعميل' : 'To Customer'}</span>
+                        <span className="text-xs sm:text-sm whitespace-nowrap">{isArabic ? 'تحويل لعميل' : 'To Customer'}</span>
                       </button>
                     </div>
                   </div>
                 </div>
 
                 {/* Right: Lead Information */}
-                <div className="space-y-4">
-                  <h3 className={`text-lg font-semibold mb-4 border-b pb-2 ${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'}`}>Lead Information</h3>
-                  <div className={`space-y-4 p-4 rounded-lg ${isLight ? 'bg-white border border-gray-200' : 'bg-slate-700'}`}>
+                <div className="space-y-2 sm:space-y-4">
+                  <h3 className={`text-base sm:text-lg font-semibold mb-2 sm:mb-4 border-b pb-2 ${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'}`}>Lead Information</h3>
+                  <div className={`space-y-2 sm:space-y-4 p-2 sm:p-4 rounded-lg ${isLight ? 'bg-white border border-gray-200' : 'bg-slate-700'}`}>
                     <div className="flex justify-between items-center">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Company:</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm font-medium text-right`}>{leadData.company}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>Company:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-xs sm:text-sm font-medium text-right`}>{leadData.company}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Location:</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.location}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>Location:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-xs sm:text-sm`}>{leadData.location}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Source:</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.source}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>Source:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-xs sm:text-sm`}>{leadData.source}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Created By:</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.createdBy}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>Created By:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-xs sm:text-sm`}>{leadData.createdBy}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Sales Person:</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.salesPerson}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>Sales Person:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-xs sm:text-sm`}>{leadData.salesPerson}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>Created Date:</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} text-sm`}>{leadData.createdDate}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>Created Date:</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} text-xs sm:text-sm`}>{leadData.createdDate}</span>
                     </div>
                   </div>
 
@@ -1119,58 +1121,58 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
               {/* Payment Plan Information */}
               {paymentPlan && (
                 <>
-                  <h3 className={`text-lg font-semibold mb-4 mt-6 border-b pb-2 ${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'}`}>
+                  <h3 className={`text-base sm:text-lg font-semibold mb-2 sm:mb-4 mt-4 sm:mt-6 border-b pb-2 ${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'}`}>
                     {isArabic ? 'خطة الدفع' : 'Payment Plan'}
                   </h3>
-                  <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 rounded-lg ${isLight ? 'bg-white border border-gray-200' : 'bg-slate-700'}`}>
+                  <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 p-3 sm:p-6 rounded-lg ${isLight ? 'bg-white border border-gray-200' : 'bg-slate-700'}`}>
                     <div className="flex flex-col gap-1">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'المشروع:' : 'Project:'}</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.projectName || '-'}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>{isArabic ? 'المشروع:' : 'Project:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-sm sm:text-lg`}>{paymentPlan.projectName || '-'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'رقم الوحدة:' : 'Unit No:'}</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.unitNo || '-'}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>{isArabic ? 'رقم الوحدة:' : 'Unit No:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-sm sm:text-lg`}>{paymentPlan.unitNo || '-'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'سعر الوحدة:' : 'Unit Price:'}</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.totalAmount ? Number(paymentPlan.totalAmount).toLocaleString() : '0'}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>{isArabic ? 'سعر الوحدة:' : 'Unit Price:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-sm sm:text-lg`}>{paymentPlan.totalAmount ? Number(paymentPlan.totalAmount).toLocaleString() : '0'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'الجراج:' : 'Garage:'}</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.garageAmount ? Number(paymentPlan.garageAmount).toLocaleString() : '0'}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>{isArabic ? 'الجراج:' : 'Garage:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-sm sm:text-lg`}>{paymentPlan.garageAmount ? Number(paymentPlan.garageAmount).toLocaleString() : '0'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'الصيانة:' : 'Maintenance:'}</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.maintenanceAmount ? Number(paymentPlan.maintenanceAmount).toLocaleString() : '0'}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>{isArabic ? 'الصيانة:' : 'Maintenance:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-sm sm:text-lg`}>{paymentPlan.maintenanceAmount ? Number(paymentPlan.maintenanceAmount).toLocaleString() : '0'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'صافي المبلغ:' : 'Net Amount:'}</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} font-bold text-lg`}>{paymentPlan.netAmount ? Number(paymentPlan.netAmount).toLocaleString() : '0'}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>{isArabic ? 'صافي المبلغ:' : 'Net Amount:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-bold text-sm sm:text-lg`}>{paymentPlan.netAmount ? Number(paymentPlan.netAmount).toLocaleString() : '0'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'المقدم:' : 'Down Payment:'}</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.downPayment ? Number(paymentPlan.downPayment).toLocaleString() : '0'}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>{isArabic ? 'المقدم:' : 'Down Payment:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-sm sm:text-lg`}>{paymentPlan.downPayment ? Number(paymentPlan.downPayment).toLocaleString() : '0'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'أقساط إضافية:' : 'Extra Installments:'}</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.extraInstallments ? Number(paymentPlan.extraInstallments).toLocaleString() : '0'}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>{isArabic ? 'أقساط إضافية:' : 'Extra Installments:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-sm sm:text-lg`}>{paymentPlan.extraInstallments ? Number(paymentPlan.extraInstallments).toLocaleString() : '0'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'قيمة القسط:' : 'Installment:'}</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.installmentAmount ? Number(paymentPlan.installmentAmount).toLocaleString() : '0'}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>{isArabic ? 'قيمة القسط:' : 'Installment:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-sm sm:text-lg`}>{paymentPlan.installmentAmount ? Number(paymentPlan.installmentAmount).toLocaleString() : '0'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>{isArabic ? 'عدد الأشهر:' : 'Months:'}</span>
-                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-lg`}>{paymentPlan.noOfMonths || '0'}</span>
+                      <span className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-xs sm:text-sm`}>{isArabic ? 'عدد الأشهر:' : 'Months:'}</span>
+                      <span className={`${isLight ? 'text-black' : 'text-white'} font-medium text-sm sm:text-lg`}>{paymentPlan.noOfMonths || '0'}</span>
                     </div>
                   </div>
                 </>
               )}
 
               {/* Check-In History Table */}
-              <div className="mt-8">
+              <div className="mt-4 sm:mt-8">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className={`text-lg font-semibold ${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'}`}>
+                  <h3 className={`text-base sm:text-lg font-semibold ${isLight ? 'text-black border-gray-300' : 'text-white border-slate-700'}`}>
                     {isArabic ? 'سجل الزيارات' : 'Check-In History'}
                   </h3>
                   <div className="flex items-center gap-2">
@@ -1188,54 +1190,54 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                      >
                        <FaTrash />
                      </button>
-                     <span className={`text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{isArabic ? 'تاريخ:' : 'Date:'}</span>
+                     <span className={`text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{isArabic ? 'تاريخ:' : 'Date:'}</span>
                      <input
                        type="date"
                        value={historyDateFilter}
                        onChange={(e) => setHistoryDateFilter(e.target.value)}
-                       className={`px-3 py-1.5 text-sm rounded-lg border focus:outline-none ${isLight ? 'bg-white border-gray-300 text-black' : 'bg-slate-600 border-slate-500 text-white'}`}
+                       className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-lg border focus:outline-none ${isLight ? 'bg-white border-gray-300 text-black' : 'bg-slate-600 border-slate-500 text-white'}`}
                      />
                   </div>
                 </div>
                 
                 <div className={`overflow-x-auto rounded-lg border ${isLight ? 'border-gray-200' : 'border-slate-600'}`}>
-                  <table className={`w-full text-sm text-left ${isArabic ? 'text-right' : ''} ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
-                    <thead className={`text-xs uppercase ${isLight ? 'bg-gray-50 text-slate-700' : 'bg-slate-700 text-slate-300'}`}>
+                  <table className={`w-full text-xs sm:text-sm text-left ${isArabic ? 'text-right' : ''} ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    <thead className={`text-[10px] sm:text-xs uppercase ${isLight ? 'bg-gray-50 text-slate-700' : 'bg-slate-700 text-slate-300'}`}>
                       <tr>
-                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'الموظف' : 'Sales Person'}</th>
-                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'وقت الحضور' : 'Check-In Time'}</th>
-                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'وقت الانصراف' : 'Check-Out Time'}</th>
-                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'موقع الحضور' : 'Check-In Location'}</th>
-                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'موقع الانصراف' : 'Check-Out Location'}</th>
-                        <th className="px-4 py-3 font-medium whitespace-nowrap">{isArabic ? 'الحالة' : 'Status'}</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 font-medium whitespace-nowrap">{isArabic ? 'الموظف' : 'Sales Person'}</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 font-medium whitespace-nowrap">{isArabic ? 'وقت الحضور' : 'Check-In Time'}</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 font-medium whitespace-nowrap">{isArabic ? 'وقت الانصراف' : 'Check-Out Time'}</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 font-medium whitespace-nowrap">{isArabic ? 'موقع الحضور' : 'Check-In Location'}</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 font-medium whitespace-nowrap">{isArabic ? 'موقع الانصراف' : 'Check-Out Location'}</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 font-medium whitespace-nowrap">{isArabic ? 'الحالة' : 'Status'}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-slate-600">
                       {filteredCheckInHistory.length > 0 ? (
                         filteredCheckInHistory.map((item) => (
                           <tr key={item.id} className={`${isLight ? 'bg-white hover:bg-gray-50' : 'bg-slate-800 hover:bg-slate-700'}`}>
-                            <td className="px-4 py-3 font-medium whitespace-nowrap dark:text-white">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium whitespace-nowrap dark:text-white">
                               {item.salesPerson || '-'}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">
                               <div className="flex flex-col">
                                 <span>{new Date(item.checkInDate).toLocaleDateString(isArabic ? 'ar-EG' : 'en-US')}</span>
-                                <span className="text-xs text-gray-500">{new Date(item.checkInDate).toLocaleTimeString(isArabic ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                                <span className="text-[10px] sm:text-xs text-gray-500">{new Date(item.checkInDate).toLocaleTimeString(isArabic ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">
                               {item.checkOutDate ? (
                                 <div className="flex flex-col">
                                   <span>{new Date(item.checkOutDate).toLocaleDateString(isArabic ? 'ar-EG' : 'en-US')}</span>
-                                  <span className="text-xs text-gray-500">{new Date(item.checkOutDate).toLocaleTimeString(isArabic ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                                  <span className="text-[10px] sm:text-xs text-gray-500">{new Date(item.checkOutDate).toLocaleTimeString(isArabic ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
                               ) : (
                                 <span className="text-gray-400">-</span>
                               )}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">
                                <div className="flex items-center gap-2">
-                                  <span className="truncate max-w-[150px]" title={item.location?.address || `${item.location?.lat}, ${item.location?.lng}`}>
+                                  <span className="truncate max-w-[100px] sm:max-w-[150px]" title={item.location?.address || `${item.location?.lat}, ${item.location?.lng}`}>
                                     {item.location?.address || (item.location?.lat ? `${item.location.lat.toFixed(4)}, ${item.location.lng.toFixed(4)}` : '-')}
                                   </span>
                                   {item.location && (item.location.lat || item.location.address) && (
@@ -1246,7 +1248,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                                             : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location.address)}`;
                                           window.open(url, '_blank');
                                        }}
-                                       className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
+                                       className="px-2 py-1 text-[10px] sm:text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
                                        title={isArabic ? 'عرض موقع الحضور' : 'Preview Check-In Location'}
                                      >
                                         <FaMapMarkerAlt />
@@ -1255,9 +1257,9 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                                   )}
                                </div>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">
                                <div className="flex items-center gap-2">
-                                  <span className="truncate max-w-[150px]" title={item.checkOutLocation?.address || `${item.checkOutLocation?.lat}, ${item.checkOutLocation?.lng}`}>
+                                  <span className="truncate max-w-[100px] sm:max-w-[150px]" title={item.checkOutLocation?.address || `${item.checkOutLocation?.lat}, ${item.checkOutLocation?.lng}`}>
                                     {item.checkOutLocation?.address || (item.checkOutLocation?.lat ? `${item.checkOutLocation.lat.toFixed(4)}, ${item.checkOutLocation.lng.toFixed(4)}` : '-')}
                                   </span>
                                   {item.checkOutLocation && (item.checkOutLocation.lat || item.checkOutLocation.address) && (
@@ -1268,7 +1270,7 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                                             : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.checkOutLocation.address)}`;
                                           window.open(url, '_blank');
                                        }}
-                                       className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors flex items-center gap-1"
+                                       className="px-2 py-1 text-[10px] sm:text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors flex items-center gap-1"
                                        title={isArabic ? 'عرض موقع الانصراف' : 'Preview Check-Out Location'}
                                      >
                                         <FaMapMarkerAlt />
@@ -1277,8 +1279,8 @@ const EnhancedLeadDetailsModal = ({ lead, isOpen, onClose, isArabic = false, the
                                   )}
                                </div>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <span className={`px-2 py-1 text-xs rounded-full ${
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-[10px] sm:text-xs rounded-full ${
                                 item.status === 'completed' ? 'bg-green-100 text-green-800' : 
                                 item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
                                 'bg-gray-100 text-gray-800'

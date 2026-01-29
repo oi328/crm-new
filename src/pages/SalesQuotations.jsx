@@ -1,401 +1,1047 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import DatePicker from 'react-datepicker'
+import "react-datepicker/dist/react-datepicker.css"
 import { api } from '../utils/api'
+import { mockStorage } from '../utils/mockStorage'
+import SearchableSelect from '../components/SearchableSelect'
+import QuotationsFormModal from '../components/QuotationsFormModal'
+import QuotationPreviewModal from '../components/QuotationPreviewModal'
+import QuotationsImportModal from '../components/QuotationsImportModal'
+import { useTheme } from '../shared/context/ThemeProvider'
+import { 
+  FaPlus, FaDownload, FaEye, FaEdit, FaTrash, 
+  FaPhone, FaEnvelope, FaChevronLeft, FaChevronRight,
+  FaFileImport, FaFileExport, FaStickyNote, FaSave, FaTimes,
+  FaFileInvoiceDollar, FaShoppingCart
+} from 'react-icons/fa'
+import { Filter, ChevronDown, Search, Calendar, X, User, DollarSign } from 'lucide-react'
+import * as XLSX from 'xlsx'
+
+// Mock data for initial state or fallback
+const MOCK_QUOTATIONS = [
+  {
+    id: 'QUO-1001',
+    customerCode: 'CUST-001',
+    customerName: 'Tech Solutions Inc.',
+    status: 'Sent',
+    items: [
+      { id: 1, name: 'Web Development', price: 1500, quantity: 10 },
+      { id: 2, name: 'Server Setup', price: 1000, quantity: 10 }
+    ],
+    subtotal: 25000,
+    tax: 3500,
+    total: 28500,
+    notes: 'Urgent delivery required',
+    createdAt: new Date(Date.now() - 36*3600*1000).toISOString(),
+    expiryDate: new Date(Date.now() + 7*24*3600*1000).toISOString(),
+    createdBy: 'Admin',
+    salesPerson: 'John Doe'
+  },
+  {
+    id: 'QUO-1002',
+    customerCode: 'CUST-002',
+    customerName: 'Global Trading Co.',
+    status: 'Approved',
+    items: [],
+    subtotal: 78000,
+    tax: 10920,
+    total: 88920,
+    notes: '',
+    createdAt: new Date(Date.now() - 12*3600*1000).toISOString(),
+    expiryDate: new Date(Date.now() + 7*24*3600*1000).toISOString(),
+    createdBy: 'Sarah',
+    salesPerson: 'Sarah Smith'
+  },
+  {
+    id: 'QUO-1003',
+    customerCode: 'CUST-003',
+    customerName: 'Local Services Ltd.',
+    status: 'Draft',
+    items: [],
+    subtotal: 12000,
+    tax: 1680,
+    total: 13680,
+    notes: 'Follow up next week',
+    createdAt: new Date().toISOString(),
+    expiryDate: new Date(Date.now() + 7*24*3600*1000).toISOString(),
+    createdBy: 'System',
+    salesPerson: 'System Bot'
+  },
+]
 
 export default function SalesQuotations() {
-  const { t } = useTranslation()
-  const [rows, setRows] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { t, i18n } = useTranslation()
+  const { theme } = useTheme()
+  const isRTL = String(i18n.language || '').startsWith('ar')
+  
+  // State
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState('')
-  const [actionInfo, setActionInfo] = useState('')
-  const [convertingIds, setConvertingIds] = useState([])
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [editingItem, setEditingItem] = useState(null)
+  const [previewItem, setPreviewItem] = useState(null)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [activeRowId, setActiveRowId] = useState(null)
+  const [expandedRowId, setExpandedRowId] = useState(null)
+  
+  // Filters
+  const [q, setQ] = useState('') // Main search query
+  const [filters, setFilters] = useState({
+    dateFrom: '',
+    dateTo: '',
+    datePeriod: '',
+    customer: '',
+    createdBy: '',
+    salesPerson: '',
+    minTotal: '',
+    maxTotal: '',
+    minItems: '',
+    maxItems: ''
+  })
+  const [showAllFilters, setShowAllFilters] = useState(false)
 
-  // Mock quotations for preview when API is empty/unavailable
-  const MOCK_QUOTATIONS = [
-    {
-      id: 'QUO-1001',
-      status: 'Draft',
-      subtotal: 25000,
-      tax: 3500,
-      total: 28500,
-      opportunityId: 'OPP-001',
-      createdAt: new Date(Date.now() - 36*3600*1000).toISOString(),
-    },
-    {
-      id: 'QUO-1002',
-      status: 'Sent',
-      subtotal: 78000,
-      tax: 10920,
-      total: 88920,
-      opportunityId: 'OPP-002',
-      createdAt: new Date(Date.now() - 12*3600*1000).toISOString(),
-    },
-    {
-      id: 'QUO-1003',
-      status: 'Approved',
-      subtotal: 12000,
-      tax: 1680,
-      total: 13680,
-      opportunityId: 'OPP-003',
-      createdAt: new Date().toISOString(),
-    },
-  ]
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [pageSearch, setPageSearch] = useState('')
+  const [exportFrom, setExportFrom] = useState('')
+  const [exportTo, setExportTo] = useState('')
 
-  // Form State
-  const [opportunities, setOpportunities] = useState([])
-  const [opportunityId, setOpportunityId] = useState('')
-  const [items, setItems] = useState([
-    { name: '', quantity: 1, unitPrice: 0, discount: 0 },
-  ])
-  // Attachment (actual file upload -> stored as Data URL for now)
-  const [attachmentFile, setAttachmentFile] = useState(null)
-  const [attachmentName, setAttachmentName] = useState('')
-  const [attachmentDataUrl, setAttachmentDataUrl] = useState('')
+  // Sorting
+  const [sortBy, setSortBy] = useState('createdAt')
+  const [sortOrder, setSortOrder] = useState('desc')
 
-  // Settings-driven tax rate (fallback to 14%)
-  const [taxRate, setTaxRate] = useState(0.14)
-  const [savingTax, setSavingTax] = useState(false)
+  // Selection
+  const [selectedItems, setSelectedItems] = useState([])
 
-  const subtotal = useMemo(() => (
-    items.reduce((sum, it) => sum + (Number(it.quantity)||0) * (Number(it.unitPrice)||0) - (Number(it.discount)||0), 0)
-  ), [items])
-  const tax = useMemo(() => (
-    Math.round(subtotal * Number(taxRate || 0.14) * 100) / 100
-  ), [subtotal, taxRate])
-  const total = useMemo(() => (
-    Math.round((subtotal + tax) * 100) / 100
-  ), [subtotal, tax])
-
-  useEffect(() => {
-    let mounted = true
-    setLoading(true)
-    setError('')
-    api.get('/api/customers/quotations')
-      .then((res) => {
-        if (!mounted) return
-        const data = res?.data?.data
-        const list = Array.isArray(data?.items) ? data.items : []
-        setRows(list.length > 0 ? list : MOCK_QUOTATIONS)
-      })
-      .catch(() => {
-        const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) || '/'
-        if (!mounted) return
-        setError(`Failed to load from ${base}/api/customers/quotations`)
-        setRows(MOCK_QUOTATIONS)
-      })
-      .finally(() => mounted && setLoading(false))
-    return () => { mounted = false }
-  }, [])
-
-  useEffect(() => {
-    let mounted = true
-    api.get('/api/customers/opportunities')
-      .then((res) => {
-        if (!mounted) return
-        const data = res?.data?.data
-        const list = Array.isArray(data?.items) ? data.items : []
-        setOpportunities(list)
-      })
-      .catch(() => {})
-    return () => { mounted = false }
-  }, [])
-
-  // Load tax rate from settings
-  useEffect(() => {
-    let mounted = true
-    api.get('/api/settings')
-      .then((res) => {
-        if (!mounted) return
-        const tr = res?.data?.data?.settings?.sales?.taxRate
-        if (typeof tr === 'number') setTaxRate(tr)
-      })
-      .catch(() => {})
-    return () => { mounted = false }
-  }, [])
-
-  const setItem = (idx, patch) => {
-    setItems((prev) => prev.map((row, i) => i === idx ? { ...row, ...patch } : row))
-  }
-  const addItem = () => setItems((prev) => ([...prev, { name: '', quantity: 1, unitPrice: 0, discount: 0 }]))
-  const removeItem = (idx) => setItems((prev) => prev.filter((_, i) => i !== idx))
-
-  const handleCreate = (e) => {
-    e.preventDefault()
-    if (submitting) return
-    setSubmitting(true)
-    const doCreate = async () => {
-      let attachmentUrl
-      if (attachmentDataUrl) {
-        const up = await api.post('/api/uploads/base64', { fileName: attachmentName || 'attachment', dataUrl: attachmentDataUrl })
-        attachmentUrl = up?.data?.data?.url || up?.data?.url || up?.data?.data?.data?.url
-      }
-      const payload = {
-        opportunityId,
-        items: items.map((it) => ({
-          name: it.name,
-          quantity: Number(it.quantity)||0,
-          unitPrice: Number(it.unitPrice)||0,
-          discount: Number(it.discount)||0,
-        })),
-        attachment: attachmentUrl || undefined,
-      }
-      const res = await api.post('/api/customers/quotations', payload)
-      return res
-    }
-    doCreate()
-      .then((res) => {
-        const item = res?.data?.data?.item
-        if (item) {
-          setRows((prev) => [item, ...prev])
-          setOpportunityId('')
-          setItems([{ name: '', quantity: 1, unitPrice: 0, discount: 0 }])
-          setAttachmentFile(null)
-          setAttachmentName('')
-          setAttachmentDataUrl('')
-          setSuccess(t('Saved successfully'))
-          setTimeout(() => setSuccess(''), 3000)
-        }
-      })
-      .catch((err) => {
-        const msg = err?.response?.data?.message || 'Failed to create'
-        setError(typeof msg === 'string' ? msg : 'Failed to create')
-      })
-      .finally(() => setSubmitting(false))
+  // Helper for success messages
+  const showSuccess = (msg) => {
+    setSuccessMessage(msg)
+    setTimeout(() => setSuccessMessage(''), 3000)
   }
 
-  const handleSendToCustomer = (id) => {
-    api.post(`/api/customers/quotations/${id}/send`)
-      .then((res) => {
-        const item = res?.data?.data?.item
-        if (item) {
-          setRows((prev) => prev.map((r) => r.id === id ? item : r))
-          setActionInfo(t('Sent successfully'))
-          setTimeout(() => setActionInfo(''), 3000)
-        }
-      })
-      .catch(() => {})
-  }
-
-  const handleConvertToOrder = (id) => {
-    if (convertingIds.includes(id)) return
-    setConvertingIds((prev) => [...prev, id])
-    api.post(`/api/customers/quotations/${id}/convert-to-sales-order`)
-      .then((res) => {
-        const order = res?.data?.data?.salesOrder
-        if (order) {
-          setActionInfo(
-            (
-              <span>
-                {t('Converted to Sales Order')}: <span className="font-medium">{order.id || t('New Order')}</span> — 
-                <a href="/sales/orders" className="underline text-indigo-700 ml-1">{t('View Sales Orders')}</a>
-              </span>
-            )
-          )
-          setTimeout(() => setActionInfo(''), 4000)
+  // Load Data
+  const load = async () => {
+    try {
+      setLoading(true)
+      setError('')
+      
+      // Simulate API call or use local storage for prototype persistence
+      setTimeout(() => {
+        if (mockStorage && mockStorage.getQuotations) {
+          const stored = mockStorage.getQuotations()
+          setItems(stored || [])
         } else {
-          setError(t('Conversion failed'))
-          setTimeout(() => setError(''), 4000)
+          setItems([])
         }
-      })
-      .catch((err) => {
-        const msg = err?.response?.data?.message || t('Conversion failed')
-        setError(typeof msg === 'string' ? msg : t('Conversion failed'))
-        setTimeout(() => setError(''), 4000)
-      })
-      .finally(() => {
-        setConvertingIds((prev) => prev.filter((x) => x !== id))
-      })
+        setLoading(false)
+      }, 500)
+
+    } catch (e) {
+      setError('Failed to load quotations')
+      setItems([])
+      setLoading(false)
+    }
   }
 
-  const handleAttachmentInput = (e) => {
-    const file = e.target.files && e.target.files[0]
-    if (!file) {
-      setAttachmentFile(null)
-      setAttachmentName('')
-      setAttachmentDataUrl('')
+  useEffect(() => {
+    load()
+  }, [])
+
+  // Removed useEffect that was saving to localStorage on every change
+
+
+  // Filtering Logic
+  const customerOptions = useMemo(() => {
+    const unique = [...new Set(items.map(i => i.customerName).filter(Boolean))]
+    return unique.map(name => ({ value: name, label: name }))
+  }, [items])
+
+  const createdByOptions = useMemo(() => {
+    const unique = [...new Set(items.map(i => i.createdBy).filter(Boolean))]
+    return unique.map(name => ({ value: name, label: name }))
+  }, [items])
+
+  const salesPersonOptions = useMemo(() => {
+    const unique = [...new Set(items.map(i => i.salesPerson).filter(Boolean))]
+    return unique.map(name => ({ value: name, label: name }))
+  }, [items])
+
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      // Search
+      if (q) {
+        const query = q.toLowerCase()
+        const match = 
+          item.id?.toLowerCase().includes(query) ||
+          item.customerCode?.toLowerCase().includes(query) ||
+          item.customerName?.toLowerCase().includes(query)
+        if (!match) return false
+      }
+
+      // Filters
+      if (filters.dateFrom) {
+        if (new Date(item.createdAt) < new Date(filters.dateFrom)) return false
+      }
+      if (filters.dateTo) {
+        // Add one day to include the end date fully
+        const endDate = new Date(filters.dateTo)
+        endDate.setDate(endDate.getDate() + 1)
+        if (new Date(item.createdAt) >= endDate) return false
+      }
+
+      if (filters.customer && item.customerName !== filters.customer) return false
+      if (filters.createdBy && item.createdBy !== filters.createdBy) return false
+      if (filters.salesPerson && item.salesPerson !== filters.salesPerson) return false
+      if (filters.minTotal && Number(item.total) < Number(filters.minTotal)) return false
+      if (filters.maxTotal && Number(item.total) > Number(filters.maxTotal)) return false
+
+      // Items Count Filter
+      const itemsCount = Array.isArray(item.items) ? item.items.length : 0
+      if (filters.minItems && itemsCount < Number(filters.minItems)) return false
+      if (filters.maxItems && itemsCount > Number(filters.maxItems)) return false
+
+      return true
+    })
+  }, [items, q, filters])
+
+  // Pagination Logic
+  const paginatedItems = useMemo(() => {
+    const sorted = [...filteredItems].sort((a, b) => {
+      const aVal = a[sortBy]
+      const bVal = b[sortBy]
+      if (aVal === bVal) return 0
+      if (sortOrder === 'asc') return aVal > bVal ? 1 : -1
+      return aVal < bVal ? 1 : -1
+    })
+    
+    return sorted.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  }, [filteredItems, sortBy, sortOrder, currentPage, itemsPerPage])
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(field)
+      setSortOrder('desc')
+    }
+  }
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedItems(paginatedItems.map(i => i.id))
+    } else {
+      setSelectedItems([])
+    }
+  }
+
+  const handleSelectRow = (id) => {
+    setSelectedItems(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }
+
+  const handleDelete = async (id) => {
+    if (window.confirm(isRTL ? 'هل أنت متأكد من حذف هذا العرض؟' : 'Are you sure you want to delete this quotation?')) {
+      setLoading(true)
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        setItems(prev => prev.filter(i => i.id !== id))
+        showSuccess(isRTL ? 'تم حذف العرض بنجاح' : 'Quotation deleted successfully')
+      } catch (e) {
+        alert(isRTL ? 'فشل الحذف' : 'Delete failed')
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
+
+  const handleImport = (importedItems) => {
+    const newItems = importedItems.map((item, index) => ({
+      ...item,
+      id: `QUO-IMP-${Date.now()}-${index}`,
+      items: item.items || [], 
+      createdAt: item.createdAt || new Date().toISOString(),
+      createdBy: 'Import'
+    }))
+    
+    setItems(prev => [...newItems, ...prev])
+    setShowImportModal(false)
+    showSuccess(isRTL ? 'تم استيراد البيانات بنجاح' : 'Data imported successfully')
+  }
+
+  const handleExport = () => {
+    // 1. Export Selected
+    if (selectedItems.length > 0) {
+      const itemsToExport = items.filter(item => selectedItems.includes(item.id))
+      const data = itemsToExport.map(item => ({
+        ID: item.id,
+        'Customer Code': item.customerCode,
+        'Customer Name': item.customerName,
+        'Total': item.total,
+        'Created By': item.createdBy,
+        'Sales Person': item.salesPerson,
+        'Date': new Date(item.createdAt).toLocaleDateString(),
+        'Notes': item.notes
+      }))
+      const ws = XLSX.utils.json_to_sheet(data)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, "Selected Quotations")
+      XLSX.writeFile(wb, "Selected_Quotations_Export.xlsx")
+      showSuccess(isRTL ? 'تم تصدير العناصر المحددة بنجاح' : 'Selected items exported successfully')
       return
     }
-    setAttachmentFile(file)
-    setAttachmentName(file.name)
-    const reader = new FileReader()
-    reader.onload = () => {
-      const dataUrl = typeof reader.result === 'string' ? reader.result : ''
-      setAttachmentDataUrl(dataUrl)
-    }
-    reader.readAsDataURL(file)
+
+    // 2. Export Range
+    const from = parseInt(exportFrom)
+    const to = parseInt(exportTo)
+    if (!from || !to || from > to || from < 1) return
+    
+    // Calculate range of items
+    const startIdx = (from - 1) * itemsPerPage
+    const endIdx = to * itemsPerPage
+    const itemsToExport = filteredItems.slice(startIdx, endIdx)
+    
+    if (itemsToExport.length === 0) return
+
+    const data = itemsToExport.map(item => ({
+      ID: item.id,
+      'Customer Code': item.customerCode,
+      'Customer Name': item.customerName,
+      'Total': item.total,
+      'Created By': item.createdBy,
+      'Sales Person': item.salesPerson,
+      'Date': new Date(item.createdAt).toLocaleDateString(),
+      'Notes': item.notes
+    }))
+
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Quotations")
+    XLSX.writeFile(wb, "Quotations_Export.xlsx")
   }
 
-  const clearAttachment = () => {
-    setAttachmentFile(null)
-    setAttachmentName('')
-    setAttachmentDataUrl('')
+  // Options for filters
+  // const statusOptions = useMemo(() => [...new Set(items.map(i => i.status).filter(Boolean))], [items])
+
+  const clearFilters = () => {
+    setQ('')
+    setFilters({
+      dateFrom: '',
+      dateTo: '',
+      datePeriod: '',
+      customer: '',
+      createdBy: '',
+      minTotal: '',
+      maxTotal: '',
+      minItems: '',
+      maxItems: ''
+    })
   }
 
-  const saveTaxRate = async () => {
-    try {
-      setSavingTax(true)
-      await api.put('/api/settings/sales', { taxRate })
-      setActionInfo(t('Tax rate updated'))
-      setTimeout(() => setActionInfo(''), 3000)
-    } catch (e) {
-      setError(t('Failed to update tax rate'))
-      setTimeout(() => setError(''), 4000)
-    } finally {
-      setSavingTax(false)
+  const handleDatePeriodChange = (period) => {
+    const now = new Date()
+    let from = ''
+    let to = ''
+
+    if (period === 'today') {
+      from = now.toISOString().split('T')[0]
+      to = now.toISOString().split('T')[0]
+    } else if (period === 'week') {
+      const first = new Date(now.setDate(now.getDate() - now.getDay()))
+      const last = new Date(now.setDate(now.getDate() - now.getDay() + 6))
+      from = first.toISOString().split('T')[0]
+      to = last.toISOString().split('T')[0]
+    } else if (period === 'month') {
+      const first = new Date(now.getFullYear(), now.getMonth(), 1)
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      from = first.toISOString().split('T')[0]
+      to = last.toISOString().split('T')[0]
     }
+
+    setFilters(prev => ({
+      ...prev,
+      datePeriod: period,
+      dateFrom: from,
+      dateTo: to
+    }))
   }
 
   return (
-    <>
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">{t('Quotations')}</h1>
-        <div className="text-sm text-gray-500">{t('Sales')}</div>
+    <div className="p-4 md:p-6 space-y-6">
+      {/* Header */}
+      <div className=" rounded-xl p-4 md:p-6 relative  mb-6">
+        <div className="flex flex-wrap lg:flex-row lg:items-center justify-between gap-4">
+          <div className="w-full lg:w-auto flex items-center justify-between lg:justify-start gap-3">
+            <div className="relative flex flex-col items-start gap-1">
+              <h1 className="text-xl md:text-2xl font-bold text-start text-theme-text dark:text-white flex items-center gap-2">
+                {t('Quotations')}
+                <span className="text-sm font-normal text-[var(--muted-text)] bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">
+                  {filteredItems.length}
+                </span>
+              </h1>
+              <span aria-hidden="true" className="inline-block h-[2px] w-full rounded bg-gradient-to-r from-blue-500 to-purple-600" />
+              <p className="text-sm text-[var(--muted-text)] mt-1">
+                {isRTL ? 'إدارة عروض الأسعار' : 'Manage your sales quotations'}
+              </p>
+            </div>
+          </div>
+          
+          <div className="w-full lg:w-auto flex flex-wrap lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="btn btn-sm w-full lg:w-auto bg-blue-600 hover:bg-blue-700 !text-white border-none flex items-center justify-center gap-2"
+            >
+              <FaFileImport />
+              {isRTL ? 'استيراد' : 'Import'}
+            </button>
+            
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn btn-sm w-full lg:w-auto bg-green-600 hover:bg-green-500 !text-white border-none flex items-center justify-center gap-2"
+            >
+              <FaPlus />
+              {isRTL ? 'إضافة ء عرض سعر' : 'Add Quotation'}
+            </button>
+          </div>
+        </div>
       </div>
 
-      {success && (
-        <div className="mb-3 p-3 rounded border border-green-300 bg-green-50 text-green-700">{success}</div>
-      )}
-      {actionInfo && (
-        <div className="mb-3 p-3 rounded border border-blue-300 bg-blue-50 text-blue-700">{actionInfo}</div>
+      {successMessage && (
+        <div className="mb-3 p-3 rounded border border-green-300 bg-green-50 text-green-700">{successMessage}</div>
       )}
 
-      {/* Create Quotation Form */}
-      <form onSubmit={handleCreate} className="mb-6 space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm mb-1">{t('Opportunity')}</label>
-            <select
-              value={opportunityId}
-              onChange={(e) => setOpportunityId(e.target.value)}
-              className="w-full border rounded px-2 py-2"
-            >
-              <option value="">{t('Select')}</option>
-              {opportunities.map((o) => (
-                <option key={o.id} value={o.id}>{o.name || o.id}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm mb-1">{t('Attachment')}</label>
-            <div className="flex items-center gap-2">
-              <input type="file" onChange={handleAttachmentInput} className="flex-1" />
-              {attachmentName && (
-                <button type="button" onClick={clearAttachment} className="px-3 py-2 rounded bg-gray-200">{t('Remove')}</button>
-              )}
-            </div>
-            {attachmentName && (
-              <div className="mt-1 text-xs text-gray-600">{t('Selected file')}: {attachmentName}</div>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="font-medium">{t('Items')}</div>
-            <button type="button" onClick={addItem} className="px-3 py-2 rounded bg-indigo-600 text-white">{t('Add Item')}</button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left border-b">
-                  <th className="p-2">{t('Product / Service')}</th>
-                  <th className="p-2">{t('Quantity')}</th>
-                  <th className="p-2">{t('Unit Price')}</th>
-                  <th className="p-2">{t('Discount')}</th>
-                  <th className="p-2">{t('Actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((it, idx) => (
-                  <tr key={idx} className="border-b">
-                    <td className="p-2"><input className="w-full border rounded px-2 py-1" value={it.name} onChange={(e) => setItem(idx, { name: e.target.value })} /></td>
-                    <td className="p-2"><input type="number" min="1" className="w-full border rounded px-2 py-1" value={it.quantity} onChange={(e) => setItem(idx, { quantity: e.target.value })} /></td>
-                    <td className="p-2"><input type="number" min="0" step="0.01" className="w-full border rounded px-2 py-1" value={it.unitPrice} onChange={(e) => setItem(idx, { unitPrice: e.target.value })} /></td>
-                    <td className="p-2"><input type="number" min="0" step="0.01" className="w-full border rounded px-2 py-1" value={it.discount} onChange={(e) => setItem(idx, { discount: e.target.value })} /></td>
-                    <td className="p-2">
-                      <button type="button" onClick={() => removeItem(idx)} className="px-2 py-1 rounded bg-red-600 text-white">{t('Remove')}</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-4 items-center">
-          <div className="text-sm text-gray-700">{t('Subtotal')}: <span className="font-medium">{subtotal.toLocaleString()}</span></div>
-          <div className="text-sm text-gray-700">{t('Tax')}: <span className="font-medium">{tax.toLocaleString()}</span></div>
-          <div className="text-sm text-gray-700">{t('Total')}: <span className="font-medium">{total.toLocaleString()}</span></div>
+      {/* Filter Section */}
+      <div className="glass-panel p-4 rounded-xl mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-sm font-semibold flex items-center gap-2 text-theme-text ">
+            <Filter className="text-blue-500" size={16} /> {isRTL ? 'تصفية' : 'Filter'}
+          </h2>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-700">{t('Tax Rate (%)')}</label>
-            <input type="number" min="0" max="100" step="0.01" className="w-24 border rounded px-2 py-1" value={Math.round(Number(taxRate||0)*10000)/100} onChange={(e) => setTaxRate(Number(e.target.value) > 1 ? Number(e.target.value)/100 : Number(e.target.value))} />
-            <button type="button" disabled={savingTax} onClick={saveTaxRate} className="px-3 py-2 rounded bg-gray-800 text-white">{savingTax ? t('Saving...') : t('Save')}</button>
+            <button 
+              onClick={() => setShowAllFilters(prev => !prev)} 
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            >
+              {showAllFilters ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'عرض الكل' : 'Show All')} 
+              <ChevronDown size={14} className={`transform transition-transform ${showAllFilters ? 'rotate-180' : ''}`} />
+            </button>
+            <button 
+              onClick={clearFilters} 
+              className="px-3 py-1.5 text-sm text-theme-text hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              {isRTL ? 'إعادة تعيين' : 'Reset'}
+            </button>
           </div>
-          <button type="submit" disabled={submitting || !opportunityId || items.length === 0} className="px-4 py-2 rounded bg-green-600 text-white">{t('Create Quotation')}</button>
-          {submitting && <span className="text-gray-500">{t('Saving...')}</span>}
         </div>
-      </form>
 
-      {error && (
-        <div className="mb-3 p-3 rounded border border-red-300 bg-red-50 text-red-700">
-          {error}
+        {/* Primary Filters Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* 1. SEARCH */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
+              <Search className="text-blue-500" size={10} /> {isRTL ? 'بحث عام' : 'Search All Data'}
+            </label>
+            <input
+              className="input w-full"
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              placeholder={isRTL ? 'بحث في العروض...' : 'Search quotations...'}
+            />
+          </div>
+
+          {/* 2. Customer */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
+              <User className="text-blue-500" size={10} /> {isRTL ? 'العميل' : 'Customer'}
+            </label>
+            <SearchableSelect
+              options={customerOptions}
+              value={filters.customer}
+              onChange={(val) => setFilters(prev => ({ ...prev, customer: val }))}
+              placeholder={isRTL ? 'اختر العميل...' : 'Select Customer...'}
+              isRTL={isRTL}
+            />
+          </div>
+
+          {/* 3. Items Count Range */}
+          <div className="space-y-1">
+             <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
+              <FaShoppingCart className="text-blue-500" size={10} /> {isRTL ? 'عدد العناصر' : 'No. of Items'}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                className="input w-full text-xs"
+                placeholder={isRTL ? 'من' : 'Min'}
+                value={filters.minItems}
+                onChange={e => setFilters(prev => ({ ...prev, minItems: e.target.value }))}
+              />
+              <input
+                type="number"
+                className="input w-full text-xs"
+                placeholder={isRTL ? 'إلى' : 'Max'}
+                value={filters.maxItems}
+                onChange={e => setFilters(prev => ({ ...prev, maxItems: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          {/* 4. Total Range */}
+          <div className="space-y-1">
+             <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
+              <DollarSign className="text-blue-500" size={10} /> {isRTL ? 'المبلغ الإجمالي' : 'Total Amount'}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                className="input w-full text-xs"
+                placeholder={isRTL ? 'من' : 'Min'}
+                value={filters.minTotal}
+                onChange={e => setFilters(prev => ({ ...prev, minTotal: e.target.value }))}
+              />
+              <input
+                type="number"
+                className="input w-full text-xs"
+                placeholder={isRTL ? 'إلى' : 'Max'}
+                value={filters.maxTotal}
+                onChange={e => setFilters(prev => ({ ...prev, maxTotal: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          {showAllFilters && (
+            <>
+              {/* 5. Created By */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
+                  <User className="text-blue-500" size={10} /> {isRTL ? 'بواسطة' : 'Created By'}
+                </label>
+                <SearchableSelect
+                  options={createdByOptions}
+                  value={filters.createdBy}
+                  onChange={(val) => setFilters(prev => ({ ...prev, createdBy: val }))}
+                  placeholder={isRTL ? 'اختر...' : 'Select...'}
+                  isRTL={isRTL}
+                />
+              </div>
+
+              {/* 6. Sales Person */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
+                  <User className="text-blue-500" size={10} /> {isRTL ? 'مندوب المبيعات' : 'Sales Person'}
+                </label>
+                <SearchableSelect
+                  options={salesPersonOptions}
+                  value={filters.salesPerson}
+                  onChange={(val) => setFilters(prev => ({ ...prev, salesPerson: val }))}
+                  placeholder={isRTL ? 'اختر...' : 'Select...'}
+                  isRTL={isRTL}
+                />
+              </div>
+
+              {/* 7. Date Range */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[var(--muted-text)] flex items-center gap-1">
+                  <Calendar className="text-blue-500" size={10} /> {isRTL ? 'تاريخ الانشاء' : 'Creation Date'}
+                </label>
+                <DatePicker
+                    popperContainer={({ children }) => createPortal(children, document.body)}
+                    selectsRange={true}
+                    startDate={filters.dateFrom ? new Date(filters.dateFrom) : null}
+                    endDate={filters.dateTo ? new Date(filters.dateTo) : null}
+                    onChange={(update) => {
+                      const [start, end] = update;
+                      const formatDate = (date) => {
+                        if (!date) return '';
+                        const offset = date.getTimezoneOffset();
+                        const localDate = new Date(date.getTime() - (offset*60*1000));
+                        return localDate.toISOString().split('T')[0];
+                      };
+                      setFilters(prev => ({
+                        ...prev,
+                        dateFrom: formatDate(start),
+                        dateTo: formatDate(end),
+                        datePeriod: ''
+                      }));
+                    }}
+                    isClearable={true}
+                    placeholderText={isRTL ? "من - إلى" : "From - To"}
+                    className="input w-full"
+                    wrapperClassName="w-full"
+                    dateFormat="yyyy-MM-dd"
+                  />
+              </div>
+            </>
+          )}
         </div>
-      )}
+      </div>
 
-      {loading ? (
-        <div className="text-gray-500">{t('Loading...')}</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left border-b">
-                <th className="p-2">{t('ID')}</th>
-                <th className="p-2">{t('Status')}</th>
-                <th className="p-2">{t('Subtotal')}</th>
-                <th className="p-2">{t('Tax')}</th>
-                <th className="p-2">{t('Total')}</th>
-                <th className="p-2">{t('Opportunity')}</th>
-                <th className="p-2">{t('Created')}</th>
-                <th className="p-2">{t('Actions')}</th>
+      {/* Table Section */}
+      <div className="glass-panel rounded-xl overflow-hidden">
+        {loading && (
+          <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 z-10 flex items-center justify-center">
+            <div className="loading loading-spinner loading-lg text-blue-600"></div>
+          </div>
+        )}
+        
+        <div className="overflow-x-auto hidden md:block">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-50/50 dark:bg-gray-800/50 text-xs uppercase text-theme-text font-semibold backdrop-blur-sm">
+              <tr>
+                <th className="p-4 w-10">
+                </th>
+                <th className="p-4 w-10">
+                  <input 
+                    type="checkbox" 
+                    className="checkbox checkbox-xs"
+                    checked={paginatedItems.length > 0 && selectedItems.length === paginatedItems.length}
+                    onChange={handleSelectAll}
+                  />
+                </th>
+                <th onClick={() => handleSort('id')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'رقم العرض' : 'Quotation #'}
+                </th>
+                <th onClick={() => handleSort('customerCode')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'كود العميل' : 'Customer Code'}
+                </th>
+                <th onClick={() => handleSort('customerName')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'اسم العميل' : 'Customer Name'}
+                </th>
+                <th onClick={() => handleSort('status')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'الحالة' : 'Status'}
+                </th>
+                <th className="p-4 whitespace-nowrap">
+                  {isRTL ? 'عدد العناصر' : 'Items'}
+                </th>
+                <th onClick={() => handleSort('subtotal')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'المجموع الفرعي' : 'Subtotal'}
+                </th>
+                <th onClick={() => handleSort('tax')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'الضريبة' : 'Tax'}
+                </th>
+                <th onClick={() => handleSort('total')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'الإجمالي' : 'Total'}
+                </th>
+                <th onClick={() => handleSort('createdBy')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'بواسطة' : 'Created By'}
+                </th>
+                <th onClick={() => handleSort('salesPerson')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'مندوب المبيعات' : 'Sales Person'}
+                </th>
+                <th onClick={() => handleSort('createdAt')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'تاريخ الإنشاء' : 'Creation Date'}
+                </th>
+                <th onClick={() => handleSort('expiryDate')} className="p-4 cursor-pointer hover:text-blue-600 whitespace-nowrap transition-colors">
+                  {isRTL ? 'صالح حتى' : 'Valid Until'}
+                </th>
+                <th className="p-4 whitespace-nowrap">
+                  {isRTL ? 'ملاحظات' : 'Notes'}
+                </th>
+                <th className="p-4 whitespace-nowrap w-[140px]">
+                  {isRTL ? 'خيارات' : 'Actions'}
+                </th>
               </tr>
             </thead>
-            <tbody>
-              {rows.length === 0 ? (
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
+              {paginatedItems.length === 0 ? (
                 <tr>
-                  <td className="p-3 text-gray-500" colSpan={8}>{t('No data')}</td>
-                </tr>
-              ) : rows.map((q) => (
-                <tr key={q.id} className="border-b hover:bg-gray-50">
-                  <td className="p-2">{q.id}</td>
-                  <td className="p-2">{q.status}</td>
-                  <td className="p-2">{typeof q.subtotal === 'number' ? q.subtotal.toLocaleString() : q.subtotal}</td>
-                  <td className="p-2">{typeof q.tax === 'number' ? q.tax.toLocaleString() : q.tax}</td>
-                  <td className="p-2 font-medium">{typeof q.total === 'number' ? q.total.toLocaleString() : q.total}</td>
-                  <td className="p-2">{q.opportunityId || '-'}</td>
-                  <td className="p-2">{q.createdAt ? new Date(q.createdAt).toLocaleString() : '-'}</td>
-                  <td className="p-2">
-                    <div className="flex gap-2">
-                      <button onClick={() => handleSendToCustomer(q.id)} className="px-3 py-1 rounded bg-blue-600 text-white" title={t('Send to Customer')}>{t('Send to Customer')}</button>
-                      <button
-                        onClick={() => handleConvertToOrder(q.id)}
-                        disabled={convertingIds.includes(q.id)}
-                        className={`px-3 py-1 rounded text-white ${convertingIds.includes(q.id) ? 'bg-purple-300 cursor-not-allowed' : 'bg-purple-600'}`}
-                        title={t('Convert to Sales Order')}
-                      >
-                        {convertingIds.includes(q.id) ? t('Converting...') : t('Convert to Sales Order')}
-                      </button>
-                    </div>
+                  <td colSpan="7" className="p-8 text-center text-theme-text">
+                    {isRTL ? 'لا توجد بيانات' : 'No data available'}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedItems.map((item) => (
+                  <React.Fragment key={item.id}>
+                    <tr 
+                      className={`transition-colors group cursor-pointer ${activeRowId === item.id ? ' dark:bg-blue-900/20' : 'hover:bg-blue-900/10'}`}
+                      onClick={() => setActiveRowId(activeRowId === item.id ? null : item.id)}
+                    >
+                      <td className="p-4 text-center">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedRowId(expandedRowId === item.id ? null : item.id);
+                          }}
+                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                        >
+                          <ChevronDown size={16} className={`transform transition-transform duration-200 ${expandedRowId === item.id ? 'rotate-180' : ''}`} />
+                        </button>
+                      </td>
+                      <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                        <input 
+                          type="checkbox" 
+                          className="checkbox checkbox-xs"
+                          checked={selectedItems.includes(item.id)}
+                          onChange={() => handleSelectRow(item.id)}
+                        />
+                      </td>
+                    <td className="p-4 font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                      {item.id}
+                    </td>
+                    <td className="p-4 text-theme-text whitespace-nowrap">
+                      {item.customerCode || '—'}
+                    </td>
+                    <td className="p-4 text-theme-text whitespace-nowrap">
+                      {item.customerName || '—'}
+                    </td>
+                    <td className="p-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        item.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                        item.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                        item.status === 'Sent' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {item.status || 'Draft'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-theme-text whitespace-nowrap text-center">
+                      {item.items ? item.items.length : 0}
+                    </td>
+                    <td className="p-4 text-theme-text whitespace-nowrap">
+                      {Number(item.subtotal || 0).toLocaleString()}
+                    </td>
+                    <td className="p-4 text-theme-text whitespace-nowrap">
+                      {Number(item.tax || 0).toLocaleString()}
+                    </td>
+                    <td className="p-4 font-semibold text-theme-text whitespace-nowrap">
+                      {Number(item.total).toLocaleString()}
+                    </td>
+                    <td className="p-4 text-theme-text whitespace-nowrap">
+                      {item.createdBy || '—'}
+                    </td>
+                     <td className="p-4 text-theme-text whitespace-nowrap">
+                      {item.salesPerson || '—'}
+                    </td>
+                    <td className="p-4 whitespace-nowrap text-theme-text" dir="ltr">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 whitespace-nowrap text-theme-text" dir="ltr">
+                      {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : '—'}
+                    </td>
+                    <td className="p-4 whitespace-nowrap text-theme-text text-center">
+                      {item.notes ? (
+                        <div className="tooltip" data-tip={item.notes}>
+                          <FaStickyNote className="text-yellow-500 inline-block" />
+                        </div>
+                      ) : '—'}
+                    </td>
+                    <td className={`p-4 whitespace-nowrap ${activeRowId === item.id ? 'sticky ltr:right-0 rtl:left-0 bg-theme-bg shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.1)] dark:shadow-none z-10' : ''}`}>
+                      <div className="flex items-center justify-end gap-3">
+                        <button 
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 transition-colors shadow-sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setPreviewItem(item)
+                          }}
+                        >
+                          <FaEye size={14} />
+                          <span className="hidden xl:inline">{isRTL ? 'معاينة' : 'Preview'}</span>
+                        </button>
+                        <button 
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40 transition-colors shadow-sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingItem(item)
+                            setShowForm(true)
+                          }}
+                        >
+                          <FaEdit size={14} />
+                          <span className="hidden xl:inline">{isRTL ? 'تعديل' : 'Edit'}</span>
+                        </button>
+                        <button 
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors shadow-sm" 
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDelete(item.id)
+                          }}
+                        >
+                          <FaTrash size={14} />
+                          <span className="hidden xl:inline">{isRTL ? 'حذف' : 'Delete'}</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  {expandedRowId === item.id && (
+                    <tr className="bg-gray-50 dark:bg-gray-800/50">
+                      <td colSpan="12" className="p-4">
+                        <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                          <table className="w-full text-sm text-left">
+                            <thead className="bg-gray-100 dark:bg-gray-800 text-xs uppercase text-theme-text font-semibold">
+                              <tr>
+                                <th className="px-4 py-2">{isRTL ? 'النوع' : 'Type'}</th>
+                                <th className="px-4 py-2">{isRTL ? 'الفئة' : 'Category'}</th>
+                                <th className="px-4 py-2">{isRTL ? 'اسم العنصر' : 'Item Name'}</th>
+                                <th className="px-4 py-2">{isRTL ? 'الكمية' : 'Qty'}</th>
+                                <th className="px-4 py-2">{isRTL ? 'السعر' : 'Price'}</th>
+                                <th className="px-4 py-2">{isRTL ? 'الخصم' : 'Discount'}</th>
+                                <th className="px-4 py-2">{isRTL ? 'المجموع' : 'Total'}</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                              {item.items && item.items.length > 0 ? (
+                                item.items.map((subItem, idx) => (
+                                  <tr key={idx} className="hover:bg-gray-200 dark:hover:bg-gray-700/50">
+                                    <td className="px-4 py-2">{subItem.type || '—'}</td>
+                                    <td className="px-4 py-2">{subItem.category || '—'}</td>
+                                    <td className="px-4 py-2 font-medium">{subItem.name}</td>
+                                    <td className="px-4 py-2">{subItem.quantity}</td>
+                                    <td className="px-4 py-2">{Number(subItem.price).toLocaleString()}</td>
+                                    <td className="px-4 py-2">{Number(subItem.discount || 0).toLocaleString()}</td>
+                                    <td className="px-4 py-2 font-semibold">
+                                      {((subItem.quantity * subItem.price) - (subItem.discount || 0)).toLocaleString()}
+                                    </td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan="8" className="px-4 py-4 text-center text-gray-500">
+                                    {isRTL ? 'لا توجد عناصر' : 'No items found'}
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
+                ))
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-4 p-4">
+          {paginatedItems.length === 0 ? (
+            <div className="text-center p-8 text-[var(--muted-text)]">
+              {isRTL ? 'لا توجد بيانات' : 'No data available'}
+            </div>
+          ) : (
+            paginatedItems.map((item) => (
+              <div key={item.id} className=" rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-bold text-theme-text">{item.customerName || '—'}</h3>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">{item.id}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                    item.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                    item.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                    item.status === 'Sent' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {item.status || 'Draft'}
+                  </span>
+                </div>
+                
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-sm text-theme-text">
+                    <span className="text-[var(--muted-text)]">{isRTL ? 'التاريخ:' : 'Date:'}</span>
+                    <span dir="ltr">{new Date(item.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-theme-text">
+                    <span className="text-[var(--muted-text)]">{isRTL ? 'المجموع:' : 'Total:'}</span>
+                    <span className="font-semibold">{Number(item.total).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-theme-text">
+                    <span className="text-[var(--muted-text)]">{isRTL ? 'عدد العناصر:' : 'Items:'}</span>
+                    <span>{item.items ? item.items.length : 0}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <button 
+                    className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPreviewItem(item)
+                    }}
+                  >
+                    <FaEye size={16} />
+                  </button>
+                  <button 
+                    className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditingItem(item)
+                      setShowForm(true)
+                    }}
+                  >
+                    <FaEdit size={16} />
+                  </button>
+                  <button 
+                    className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(item.id)
+                    }}
+                  >
+                    <FaTrash size={16} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Pagination */}
+        <nav className="flex flex-col gap-4 p-3 lg:p-4 border-t border-theme-border dark:border-gray-700 dark:bg-transparent rounded-b-lg backdrop-blur-sm">
+        {/* Row 1: Show Entries & Page Navigation */}
+        <div className="flex  lg:flex-row justify-between items-center gap-3">
+          {/* Show Entries */}
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto text-sm font-medium text-theme-text dark:text-white">
+            <span style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Show')}</span>
+            <select 
+              value={itemsPerPage} 
+              onChange={(e) => { 
+                setItemsPerPage(Number(e.target.value)); 
+                setCurrentPage(1); 
+              }} 
+              className="px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm text-theme-text dark:text-white text-xs"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-xs font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('entries')}</span>
+            <label htmlFor="page-search" className="sr-only">{t('Search Page')}</label>
+            <input
+              id="page-search"
+              type="text"
+              placeholder={t('Go to page...')}
+              value={pageSearch}
+              onChange={(e) => setPageSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const page = Number(pageSearch)
+                  if (page > 0 && page <= Math.ceil(filteredItems.length / itemsPerPage)) {
+                    setCurrentPage(page)
+                    setPageSearch('')
+                  }
+                }
+              }}
+              className="ml-2 px-3 py-1.5 border border-theme-border dark:border-gray-600 rounded-lg  dark:bg-transparent backdrop-blur-sm text-theme-text dark:text-white text-xs w-full sm:w-64 lg:w-28  dark:placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-400"
+              style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
+            />
+          </div>
+
+          {/* Page Navigation */}
+          <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="block px-3 py-2 leading-tight text-theme-text border border-theme-border rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+            >
+              <span className="sr-only text-theme-text dark:text-white focus:text-white">{t('Previous')}</span>
+              <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
+            </button>
+            <span className="text-sm font-medium text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>
+              {t('Page')} <span className="font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{currentPage}</span> {t('of')} <span className="font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{Math.ceil(filteredItems.length / itemsPerPage)}</span>
+            </span>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredItems.length / itemsPerPage)))}
+              disabled={currentPage === Math.ceil(filteredItems.length / itemsPerPage)}
+              className="block px-3 py-2 leading-tight text-theme-text border border-theme-border rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-transparent dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 backdrop-blur-sm"
+            >
+              <span className="sr-only text-theme-text dark:text-white focus:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Next')}</span>
+              <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: Export Controls */}
+        <div className="flex justify-center items-center">
+          <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto border p-2 rounded-lg border-theme-border dark:border-gray-600  dark:bg-gray-700 justify-center">
+            <span className="text-xs font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('Export Pages')}</span>
+            <input
+              type="number"
+              min="1"
+              max={Math.ceil(filteredItems.length / itemsPerPage)}
+              placeholder="From"
+              value={exportFrom}
+              onChange={(e) => setExportFrom(e.target.value)}
+              className="w-16 px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm text-white text-xs focus:border-blue-500"
+              style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
+            />
+            <span className="text-xs font-semibold text-theme-text dark:text-white" style={{ color: theme === 'dark' ? '#ffffff' : undefined }}>{t('to')}</span>
+            <input
+              type="number"
+              min="1"
+              max={Math.ceil(filteredItems.length / itemsPerPage)}
+              placeholder="To"
+              value={exportTo}
+              onChange={(e) => setExportTo(e.target.value)}
+              className="w-16 px-2 py-1 border border-theme-border dark:border-gray-600 rounded-md dark:bg-transparent backdrop-blur-sm text-theme-text dark:text-white text-xs focus:border-blue-500"
+              style={{ color: theme === 'dark' ? '#ffffff' : undefined }}
+            />
+            <button
+              onClick={handleExport}
+              className={`btn btn-sm ${selectedItems.length > 0 ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'} !text-white border-none flex items-center gap-1`}
+            >
+              {selectedItems.length > 0 ? <FaFileExport size={12} /> : <FaDownload size={12} />}
+              {selectedItems.length > 0 
+                ? (isRTL ? `تصدير المحدد (${selectedItems.length})` : `Export Selected (${selectedItems.length})`) 
+                : t('Export')}
+            </button>
+          </div>
+        </div>
+      </nav>
+      </div>
+
+      {/* Form Modal */}
+      <QuotationsFormModal
+        isOpen={showForm}
+        onClose={() => {
+          setShowForm(false)
+          setEditingItem(null)
+        }}
+        onSave={(data) => {
+          if (editingItem) {
+            const updatedItem = { ...editingItem, ...data }
+            if (mockStorage && mockStorage.saveQuotation) {
+              mockStorage.saveQuotation(updatedItem)
+            }
+            setItems(prev => prev.map(i => i.id === editingItem.id ? updatedItem : i))
+            showSuccess(isRTL ? 'تم تحديث عرض السعر' : 'Quotation updated successfully')
+          } else {
+            const newItem = {
+              ...data,
+              createdAt: new Date().toISOString()
+            }
+            if (mockStorage && mockStorage.saveQuotation) {
+              mockStorage.saveQuotation(newItem)
+            }
+            setItems(prev => [newItem, ...prev])
+            showSuccess(isRTL ? 'تم إضافة عرض السعر' : 'Quotation added successfully')
+          }
+          setShowForm(false)
+          setEditingItem(null)
+        }}
+        initialData={editingItem}
+        isRTL={isRTL}
+      />
+
+      <QuotationPreviewModal
+        isOpen={!!previewItem}
+        onClose={() => setPreviewItem(null)}
+        quotation={previewItem}
+      />
+
+      {showImportModal && (
+        <QuotationsImportModal
+          onClose={() => setShowImportModal(false)}
+          onImport={handleImport}
+          isRTL={isRTL}
+        />
       )}
+
     </div>
-    </>
   )
 }

@@ -32,18 +32,18 @@ export default function SalesActivitiesReport() {
   ]
 
   const googleMeetData = [
-    { name: isRTL ? 'إجراءات جوجل ميت' : 'Google Meet Actions', value: 233, color: '#0ea5e9' },
+    { name: isRTL ? 'إجراءات جوجل ميت' : 'Google Meet Actions', value: 233, color: '#ef4444' },
   ]
 
   // Define Next Actions as Stages
   const actionDefs = [
       { name: isRTL ? 'متابعة' : 'Follow Up', color: '#0ea5e9' },
-      { name: isRTL ? 'اجتماع' : 'Meeting', color: '#38bdf8' },
-      { name: isRTL ? 'عرض سعر' : 'Proposal', color: '#0284c7' },
-      { name: isRTL ? 'حجز' : 'Reservation', color: '#0369a1' },
-      { name: isRTL ? 'إغلاق صفقات' : 'Closing Deals', color: '#0f766e' },
-      { name: isRTL ? 'إيجار' : 'Rent', color: '#22c55e' },
-      { name: isRTL ? 'إلغاء' : 'Cancel', color: '#f97316' }
+      { name: isRTL ? 'اجتماع' : 'Meeting', color: '#8b5cf6' }, // Purple
+      { name: isRTL ? 'عرض سعر' : 'Proposal', color: '#06b6d4' }, // Cyan
+      { name: isRTL ? 'حجز' : 'Reservation', color: '#db2777' }, // Pink
+      { name: isRTL ? 'إغلاق صفقات' : 'Closing Deals', color: '#22c55e' }, // Green
+      { name: isRTL ? 'إيجار' : 'Rent', color: '#f97316' }, // Orange
+      { name: isRTL ? 'إلغاء' : 'Cancel', color: '#ef4444' } // Red
   ];
 
   const tableData = useMemo(() => {
@@ -62,7 +62,7 @@ export default function SalesActivitiesReport() {
       ...row,
       actionByStage: actionDefs[index % actionDefs.length].name
     }));
-  }, []);
+  }, [isRTL]);
 
   // State for filters
   const [salesPersonFilter, setSalesPersonFilter] = useState([])
@@ -90,7 +90,7 @@ export default function SalesActivitiesReport() {
     { value: 'Youssef Kamal', label: 'Youssef Kamal' },
   ]
   const managerOptions = [{ value: 'Manager 1', label: isRTL ? 'مدير 1' : 'Manager 1' }, { value: 'Manager 2', label: isRTL ? 'مدير 2' : 'Manager 2' }]
-  const stageOptions = useMemo(() => actionDefs.map(s => ({ value: s.name, label: s.name })), [isRTL])
+  const stageOptions = useMemo(() => actionDefs.map(s => ({ value: s.name, label: s.name, color: s.color })), [isRTL])
   const sourceOptions = [{ value: 'Facebook', label: isRTL ? 'فيسبوك' : 'Facebook' }, { value: 'Website', label: isRTL ? 'الموقع' : 'Website' }]
   const projectOptions = [{ value: 'Project A', label: isRTL ? 'مشروع أ' : 'Project A' }, { value: 'Project B', label: isRTL ? 'مشروع ب' : 'Project B' }]
 
@@ -223,8 +223,8 @@ export default function SalesActivitiesReport() {
     const total = segments.reduce((sum, item) => sum + (item.value || 0), 0)
 
     return (
-      <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-        <div className="text-sm font-semibold mb-2 dark:text-white text-center md:text-left">
+      <div className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="text-sm font-semibold mb-2 text-theme-text dark:text-white text-center md:text-left">
           {title}
         </div>
         <div className="h-48 flex items-center justify-center">
@@ -262,11 +262,11 @@ export default function SalesActivitiesReport() {
       </div>
 
       {/* Filter Panel */}
-      <div className=" backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-8">
+      <div className="bg-theme-bg backdrop-blur-md rounded-2xl shadow-sm border border-theme-border dark:border-gray-700/50 p-6 mb-8">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 dark:text-white font-semibold">
             <Filter size={20} className="text-blue-500 dark:text-blue-400" />
-            <h3>{t('Filter')}</h3>
+            <h3 className="text-theme-text">{t('Filter')}</h3>
           </div>
           
           <div className="flex items-center gap-2">
@@ -290,14 +290,14 @@ export default function SalesActivitiesReport() {
           {/* First Row (Always Visible) - Selects */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
-                <User size={12} className="text-blue-500 dark:text-blue-400" />
-                {isRTL ? 'مسؤول المبيعات' : 'Sales Person'}
-              </label>
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
+                      <User size={12} className="text-blue-500 dark:text-blue-400" />
+                      {isRTL ? 'مسؤول المبيعات' : 'Sales Person'}
+                    </label>
               <SearchableSelect options={salesPersonOptions} value={salesPersonFilter} onChange={setSalesPersonFilter} placeholder={isRTL ? 'اختر' : 'Select'} multiple isRTL={isRTL} icon={<User size={16} />} />
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Users size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'المدير أو الفريق' : 'Manager or team'}
               </label>
@@ -337,10 +337,10 @@ export default function SalesActivitiesReport() {
                <input type="date" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" value={assignDateFilter} onChange={(e) => setAssignDateFilter(e.target.value)} />
              </div>
              <div className="space-y-1">
-               <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
-                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
-                 {isRTL ? 'تاريخ الإنشاء' : 'Creation Date'}
-               </label>
+               <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
+                      <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                      {isRTL ? 'الفترة' : 'Duration'}
+                    </label>
                <input type="date" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" value={creationDateFilter} onChange={(e) => setCreationDateFilter(e.target.value)} />
              </div>
              <div className="space-y-1">
@@ -358,10 +358,10 @@ export default function SalesActivitiesReport() {
                <input type="date" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" value={closeDealsDateFilter} onChange={(e) => setCloseDealsDateFilter(e.target.value)} />
              </div>
              <div className="space-y-1">
-               <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
-                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
-                 {isRTL ? 'تاريخ العرض' : 'Proposal Date'}
-               </label>
+               <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
+                      <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
+                      {isRTL ? 'إلى تاريخ' : 'To Date'}
+                    </label>
                <input type="date" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" value={proposalDateFilter} onChange={(e) => setProposalDateFilter(e.target.value)} />
              </div>
           </div>
@@ -404,7 +404,7 @@ export default function SalesActivitiesReport() {
           return (
             <div 
               key={idx}
-              className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
+              className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
             >
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110">
                 <Icon size={80} className={card.color} />
@@ -440,8 +440,8 @@ export default function SalesActivitiesReport() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-theme-border dark:border-gray-700/50 flex items-center justify-between">
           <h2 className="text-lg font-bold dark:text-white">{isRTL ? 'نظرة عامة على نشاطات المبيعات' : 'Sales Activities Overview'}</h2>
           <div className="relative" ref={exportMenuRef}>
             <button 
@@ -473,20 +473,20 @@ export default function SalesActivitiesReport() {
         {/* Responsive Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white">
+            <thead className="text-xs uppercase bg-theme-bg dark:bg-white/5 dark:text-white">
               <tr>
-                <th className="md:hidden px-4 py-3 border-b border-white/10 dark:border-gray-700/50"></th>
-                <th className="px-4 py-3 border-b border-white/10 dark:border-gray-700/50 text-start">{isRTL ? 'مسؤول المبيعات' : 'Salesperson'}</th>
-                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'إجمالي العملاء' : 'Total Leads'}</th>
-                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'المتأخرة' : 'Delayed'}</th>
-                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'الإجراءات' : 'Actions'}</th>
-                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'المكالمات' : 'Calls'}</th>
-                <th className="hidden md:table-cell px-4 py-3 border-b border-white/10 dark:border-gray-700/50 text-start">{isRTL ? 'الإجراء حسب المرحلة' : 'Action by Stage'}</th>
-                <th className="px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'الإيرادات' : 'Revenue'}</th>
-                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-white/10 dark:border-gray-700/50">{isRTL ? 'الهدف' : 'Target'}</th>
+                <th className="md:hidden px-4 py-3 border-b border-theme-border dark:border-gray-700/50"></th>
+                <th className="px-4 py-3 border-b border-theme-border dark:border-gray-700/50 text-start text-theme-text dark:text-white">{isRTL ? 'مسؤول المبيعات' : 'Salesperson'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-theme-border dark:border-gray-700/50 text-theme-text dark:text-white">{isRTL ? 'إجمالي العملاء' : 'Total Leads'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-theme-border dark:border-gray-700/50 text-theme-text dark:text-white">{isRTL ? 'المتأخرة' : 'Delayed'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-theme-border dark:border-gray-700/50 text-theme-text dark:text-white">{isRTL ? 'الإجراءات' : 'Actions'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-theme-border dark:border-gray-700/50 text-theme-text dark:text-white">{isRTL ? 'المكالمات' : 'Calls'}</th>
+                <th className="hidden md:table-cell px-4 py-3 border-b border-theme-border dark:border-gray-700/50 text-start text-theme-text dark:text-white">{isRTL ? 'الإجراء حسب المرحلة' : 'Action by Stage'}</th>
+                <th className="px-4 py-3 text-center border-b border-theme-border dark:border-gray-700/50 text-theme-text dark:text-white">{isRTL ? 'الإيرادات' : 'Revenue'}</th>
+                <th className="hidden md:table-cell px-4 py-3 text-center border-b border-theme-border dark:border-gray-700/50 text-theme-text dark:text-white">{isRTL ? 'الهدف' : 'Target'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-theme-border dark:divide-gray-700/50">
               {filteredData.length === 0 && (
                 <tr>
                   <td
@@ -509,18 +509,26 @@ export default function SalesActivitiesReport() {
               )}
               {paginatedRows.map((row) => (
                 <React.Fragment key={row.id}>
-                  <tr className="hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                  <tr className="hover:bg-theme-bg/50 dark:hover:bg-white/5 transition-colors">
                     <td className="md:hidden px-4 py-3">
-                      <button onClick={() => toggleRow(row.id)} className="p-1 rounded-full hover:bg-white/10 text-[var(--muted-text)]">
+                      <button onClick={() => toggleRow(row.id)} className="p-1 rounded-full hover:bg-theme-bg/50 text-[var(--muted-text)]">
                         {expandedRows[row.id] ? <ChevronDown size={16} className="transform rotate-180" /> : <ChevronDown size={16} />}
                       </button>
                     </td>
-                    <td className="px-4 py-3 font-medium dark:text-white">{row.salesperson}</td>
+                    <td className="px-4 py-3 font-medium text-theme-text dark:text-white">{row.salesperson}</td>
                     <td className="hidden md:table-cell px-4 py-3 text-center dark:text-white">{row.totalLeads}</td>
                     <td className="hidden md:table-cell px-4 py-3 text-center text-red-500 font-medium">{row.delayed}</td>
                     <td className="hidden md:table-cell px-4 py-3 text-center dark:text-white">{row.actions}</td>
                     <td className="hidden md:table-cell px-4 py-3 text-center dark:text-white">{row.calls}</td>
-                    <td className="hidden md:table-cell px-4 py-3 dark:text-white">{row.actionByStage}</td>
+                    <td className="hidden md:table-cell px-4 py-3 dark:text-white">
+                      <div className="flex items-center gap-2">
+                        <span 
+                          className="w-2 h-2 rounded-full shrink-0" 
+                          style={{ backgroundColor: actionDefs.find(a => a.name === row.actionByStage)?.color || '#ccc' }}
+                        />
+                        {row.actionByStage}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-center font-bold text-green-600">{row.revenue.toLocaleString()}</td>
                     <td className="hidden md:table-cell px-4 py-3 text-center font-bold text-blue-600">{row.target.toLocaleString()}</td>
                   </tr>
@@ -546,7 +554,13 @@ export default function SalesActivitiesReport() {
                             </div>
                             <div className="col-span-2 flex justify-between">
                               <span className="text-[var(--muted-text)]">{isRTL ? 'الإجراء حسب المرحلة' : 'Action by Stage'}:</span>
-                              <span className="dark:text-white">{row.actionByStage}</span>
+                              <span className="dark:text-white flex items-center gap-2">
+                                <span 
+                                  className="w-2 h-2 rounded-full shrink-0" 
+                                  style={{ backgroundColor: actionDefs.find(a => a.name === row.actionByStage)?.color || '#ccc' }}
+                                />
+                                {row.actionByStage}
+                              </span>
                             </div>
                             <div className="col-span-2 flex justify-between">
                               <span className="text-[var(--muted-text)]">{isRTL ? 'الهدف' : 'Target'}:</span>
@@ -561,7 +575,7 @@ export default function SalesActivitiesReport() {
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-3 bg-[var(--content-bg)]/80 border-t border-white/10 dark:border-gray-700/60 flex sm:flex-row items-center justify-between gap-3">
+        <div className="px-4 py-3 bg-theme-bg border-t border-theme-border dark:border-gray-700/60 flex sm:flex-row items-center justify-between gap-3">
           <div className="text-[11px] sm:text-xs text-[var(--muted-text)]">
             {isRTL
               ? `إظهار ${Math.min((currentPage - 1) * entriesPerPage + 1, filteredData.length)}-${Math.min(currentPage * entriesPerPage, filteredData.length)} من ${filteredData.length}`

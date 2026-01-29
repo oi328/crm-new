@@ -7,7 +7,7 @@ import { Bar } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
 import { PieChart } from '@shared/components/PieChart'
 import { FaFileExport, FaFileExcel, FaFilePdf } from 'react-icons/fa'
-import { Filter, FileText, CheckCircle2, XCircle, Calendar, ChevronDown, ChevronUp, Eye, Download, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Filter, FileText, CheckCircle2, XCircle, Calendar, Eye, Download, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
@@ -16,24 +16,13 @@ const ImportsReport = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const isRTL = i18n.dir() === 'rtl'
-  const [expandedRows, setExpandedRows] = useState(new Set())
-
-  const toggleRow = (id) => {
-    const newExpanded = new Set(expandedRows)
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id)
-    } else {
-      newExpanded.add(id)
-    }
-    setExpandedRows(newExpanded)
-  }
 
   const initialLogs = [
-    { id: 1, fileName: 'clients_nov.csv', department: 'Customers', performedBy: 'Ahmed Ali', manager: 'Ahmed Ali', dateTime: '2025-11-09T08:45:00', status: 'Success', error: '' },
-    { id: 2, fileName: 'orders_oct.xlsx', department: 'Orders', performedBy: 'Sara Hassan', manager: 'Sara Hassan', dateTime: '2025-11-08T15:10:00', status: 'Failed', error: 'Missing column “Order ID”' },
-    { id: 3, fileName: 'inventory_11_07.csv', department: 'Inventory', performedBy: 'Omar Ali', manager: 'Omar Ali', dateTime: '2025-11-07T10:05:00', status: 'Success', error: '' },
-    { id: 4, fileName: 'leads_batch_oct.xlsx', department: 'Leads', performedBy: 'Mona Adel', manager: 'Mona Adel', dateTime: '2025-11-06T13:30:00', status: 'Success', error: '' },
-    { id: 5, fileName: 'marketing_campaigns.csv', department: 'Marketing', performedBy: 'Ahmed Ali', manager: 'Ahmed Ali', dateTime: '2025-11-05T09:15:00', status: 'Failed', error: 'Unsupported date format in column “Start Date”' }
+    { id: 1, fileName: 'clients_nov.csv', type: 'Customers', performedBy: 'Ahmed Ali', manager: 'Ahmed Ali', dateTime: '2025-11-09T08:45:00', status: 'Success', error: '' },
+    { id: 2, fileName: 'orders_oct.xlsx', type: 'Orders', performedBy: 'Sara Hassan', manager: 'Sara Hassan', dateTime: '2025-11-08T15:10:00', status: 'Failed', error: 'Missing column “Order ID”' },
+    { id: 3, fileName: 'inventory_11_07.csv', type: 'Inventory', performedBy: 'Omar Ali', manager: 'Omar Ali', dateTime: '2025-11-07T10:05:00', status: 'Success', error: '' },
+    { id: 4, fileName: 'leads_batch_oct.xlsx', type: 'Leads', performedBy: 'Mona Adel', manager: 'Mona Adel', dateTime: '2025-11-06T13:30:00', status: 'Success', error: '' },
+    { id: 5, fileName: 'marketing_campaigns.csv', type: 'Projects', performedBy: 'Ahmed Ali', manager: 'Ahmed Ali', dateTime: '2025-11-05T09:15:00', status: 'Failed', error: 'Unsupported date format in column “Start Date”' }
   ]
 
   const [logs] = useState(initialLogs)
@@ -42,6 +31,7 @@ const ImportsReport = () => {
   const [statusFilter, setStatusFilter] = useState('all')
   const [datePreset, setDatePreset] = useState('year')
   const [showExportMenu, setShowExportMenu] = useState(false)
+  const [previewItem, setPreviewItem] = useState(null)
   const exportMenuRef = useRef(null)
 
   const managers = useMemo(() => Array.from(new Set(logs.map(l => l.manager))), [logs])
@@ -229,7 +219,7 @@ const ImportsReport = () => {
         </p>
       </div>
 
-      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-8">
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm border border-theme-border dark:border-gray-700/50 p-6 mb-8">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 dark:text-white font-semibold">
             <Filter size={20} className="text-blue-500 dark:text-blue-400" />
@@ -318,7 +308,7 @@ const ImportsReport = () => {
           return (
             <div
               key={idx}
-              className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
+              className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
             >
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110">
                 <Icon size={80} className={card.color} />
@@ -344,7 +334,7 @@ const ImportsReport = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm p-4 rounded-2xl">
+        <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm p-4 rounded-2xl">
           <div className="text-sm font-medium mb-2 dark:text-white">
             {isRTL ? 'كمية الواردات لكل مدير' : 'Imports Quantity per Manager'}
           </div>
@@ -404,7 +394,7 @@ const ImportsReport = () => {
           </div>
         </div>
 
-        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm p-4 rounded-2xl">
+        <div className="  backdrop-blur-md border border-theme-border dark:border-gray-700/50 dark:border-gray-700/50 shadow-sm p-4 rounded-2xl">
           <div className="text-sm font-medium mb-2 dark:text-white">
             {isRTL ? 'الناجحة / الفاشلة' : 'Success & Fail'}
           </div>
@@ -444,9 +434,9 @@ const ImportsReport = () => {
         </div>
       </div>
 
-      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
-          <h2 className="text-lg font-bold dark:text-white">
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-theme-border dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-theme-text dark:text-white">
             {isRTL ? 'قائمة الواردات' : 'Imports List'}
           </h2>
           <div className="relative" ref={exportMenuRef}>
@@ -459,16 +449,16 @@ const ImportsReport = () => {
             </button>
 
             {showExportMenu && (
-              <div className={`absolute top-full ${isRTL ? 'left-0' : 'right-0'} mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-48`}>
+              <div className={`absolute top-full ${isRTL ? 'left-0' : 'right-0'} mt-1 bg-white dark:bg-[#172554] rounded-lg shadow-xl border border-gray-100 dark:border-[#1e3a8a] py-1 z-50 w-48`}>
                 <button
                   onClick={handleExport}
-                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-blue-900/50 flex items-center gap-2 dark:text-white"
                 >
                   <FaFileExcel className="text-green-600" /> {isRTL ? 'تصدير كـ Excel' : 'Export to Excel'}
                 </button>
                 <button
                   onClick={exportToPdf}
-                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
+                  className="w-full text-start px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-blue-900/50 flex items-center gap-2 dark:text-white"
                 >
                   <FaFilePdf className="text-red-600" /> {isRTL ? 'تصدير كـ PDF' : 'Export to PDF'}
                 </button>
@@ -477,95 +467,114 @@ const ImportsReport = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left dark:text-white">
+        {/* Mobile View - Cards */}
+        <div className="md:hidden space-y-4 p-4">
+          {paginatedRows.map(row => (
+            <div key={row.id} className=" rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-theme-text dark:text-white text-lg">{row.fileName}</h3>
+                  <p className="text-xs text-theme-text dark:text-white mt-1">{row.type}</p>
+                </div>
+                <StatusBadge status={row.status} />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'تمت بواسطة' : 'Action By'}</span>
+                  <div className="font-medium text-theme-text dark:text-white">
+                    <div>{row.performedBy}</div>
+                    <div className="text-xs text-theme-text dark:text-white">{row.manager}</div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'تاريخ الإجراء' : 'Action Date'}</span>
+                  <span className="font-medium text-theme-text dark:text-white" dir="ltr">{new Date(row.dateTime).toLocaleString()}</span>
+                </div>
+                <div className="col-span-2 flex flex-col gap-1">
+                  <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'وصف الخطأ' : 'Error'}</span>
+                  <span className="font-medium text-theme-text dark:text-white truncate">{row.error || '—'}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                <button 
+                  onClick={() => setPreviewItem(row)}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Eye size={16} />
+                  {isRTL ? 'معاينة' : 'Preview'}
+                </button>
+                <button className="flex-1 flex items-center justify-center gap-2 py-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors">
+                  <Download size={16} />
+                  {isRTL ? 'تحميل' : 'Download'}
+                </button>
+              </div>
+            </div>
+          ))}
+          {paginatedRows.length === 0 && (
+            <div className="text-center py-8 text-theme-text dark:text-white">
+              {isRTL ? 'لا توجد بيانات' : 'No data available'}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View - Table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-sm text-left rtl:text-right dark:text-white">
             <thead className="text-xs dark:text-white uppercase bg-gray-50/50 dark:bg-gray-700/50 dark:text-white">
               <tr>
-                <th className="px-4 py-3 md:hidden"></th>
                 <th className="px-4 py-3 text-start">{isRTL ? 'اسم الملف' : 'File Name'}</th>
                 <th className="px-4 py-3 text-start">{isRTL ? 'الحالة' : 'Status'}</th>
-                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'القسم' : 'Department'}</th>
-                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'تمت بواسطة' : 'Action By'}</th>
-                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'تاريخ الإجراء' : 'Action Date'}</th>
-                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'اخطاء' : 'error'}</th>
-                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'الإجراء' : 'Action'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'النوع' : 'Type'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'تمت بواسطة' : 'Action By'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'تاريخ الإجراء' : 'Action Date'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'اخطاء' : 'error'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'الإجراء' : 'Action'}</th>
               </tr>
             </thead>
             <tbody>
               {paginatedRows.length > 0 ? (
-                paginatedRows.map((row) => {
-                  const isExpanded = expandedRows.has(row.id)
-                  return (
-                    <React.Fragment key={row.id}>
-                      <tr className="border-b dark:border-gray-700/50 hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
-                        <td className="px-4 py-3 md:hidden">
-                          <button
-                            onClick={() => toggleRow(row.id)}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                          >
-                            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                          </button>
-                        </td>
-                        <td className="px-4 py-3 font-medium  dark:text-white whitespace-nowrap">
-                          {row.fileName}
-                        </td>
-                        <td className="px-4 py-3">
-                          <StatusBadge status={row.status} />
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell">{row.department}</td>
-                        <td className="px-4 py-3 hidden md:table-cell">
-                          <div>
-                            <div className="font-medium">{row.performedBy}</div>
-                            <div className="text-xs dark:text-white">{row.manager}</div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell" dir="ltr">
-                          {new Date(row.dateTime).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell max-w-xs truncate" title={row.error}>
-                          {row.error || '—'}
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell">
-                          <div className="flex items-center gap-2">
-                            <button className=" hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400 transition-colors" title={isRTL ? 'معاينة' : 'Preview'}>
-                              <Eye size={16} />
-                            </button>
-                            <button className=" hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400 transition-colors" title={isRTL ? 'تحميل' : 'Download'}>
-                              <Download size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      {isExpanded && (
-                        <tr className="md:hidden ">
-                          <td colSpan={8} className="px-4 py-3 space-y-2">
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                              <div className="dark:text-white">{isRTL ? 'القسم' : 'Department'}:</div>
-                              <div>{row.department}</div>
-                              <div className="dark:text-white">{isRTL ? 'تمت بواسطة' : 'Action By'}:</div>
-                              <div>{row.performedBy} ({row.manager})</div>
-                              <div className="dark:text-white">{isRTL ? 'تاريخ الإجراء' : 'Action Date'}:</div>
-                              <div dir="ltr">{new Date(row.dateTime).toLocaleString()}</div>
-                              <div className="dark:text-white">{isRTL ? 'اخطاء' : 'error'}:</div>
-                              <div>{row.error || '—'}</div>
-                              <div className="col-span-2 flex justify-end gap-2 mt-2">
-                                <button className="flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-xs">
-                                  <Eye size={14} /> {isRTL ? 'معاينة' : 'Preview'}
-                                </button>
-                                <button className="flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-xs">
-                                  <Download size={14} /> {isRTL ? 'تحميل' : 'Download'}
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  )
-                })
+                paginatedRows.map((row) => (
+                  <tr key={row.id} className="border-b dark:border-gray-700/50 hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                    <td className="px-4 py-3 font-medium text-theme-text dark:text-white whitespace-nowrap">
+                      {row.fileName}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={row.status} />
+                    </td>
+                    <td className="px-4 py-3 text-theme-text dark:text-white">{row.type}</td>
+                    <td className="px-4 py-3 text-theme-text dark:text-white">
+                      <div>
+                        <div className="font-medium">{row.performedBy}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{row.manager}</div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-theme-text dark:text-white" dir="ltr">
+                      {new Date(row.dateTime).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 max-w-xs truncate text-theme-text dark:text-white" title={row.error}>
+                      {row.error || '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => setPreviewItem(row)}
+                          className="hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400 transition-colors p-1" 
+                          title={isRTL ? 'معاينة' : 'Preview'}
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button className="hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400 transition-colors p-1" title={isRTL ? 'تحميل' : 'Download'}>
+                          <Download size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center dark:text-white">
+                  <td colSpan={7} className="px-4 py-8 text-center text-theme-text dark:text-white">
                     {isRTL ? 'لا توجد بيانات' : 'No data available'}
                   </td>
                 </tr>
@@ -613,7 +622,7 @@ const ImportsReport = () => {
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-1">
-              <span className="text-[10px] sm:text-xs text-[var(--muted-text)] whitespace-nowrap">
+              <span className="text-[10px] sm:text-xs text-theme-text dark:text-gray-400 whitespace-nowrap">
                 {isRTL ? 'لكل صفحة:' : 'Per page:'}
               </span>
               <select
@@ -633,6 +642,116 @@ const ImportsReport = () => {
           </div>
         </div>
       </div>
+
+      {previewItem && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setPreviewItem(null)}
+          />
+          <div className="card relative z-10 w-full max-w-2xl glass-panel rounded-2xl p-6 shadow-2xl overflow-hidden transform transition-all scale-100">
+            {/* Header */}
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="text-xl font-semibold dark:text-white flex items-center gap-2">
+                 {isRTL ? 'تفاصيل الملف' : 'File Details'}
+              </h3>
+              <button
+                onClick={() => setPreviewItem(null)}
+                className="p-1 rounded-full hover:bg-gray-500/20 transition-colors text-gray-500 dark:text-gray-300"
+              >
+                <XCircle size={24} />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              
+              {/* Summary Cards */}
+              <div className=" grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div className="glass-panel rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                    <div className="text-xs text-[var(--muted-text)] mb-1">{isRTL ? 'اسم الملف' : 'File Name'}</div>
+                    <div className="font-semibold text-sm break-all" dir="ltr">{previewItem.fileName}</div>
+                 </div>
+                 <div className="glass-panel rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                    <div className="text-xs text-[var(--muted-text)] mb-1">{isRTL ? 'الحالة' : 'Status'}</div>
+                    <StatusBadge status={previewItem.status} />
+                 </div>
+                 <div className="glass-panel rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                    <div className="text-xs text-[var(--muted-text)] mb-1">{isRTL ? 'النوع' : 'Type'}</div>
+                    <div className="font-semibold text-sm">{previewItem.type}</div>
+                 </div>
+              </div>
+
+              {/* Details Grid */}
+              <div className="glass-panel rounded-xl p-4">
+                 <h4 className="text-sm font-semibold mb-3 border-b border-gray-700/30 pb-2 dark:text-white">{isRTL ? 'معلومات إضافية' : 'Additional Info'}</h4>
+                 <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-[var(--muted-text)] block text-xs">{isRTL ? 'تاريخ الإجراء' : 'Action Date'}</span>
+                      <span className="font-medium dark:text-white" dir="ltr">{new Date(previewItem.dateTime).toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-[var(--muted-text)] block text-xs">{isRTL ? 'تمت بواسطة' : 'Performed By'}</span>
+                      <span className="font-medium dark:text-white">{previewItem.performedBy}</span>
+                    </div>
+                    {previewItem.error && (
+                      <div className="col-span-2 mt-2 p-3 rounded bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+                        <span className="font-bold block text-xs mb-1">{isRTL ? 'تفاصيل الخطأ' : 'Error Details'}</span>
+                        {previewItem.error}
+                      </div>
+                    )}
+                 </div>
+              </div>
+
+              {/* Data Preview Table (Mock) */}
+              <div className="glass-panel rounded-xl p-0 overflow-hidden">
+                 <div className="px-4 py-3 bg-gray-500/5 border-b border-gray-500/10 flex justify-between items-center">
+                    <h4 className="text-sm font-semibold dark:text-white">{isRTL ? 'معاينة البيانات' : 'Data Preview'}</h4>
+                    <span className="text-[10px] text-[var(--muted-text)]">{isRTL ? 'عينة' : 'Sample'}</span>
+                 </div>
+                 <div className="overflow-x-auto">
+                   <table className="min-w-full text-xs">
+                     <thead className="bg-gray-500/5">
+                        <tr>
+                           <th className="px-3 py-2 text-start dark:text-gray-300">ID</th>
+                           <th className="px-3 py-2 text-start dark:text-gray-300">{isRTL ? 'الاسم' : 'Name'}</th>
+                           <th className="px-3 py-2 text-start dark:text-gray-300">{isRTL ? 'البيانات' : 'Data'}</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-gray-700/10">
+                        {[1, 2, 3].map(i => (
+                          <tr key={i} className="hover:bg-gray-500/5">
+                             <td className="px-3 py-2 opacity-70 dark:text-gray-400">#{100 + i}</td>
+                             <td className="px-3 py-2 dark:text-gray-300">Item {i}</td>
+                             <td className="px-3 py-2 opacity-70 dark:text-gray-400">...</td>
+                          </tr>
+                        ))}
+                     </tbody>
+                   </table>
+                 </div>
+              </div>
+
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-700/20">
+              <button
+                onClick={() => setPreviewItem(null)}
+                className="px-4 py-2 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors text-sm"
+              >
+                {isRTL ? 'إغلاق' : 'Close'}
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm flex items-center gap-2"
+              >
+                <Download size={16} />
+                {isRTL ? 'تحميل الملف' : 'Download File'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { RiSearchLine, RiRefreshLine } from 'react-icons/ri'
 import { FaFileExport, FaFileExcel, FaFilePdf } from 'react-icons/fa'
-import { Filter, ChevronDown as FilterChevron, Calendar, FileText, CheckCircle2, XCircle, ChevronDown, ChevronUp, Eye, Download, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Filter, Calendar, FileText, CheckCircle2, XCircle, ChevronDown, Eye, Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
@@ -35,25 +35,11 @@ const ExportsReport = () => {
   const [query, setQuery] = useState('')
   const [entriesPerPage, setEntriesPerPage] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
-  const [selectAll, setSelectAll] = useState(false)
   const [previewItem, setPreviewItem] = useState(null)
   const [showExportModal, setShowExportModal] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const exportMenuRef = useRef(null)
   
-  // Mobile table expanded rows
-  const [expandedRows, setExpandedRows] = useState(new Set())
-
-  const toggleRow = (id) => {
-    const newExpanded = new Set(expandedRows)
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id)
-    } else {
-      newExpanded.add(id)
-    }
-    setExpandedRows(newExpanded)
-  }
-
   // Filters
   const [selectedManager, setSelectedManager] = useState('All')
   const [selectedEmployee, setSelectedEmployee] = useState('All')
@@ -76,13 +62,13 @@ const ExportsReport = () => {
   // Demo dataset
   const [exportsData, setExportsData] = useState(() => {
     const now = new Date()
-    const mk = (fileName, dept, by, tsOffsetDays, status, notes) => ({
+    const mk = (fileName, dept, by, tsOffsetDays, status, error) => ({
       fileName,
       department: dept,
       performedBy: by,
       timestamp: new Date(now.getTime() - tsOffsetDays * 24 * 60 * 60 * 1000),
       status, // 'Success' | 'Failed'
-      notes,
+      error,
     })
     return [
       mk('clients_nov.csv', 'Customers', 'Ahmed Ali', 0, 'Success', ''),
@@ -168,7 +154,7 @@ const ExportsReport = () => {
 
   // Actions
   const handleDownloadRowCSV = (row) => {
-    const csvContent = `File Name,Department,Performed By,Date & Time,Status,Notes\n${row.fileName},${row.department},${row.performedBy},${row.timestamp.toLocaleString()},${row.status},${row.notes || ''}`
+    const csvContent = `File Name,Department,Performed By,Date & Time,Status,error\n${row.fileName},${row.department},${row.performedBy},${row.timestamp.toLocaleString()},${row.status},${row.error || ''}`
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -188,7 +174,7 @@ const ExportsReport = () => {
       // simulate retry success 70% of time
       const ok = Math.random() < 0.7
       item.status = ok ? 'Success' : 'Failed'
-      item.notes = ok ? '' : 'Retry failed'
+      item.error = ok ? '' : 'Retry failed'
       next[rowIdx] = item
       return next
     })
@@ -202,7 +188,7 @@ const ExportsReport = () => {
       [isRTL ? 'نفّذ بواسطة' : 'Performed By']: r.performedBy,
       [isRTL ? 'التاريخ والوقت' : 'Date & Time']: r.timestamp.toLocaleString(),
       [isRTL ? 'الحالة' : 'Status']: r.status,
-      [isRTL ? 'اخطاء' : 'error']: r.notes || '',
+      [isRTL ? 'اخطاء' : 'error']: r.error || '',
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
     const wb = XLSX.utils.book_new()
@@ -229,7 +215,7 @@ const ExportsReport = () => {
       r.performedBy,
       r.timestamp.toLocaleString(),
       r.status,
-      r.notes || ''
+      r.error || ''
     ])
 
     doc.text(isRTL ? 'تقرير التصدير' : 'Exports Report', 40, 40)
@@ -274,7 +260,7 @@ const ExportsReport = () => {
       performedBy: user,
       timestamp: new Date(),
       status: ok ? 'Success' : 'Failed',
-      notes: ok ? '' : 'Service unavailable',
+      error: ok ? '' : 'Service unavailable',
     }
     setExportsData(prev => [newRecord, ...prev])
     setShowExportModal(false)
@@ -331,7 +317,7 @@ const ExportsReport = () => {
         </div>
       </div>
 
-      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-8">
+      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-theme-border dark:border-gray-700/50 p-6 mb-8">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 dark:text-white font-semibold">
             <Filter size={20} className="text-blue-500 dark:text-blue-400" />
@@ -352,7 +338,7 @@ const ExportsReport = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 {isRTL ? 'المدير' : 'Manager'}
               </label>
               <select
@@ -373,7 +359,7 @@ const ExportsReport = () => {
             </div>
             
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 {isRTL ? 'الحالة' : 'Status'}
               </label>
               <select
@@ -391,7 +377,7 @@ const ExportsReport = () => {
             </div>
             
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
                 {isRTL ? 'تاريخ الإجراء' : 'Action Date'}
               </label>
@@ -419,9 +405,9 @@ const ExportsReport = () => {
           const Icon = card.icon
           return (
             <div
-              key={idx}
-              className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
-            >
+                key={idx}
+                className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden h-32"
+              >
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110">
                 <Icon size={80} className={card.color} />
               </div>
@@ -446,7 +432,7 @@ const ExportsReport = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
-        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm p-4 rounded-2xl">
+        <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm p-4 rounded-2xl">
           <div className="font-semibold mb-2">{isRTL ? 'كمية التصدير لكل مدير' : 'Exports Quantity per Manager'}</div>
           <div className="h-[260px]">
             <Bar
@@ -497,7 +483,7 @@ const ExportsReport = () => {
             />
           </div>
         </div>
-        <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm p-4 rounded-2xl">
+        <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm p-4 rounded-2xl">
           <div className="text-sm font-medium mb-2 dark:text-white">{isRTL ? 'الناجحة / الفاشلة' : 'Success & Fail'}</div>
           <div className="h-[260px] flex flex-col items-center justify-center">
             <div className="flex-1 flex items-center justify-center">
@@ -535,9 +521,9 @@ const ExportsReport = () => {
         </div>
       </div>
 
-      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden mb-4">
-        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
-          <h2 className="text-lg font-bold dark:text-white">
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden mb-4">
+        <div className="p-4 border-b border-theme-border dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-theme-text dark:text-white">
             {isRTL ? 'قائمة التصدير' : 'Exports List'}
           </h2>
           <div className="relative" ref={exportMenuRef}>
@@ -572,111 +558,119 @@ const ExportsReport = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile View - Cards */}
+        <div className="md:hidden space-y-4 p-4">
+          {paginatedRows.map((row) => {
+            const rowId = row.fileName + row.timestamp.getTime()
+            return (
+              <div key={rowId} className=" rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-theme-text dark:text-white text-lg">{row.fileName}</h3>
+                    <p className="text-xs text-theme-text dark:text-white mt-1">{row.department}</p>
+                  </div>
+                  <StatusBadge status={row.status} />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'نفّذ بواسطة' : 'Performed By'}</span>
+                    <span className="font-medium text-theme-text dark:text-white">{row.performedBy}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'التاريخ' : 'Date'}</span>
+                    <span className="font-medium text-theme-text dark:text-white" dir="ltr">{row.timestamp.toLocaleString()}</span>
+                  </div>
+                  <div className="col-span-2 flex flex-col gap-1">
+                    <span className="text-xs text-theme-text dark:text-white">{isRTL ? 'اخطاء' : 'error'}</span>
+                    <span className="font-medium text-theme-text dark:text-white truncate">{row.error || '—'}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                  <button
+                    onClick={() => setPreviewItem(row)}
+                    className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+                  >
+                    <Eye size={16} />
+                    {isRTL ? 'معاينة' : 'Preview'}
+                  </button>
+                  <button
+                    onClick={() => handleDownloadRowCSV(row)}
+                    className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-sm font-medium"
+                  >
+                    <Download size={16} />
+                    {isRTL ? 'تحميل' : 'Download'}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+          {paginatedRows.length === 0 && (
+            <div className="text-center py-8 text-theme-text dark:text-white">
+              {isRTL ? 'لا توجد بيانات' : 'No data available'}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View - Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left dark:text-white">
-            <thead className="text-xs dark:text-white uppercase bg-gray-50/50 dark:bg-gray-700/50 dark:text-white">
+            <thead className="text-xs text-theme-text dark:text-white uppercase  dark:bg-gray-700/50">
               <tr>
-                <th className="px-4 py-3 md:hidden"></th>
                 <th className="px-4 py-3 text-start">{isRTL ? 'اسم الملف' : 'File Name'}</th>
                 <th className="px-4 py-3 text-start">{isRTL ? 'الحالة' : 'Status'}</th>
-                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'القسم' : 'Department'}</th>
-                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'نفّذ بواسطة' : 'Performed By'}</th>
-                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'التاريخ والوقت' : 'Date & Time'}</th>
-                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'اخطاء' : 'error'}</th>
-                <th className="px-4 py-3 text-start hidden md:table-cell">{isRTL ? 'الإجراء' : 'Action'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'القسم' : 'Department'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'نفّذ بواسطة' : 'Performed By'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'التاريخ والوقت' : 'Date & Time'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'اخطاء' : 'error'}</th>
+                <th className="px-4 py-3 text-start">{isRTL ? 'الإجراء' : 'Action'}</th>
               </tr>
             </thead>
             <tbody>
               {paginatedRows.length > 0 ? (
                 paginatedRows.map((row) => {
-                  const isExpanded = expandedRows.has(row.fileName + row.timestamp.getTime()) // Use unique ID if available, otherwise combine fields
-                  // Wait, row doesn't have ID in mock data? Let's check mk function.
-                  // mk doesn't add ID. I should use index or generate ID. 
-                  // But paginatedRows map index is local.
-                  // I'll use a combination of fileName and timestamp for key and ID.
                   const rowId = row.fileName + row.timestamp.getTime()
-                  const isRowExpanded = expandedRows.has(rowId)
-
                   return (
-                    <React.Fragment key={rowId}>
-                      <tr className="border-b dark:text-white dark:border-gray-700/50 hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
-                        <td className="px-4 py-3 md:hidden">
+                    <tr key={rowId} className="border-b dark:text-white dark:border-gray-700/50 hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                      <td className="px-4 py-3 font-medium text-theme-text dark:text-white whitespace-nowrap">
+                        {row.fileName}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={row.status} />
+                      </td>
+                      <td className="px-4 py-3 text-theme-text dark:text-white">{row.department}</td>
+                      <td className="px-4 py-3 text-theme-text dark:text-white">{row.performedBy}</td>
+                      <td className="px-4 py-3 text-theme-text dark:text-white" dir="ltr">
+                        {row.timestamp.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-theme-text dark:text-white max-w-xs truncate" title={row.error}>
+                        {row.error || '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
                           <button
-                            onClick={() => toggleRow(rowId)}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                            onClick={() => setPreviewItem(row)}
+                            className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400 transition-colors"
+                            title={isRTL ? 'معاينة' : 'Preview'}
                           >
-                            {isRowExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            <Eye size={16} />
                           </button>
-                        </td>
-                        <td className="px-4 py-3 font-medium  dark:text-white whitespace-nowrap">
-                          {row.fileName}
-                        </td>
-                        <td className="px-4 py-3">
-                          <StatusBadge status={row.status} />
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell">{row.department}</td>
-                        <td className="px-4 py-3 hidden md:table-cell">{row.performedBy}</td>
-                        <td className="px-4 py-3 hidden md:table-cell" dir="ltr">
-                          {row.timestamp.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell max-w-xs truncate" title={row.notes}>
-                          {row.notes || '—'}
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setPreviewItem(row)}
-                              className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400 transition-colors"
-                              title={isRTL ? 'معاينة' : 'Preview'}
-                            >
-                              <Eye size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDownloadRowCSV(row)}
-                              className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400 transition-colors"
-                              title={isRTL ? 'تحميل' : 'Download'}
-                            >
-                              <Download size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      {isRowExpanded && (
-                        <tr className="md:hidden bg-gray-50 dark:bg-gray-800/50">
-                          <td colSpan={8} className="px-4 py-3 space-y-2">
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                              <div className=" dark:text-white">{isRTL ? 'القسم' : 'Department'}:</div>
-                              <div>{row.department}</div>
-                              <div className=" dark:text-white">{isRTL ? 'نفّذ بواسطة' : 'Action By'}:</div>
-                              <div>{row.performedBy}</div>
-                              <div className=" dark:text-white">{isRTL ? 'تاريخ الإجراء' : 'Action Date'}:</div>
-                              <div dir="ltr">{row.timestamp.toLocaleString()}</div>
-                              <div className=" dark:text-white">{isRTL ? 'خطأ' : 'Error'}:</div>
-                              <div>{row.notes || '—'}</div>
-                              <div className="col-span-2 flex justify-end gap-2 mt-2">
-                                <button
-                                  onClick={() => setPreviewItem(row)}
-                                  className="flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-xs"
-                                >
-                                  <Eye size={14} /> {isRTL ? 'معاينة' : 'Preview'}
-                                </button>
-                                <button
-                                  onClick={() => handleDownloadRowCSV(row)}
-                                  className="flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-xs"
-                                >
-                                  <Download size={14} /> {isRTL ? 'تحميل' : 'Download'}
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
+                          <button
+                            onClick={() => handleDownloadRowCSV(row)}
+                            className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400 transition-colors"
+                            title={isRTL ? 'تحميل' : 'Download'}
+                          >
+                            <Download size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   )
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center dark:text-white">
+                  <td colSpan={7} className="px-4 py-8 text-center text-theme-text dark:text-white">
                     {isRTL ? 'لا توجد بيانات' : 'No data available'}
                   </td>
                 </tr>
@@ -724,7 +718,7 @@ const ExportsReport = () => {
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-1">
-              <span className="text-[10px] sm:text-xs text-[var(--muted-text)] whitespace-nowrap">
+              <span className="text-[10px] sm:text-xs text-theme-text dark:text-gray-400 whitespace-nowrap">
                 {isRTL ? 'لكل صفحة:' : 'Per page:'}
               </span>
               <select

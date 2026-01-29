@@ -315,8 +315,8 @@ export default function RentReport() {
   const renderPieCard = (title, data) => {
     const total = data.reduce((sum, item) => sum + (item.value || 0), 0)
     return (
-      <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-        <div className="text-sm font-semibold mb-2 dark:text-white text-center md:text-left">{title}</div>
+      <div className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="text-sm font-semibold mb-2 text-theme-text dark:text-white text-center md:text-left">{title}</div>
         <div className="h-48 flex items-center justify-center">
           <PieChart
             segments={data}
@@ -348,7 +348,7 @@ export default function RentReport() {
         </h1>
       </div>
 
-      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-gray-700/50 p-6 mb-4">
+      <div className="backdrop-blur-md rounded-2xl shadow-sm border border-theme-border dark:border-gray-700/50 p-6 mb-4">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 dark:text-white font-semibold">
             <Filter size={20} className="text-blue-500 dark:text-blue-400" />
@@ -377,7 +377,7 @@ export default function RentReport() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <User size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Sales Person')}
               </label>
@@ -386,7 +386,7 @@ export default function RentReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Users size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Manager')}
               </label>
@@ -395,7 +395,7 @@ export default function RentReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Tag size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Source')}
               </label>
@@ -404,7 +404,7 @@ export default function RentReport() {
               </SearchableSelect>
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Layers size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Rent Status')}
               </label>
@@ -420,7 +420,7 @@ export default function RentReport() {
             }`}
           >
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Date From')}
               </label>
@@ -432,7 +432,7 @@ export default function RentReport() {
               />
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Calendar size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Date To')}
               </label>
@@ -444,7 +444,7 @@ export default function RentReport() {
               />
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-xs font-medium dark:text-white">
+              <label className="flex items-center gap-1 text-xs font-medium text-theme-text dark:text-white">
                 <Home size={12} className="text-blue-500 dark:text-blue-400" />
                 {t('Unit Type')}
               </label>
@@ -466,10 +466,10 @@ export default function RentReport() {
         ].map(card => (
           <div
             key={card.label}
-            className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex items-center justify-between"
+            className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden flex items-center justify-between"
           >
             <div>
-              <div className="text-xs dark:text-white">{card.label}</div>
+              <div className="text-xs text-theme-text dark:text-white">{card.label}</div>
               <div className="text-lg font-semibold">{card.value}</div>
             </div>
             <div className={`w-8 h-8 rounded-lg ${card.accent}`}></div>
@@ -480,7 +480,7 @@ export default function RentReport() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {renderPieCard(t('Rent Units by status'), unitsByStatusData)}
         
-        <div className="group relative bg-white/10 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-white/50 dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+        <div className="group relative bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl border border-theme-border dark:border-gray-700/50 p-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
           <div className="text-sm font-semibold mb-4 dark:text-white">{t('Rent Amount overtime')}</div>
           <div className="h-64">
             <Bar data={rentOverTimeData} options={barOptions} />
@@ -490,9 +490,9 @@ export default function RentReport() {
         {renderPieCard(t('Expired & Renewed contracts'), expiredRenewedData)}
       </div>
 
-      <div className="bg-white/10 dark:bg-gray-800/30 backdrop-blur-md border border-white/50 dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 flex items-center justify-between">
-          <h2 className="text-lg font-bold dark:text-white">{t('Rent Overview')}</h2>
+      <div className="bg-theme-bg dark:bg-gray-800/30 backdrop-blur-md border border-theme-border dark:border-gray-700/50 shadow-sm rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-theme-border dark:border-gray-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-theme-text dark:text-white">{t('Rent Overview')}</h2>
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(prev => !prev)}
@@ -523,7 +523,73 @@ export default function RentReport() {
             )}
           </div>
         </div>
-        <div className="overflow-x-auto">
+        {/* Mobile View - Cards */}
+        <div className="md:hidden space-y-4 p-4">
+          {paginatedData.map(unit => (
+            <div key={unit.id} className=" rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-lg">{unit.property}</h3>
+                  <p className="text-sm text-theme-text dark:text-white">{unit.clientName}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-blue-600 dark:text-blue-400">{unit.rentAmount.toLocaleString()} EGP</p>
+                  <span className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${
+                    unit.status === 'active' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                    unit.status === 'expired' ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                    'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                  }`}>
+                    {t(unit.status.charAt(0).toUpperCase() + unit.status.slice(1))}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="space-y-1">
+                  <p className="text-xs text-theme-text dark:text-white">{t('Contact')}</p>
+                  <p className="font-medium   text-theme-text dark:text-white">{unit.contact}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-theme-text dark:text-white">{t('Sales Person')}</p>
+                  <p className="font-medium text-theme-text dark:text-white">{unit.salesPerson}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-theme-text dark:text-white">{t('Start Date')}</p>
+                  <p className="font-medium text-theme-text dark:text-white">{unit.startDate}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-theme-text dark:text-white">{t('End Date')}</p>
+                  <p className="font-medium dark:text-gray-200">{unit.endDate}</p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
+                <button
+                  onClick={() => handlePreview(unit)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                >
+                  <Eye size={14} />
+                  {t('Preview')}
+                </button>
+                <button
+                  onClick={() => handleDelete(unit.id)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                >
+                  <Trash2 size={14} />
+                  {t('Delete')}
+                </button>
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <div className="text-center py-8 text-theme-text dark:text-white">
+              {t('No rent units found')}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View - Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs uppercase bg-white/5 dark:bg-white/5 dark:text-white">
               <tr>

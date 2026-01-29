@@ -20,6 +20,7 @@ export default function SearchableSelect({
   children,
   menuWidth,
   usePortal = true,
+  multiple = false,
 }) {
   const { i18n } = useTranslation()
   const isArabic = i18n.language === 'ar'
@@ -53,9 +54,17 @@ export default function SearchableSelect({
   }, [opts, query])
 
   const selectedLabel = useMemo(() => {
+    if (multiple) {
+      if (!Array.isArray(value) || value.length === 0) return ''
+      if (value.length > 2) return `${value.length} selected`
+      return value.map(v => {
+        const found = opts.find(o => o.value === v)
+        return found ? found.label : v
+      }).join(', ')
+    }
     const found = opts.find(o => o.value === value)
     return found ? found.label : ''
-  }, [opts, value])
+  }, [opts, value, multiple])
 
   useEffect(() => {
     const onDocClick = (e) => {
@@ -140,17 +149,36 @@ export default function SearchableSelect({
                   {filtered.length === 0 && (
                     <li className="px-3 py-2 text-sm text-[var(--muted-text)]">{isArabic ? 'لا توجد نتائج' : 'No results'}</li>
                   )}
-                  {filtered.map((o) => (
+                  {filtered.map((o) => {
+                    const isSelected = multiple 
+                      ? (Array.isArray(value) && value.includes(o.value))
+                      : o.value === value
+                    
+                    return (
                     <li
                       key={o.value}
                       role="option"
-                      aria-selected={o.value === value}
-                      className={`mx-1 rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${o.value === value ? 'bg-[rgba(37,99,235,0.28)] text-white' : 'hover:bg-[rgba(37,99,235,0.18)]'} ${isLight ? 'text-theme-text' : 'text-gray-100'}`}
-                      onClick={() => { onChange && onChange(o.value); setOpen(false); setQuery('') }}
+                      aria-selected={isSelected}
+                      className={`mx-1 rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors flex items-center justify-between ${isSelected ? 'bg-[rgba(37,99,235,0.28)] text-white' : 'hover:bg-[rgba(37,99,235,0.18)]'} ${isLight ? 'text-theme-text' : 'text-gray-100'}`}
+                      onClick={() => { 
+                        if (multiple) {
+                          const currentVal = Array.isArray(value) ? value : []
+                          const newVal = currentVal.includes(o.value)
+                            ? currentVal.filter(v => v !== o.value)
+                            : [...currentVal, o.value]
+                          onChange && onChange(newVal)
+                          inputRef.current?.focus()
+                        } else {
+                          onChange && onChange(o.value)
+                          setOpen(false)
+                          setQuery('') 
+                        }
+                      }}
                     >
-                      {o.label}
+                      <span>{o.label}</span>
+                      {isSelected && multiple && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
                     </li>
-                  ))}
+                  )})}
                 </ul>
               </div>,
               document.body
@@ -170,17 +198,36 @@ export default function SearchableSelect({
                   {filtered.length === 0 && (
                     <li className="px-3 py-2 text-sm text-[var(--muted-text)]">{isArabic ? 'لا توجد نتائج' : 'No results'}</li>
                   )}
-                  {filtered.map((o) => (
+                  {filtered.map((o) => {
+                    const isSelected = multiple 
+                      ? (Array.isArray(value) && value.includes(o.value))
+                      : o.value === value
+
+                    return (
                     <li
                       key={o.value}
                       role="option"
-                      aria-selected={o.value === value}
-                      className={`mx-1 rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${o.value === value ? 'bg-[rgba(37,99,235,0.28)] text-white' : 'hover:bg-[rgba(37,99,235,0.18)]'} ${isLight ? 'text-theme-text' : 'text-gray-100'}`}
-                      onClick={() => { onChange && onChange(o.value); setOpen(false); setQuery('') }}
+                      aria-selected={isSelected}
+                      className={`mx-1 rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors flex items-center justify-between ${isSelected ? 'bg-[rgba(37,99,235,0.28)] text-white' : 'hover:bg-[rgba(37,99,235,0.18)]'} ${isLight ? 'text-theme-text' : 'text-gray-100'}`}
+                      onClick={() => { 
+                        if (multiple) {
+                          const currentVal = Array.isArray(value) ? value : []
+                          const newVal = currentVal.includes(o.value)
+                            ? currentVal.filter(v => v !== o.value)
+                            : [...currentVal, o.value]
+                          onChange && onChange(newVal)
+                          inputRef.current?.focus()
+                        } else {
+                          onChange && onChange(o.value)
+                          setOpen(false)
+                          setQuery('') 
+                        }
+                      }}
                     >
-                      {o.label}
+                      <span>{o.label}</span>
+                      {isSelected && multiple && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
                     </li>
-                  ))}
+                  )})}
                 </ul>
               </div>
             )

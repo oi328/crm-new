@@ -39,6 +39,9 @@ import {
   Calendar,
   Bookmark
 } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import { createPortal } from 'react-dom';
 
 const ICON_MAP = {
   Users: <Users className="w-5 h-5" />,
@@ -610,43 +613,37 @@ export const Dashboard = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                {/* Date From */}
                 <div className="space-y-2">
                   <label className={`flex items-center gap-2 text-[10px] font-medium ${isLight ? 'text-gray-900' : 'text-white'}`}>
                     <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    {t('From Date')}
+                    {t('Date Range')}
                   </label>
-                  <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    max={dateTo || undefined}
-                    lang={i18n.language === 'ar' ? 'ar-EG' : 'en-US'}
-                    dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
-                    placeholder={t('Date Input Placeholder')}
-                    className="lm-input !w-[9.25rem] text-[9px] px-1 py-[2px]"
-                  />
-                </div>
-                {/* Date To */}
-                <div className="space-y-2">
-                  <label className={`flex items-center gap-2 text-[10px] font-medium ${isLight ? 'text-gray-900' : 'text-white'}`}>
-                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    {t('To Date')}
-                  </label>
-                  <input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    min={dateFrom || undefined}
-                    lang={i18n.language === 'ar' ? 'ar-EG' : 'en-US'}
-                    dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
-                    placeholder={t('Date Input Placeholder')}
-                    className="lm-input !w-[9.25rem] text-[9px] px-1 py-[2px]"
-                  />
+                  <div className="w-full">
+                    <DatePicker
+                        popperContainer={({ children }) => createPortal(children, document.body)}
+                        selectsRange={true}
+                        startDate={dateFrom ? new Date(dateFrom) : null}
+                        endDate={dateTo ? new Date(dateTo) : null}
+                        onChange={(update) => {
+                            const [start, end] = update;
+                            const formatDate = (date) => {
+                                if (!date) return '';
+                                const offset = date.getTimezoneOffset();
+                                const localDate = new Date(date.getTime() - (offset*60*1000));
+                                return localDate.toISOString().split('T')[0];
+                            };
+                            setDateFrom(formatDate(start));
+                            setDateTo(formatDate(end));
+                        }}
+                        isClearable={true}
+                        placeholderText={i18n.language === 'ar' ? "من - إلى" : "From - To"}
+                        className="lm-input !w-full text-[9px] px-1 py-[2px]"
+                        wrapperClassName="w-full"
+                        dateFormat="yyyy-MM-dd"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -692,44 +689,38 @@ export const Dashboard = () => {
                 </SearchableSelect>
               </div>
 
-              {/* Date From */}
-              <div className="space-y-2">
+              {/* Date Range */}
+              <div className="space-y-2 md:col-span-2 lg:col-span-1">
                 <label className={`flex items-center gap-2 text-[10px] font-medium ${isLight ? 'text-gray-900' : 'text-white'}`}>
                   <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  {t('From Date')}
+                  {t('Date Range')}
                 </label>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  max={dateTo || undefined}
-                  lang={i18n.language === 'ar' ? 'ar-EG' : 'en-US'}
-                  dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
-                  placeholder={t('Date Input Placeholder')}
-                  className="lm-input !w-[9.25rem] text-[9px] px-1 py-[2px]"
-                />
-              </div>
-
-              {/* Date To */}
-              <div className="space-y-2">
-                <label className={`flex items-center gap-2 text-[10px] font-medium ${isLight ? 'text-gray-900' : 'text-white'}`}>
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  {t('To Date')}
-                </label>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  min={dateFrom || undefined}
-                  lang={i18n.language === 'ar' ? 'ar-EG' : 'en-US'}
-                  dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
-                  placeholder={t('Date Input Placeholder')}
-                  className="lm-input !w-[9.25rem] text-[9px] px-1 py-[2px]"
-                />
+                <div className="w-full">
+                  <DatePicker
+                      popperContainer={({ children }) => createPortal(children, document.body)}
+                      selectsRange={true}
+                      startDate={dateFrom ? new Date(dateFrom) : null}
+                      endDate={dateTo ? new Date(dateTo) : null}
+                      onChange={(update) => {
+                          const [start, end] = update;
+                          const formatDate = (date) => {
+                              if (!date) return '';
+                              const offset = date.getTimezoneOffset();
+                              const localDate = new Date(date.getTime() - (offset*60*1000));
+                              return localDate.toISOString().split('T')[0];
+                          };
+                          setDateFrom(formatDate(start));
+                          setDateTo(formatDate(end));
+                      }}
+                      isClearable={true}
+                      placeholderText={i18n.language === 'ar' ? "من - إلى" : "From - To"}
+                      className="lm-input !w-full text-[9px] px-1 py-[2px]"
+                      wrapperClassName="w-full"
+                      dateFormat="yyyy-MM-dd"
+                  />
+                </div>
               </div>
             </div>
           </section>
@@ -877,7 +868,10 @@ export const Dashboard = () => {
                   <div
                     key={key}
                     className={`relative overflow-hidden rounded-2xl p-1 group ${style.containerLight} border-2 shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-500 cursor-pointer ${selectedStageFilter === stageKey ? 'ring-2 ring-blue-500' : ''}`}
-                    onClick={() => navigate(`/leads?stage=${stageKey}`)}
+                    onClick={() => {
+                      setSelectedStageFilter(stageKey)
+                      navigate(`/leads?stage=${stageKey}`)
+                    }}
                     role="button"
                     tabIndex={0}
                   >

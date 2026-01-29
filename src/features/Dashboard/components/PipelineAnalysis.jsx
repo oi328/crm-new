@@ -43,20 +43,7 @@ import {
   HiOutlineX,
   HiOutlineFilter
 } from 'react-icons/hi';
-import { 
-  BiBarChart, 
-  BiLineChart, 
-  BiPieChart, 
-  BiTable, 
-  BiListUl,
-  BiSearch,
-  BiSlider,
-  BiUser,
-  BiCalendar,
-  BiDollar,
-  BiX,
-  BiFilter
-} from 'react-icons/bi';
+
 import { 
   RiBarChart2Line, 
   RiLineChartLine, 
@@ -381,7 +368,7 @@ export const PipelineAnalysis = ({ selectedEmployee, dateFrom, dateTo }) => {
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <BiSlider className="text-indigo-600 dark:text-indigo-400" />
+                <FaSlidersH className="text-indigo-600 dark:text-indigo-400" />
                 {t('Advanced Search Options')}
               </h3>
               <button
