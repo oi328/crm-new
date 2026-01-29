@@ -8,6 +8,7 @@ import { mockStorage } from '../utils/mockStorage'
 import SearchableSelect from '../components/SearchableSelect'
 import CustomersImportModal from '../components/CustomersImportModal'
 import CustomersFormModal from '../components/CustomersFormModal'
+import CustomerDetailsModal from '../components/CustomerDetailsModal'
 import QuotationsFormModal from '../components/QuotationsFormModal'
 import SalesOrdersFormModal from '../components/SalesOrdersFormModal'
 import { useTheme } from '../shared/context/ThemeProvider'
@@ -306,6 +307,8 @@ export const Customers = () => {
   const [showImportModal, setShowImportModal] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
+  const [showCustomerDetailsModal, setShowCustomerDetailsModal] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [successMessage, setSuccessMessage] = useState('')
   const [activeRowId, setActiveRowId] = useState(null)
   
@@ -479,6 +482,11 @@ export const Customers = () => {
     setSelectedItems(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     )
+  }
+
+  const handlePreviewCustomer = (customer) => {
+    setSelectedCustomer(customer)
+    setShowCustomerDetailsModal(true)
   }
 
   const handleDelete = async (id) => {
@@ -1276,6 +1284,19 @@ export const Customers = () => {
         <CustomersImportModal
           onClose={() => setShowImportModal(false)}
           onImport={handleImport}
+          isRTL={isRTL}
+        />
+      )}
+
+      {/* Customer Details Modal */}
+      {showCustomerDetailsModal && (
+        <CustomerDetailsModal
+          isOpen={showCustomerDetailsModal}
+          onClose={() => {
+            setShowCustomerDetailsModal(false)
+            setSelectedCustomer(null)
+          }}
+          customer={selectedCustomer}
           isRTL={isRTL}
         />
       )}
