@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaTimes, FaUser, FaPhone, FaEnvelope, FaBuilding, FaMapMarkerAlt, FaCalendarAlt, FaComments, FaHistory, FaPlus, FaEdit, FaTrash, FaFilter, FaSort, FaSearch, FaClock, FaHandshake, FaFileAlt, FaChartLine, FaInfoCircle, FaVideo, FaWhatsapp } from 'react-icons/fa';
+import { FaTimes, FaUser, FaComments, FaFileAlt, FaMapMarkerAlt } from 'react-icons/fa';
 
 const CustomerDetailsModal = ({ isOpen, onClose, customer }) => {
   const { t, i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
   
   const [activeTab, setActiveTab] = useState('details');
-  const [actionFilter, setActionFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('date');
-  const [searchTerm, setSearchTerm] = useState('');
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState([
     {
@@ -38,86 +35,18 @@ const CustomerDetailsModal = ({ isOpen, onClose, customer }) => {
     }
   };
 
-  // Sample actions data - Mock for now
-  const customerActions = [
-    {
-      id: 1,
-      type: 'call',
-      title: isArabic ? 'مكالمة ترحيبية' : 'Welcome Call',
-      description: isArabic ? 'مكالمة ترحيبية' : 'Welcome Call',
-      date: '2024-01-15',
-      time: '10:30 AM',
-      user: isArabic ? 'أحمد علي' : 'Ahmed Ali',
-      status: 'completed',
-      priority: 'high',
-      notes: isArabic ? 'العميل سعيد بالخدمة' : 'Customer is happy with service'
-    }
-  ];
-
-  const getActionIcon = (type) => {
-    switch (type) {
-      case 'call': return <FaPhone className="text-blue-500" />;
-      case 'email': return <FaEnvelope className="text-green-500" />;
-      case 'meeting': return <FaUser className="text-purple-500" />;
-      case 'follow_up': return <FaHistory className="text-orange-500" />;
-      case 'proposal': return <FaHandshake className="text-indigo-500" />;
-      case 'document': return <FaFileAlt className="text-gray-500" />;
-      default: return <FaComments className="text-gray-500" />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Filter and sort actions
-  const filteredAndSortedActions = customerActions
-    .filter(action => {
-      if (actionFilter === 'all') return true;
-      return action.type === actionFilter;
-    })
-    .filter(action => {
-      if (!searchTerm) return true;
-      return action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             action.notes.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             action.user.toLowerCase().includes(searchTerm.toLowerCase());
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'date':
-          return new Date(b.date) - new Date(a.date);
-        case 'type':
-          return a.type.localeCompare(b.type);
-        case 'priority':
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
-          return priorityOrder[b.priority] - priorityOrder[a.priority];
-        case 'status':
-          return a.status.localeCompare(b.status);
-        default:
-          return 0;
-      }
-    });
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2000] p-0 sm:p-4 backdrop-blur-sm">
-      <div className="bg-white sm:rounded-2xl shadow-2xl w-full sm:max-w-4xl max-h-[85vh] h-auto overflow-y-auto transform transition-all duration-300 ease-out">
+      {/* 
+         Updated classes:
+         - Added 'flex flex-col' to enable flex layout for children (header, tabs, content)
+         - Added 'overflow-hidden' to prevent scroll on the modal container itself
+         - Removed 'overflow-y-auto' from here to have single scrollbar in content
+         - Removed 'h-auto' to rely on max-h and flex
+      */}
+      <div className="bg-white sm:rounded-2xl shadow-2xl w-full sm:max-w-4xl max-h-[85vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out">
         {/* Modern Header with Gradient */}
-        <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 p-8">
+        <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 p-8 flex-shrink-0">
           <button 
             onClick={onClose}
             className="absolute top-4 right-4 z-20 btn btn-sm btn-circle bg-white text-red-600 hover:bg-red-50 shadow-lg rtl:right-auto rtl:left-4"
@@ -158,7 +87,7 @@ const CustomerDetailsModal = ({ isOpen, onClose, customer }) => {
         </div>
 
         {/* Modern Tabs */}
-        <div className="bg-gray-50/50 px-8 pt-6">
+        <div className="bg-gray-50/50 px-8 pt-6 flex-shrink-0">
           <div className="flex space-x-1 rtl:space-x-reverse bg-gray-100 rounded-2xl p-1.5">
             <button
               onClick={() => setActiveTab('details')}
@@ -171,20 +100,7 @@ const CustomerDetailsModal = ({ isOpen, onClose, customer }) => {
               <FaUser className="text-sm" />
               <span>{isArabic ? 'تفاصيل العميل' : 'Client Details'}</span>
             </button>
-            <button
-              onClick={() => setActiveTab('actions')}
-              className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 rtl:space-x-reverse ${
-                activeTab === 'actions'
-                  ? 'bg-white text-blue-600 shadow-lg shadow-blue-500/20 transform scale-[1.02]'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-              }`}
-            >
-              <FaHistory className="text-sm" />
-              <span>{isArabic ? `الأنشطة` : `Activities`}</span>
-              <div className="bg-blue-100 text-blue-600 text-xs px-2 py-0.5 rounded-full ml-2 rtl:ml-0 rtl:mr-2">
-                {filteredAndSortedActions.length}
-              </div>
-            </button>
+            {/* Removed Activities Tab */}
             <button
               onClick={() => setActiveTab('comments')}
               className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 rtl:space-x-reverse ${
@@ -203,7 +119,13 @@ const CustomerDetailsModal = ({ isOpen, onClose, customer }) => {
         </div>
 
         {/* Content */}
-        <div className="p-8 overflow-y-auto max-h-[calc(85vh-200px)]">
+        {/* 
+            Updated classes:
+            - Added 'flex-1' to take remaining height
+            - Added 'overflow-y-auto' to enable scrolling only in this area
+            - Removed fixed max-h calculation
+        */}
+        <div className="p-8 overflow-y-auto flex-1">
           {activeTab === 'details' && (
             <div className="space-y-8">
               {/* Basic Information */}
@@ -279,36 +201,6 @@ const CustomerDetailsModal = ({ isOpen, onClose, customer }) => {
                   </div>
               </div>
 
-            </div>
-          )}
-
-          {activeTab === 'actions' && (
-            <div className="space-y-6">
-              {filteredAndSortedActions.length > 0 ? (
-                filteredAndSortedActions.map((action) => (
-                  <div key={action.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-start gap-4">
-                     <div className="bg-gray-100 p-3 rounded-full">
-                        {getActionIcon(action.type)}
-                     </div>
-                     <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                            <h4 className="font-bold text-gray-800">{action.title}</h4>
-                            <span className="text-xs text-gray-500">{action.date} {action.time}</span>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">{action.notes}</p>
-                        <div className="flex gap-2 mt-2">
-                             <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(action.status)}`}>
-                                {action.status}
-                             </span>
-                        </div>
-                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-10 text-gray-500">
-                  {isArabic ? 'لا توجد أنشطة' : 'No activities found'}
-                </div>
-              )}
             </div>
           )}
 

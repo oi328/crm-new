@@ -1074,7 +1074,13 @@ export const Customers = () => {
                     </td>
                     <td className={`p-4 whitespace-nowrap sticky ltr:right-0 rtl:left-0 bg-theme-bg shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.1)] dark:shadow-none z-10 transition-opacity duration-200 ${activeRowId === item.id ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                       <div className="flex items-center justify-end gap-3">
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 transition-colors shadow-sm">
+                        <button 
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 transition-colors shadow-sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handlePreviewCustomer(item)
+                          }}
+                        >
                           <FaEye size={14} />
                           <span className="hidden xl:inline">{isRTL ? 'معاينة' : 'Preview'}</span>
                         </button>
@@ -1151,7 +1157,10 @@ export const Customers = () => {
                 <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
                   <button 
                     className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400"
-                    onClick={() => {/* Preview logic */}}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handlePreviewCustomer(item)
+                    }}
                   >
                     <FaEye size={16} />
                   </button>
